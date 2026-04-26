@@ -1,0 +1,811 @@
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+} from 'recharts';
+import { supabase } from '@/lib/supabase';
+
+const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
+const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
+
+type Tab = 'metrics' | 'users' | 'validations' | 'ai';
+type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  validations_count?: number;
+}
+
+interface Validation {
+  id: string;
+  user_id: string;
+  idea_name: string | null;
+  idea_description: string | null;
+  idea_industry: string | null;
+  target_country: string | null;
+  business_stage: string | null;
+  status: string;
+  validation_score: number | null;
+  current_step: number;
+  ai_feedback: string | null;
+  summary_json: Record<string, unknown> | null;
+  competitive_analysis: Record<string, unknown> | null;
+  created_at: string;
+  completed_at: string | null;
+  profile?: { full_name: string | null; avatar_url: string | null } | null;
+}
+
+interface AiInteraction {
+  id: string;
+  validation_id: string;
+  step: number;
+  model: string;
+  tokens_used: number | null;
+  created_at: string;
+}
+
+function fmt(date: string) {
+  return new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function scoreBg(score: number | null) {
+  if (score === null) return 'bg-gray-100 text-gray-400';
+  if (score >= 75) return 'bg-emerald-50 text-emerald-700';
+  if (score >= 50) return 'bg-amber-50 text-amber-700';
+  return 'bg-red-50 text-red-600';
+}
+
+function modelBadge(model: string | null) {
+  if (!model) return 'bg-gray-100 text-gray-400';
+  if (model.includes('claude')) return 'bg-teal-50 text-teal-700';
+  if (model.includes('gpt')) return 'bg-green-50 text-green-700';
+  return 'bg-gray-100 text-gray-500';
+}
+
+function modelLabel(model: string | null) {
+  if (!model) return '—';
+  if (model.includes('claude')) return model.replace('claude-', '').replace(/-\d{8}$/, '');
+  return model;
+}
+
+function estimateCost(interactions: AiInteraction[]) {
+  let cost = 0;
+  for (const a of interactions) {
+    const t = a.tokens_used ?? 0;
+    if (a.model?.includes('gpt-4o-mini')) cost += (t / 1_000_000) * 0.40;
+    else if (a.model?.includes('gpt-4o')) cost += (t / 1_000_000) * 5;
+    else cost += (t / 1_000_000) * 3; // claude sonnet default
+  }
+  return cost.toFixed(4);
+}
+
+function Avatar({ name, url, size = 8 }: { name: string | null; url: string | null; size?: number }) {
+  const cls = `w-${size} h-${size} rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold`;
+  if (url) return <img src={url} alt={name ?? ''} className={`${cls} object-cover`} />;
+  return (
+    <div className={`${cls} bg-teal-100 text-teal-700`}>
+      {name?.charAt(0)?.toUpperCase() ?? '?'}
+    </div>
+  );
+}
+
+function KPI({ label, value, sub, icon, accent = '#14b8a6', trend }: {
+  label: string; value: string | number; sub?: string; icon: React.ReactNode; accent?: string;
+  trend?: { value: number; label: string };
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-start gap-4">
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: accent + '18' }}>
+        <span style={{ color: accent }}>{icon}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
+        <p className="text-2xl font-black text-gray-900 leading-none">{value}</p>
+        <div className="flex items-center gap-2 mt-1">
+          {sub && <p className="text-xs text-gray-400">{sub}</p>}
+          {trend && (
+            <span className={`text-xs font-semibold ${trend.value >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+              {trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)} {trend.label}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Card({ title, children, className = '', action }: {
+  title: string; children: React.ReactNode; className?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden ${className}`}>
+      <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-gray-700">{title}</h3>
+        {action}
+      </div>
+      <div className="p-6">{children}</div>
+    </div>
+  );
+}
+
+const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  {
+    id: 'metrics', label: 'Métricas',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+  },
+  {
+    id: 'users', label: 'Usuarios',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+  },
+  {
+    id: 'validations', label: 'Validaciones',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  },
+  {
+    id: 'ai', label: 'AI Usage',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+  },
+];
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+export function Admin() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>('metrics');
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [validations, setValidations] = useState<Validation[]>([]);
+  const [aiInteractions, setAiInteractions] = useState<AiInteraction[]>([]);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email !== ADMIN_EMAIL) navigate('/validate', { replace: true });
+    });
+  }, [navigate]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data: profs }, { data: vals }, { data: ais }] = await Promise.all([
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+      supabase.from('validations')
+        .select('*, profile:profiles(full_name, avatar_url)')
+        .order('created_at', { ascending: false }),
+      supabase.from('ai_interactions').select('*').order('created_at', { ascending: false }),
+    ]);
+    const enriched = (profs ?? []).map((p: Profile) => ({
+      ...p,
+      validations_count: (vals ?? []).filter((v: Validation) => v.user_id === p.id).length,
+    }));
+    setProfiles(enriched);
+    setValidations(vals ?? []);
+    setAiInteractions(ais ?? []);
+    setLastRefresh(new Date());
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const completed = validations.filter(v => v.status === 'completed');
+  const inProgress = validations.filter(v => v.status === 'in_progress');
+  const avgScore = completed.length
+    ? Math.round(completed.reduce((s, v) => s + (v.validation_score ?? 0), 0) / completed.length)
+    : 0;
+  const completionRate = validations.length ? Math.round((completed.length / validations.length) * 100) : 0;
+  const totalTokens = aiInteractions.reduce((s, a) => s + (a.tokens_used ?? 0), 0);
+
+  // Usuarios nuevos esta semana
+  const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const usersThisWeek = profiles.filter(p => new Date(p.created_at) >= oneWeekAgo).length;
+  const prevWeekStart = new Date(); prevWeekStart.setDate(prevWeekStart.getDate() - 14);
+  const usersLastWeek = profiles.filter(p => {
+    const d = new Date(p.created_at);
+    return d >= prevWeekStart && d < oneWeekAgo;
+  }).length;
+  const userTrend = usersThisWeek - usersLastWeek;
+
+  // Validaciones por día — últimos 14 días
+  const valsByDay = (() => {
+    const map: Record<string, number> = {};
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      map[d.toISOString().slice(0, 10)] = 0;
+    }
+    validations.forEach(v => { const k = v.created_at.slice(0, 10); if (k in map) map[k]++; });
+    return Object.entries(map).map(([date, count]) => ({ date: date.slice(5), count }));
+  })();
+
+  // Tokens por día — últimos 14 días
+  const tokensByDay = (() => {
+    const map: Record<string, number> = {};
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      map[d.toISOString().slice(0, 10)] = 0;
+    }
+    aiInteractions.forEach(a => { const k = a.created_at.slice(0, 10); if (k in map) map[k] += (a.tokens_used ?? 0); });
+    return Object.entries(map).map(([date, tokens]) => ({ date: date.slice(5), tokens }));
+  })();
+
+  // Score dist
+  const scoreDist = [
+    { label: '0–25', count: completed.filter(v => (v.validation_score ?? 0) <= 25).length },
+    { label: '26–50', count: completed.filter(v => (v.validation_score ?? 0) > 25 && (v.validation_score ?? 0) <= 50).length },
+    { label: '51–75', count: completed.filter(v => (v.validation_score ?? 0) > 50 && (v.validation_score ?? 0) <= 75).length },
+    { label: '76–100', count: completed.filter(v => (v.validation_score ?? 0) > 75).length },
+  ];
+
+  // Industrias
+  const indMap: Record<string, number> = {};
+  validations.forEach(v => { const k = v.idea_industry ?? 'Sin categoría'; indMap[k] = (indMap[k] ?? 0) + 1; });
+  const industries = Object.entries(indMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, value]) => ({ name, value }));
+
+  // Países
+  const countryMap: Record<string, number> = {};
+  validations.forEach(v => { if (v.target_country) { countryMap[v.target_country] = (countryMap[v.target_country] ?? 0) + 1; } });
+  const countries = Object.entries(countryMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
+
+  // Etapas
+  const stageMap: Record<string, number> = {};
+  validations.forEach(v => { if (v.business_stage) { stageMap[v.business_stage] = (stageMap[v.business_stage] ?? 0) + 1; } });
+  const stages = Object.entries(stageMap).sort((a, b) => b[1] - a[1]).map(([stage, count]) => ({ stage, count }));
+
+  // AI por step
+  const stepMap: Record<number, number> = {};
+  aiInteractions.forEach(a => { stepMap[a.step] = (stepMap[a.step] ?? 0) + 1; });
+  const byStep = Object.entries(stepMap).sort((a, b) => +a[0] - +b[0]).map(([step, count]) => ({ step: `S${step}`, count }));
+
+  // Predicción
+  const avg7 = valsByDay.slice(-7).reduce((s, d) => s + d.count, 0) / 7;
+  const projected30 = Math.round(avg7 * 30);
+
+  // Filtro de validaciones
+  const filteredValidations = statusFilter === 'all' ? validations : validations.filter(v => v.status === statusFilter);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-400">Cargando datos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* ── Sidebar — hidden en móvil ─────────────────────────────────── */}
+      <aside className="hidden lg:flex w-56 bg-gray-900 flex-shrink-0 flex-col min-h-screen sticky top-0 h-screen">
+        <div className="px-5 py-6 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white text-sm font-bold leading-none">ValidateAI</p>
+              <p className="text-gray-500 text-xs mt-0.5">Admin Panel</p>
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                tab === item.id
+                  ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/25'
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {item.icon}
+              {item.label}
+              {item.id === 'users' && (
+                <span className="ml-auto text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{profiles.length}</span>
+              )}
+              {item.id === 'validations' && (
+                <span className="ml-auto text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{validations.length}</span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="px-4 py-4 border-t border-white/10 space-y-2">
+          <p className="text-xs text-gray-600 px-1">
+            {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+          <button
+            onClick={load}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/10 transition-all font-medium"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar
+          </button>
+          <button
+            onClick={() => navigate('/validate')}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/10 transition-all font-medium"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver a la app
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main content ─────────────────────────────────────────────────── */}
+      <main className="flex-1 overflow-auto min-w-0">
+        <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sticky top-0 z-10">
+          <div>
+            <h1 className="text-lg font-black text-gray-900">
+              {NAV_ITEMS.find(n => n.id === tab)?.label}
+            </h1>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {tab === 'metrics' && `${validations.length} validaciones · ${profiles.length} usuarios`}
+              {tab === 'users' && `${profiles.length} usuarios · ${usersThisWeek} esta semana`}
+              {tab === 'validations' && `${completed.length} completadas · ${inProgress.length} en progreso`}
+              {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
+            </p>
+          </div>
+        </div>
+
+        <div className="px-4 md:px-8 py-4 md:py-6 space-y-4 md:space-y-6 pb-24 lg:pb-6">
+
+          {/* ══ MÉTRICAS ═══════════════════════════════════════════════════ */}
+          {tab === 'metrics' && (
+            <>
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+                <KPI
+                  label="Usuarios"
+                  value={profiles.length}
+                  sub="registrados"
+                  accent="#14b8a6"
+                  trend={{ value: userTrend, label: 'vs sem. ant.' }}
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+                />
+                <KPI
+                  label="Validaciones"
+                  value={validations.length}
+                  sub={`${completed.length} completadas`}
+                  accent="#8b5cf6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <KPI
+                  label="Score promedio"
+                  value={completed.length ? `${avgScore} pts` : '—'}
+                  sub={completed.length ? 'en completadas' : 'Sin completadas aún'}
+                  accent="#f59e0b"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}
+                />
+                <KPI
+                  label="Completitud"
+                  value={`${completionRate}%`}
+                  sub="del total iniciado"
+                  accent="#ef4444"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+                />
+              </div>
+
+              {/* Predicción */}
+              <div className="bg-gray-900 rounded-2xl p-4 md:p-6">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Predicción — próximos 30 días</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                  <div>
+                    <p className="text-3xl md:text-4xl font-black text-teal-400">{projected30}</p>
+                    <p className="text-xs text-gray-500 mt-1.5">validaciones proyectadas</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl md:text-4xl font-black text-violet-400">{Math.round(projected30 * completionRate / 100)}</p>
+                    <p className="text-xs text-gray-500 mt-1.5">completadas proyectadas</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl md:text-4xl font-black text-amber-400">{avg7.toFixed(1)}</p>
+                    <p className="text-xs text-gray-500 mt-1.5">validaciones/día (prom. 7d)</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-700 mt-5">Basado en promedio últimos 7 días × 30.</p>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                <Card title="Validaciones por día — últimos 14 días">
+                  <ResponsiveContainer width="100%" height={210}>
+                    <LineChart data={valsByDay}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                      <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                      <Line type="monotone" dataKey="count" stroke="#14b8a6" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Card>
+
+                <Card title="Distribución de scores">
+                  {completed.length === 0 ? (
+                    <div className="h-[210px] flex items-center justify-center text-sm text-gray-300">Sin validaciones completadas aún</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={210}>
+                      <BarChart data={scoreDist} barCategoryGap="35%">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                        <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                        <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </Card>
+
+                <Card title="Industrias más validadas">
+                  {industries.length === 0 ? (
+                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
+                  ) : (
+                    <div className="flex items-center gap-6">
+                      <ResponsiveContainer width="45%" height={180}>
+                        <PieChart>
+                          <Pie data={industries} dataKey="value" cx="50%" cy="50%" outerRadius={72} innerRadius={36} paddingAngle={3}>
+                            {industries.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex-1 space-y-2.5">
+                        {industries.map((ind, i) => (
+                          <div key={ind.name} className="flex items-center gap-2.5">
+                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                            <span className="text-xs text-gray-500 flex-1 truncate">{ind.name}</span>
+                            <span className="text-xs font-bold text-gray-800">{ind.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+
+                <Card title="Validaciones por país">
+                  {countries.length === 0 ? (
+                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {countries.map((c, i) => (
+                        <div key={c.name} className="flex items-center gap-3">
+                          <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                          <span className="text-xs text-gray-500 flex-1 truncate">{c.name}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${(c.value / (countries[0]?.value ?? 1)) * 100}%`, background: COLORS[i % COLORS.length] }} />
+                            </div>
+                            <span className="text-xs font-bold text-gray-700 w-4 text-right">{c.value}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+
+                <Card title="Validaciones por etapa">
+                  {stages.length === 0 ? (
+                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={stages} barCategoryGap="35%">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                        <XAxis dataKey="stage" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                        <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                        <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </Card>
+
+                <Card title="Interacciones AI por step">
+                  <ResponsiveContainer width="100%" height={180}>
+                    <BarChart data={byStep} barCategoryGap="35%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="step" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                      <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                      <Bar dataKey="count" fill="#14b8a6" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+              </div>
+            </>
+          )}
+
+          {/* ══ USUARIOS ═══════════════════════════════════════════════════ */}
+          {tab === 'users' && (
+            <Card title={`${profiles.length} usuarios`}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      {['Usuario', 'ID', 'Validaciones', 'Esta semana', 'Registro'].map(h => (
+                        <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8 whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {profiles.map(p => {
+                      const userValsThisWeek = validations.filter(v =>
+                        v.user_id === p.id && new Date(v.created_at) >= oneWeekAgo
+                      ).length;
+                      return (
+                        <tr key={p.id} className="hover:bg-gray-50/50 transition">
+                          <td className="py-3.5 pr-8">
+                            <div className="flex items-center gap-3">
+                              <Avatar name={p.full_name} url={p.avatar_url} size={8} />
+                              <span className="font-medium text-gray-900">
+                                {p.full_name ?? <span className="text-gray-300 font-normal italic">Sin nombre</span>}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 pr-8 font-mono text-xs text-gray-300">{p.id.slice(0, 8)}…</td>
+                          <td className="py-3.5 pr-8">
+                            <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
+                              (p.validations_count ?? 0) > 0 ? 'bg-teal-50 text-teal-700' : 'bg-gray-100 text-gray-400'
+                            }`}>
+                              {p.validations_count}
+                            </span>
+                          </td>
+                          <td className="py-3.5 pr-8">
+                            {userValsThisWeek > 0 ? (
+                              <span className="text-xs font-semibold text-emerald-600">+{userValsThisWeek}</span>
+                            ) : (
+                              <span className="text-xs text-gray-300">—</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 text-xs text-gray-400">{fmt(p.created_at)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {profiles.length === 0 && (
+                  <p className="text-sm text-gray-300 text-center py-12">Sin usuarios registrados aún</p>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* ══ VALIDACIONES ═══════════════════════════════════════════════ */}
+          {tab === 'validations' && (
+            <Card
+              title={`${filteredValidations.length} validaciones`}
+              action={
+                <div className="flex gap-1">
+                  {(['all', 'completed', 'in_progress', 'archived'] as StatusFilter[]).map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setStatusFilter(f)}
+                      className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                        statusFilter === f ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100'
+                      }`}
+                    >
+                      {f === 'all' ? 'Todas' : f === 'completed' ? 'Completas' : f === 'in_progress' ? 'En progreso' : 'Archivadas'}
+                    </button>
+                  ))}
+                </div>
+              }
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      {['Idea', 'Usuario', 'Industria', 'País', 'Etapa', 'Estado', 'Score', 'Progreso', 'Fecha', ''].map(h => (
+                        <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-4 whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredValidations.map(v => {
+                      const prof = v.profile as { full_name: string | null; avatar_url: string | null } | null;
+                      const displayName = v.idea_name
+                        ?? (v.idea_description ? v.idea_description.slice(0, 40) + '…' : null);
+                      const isExpanded = expandedRow === v.id;
+                      return (
+                        <>
+                          <tr
+                            key={v.id}
+                            className="hover:bg-gray-50/50 transition border-t border-gray-50 cursor-pointer"
+                            onClick={() => setExpandedRow(isExpanded ? null : v.id)}
+                          >
+                            <td className="py-3.5 pr-4 font-medium text-gray-900 max-w-[160px] truncate">
+                              {displayName ?? <span className="text-gray-300 font-normal italic">Sin nombre</span>}
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              <div className="flex items-center gap-2">
+                                <Avatar name={prof?.full_name ?? null} url={prof?.avatar_url ?? null} size={6} />
+                                <span className="text-gray-500 text-xs truncate max-w-[90px]">
+                                  {prof?.full_name ?? <span className="text-gray-300">—</span>}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 pr-4 text-gray-400 text-xs max-w-[110px] truncate">
+                              {v.idea_industry ?? '—'}
+                            </td>
+                            <td className="py-3.5 pr-4 text-gray-400 text-xs whitespace-nowrap">
+                              {v.target_country ?? '—'}
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              {v.business_stage ? (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium whitespace-nowrap">
+                                  {v.business_stage}
+                                </span>
+                              ) : <span className="text-gray-300 text-xs">—</span>}
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
+                                v.status === 'completed' ? 'bg-emerald-50 text-emerald-700'
+                                : v.status === 'archived' ? 'bg-gray-100 text-gray-400'
+                                : 'bg-amber-50 text-amber-600'
+                              }`}>
+                                {v.status === 'completed' ? 'Completa' : v.status === 'archived' ? 'Archivada' : 'En progreso'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              {v.validation_score !== null ? (
+                                <span className={`text-sm font-black px-2 py-0.5 rounded-lg ${scoreBg(v.validation_score)}`}>
+                                  {v.validation_score}
+                                </span>
+                              ) : <span className="text-gray-300 text-xs">—</span>}
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-teal-400 rounded-full" style={{ width: `${(v.current_step / 6) * 100}%` }} />
+                                </div>
+                                <span className="text-xs text-gray-400">{v.current_step}/6</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 pr-4 text-xs text-gray-400 whitespace-nowrap">{fmt(v.created_at)}</td>
+                            <td className="py-3.5">
+                              <svg className={`w-4 h-4 text-gray-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr key={`${v.id}-expanded`} className="bg-gray-50/70">
+                              <td colSpan={10} className="px-4 py-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  {v.ai_feedback && (
+                                    <div>
+                                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Feedback AI</p>
+                                      <p className="text-xs text-gray-600 leading-relaxed line-clamp-6">{v.ai_feedback}</p>
+                                    </div>
+                                  )}
+                                  {v.summary_json && (
+                                    <div>
+                                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Summary JSON</p>
+                                      <pre className="text-xs text-gray-500 bg-white rounded-xl p-3 overflow-auto max-h-40 border border-gray-100">
+                                        {JSON.stringify(v.summary_json, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                  {v.competitive_analysis && (
+                                    <div className="col-span-2">
+                                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Análisis competitivo</p>
+                                      <pre className="text-xs text-gray-500 bg-white rounded-xl p-3 overflow-auto max-h-48 border border-gray-100">
+                                        {JSON.stringify(v.competitive_analysis, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                  {!v.ai_feedback && !v.summary_json && !v.competitive_analysis && (
+                                    <p className="text-xs text-gray-300 col-span-2">Sin datos adicionales</p>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {filteredValidations.length === 0 && (
+                  <p className="text-sm text-gray-300 text-center py-12">Sin validaciones en este filtro</p>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* ══ AI USAGE ═══════════════════════════════════════════════════ */}
+          {tab === 'ai' && (
+            <>
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+                <KPI label="Interacciones" value={aiInteractions.length} accent="#14b8a6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+                />
+                <KPI label="Tokens usados" value={totalTokens.toLocaleString()} accent="#8b5cf6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>}
+                />
+                <KPI label="Costo estimado" value={`$${estimateCost(aiInteractions)}`} sub="por modelo real" accent="#f59e0b"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <KPI label="Prom. tokens" value={aiInteractions.length ? Math.round(totalTokens / aiInteractions.length).toLocaleString() : 0} sub="por interacción" accent="#ef4444"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
+                />
+              </div>
+
+              <Card title="Tokens por día — últimos 14 días">
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={tokensByDay}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                    <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                    <Line type="monotone" dataKey="tokens" stroke="#8b5cf6" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Card title="Interacciones recientes">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        {['Validación', 'Step', 'Modelo', 'Tokens', 'Fecha'].map(h => (
+                          <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {aiInteractions.slice(0, 50).map(a => (
+                        <tr key={a.id} className="hover:bg-gray-50/50 transition">
+                          <td className="py-3.5 pr-8 font-mono text-xs text-gray-300">{a.validation_id.slice(0, 8)}…</td>
+                          <td className="py-3.5 pr-8">
+                            <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg">{a.step}</span>
+                          </td>
+                          <td className="py-3.5 pr-8">
+                            <span className={`text-xs px-2 py-1 rounded-lg font-mono ${modelBadge(a.model)}`}>
+                              {modelLabel(a.model)}
+                            </span>
+                          </td>
+                          <td className="py-3.5 pr-8 font-semibold text-gray-800">{a.tokens_used?.toLocaleString() ?? '—'}</td>
+                          <td className="py-3.5 text-xs text-gray-400">{fmt(a.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {aiInteractions.length === 0 && (
+                    <p className="text-sm text-gray-300 text-center py-12">Sin interacciones AI aún</p>
+                  )}
+                </div>
+              </Card>
+            </>
+          )}
+        </div>
+      </main>
+
+      {/* ── Bottom Nav móvil ───────────────────────────────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-900 border-t border-white/10 flex">
+        {NAV_ITEMS.map(item => (
+          <button
+            key={item.id}
+            onClick={() => setTab(item.id)}
+            className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium transition-colors ${
+              tab === item.id ? 'text-teal-400' : 'text-gray-500'
+            }`}
+          >
+            {item.icon}
+            <span className="text-[10px]">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
