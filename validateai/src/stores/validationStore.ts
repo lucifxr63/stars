@@ -20,6 +20,7 @@ interface ValidationState {
   founderFit: FounderFit | null;
   marketSignals: MarketSignals | null;
   fromCache: boolean;
+  validationMode: 'quick' | 'detailed';
 
   setStep: (step: number) => void;
   nextStep: () => void;
@@ -34,6 +35,7 @@ interface ValidationState {
   setFounderFit: (data: FounderFit) => void;
   setMarketSignals: (data: MarketSignals) => void;
   setFromCache: (val: boolean) => void;
+  setValidationMode: (mode: 'quick' | 'detailed') => void;
   setAIThinking: (val: boolean) => void;
   setValidationId: (id: string) => void;
   reset: () => void;
@@ -55,6 +57,7 @@ const initialState = {
   founderFit: null,
   marketSignals: null,
   fromCache: false,
+  validationMode: 'detailed' as const,
 };
 
 export const useValidationStore = create<ValidationState>()(
@@ -74,6 +77,7 @@ export const useValidationStore = create<ValidationState>()(
         setFounderFit: (data) => set({ founderFit: data }),
         setMarketSignals: (data) => set({ marketSignals: data }),
         setFromCache: (val) => set({ fromCache: val }),
+        setValidationMode: (mode) => set({ validationMode: mode }),
         setAIThinking: (val) => set({ aiThinking: val }),
         setValidationId: (id) => set({ validationId: id }),
         reset: () => set(initialState),

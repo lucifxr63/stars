@@ -84,9 +84,9 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-[#12121A] rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+        <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-white/5">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
               <svg className="w-4.5 h-4.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -94,7 +94,7 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
               </svg>
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900">Completar contexto de mercado</h2>
+              <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Completar contexto de mercado</h2>
               <p className="text-xs text-gray-400 mt-0.5">Necesitamos estos datos para el análisis actualizado</p>
             </div>
           </div>
@@ -106,13 +106,13 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {needsCountry && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] mb-2">
                     País objetivo <span className="text-red-400">*</span>
                   </label>
                   <select
                     {...register('target_country')}
-                    className={`w-full px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white focus:border-teal-500 transition
-                      ${errors.target_country ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                    className={`w-full px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white dark:bg-[#12121A] focus:border-teal-500 transition
+                      ${errors.target_country ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/10'}`}
                   >
                     <option value="">Selecciona un país</option>
                     {TARGET_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -121,13 +121,13 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] mb-2">
                   Región <span className="text-gray-400 font-normal">(opcional)</span>
                 </label>
                 <input
                   {...register('target_region')}
                   placeholder="Ej: Santiago, CDMX..."
-                  className="w-full px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white focus:border-teal-500 transition border-gray-200 placeholder:text-gray-300"
+                  className="w-full px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white dark:bg-[#12121A] focus:border-teal-500 transition border-gray-200 dark:border-white/10 placeholder:text-gray-300"
                 />
               </div>
             </div>
@@ -136,14 +136,14 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
           {/* Modelo de negocio */}
           {needsModel && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] mb-3">
                 Modelo de negocio <span className="text-red-400">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {BUSINESS_MODELS.map((m) => (
                   <label key={m} className="cursor-pointer">
                     <input type="radio" {...register('business_model')} value={m} className="peer hidden" />
-                    <div className="px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium text-gray-500 border-gray-200 bg-white
+                    <div className="px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 bg-white dark:bg-[#12121A]
                                     peer-checked:bg-teal-500 peer-checked:text-white peer-checked:border-teal-500
                                     hover:border-teal-300 hover:text-teal-600 transition-all duration-150">
                       {BUSINESS_MODEL_LABELS[m]}
@@ -158,14 +158,14 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
           {/* Etapa */}
           {needsStage && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] mb-3">
                 Etapa del proyecto <span className="text-red-400">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {BUSINESS_STAGES.map((s) => (
                   <label key={s} className="cursor-pointer">
                     <input type="radio" {...register('business_stage')} value={s} className="peer hidden" />
-                    <div className="px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium text-gray-500 border-gray-200 bg-white
+                    <div className="px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 bg-white dark:bg-[#12121A]
                                     peer-checked:bg-teal-500 peer-checked:text-white peer-checked:border-teal-500
                                     hover:border-teal-300 hover:text-teal-600 transition-all duration-150">
                       {BUSINESS_STAGE_LABELS[s]}
@@ -180,13 +180,13 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
           {/* Precio */}
           {needsPrice && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] mb-2">
                 Rango de precio estimado <span className="text-red-400">*</span>
               </label>
               <select
                 {...register('pricing_range')}
-                className={`w-full px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white focus:border-teal-500 transition
-                  ${errors.pricing_range ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                className={`w-full px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white dark:bg-[#12121A] focus:border-teal-500 transition
+                  ${errors.pricing_range ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/10'}`}
               >
                 <option value="">Selecciona un rango</option>
                 {PRICING_RANGES.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -197,7 +197,7 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
 
           {/* Competidores */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] mb-2">
               Competidores que conoces <span className="text-gray-400 font-normal">(opcional, máx. 5)</span>
             </label>
             <div className="flex gap-2">
@@ -207,8 +207,8 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCompetitor(); } }}
                 placeholder="Escribe un nombre y presiona Enter"
                 disabled={competitors.length >= 5}
-                className="flex-1 px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white focus:border-teal-500 transition
-                           border-gray-200 placeholder:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 border-2 rounded-2xl text-sm outline-none bg-white dark:bg-[#12121A] focus:border-teal-500 transition
+                           border-gray-200 dark:border-white/10 placeholder:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <button
                 type="button"
@@ -255,7 +255,7 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
               <div className="px-4 py-4 space-y-4">
                 {/* Años de experiencia */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-[#C4C4D4] mb-1">
                     Años de experiencia en esta industria
                   </label>
                   <input
@@ -264,7 +264,7 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
                     max={40}
                     value={founderCtx.yearsInIndustry}
                     onChange={(e) => setFounderCtx((f) => ({ ...f, yearsInIndustry: Number(e.target.value) }))}
-                    className="w-24 px-3 py-2 border-2 rounded-xl text-sm outline-none focus:border-purple-400 transition border-gray-200"
+                    className="w-24 px-3 py-2 border-2 rounded-xl text-sm outline-none focus:border-purple-400 transition border-gray-200 dark:border-white/10"
                   />
                 </div>
 
@@ -292,14 +292,14 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
                           </svg>
                         )}
                       </div>
-                      <span className="text-sm text-gray-600">{label}</span>
+                      <span className="text-sm text-gray-600 dark:text-[#8B8AA0]">{label}</span>
                     </label>
                   ))}
                 </div>
 
                 {/* Red de contactos */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-[#C4C4D4] mb-2">
                     Red de contactos en el mercado objetivo
                   </label>
                   <div className="flex gap-2">
@@ -314,7 +314,7 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
                           className={`flex-1 py-2 text-xs font-semibold rounded-xl border-2 transition ${
                             active
                               ? 'bg-purple-500 text-white border-purple-500'
-                              : 'border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600'
+                              : 'border-gray-200 dark:border-white/10 text-gray-500 dark:text-[#8B8AA0] hover:border-purple-300 hover:text-purple-600'
                           }`}
                         >
                           {labels[v]}
@@ -332,7 +332,7 @@ export function ReanalyzeModal({ existing, onSubmit, onCancel }: Props) {
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-2xl hover:bg-gray-50 transition text-sm"
+              className="flex-1 py-3 border-2 border-gray-200 dark:border-white/10 text-gray-600 dark:text-[#8B8AA0] font-semibold rounded-2xl hover:bg-gray-50 dark:bg-[#0A0A0F] transition text-sm"
             >
               Cancelar
             </button>

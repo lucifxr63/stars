@@ -48,23 +48,23 @@ export function VersionTimeline({ versions, currentId }: Props) {
             {/* Timeline connector */}
             <div className="flex flex-col items-center">
               <div className={`w-3 h-3 rounded-full mt-1 shrink-0 border-2 ${
-                isCurrent ? 'bg-teal-500 border-teal-500' : isCompleted ? 'bg-gray-300 border-gray-300' : 'bg-white border-gray-300'
+                isCurrent ? 'bg-teal-500 border-teal-500' : isCompleted ? 'bg-gray-300 border-gray-300' : 'bg-white dark:bg-[#12121A] border-gray-300'
               }`} />
               {idx < versions.length - 1 && (
-                <div className="w-0.5 h-full min-h-[2rem] bg-gray-100 mt-1" />
+                <div className="w-0.5 h-full min-h-[2rem] bg-gray-100 dark:bg-white/5 mt-1" />
               )}
             </div>
 
             {/* Card */}
             <div className={`flex-1 rounded-2xl border-2 p-3 transition-all ${
-              isCurrent ? 'border-teal-300 bg-teal-50' : 'border-gray-100 bg-white hover:border-gray-200'
+              isCurrent ? 'border-teal-300 bg-teal-50' : 'border-gray-100 bg-white dark:bg-[#12121A] hover:border-gray-200 dark:border-white/10'
             }`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {/* Versión badge */}
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                      isCurrent ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-500'
+                      isCurrent ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-500 dark:text-[#8B8AA0]'
                     }`}>
                       v{v.version}
                     </span>
@@ -77,7 +77,7 @@ export function VersionTimeline({ versions, currentId }: Props) {
                   </div>
 
                   {/* Nombre de la idea */}
-                  <p className="text-sm font-semibold text-gray-800 truncate">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-[#F0EFF8] truncate">
                     {v.idea_name ?? 'Sin nombre'}
                   </p>
 
@@ -103,7 +103,7 @@ export function VersionTimeline({ versions, currentId }: Props) {
 
               {/* Link al reporte completo (si no es el actual) */}
               {!isCurrent && isCompleted && (
-                <div className="mt-2 pt-2 border-t border-gray-100">
+                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-white/5">
                   <Link
                     to={`/results/${v.id}`}
                     className="text-[10px] font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-1"

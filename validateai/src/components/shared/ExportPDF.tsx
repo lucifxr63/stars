@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { generateValidationPDF } from '@/lib/pdf';
 import { useValidationStore } from '@/stores/validationStore';
-import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals } from '@/types/validation';
 
 export function ExportPDF() {
   const store = useValidationStore();
@@ -11,38 +10,36 @@ export function ExportPDF() {
   const handleExport = async () => {
     setLoading(true);
     try {
-      // Datos extendidos guardados en el store durante el wizard
-      const extended = store.stepMVP as Record<string, unknown>;
       const summaryRaw = store.summary as Record<string, unknown> | null;
 
       await generateValidationPDF({
-        idea_name:             store.stepIdea.idea_name,
-        idea_description:      store.stepIdea.idea_description,
-        idea_industry:         store.stepIdea.idea_industry,
-        target_country:        store.stepIdea.target_country,
-        target_region:         store.stepIdea.target_region,
-        business_model:        store.stepIdea.business_model,
-        business_stage:        store.stepIdea.business_stage,
-        pricing_range:         store.stepIdea.pricing_range,
-        known_competitors:     store.stepIdea.known_competitors,
-        questions_answers:     store.stepQuestions?.questions_answers ?? undefined,
-        customer_segment:      store.stepCustomer.customer_segment,
-        customer_pain_points:  store.stepCustomer.customer_pain_points,
-        customer_context:      (store.stepCustomer as Record<string, unknown>).customer_context as string | undefined,
-        value_proposition:     store.stepValueProp.value_proposition,
-        differentiator:        store.stepValueProp.differentiator,
-        mvp_type:              store.stepMVP.mvp_type,
-        mvp_features:          store.stepMVP.mvp_features,
-        mvp_user_flow:         store.stepMVP.mvp_user_flow,
-        summary:               (summaryRaw ?? {}) as Record<string, unknown>,
-        market_sizing:         (extended.market_sizing as MarketSizing) ?? null,
-        competitive_analysis:  (extended.competitive_analysis as CompetitiveAnalysis) ?? null,
-        score_breakdown:       (summaryRaw?.score_breakdown as ScoreBreakdown) ?? null,
-        risk_analysis:         (store.riskAnalysis as RiskAnalysis) ?? null,
-        unit_economics:        (store.unitEconomics as UnitEconomics) ?? null,
-        founder_fit:           (store.founderFit as FounderFit) ?? null,
-        market_signals:        (store.marketSignals as MarketSignals) ?? null,
-        from_cache:            store.fromCache,
+        idea_name:            store.stepIdea.idea_name,
+        idea_description:     store.stepIdea.idea_description,
+        idea_industry:        store.stepIdea.idea_industry,
+        target_country:       store.stepMarket.target_country ?? undefined,
+        target_region:        store.stepMarket.target_region ?? undefined,
+        business_model:       store.stepMarket.business_model ?? undefined,
+        business_stage:       undefined,
+        pricing_range:        store.stepMarket.pricing_range ?? undefined,
+        known_competitors:    undefined,
+        questions_answers:    undefined,
+        customer_segment:     store.stepMarket.customer_segment,
+        customer_pain_points: undefined,
+        customer_context:     undefined,
+        value_proposition:    undefined,
+        differentiator:       undefined,
+        mvp_type:             undefined,
+        mvp_features:         undefined,
+        mvp_user_flow:        undefined,
+        summary:              (summaryRaw ?? {}) as Record<string, unknown>,
+        market_sizing:        null,
+        competitive_analysis: null,
+        score_breakdown:      (summaryRaw?.score_breakdown as never) ?? null,
+        risk_analysis:        null,
+        unit_economics:       null,
+        founder_fit:          null,
+        market_signals:       null,
+        from_cache:           store.fromCache,
       });
       toast.success('PDF descargado correctamente');
     } catch {

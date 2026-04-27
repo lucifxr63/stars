@@ -38,7 +38,7 @@ export function ScoreGauge({ score }: ScoreGaugeProps) {
             strokeWidth="14"
             strokeLinecap="round"
             strokeDasharray={`${progress} ${gap}`}
-            style={{ transition: 'stroke-dasharray 1.2s ease-out' }}
+            style={{ transition: 'stroke-dasharray 1.2s ease-out', filter: `drop-shadow(0 0 12px ${config.color}40)` }}
           />
         </svg>
         {/* Center */}

@@ -16,7 +16,7 @@ export function LockedSection({ title, description, requiredTier, hint }: Props)
   const tc = TIER_LABELS[requiredTier] ?? TIER_LABELS.pro;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50">
+    <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F]">
       {/* Contenido difuminado */}
       <div className="filter blur-[3px] pointer-events-none select-none p-5 opacity-50" aria-hidden="true">
         <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
@@ -31,15 +31,15 @@ export function LockedSection({ title, description, requiredTier, hint }: Props)
       </div>
 
       {/* Overlay de bloqueo */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-white/70 backdrop-blur-[1px]">
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-white dark:bg-[#12121A]/70 backdrop-blur-[1px]">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${tc.bg} border-2 ${tc.border}`}>
           <svg className={`w-6 h-6 ${tc.color}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
 
-        <h3 className="text-sm font-bold text-gray-900 mb-1">{title}</h3>
-        <p className="text-xs text-gray-500 mb-3 max-w-xs leading-snug">{description}</p>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">{title}</h3>
+        <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-3 max-w-xs leading-snug">{description}</p>
 
         {hint && (
           <p className="text-xs text-gray-400 italic mb-4 max-w-xs leading-snug">"{hint}"</p>

@@ -46,7 +46,7 @@ export function StepFounder() {
 
       <div className="space-y-5">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-2">
             Años de experiencia en esta industria
           </label>
           <input
@@ -55,40 +55,40 @@ export function StepFounder() {
             max={50}
             {...register('yearsInIndustry', { valueAsNumber: true })}
             placeholder="0"
-            className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-white
+            className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
                         focus:border-indigo-500
-                        ${errors.yearsInIndustry ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                        ${errors.yearsInIndustry ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/8'}`}
           />
           <ErrorMsg message={errors.yearsInIndustry?.message} />
         </div>
 
         <div>
-           <label className="block text-sm font-semibold text-gray-700 mb-3">
+           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
             Equipo Técnico
           </label>
           <label className={`flex items-center gap-3 p-4 border-2 rounded-2xl cursor-pointer transition
-                            ${hasTech ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                            ${hasTech ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 dark:border-white/8 hover:bg-white dark:bg-[#12121A]/3'}`}>
             <input
               type="checkbox"
               {...register('hasTechnicalCofounder')}
               className="w-5 h-5 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500"
             />
-            <span className="text-sm font-medium text-gray-700">Tengo un Co-founder técnico o un equipo de desarrollo interno</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-[#F0EFF8]">Tengo un Co-founder técnico o un equipo de desarrollo interno</span>
           </label>
         </div>
 
         <div>
-           <label className="block text-sm font-semibold text-gray-700 mb-3">
+           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
             Contexto del Problema
           </label>
           <label className={`flex items-center gap-3 p-4 border-2 rounded-2xl cursor-pointer transition
-                            ${facedProblem ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                            ${facedProblem ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 dark:border-white/8 hover:bg-white dark:bg-[#12121A]/3'}`}>
             <input
               type="checkbox"
               {...register('personallyFacedProblem')}
               className="w-5 h-5 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500"
             />
-            <span className="text-sm font-medium text-gray-700">He sufrido o vivido este problema personalmente</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-[#F0EFF8]">He sufrido o vivido este problema personalmente</span>
           </label>
         </div>
 
@@ -98,7 +98,7 @@ export function StepFounder() {
         <button
           type="button"
           onClick={prevStep}
-          className="w-1/3 py-4 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all text-sm"
+          className="w-1/3 py-4 text-gray-600 dark:text-[#8B8AA0] font-bold rounded-2xl hover:bg-gray-100 dark:bg-white/5 transition-all text-sm"
         >
           Volver
         </button>
@@ -114,3 +114,4 @@ export function StepFounder() {
     </form>
   );
 }
+

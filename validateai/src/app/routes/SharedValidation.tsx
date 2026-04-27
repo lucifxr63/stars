@@ -51,7 +51,7 @@ export function SharedValidation() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -59,13 +59,13 @@ export function SharedValidation() {
 
   if (notFound || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 text-center px-4">
-        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center">
           <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <p className="font-bold text-gray-700">Esta validación no existe o ya no está disponible.</p>
+        <p className="font-bold text-gray-700 dark:text-[#C4C4D4]">Esta validación no existe o ya no está disponible.</p>
         <Link to="/" className="text-sm text-teal-600 hover:underline">Ir a ValidateAI →</Link>
       </div>
     );
@@ -77,9 +77,9 @@ export function SharedValidation() {
   const scoreBg = isGood ? 'bg-green-50 border-green-200' : isMid ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 py-4">
+      <div className="bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/5 px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
@@ -87,24 +87,24 @@ export function SharedValidation() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span className="font-bold text-gray-900 text-sm">ValidateAI</span>
+            <span className="font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">ValidateAI</span>
           </div>
-          <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Reporte compartido</span>
+          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-white/5 px-2.5 py-1 rounded-full">Reporte compartido</span>
         </div>
       </div>
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 space-y-5">
         {/* Título */}
         <div>
-          <h1 className="text-2xl font-black text-gray-900">{data.idea_name ?? 'Sin nombre'}</h1>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">{data.idea_name ?? 'Sin nombre'}</h1>
           <div className="flex flex-wrap gap-2 mt-2">
-            {data.idea_industry && <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-500 rounded-full">{data.idea_industry}</span>}
+            {data.idea_industry && <span className="text-xs px-2.5 py-1 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-[#8B8AA0] rounded-full">{data.idea_industry}</span>}
             {data.target_country && <span className="text-xs px-2.5 py-1 bg-teal-50 text-teal-600 rounded-full">{data.target_country}</span>}
             {data.business_model && <span className="text-xs px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full uppercase">{data.business_model}</span>}
             {data.business_stage && <span className="text-xs px-2.5 py-1 bg-violet-50 text-violet-600 rounded-full">{data.business_stage}</span>}
           </div>
           {data.idea_description && (
-            <p className="text-sm text-gray-500 mt-3 leading-relaxed">{data.idea_description}</p>
+            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mt-3 leading-relaxed">{data.idea_description}</p>
           )}
         </div>
 
@@ -115,7 +115,7 @@ export function SharedValidation() {
               <ScoreGauge score={data.validation_score} />
               <div className="flex-1 text-center sm:text-left">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Análisis general</p>
-                <p className="text-gray-700 leading-relaxed text-sm">{summary.feedback}</p>
+                <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function SharedValidation() {
               </div>
               <ul className="space-y-2">
                 {summary.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-[#C4C4D4]">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
                     <span className="leading-snug">{s}</span>
                   </li>
@@ -154,7 +154,7 @@ export function SharedValidation() {
               </div>
               <ul className="space-y-2">
                 {summary.weaknesses.map((w, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-[#C4C4D4]">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                     <span className="leading-snug">{w}</span>
                   </li>
@@ -166,15 +166,15 @@ export function SharedValidation() {
 
         {/* Próximos pasos */}
         {(summary?.next_steps?.length ?? 0) > 0 && summary && (
-          <div className="bg-white border-2 border-gray-100 rounded-2xl p-5">
-            <h3 className="text-sm font-bold text-gray-700 mb-4">Próximos pasos recomendados</h3>
+          <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
+            <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Próximos pasos recomendados</h3>
             <ol className="space-y-3">
               {summary.next_steps.map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
                     {i + 1}
                   </span>
-                  <p className="text-sm text-gray-600 leading-relaxed">{step}</p>
+                  <p className="text-sm text-gray-600 dark:text-[#8B8AA0] leading-relaxed">{step}</p>
                 </li>
               ))}
             </ol>
@@ -182,23 +182,23 @@ export function SharedValidation() {
         )}
 
         {/* Segmento y propuesta de valor */}
-        <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 space-y-3">
+        <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 space-y-3">
           {data.customer_segment && (
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Cliente objetivo</p>
-              <p className="text-sm text-gray-700">{data.customer_segment}</p>
+              <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{data.customer_segment}</p>
             </div>
           )}
           {data.value_proposition && (
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Propuesta de valor</p>
-              <p className="text-sm text-gray-700">{data.value_proposition}</p>
+              <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{data.value_proposition}</p>
             </div>
           )}
           {data.differentiator && (
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Diferenciador</p>
-              <p className="text-sm text-gray-700">{data.differentiator}</p>
+              <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{data.differentiator}</p>
             </div>
           )}
         </div>

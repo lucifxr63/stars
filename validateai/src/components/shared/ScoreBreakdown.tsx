@@ -17,19 +17,19 @@ export function ScoreBreakdown({ data }: { data: ScoreBreakdownType }) {
   }));
 
   return (
-    <div className="border border-gray-100 rounded-2xl overflow-hidden">
-      <div className="px-5 py-4 bg-white border-b border-gray-100">
+    <div className="border border-gray-100 dark:border-white/5 rounded-2xl overflow-hidden">
+      <div className="px-5 py-4 bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
             <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
           </div>
-          <p className="text-sm font-bold text-gray-800">Desglose del score</p>
+          <p className="text-sm font-bold text-gray-800 dark:text-[#F0EFF8]">Desglose del score</p>
         </div>
       </div>
 
-      <div className="bg-gray-50/40 px-5 py-4">
+      <div className="bg-gray-50 dark:bg-[#0A0A0F]/40 px-5 py-4">
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="w-full">
             <ResponsiveContainer width="100%" height={200}>
@@ -63,7 +63,7 @@ export function ScoreBreakdown({ data }: { data: ScoreBreakdownType }) {
                 return (
                   <div key={key}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-gray-500">{LABELS[key]}</span>
+                      <span className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0]">{LABELS[key]}</span>
                       <span className="text-xs font-black" style={{ color }}>{val}</span>
                     </div>
                     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">

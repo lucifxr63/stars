@@ -47,6 +47,28 @@ export function useTrainingData() {
         training_consent_at: consent ? new Date().toISOString() : null,
       })
       .eq('id', user.id);
+
+    // Al activar el consentimiento, anonimizar la validación completada más reciente
+    if (consent) {
+      try {
+        const { data: latest } = await supabase
+          .from('validations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latest?.id) {
+          await supabase.functions.invoke('anonymize-idea', {
+            body: { validation_id: latest.id },
+          });
+        }
+      } catch {
+        // silencioso — no interrumpir el flujo si falla
+      }
+    }
   };
 
   return { saveIfConsented, updateConsent, saving };

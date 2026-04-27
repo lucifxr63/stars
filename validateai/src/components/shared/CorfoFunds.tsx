@@ -36,8 +36,8 @@ export function CorfoFunds({ stage, industry, businessModel }: Props) {
 
   if (matches.length === 0) {
     return (
-      <div className="bg-gray-50 rounded-2xl p-5 text-center">
-        <p className="text-sm text-gray-500">No se encontraron instrumentos CORFO aplicables en esta etapa e industria.</p>
+      <div className="bg-gray-50 dark:bg-[#0A0A0F] rounded-2xl p-5 text-center">
+        <p className="text-sm text-gray-500 dark:text-[#8B8AA0]">No se encontraron instrumentos CORFO aplicables en esta etapa e industria.</p>
       </div>
     );
   }
@@ -49,17 +49,17 @@ export function CorfoFunds({ stage, industry, businessModel }: Props) {
           <span className="text-base">🇨🇱</span>
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-900">Fondos CORFO aplicables</p>
+          <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Fondos CORFO aplicables</p>
           <p className="text-xs text-gray-400">{matches.length} instrumento{matches.length !== 1 ? 's' : ''} relevante{matches.length !== 1 ? 's' : ''} para tu etapa</p>
         </div>
       </div>
 
       {matches.map(({ instrument: inst, matchScore, matchReasons }) => (
-        <div key={inst.id} className="border border-gray-100 rounded-2xl p-4 hover:border-gray-200 transition-colors">
+        <div key={inst.id} className="border border-gray-100 rounded-2xl p-4 hover:border-gray-200 dark:border-white/10 transition-colors">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-gray-900 text-sm">{inst.name}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${CATEGORY_COLORS[inst.category] ?? 'bg-gray-100 text-gray-600'}`}>
+              <span className="font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">{inst.name}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${CATEGORY_COLORS[inst.category] ?? 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0]'}`}>
                 {CATEGORY_LABELS[inst.category] ?? inst.category}
               </span>
             </div>
@@ -69,16 +69,16 @@ export function CorfoFunds({ stage, industry, businessModel }: Props) {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 mb-3 leading-relaxed">{inst.description}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-3 leading-relaxed">{inst.description}</p>
 
           <div className="flex items-center gap-4 mb-3">
             <div>
               <p className="text-[10px] text-gray-400 uppercase font-semibold">Monto máx.</p>
-              <p className="text-sm font-bold text-gray-800">{fmtClp(inst.maxAmountClp)}</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-[#F0EFF8]">{fmtClp(inst.maxAmountClp)}</p>
             </div>
             <div>
               <p className="text-[10px] text-gray-400 uppercase font-semibold">Etapas</p>
-              <p className="text-sm font-bold text-gray-800 capitalize">{inst.stages.join(', ')}</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-[#F0EFF8] capitalize">{inst.stages.join(', ')}</p>
             </div>
           </div>
 
@@ -90,10 +90,10 @@ export function CorfoFunds({ stage, industry, businessModel }: Props) {
             </div>
           )}
 
-          <div className="border-t border-gray-100 pt-3">
+          <div className="border-t border-gray-100 dark:border-white/5 pt-3">
             <p className="text-[10px] text-gray-400 uppercase font-semibold mb-1">Requisitos principales</p>
             {inst.requirements.slice(0, 2).map((req) => (
-              <p key={req} className="text-xs text-gray-500">• {req}</p>
+              <p key={req} className="text-xs text-gray-500 dark:text-[#8B8AA0]">• {req}</p>
             ))}
           </div>
 

@@ -21,6 +21,9 @@ import { RegulatoryRoadmap } from '@/components/shared/RegulatoryRoadmap';
 import { generateValidationPDF, PDF_THEMES } from '@/lib/pdf';
 import type { PDFTheme } from '@/lib/pdf';
 import { ReanalyzeModal } from '@/components/shared/ReanalyzeModal';
+import { SwotMatrix } from '@/components/shared/SwotMatrix';
+import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
+import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import type {
@@ -74,11 +77,6 @@ interface ValidationFull {
   version: number;
 }
 
-const PRIORITY_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
-  must: { label: 'Esencial', className: 'bg-red-100 text-red-700 border-red-200', dot: 'bg-red-500' },
-  should: { label: 'Importante', className: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
-  could: { label: 'Deseable', className: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
-};
 
 const DASHBOARD_TABS = ['Resumen Ejecutivo', 'Mercado y Competencia', 'Finanzas y Riesgos', 'Producto y Entrega', 'Equipo y Mentoría'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
@@ -90,7 +88,7 @@ export function ValidationDetail() {
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [updatePdfLoading, setUpdatePdfLoading] = useState(false);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [showReanalyzeModal, setShowReanalyzeModal] = useState(false);
   const [showPivotModal, setShowPivotModal] = useState(false);
@@ -469,13 +467,13 @@ export function ValidationDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
         <Header />
         <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 space-y-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
-              <div className="h-4 bg-gray-100 rounded w-1/3 mb-3" />
-              <div className="h-3 bg-gray-100 rounded w-2/3" />
+            <div key={i} className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-6 animate-pulse">
+              <div className="h-4 bg-gray-100 dark:bg-white/5 rounded w-1/3 mb-3" />
+              <div className="h-3 bg-gray-100 dark:bg-white/5 rounded w-2/3" />
             </div>
           ))}
         </div>
@@ -490,17 +488,14 @@ export function ValidationDetail() {
   const isGood = (data.validation_score ?? 0) >= 70;
   const isMid = (data.validation_score ?? 0) >= 40;
   const scoreBg = isGood
-    ? 'bg-green-50 border-green-200'
+    ? 'bg-green-50 border-green-200 dark:bg-green-500/10 dark:border-green-500/20 shadow-sm shadow-green-500/10'
     : isMid
-    ? 'bg-amber-50 border-amber-200'
-    : 'bg-red-50 border-red-200';
+    ? 'bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 shadow-sm shadow-amber-500/10'
+    : 'bg-red-50 border-red-200 dark:bg-red-500/10 dark:border-red-500/20 shadow-sm shadow-red-500/10';
 
-  const mustFeatures = data.mvp_features?.filter((f) => f.priority === 'must') ?? [];
-  const shouldFeatures = data.mvp_features?.filter((f) => f.priority === 'should') ?? [];
-  const couldFeatures = data.mvp_features?.filter((f) => f.priority === 'could') ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
       <Header />
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
@@ -508,7 +503,7 @@ export function ValidationDetail() {
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
           <Link to="/results" className="hover:text-teal-600 transition">Mis validaciones</Link>
           <span>›</span>
-          <span className="text-gray-700 font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
+          <span className="text-gray-700 dark:text-[#C4C4D4] font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
         </div>
 
         {/* Header */}
@@ -517,8 +512,8 @@ export function ValidationDetail() {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-xl sm:text-2xl font-black text-gray-900 break-words">{data.idea_name ?? 'Sin nombre'}</h1>
-                <span className="px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 text-[10px] font-black shrink-0">
+                <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-[#F0EFF8] break-words">{data.idea_name ?? 'Sin nombre'}</h1>
+                <span className="px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 dark:text-[#8B8AA0] text-[10px] font-black shrink-0">
                   v{data.version || 1}
                 </span>
               </div>
@@ -528,160 +523,146 @@ export function ValidationDetail() {
                   : new Date(data.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })
                 }
               </p>
+              
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                {data.target_country && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-xs font-bold text-blue-700 dark:text-blue-400">
+                    <span className="text-[10px]">🌍</span> {data.target_country}
+                  </span>
+                )}
+                {data.business_model && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-xs font-bold text-purple-700 dark:text-purple-400 capitalize">
+                    <span className="text-[10px]">💼</span> {data.business_model.replace(/_/g, ' ')}
+                  </span>
+                )}
+                {data.pricing_range && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                    <span className="text-[10px]">💰</span> {data.pricing_range}
+                  </span>
+                )}
+              </div>
             </div>
             
-            {/* Acciones de versión (Pivot / History) */}
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                to={`/results/${id}/history`}
-                className="flex items-center justify-center h-9 px-3 gap-1.5 border-2 border-gray-200 text-gray-500 rounded-xl text-xs font-bold hover:bg-gray-50 hover:text-gray-700 transition"
-                title="Ver historial de iteraciones"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Historial
-              </Link>
+            {/* Acciones y Menú Dropdown */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0 relative z-20">
+              {/* Botón Principal: Descargar PDF */}
               <button
-                onClick={() => setShowPivotModal(true)}
-                className="flex items-center justify-center h-9 px-3 gap-1.5 bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold hover:bg-amber-200 active:scale-[0.98] transition"
-                title="Iterar esta idea y crear una nueva versión"
+                onClick={handleExportPDF}
+                disabled={pdfLoading}
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 active:scale-[0.98] transition disabled:opacity-50"
+                title="Descargar PDF con los datos actuales"
               >
-                <span>🔀</span>
-                Pivotar
+                {pdfLoading ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  </svg>
+                )}
+                Descargar PDF
               </button>
-            </div>
-          </div>
 
-          {/* Selector de tema PDF */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <span className="text-xs font-semibold text-gray-400 shrink-0">Estilo del PDF:</span>
-            <div className="flex gap-1.5">
-              {PDF_THEMES.map((t) => {
-                const isActive = pdfTheme === t.id;
-                const swatches: Record<string, string> = {
-                  dark:     'bg-slate-900',
-                  clean:    'bg-white border border-gray-200',
-                  gradient: 'bg-gradient-to-r from-teal-400 to-blue-700',
-                };
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => handleThemeChange(t.id)}
-                    title={`${t.label} — ${t.desc}`}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border-2 transition-all ${
-                      isActive
-                        ? 'border-teal-500 bg-teal-50 text-teal-700'
-                        : 'border-gray-200 bg-white text-gray-500 hover:border-teal-300 hover:text-teal-600'
-                    }`}
-                  >
-                    <span className={`w-3 h-3 rounded-full shrink-0 ${swatches[t.id]}`} />
-                    <span className="hidden sm:inline">{t.label}</span>
-                    <span className="sm:hidden">{t.id === 'dark' ? '🌑' : t.id === 'clean' ? '⬜' : '🎨'}</span>
+              {/* Compartir Rápido */}
+              <button
+                onClick={handleShare}
+                disabled={sharing}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border-2 border-teal-200 dark:border-teal-500/30 text-teal-600 dark:text-teal-400 bg-teal-50/50 dark:bg-teal-500/5 text-xs font-bold rounded-xl hover:bg-teal-50 dark:hover:bg-teal-500/10 active:scale-[0.98] transition disabled:opacity-50"
+              >
+                {sharing ? (
+                  <div className="w-3.5 h-3.5 border-2 border-teal-400/40 border-t-teal-500 rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                )}
+                Compartir
+              </button>
+
+              {/* Dropdown de Más Opciones */}
+              <details 
+                className="group relative"
+                onBlur={(e) => {
+                  // Cierra el details automáticamente si el foco sale del elemento
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    e.currentTarget.removeAttribute('open');
+                  }
+                }}
+              >
+                <summary className="flex items-center justify-center gap-1.5 h-9 px-3 border-2 border-gray-200 dark:border-white/10 text-gray-700 dark:text-[#F0EFF8] bg-white dark:bg-[#1A1A24] rounded-xl text-xs font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer list-none [&::-webkit-details-marker]:hidden outline-none focus:ring-2 focus:ring-teal-500/50">
+                  ⚙️ Opciones <span className="group-open:rotate-180 transition-transform opacity-50">▾</span>
+                </summary>
+                
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1A1A24] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 dark:border-white/10 p-2 flex flex-col gap-1 z-50">
+                  
+                  {/* Tema del PDF */}
+                  <div className="px-3 py-2.5 border-b border-gray-100 dark:border-white/5 mb-1 bg-gray-50/50 dark:bg-[#0A0A0F]/50 rounded-lg">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-[#8B8AA0] mb-2">Tema del PDF</p>
+                    <div className="flex gap-1.5">
+                      {PDF_THEMES.map((t) => {
+                        const isActive = pdfTheme === t.id;
+                        const swatches: Record<string, string> = {
+                          dark:     'bg-slate-900',
+                          clean:    'bg-white border border-gray-200',
+                          gradient: 'bg-gradient-to-r from-teal-400 to-blue-700',
+                        };
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => handleThemeChange(t.id)}
+                            title={t.label}
+                            className={`flex-1 flex justify-center py-1.5 rounded-lg border transition-all ${
+                              isActive
+                                ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
+                                : 'border-gray-200 dark:border-white/10 hover:border-teal-300'
+                            }`}
+                          >
+                            <span className={`w-3.5 h-3.5 rounded-full ${swatches[t.id]}`} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Acciones de IA */}
+                  {hasAnythingToUpdate && (
+                    <button onClick={handleReanalyzeClick} disabled={reanalyzing} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl text-xs font-bold text-gray-700 dark:text-[#F0EFF8] text-left transition disabled:opacity-50">
+                      <span className="w-4 h-4 text-center">{reanalyzing ? '⏳' : '🔄'}</span>
+                      {reanalyzing ? 'Analizando...' : 'Actualizar Datos IA'}
+                    </button>
+                  )}
+                  
+                  {hasAdvancedToGenerate && (
+                    <button onClick={handleGenerateAdvanced} disabled={generatingAdvanced} className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-400 text-left transition disabled:opacity-50">
+                      <span className="w-4 h-4 text-center">{generatingAdvanced ? '⏳' : '✦'}</span>
+                      {generatingAdvanced ? 'Generando...' : 'Generar Análisis Pro'}
+                    </button>
+                  )}
+
+                  <button onClick={handleUpdateAndExportPDF} disabled={updatePdfLoading} className="flex items-center gap-2 px-3 py-2 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-xl text-xs font-bold text-teal-700 dark:text-teal-400 text-left transition disabled:opacity-50">
+                    <span className="w-4 h-4 text-center">{updatePdfLoading ? '⏳' : '📥'}</span>
+                    {updatePdfLoading ? 'Actualizando PDF...' : 'PDF Fresco (Act. + PDF)'}
                   </button>
-                );
-              })}
+
+                  <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
+
+                  {/* Acciones de Versión */}
+                  <button onClick={() => { setShowPivotModal(true); document.querySelector('details[open]')?.removeAttribute('open'); }} className="flex items-center gap-2 px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 text-left transition">
+                    <span className="w-4 h-4 text-center">🔀</span>
+                    Pivotar Idea
+                  </button>
+                  
+                  <Link to={`/results/${id}/history`} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl text-xs font-bold text-gray-600 dark:text-[#8B8AA0] transition">
+                    <span className="w-4 h-4 text-center">🕒</span>
+                    Historial de Versiones
+                  </Link>
+                </div>
+              </details>
             </div>
-          </div>
-
-          {/* Botones de acción — 2×2 en móvil, fila en sm+ */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
-
-            {hasAnythingToUpdate && (
-              <button
-                onClick={handleReanalyzeClick}
-                disabled={reanalyzing}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-teal-500 text-white text-xs sm:text-sm font-semibold
-                           rounded-xl hover:bg-teal-600 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                {reanalyzing ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                )}
-                <span className="truncate">{reanalyzing ? 'Analizando...' : 'Actualizar'}</span>
-              </button>
-            )}
-
-            {/* Botón análisis avanzados */}
-            {hasAdvancedToGenerate && (
-              <button
-                onClick={handleGenerateAdvanced}
-                disabled={generatingAdvanced || reanalyzing}
-                title="Genera análisis de riesgos, unit economics, founder fit y señales de mercado"
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-purple-600 text-white text-xs sm:text-sm font-semibold
-                           rounded-xl hover:bg-purple-700 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                {generatingAdvanced ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /><span className="truncate">Generando...</span></>
-                ) : (
-                  <><span className="text-base leading-none">✦</span><span className="truncate">Análisis Pro</span></>
-                )}
-              </button>
-            )}
-
-            <button
-              onClick={handleShare}
-              disabled={sharing}
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 border-2 border-teal-200 text-teal-600 text-xs sm:text-sm font-semibold
-                         rounded-xl hover:bg-teal-50 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {sharing ? (
-                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-500 rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              )}
-              <span className="truncate">Compartir</span>
-            </button>
-
-            <button
-              onClick={handleUpdateAndExportPDF}
-              disabled={updatePdfLoading || reanalyzing}
-              title="Actualiza el análisis de IA y descarga el PDF con los datos más recientes"
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-teal-600 text-white text-xs sm:text-sm font-semibold
-                         rounded-xl hover:bg-teal-700 active:scale-[0.98] transition-all
-                         disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {updatePdfLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span className="truncate">Actualizando...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <span className="truncate">PDF fresco</span>
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleExportPDF}
-              disabled={pdfLoading}
-              title="Descarga el PDF con los datos actuales sin volver a llamar a la IA"
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-900 text-white text-xs sm:text-sm font-semibold
-                         rounded-xl hover:bg-gray-800 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {pdfLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                </svg>
-              )}
-              <span className="truncate">Descargar PDF</span>
-            </button>
           </div>
         </div>
 
         {/* TABS NAVIGATION */}
-        <div className="flex bg-white rounded-xl border border-gray-200 p-1 mb-6 overflow-x-auto hide-scrollbar shadow-sm">
+        <div className="flex bg-white dark:bg-[#12121A] rounded-xl border border-gray-200 dark:border-white/10 p-1 mb-6 overflow-x-auto hide-scrollbar shadow-sm">
           {DASHBOARD_TABS.map((t) => (
             <button
               key={t}
@@ -689,7 +670,7 @@ export function ValidationDetail() {
               className={`flex-1 min-w-[max-content] px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 ${
                 activeTab === t
                   ? 'bg-teal-50 text-teal-700 shadow-sm border border-teal-100'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50 border border-transparent'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-[#F0EFF8] hover:bg-gray-50 dark:bg-[#0A0A0F] border border-transparent'
               }`}
             >
               {t}
@@ -707,14 +688,14 @@ export function ValidationDetail() {
                     <ScoreGauge score={data.validation_score} />
                     <div className="flex-1 text-center sm:text-left">
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Análisis general</p>
-                      <p className="text-gray-700 leading-relaxed text-sm">{summary.feedback}</p>
+                      <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Data Summary */}
-              <div className="bg-gray-50 border-2 border-gray-100 rounded-2xl p-5">
+              <div className="bg-gray-50 dark:bg-[#0A0A0F] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Datos de la validación</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   {[
@@ -722,9 +703,9 @@ export function ValidationDetail() {
                     { label: 'Propuesta de valor', value: data.value_proposition },
                     { label: 'Diferenciador', value: data.differentiator },
                   ].filter((i) => i.value).map((item) => (
-                    <div key={item.label} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                    <div key={item.label} className="bg-white dark:bg-[#12121A] rounded-xl p-3 border border-gray-100 dark:border-white/5 shadow-sm">
                       <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
-                      <p className="text-sm font-semibold text-gray-700 leading-snug">{item.value}</p>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] leading-snug">{item.value}</p>
                     </div>
                   ))}
                 </div>
@@ -732,9 +713,9 @@ export function ValidationDetail() {
 
               {/* Idea description */}
               {data.idea_description && (
-                <div className="bg-white border-2 border-gray-100 rounded-2xl p-5">
+                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Descripción de la idea</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{data.idea_description}</p>
+                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.idea_description}</p>
                 </div>
               )}
 
@@ -742,55 +723,15 @@ export function ValidationDetail() {
               {data.score_breakdown && <ScoreBreakdown data={data.score_breakdown} />}
 
               {/* Fortalezas y debilidades */}
-              {summary && (summary.strengths?.length > 0 || summary.weaknesses?.length > 0) && (
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="bg-green-50 border-2 border-green-100 rounded-2xl p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-black">✓</div>
-                      <h3 className="text-sm font-bold text-green-800">Fortalezas</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {summary.strengths.map((s, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
-                          <span className="leading-snug">{s}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="bg-amber-50 border-2 border-amber-100 rounded-2xl p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-black">!</div>
-                      <h3 className="text-sm font-bold text-amber-800">Áreas de mejora</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {summary.weaknesses.map((w, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                          <span className="leading-snug">{w}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
+              <SwotMatrix 
+                strengths={summary?.strengths || []} 
+                weaknesses={summary?.weaknesses || []} 
+              />
               
               {/* Próximos pasos */}
-              {(summary?.next_steps?.length ?? 0) > 0 && summary && (
-                <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-700 mb-4">Próximos pasos recomendados</h3>
-                  <ol className="space-y-3">
-                    {summary.next_steps.map((step, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <span className="w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
-                          {i + 1}
-                        </span>
-                        <p className="text-sm text-gray-600 leading-relaxed">{step}</p>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
+              <NextStepsTimeline 
+                steps={summary?.next_steps || []} 
+              />
             </div>
           )}
 
@@ -844,7 +785,7 @@ export function ValidationDetail() {
 
               {/* CORFO Instruments */}
               {data.target_country === 'Chile' && data.business_stage && data.idea_industry && (
-                <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                <div className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
                   <CorfoFunds
                     stage={data.business_stage}
                     industry={data.idea_industry}
@@ -858,59 +799,28 @@ export function ValidationDetail() {
           {activeTab === 'Producto y Entrega' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* MVP */}
-              {data.mvp_type && (
-                <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-700 mb-4">Plan de MVP</h3>
-                  <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 rounded-xl p-3 mb-4">
-                    <span className="text-xl">🚀</span>
-                    <div>
-                      <p className="text-xs text-teal-600 font-bold uppercase">Tipo</p>
-                      <p className="font-bold text-gray-900 capitalize">{data.mvp_type.replace(/_/g, ' ')}</p>
-                    </div>
+              {/* MVP */}
+              <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Plan de MVP</h3>
+                <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 dark:bg-teal-500/10 dark:border-teal-500/20 rounded-xl p-3 mb-4">
+                  <span className="text-xl">🚀</span>
+                  <div>
+                    <p className="text-xs text-teal-600 dark:text-teal-400 font-bold uppercase">Tipo</p>
+                    <p className={`font-bold text-gray-900 dark:text-[#F0EFF8] capitalize ${!data.mvp_type ? 'italic opacity-70' : ''}`}>
+                      {data.mvp_type ? data.mvp_type.replace(/_/g, ' ') : '(Ejemplo) Concierge MVP'}
+                    </p>
                   </div>
-
-                  {data.mvp_features && data.mvp_features.length > 0 && (
-                    <div className="space-y-4 mb-4">
-                      {[
-                        { group: mustFeatures, key: 'must' },
-                        { group: shouldFeatures, key: 'should' },
-                        { group: couldFeatures, key: 'could' },
-                      ].map(({ group, key }) =>
-                        group.length > 0 ? (
-                          <div key={key}>
-                            <div className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border mb-2 ${PRIORITY_CONFIG[key].className}`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${PRIORITY_CONFIG[key].dot}`} />
-                              {PRIORITY_CONFIG[key].label}
-                            </div>
-                            <div className="space-y-2">
-                              {group.map((f, i) => (
-                                <div key={i} className="flex items-start gap-3 bg-gray-50 rounded-xl border border-gray-100 p-3">
-                                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${PRIORITY_CONFIG[key].dot}`} />
-                                  <div>
-                                    <p className="text-sm font-semibold text-gray-800">{f.name}</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">{f.description}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null
-                      )}
-                    </div>
-                  )}
-
-                  {data.mvp_user_flow && (
-                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-                      <p className="text-xs font-bold text-gray-400 uppercase mb-2">Flujo de usuario</p>
-                      <p className="text-sm text-gray-600 leading-relaxed">{data.mvp_user_flow}</p>
-                    </div>
-                  )}
                 </div>
-              )}
+
+                  <KanbanMVP 
+                    features={data.mvp_features || []} 
+                    userFlow={data.mvp_user_flow} 
+                  />
+                </div>
 
               {/* Regulatory Roadmap */}
               {data.target_country === 'Chile' && data.idea_industry && (
-                <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                <div className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
                   <RegulatoryRoadmap industry={data.idea_industry} />
                 </div>
               )}
@@ -1000,10 +910,10 @@ export function ValidationDetail() {
       {/* Overlay análisis base */}
       {reanalyzing && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center">
+          <div className="bg-white dark:bg-[#12121A] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center">
             <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
             <div>
-              <p className="font-bold text-gray-900 mb-1">Analizando mercado y competencia</p>
+              <p className="font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Analizando mercado y competencia</p>
               <p className="text-sm text-gray-400">Esto puede tomar unos segundos...</p>
             </div>
           </div>
@@ -1013,10 +923,10 @@ export function ValidationDetail() {
       {/* Overlay análisis avanzados */}
       {generatingAdvanced && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
+          <div className="bg-white dark:bg-[#12121A] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
             <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
             <div>
-              <p className="font-bold text-gray-900 mb-1">Generando análisis avanzados</p>
+              <p className="font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Generando análisis avanzados</p>
               <p className="text-sm text-gray-400">Riesgos · Unit Economics · Founder Fit · Señales de mercado</p>
               <p className="text-xs text-gray-300 mt-1">Puede tomar 15–30 segundos...</p>
             </div>

@@ -23,7 +23,7 @@ export function RegulatoryRoadmap({ industry }: Props) {
           <span className="text-base">⚖️</span>
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-900">Marco regulatorio Chile</p>
+          <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Marco regulatorio Chile</p>
           <p className="text-xs text-gray-400">{items.length} regulacion{items.length !== 1 ? 'es' : ''} relevante{items.length !== 1 ? 's' : ''} para tu industria</p>
         </div>
       </div>
@@ -31,18 +31,18 @@ export function RegulatoryRoadmap({ industry }: Props) {
       {items.map((item) => {
         const urgency = URGENCY_CONFIG[item.urgency];
         return (
-          <div key={item.id} className="border border-gray-100 rounded-2xl p-4 hover:border-gray-200 transition-colors">
+          <div key={item.id} className="border border-gray-100 rounded-2xl p-4 hover:border-gray-200 dark:border-white/10 transition-colors">
             <div className="flex items-start justify-between gap-3 mb-2">
-              <p className="font-semibold text-gray-900 text-sm flex-1">{item.title}</p>
+              <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm flex-1">{item.title}</p>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 ${urgency.className}`}>
                 {urgency.label}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mb-2">{item.entity}</p>
-            <p className="text-xs text-gray-600 leading-relaxed mb-3">{item.description}</p>
+            <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-2">{item.entity}</p>
+            <p className="text-xs text-gray-600 dark:text-[#8B8AA0] leading-relaxed mb-3">{item.description}</p>
             <ul className="space-y-1 mb-3">
               {item.keyPoints.map((point) => (
-                <li key={point} className="text-xs text-gray-600 flex gap-1.5">
+                <li key={point} className="text-xs text-gray-600 dark:text-[#8B8AA0] flex gap-1.5">
                   <span className="text-gray-400 shrink-0 mt-0.5">•</span>
                   <span>{point}</span>
                 </li>

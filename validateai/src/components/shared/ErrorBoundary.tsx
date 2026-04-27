@@ -29,11 +29,11 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-          <div className="max-w-md w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] px-4">
+          <div className="max-w-md w-full bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm p-8 text-center">
             <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Algo salió mal</h2>
-            <p className="text-sm text-gray-500 mb-6 font-mono bg-gray-50 rounded-lg p-3">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-2">Algo salió mal</h2>
+            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-6 font-mono bg-gray-50 dark:bg-[#0A0A0F] rounded-lg p-3">
               {this.state.message}
             </p>
             <div className="flex gap-3 justify-center">
@@ -46,8 +46,8 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
               <button
                 onClick={() => window.location.replace('/')}
-                className="px-5 py-2.5 border border-gray-200 text-gray-600 font-medium
-                           rounded-xl hover:bg-gray-50 transition text-sm"
+                className="px-5 py-2.5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-[#8B8AA0] font-medium
+                           rounded-xl hover:bg-gray-50 dark:bg-[#0A0A0F] transition text-sm"
               >
                 Ir al inicio
               </button>

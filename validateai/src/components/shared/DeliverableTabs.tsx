@@ -27,20 +27,20 @@ function ValidationKitView({ d }: { d: DeliverableData }) {
     <div className="space-y-4">
       <div className="bg-teal-50 rounded-xl p-4 border border-teal-100">
         <p className="text-xs font-bold text-teal-700 uppercase mb-1">Hipótesis principal</p>
-        <p className="text-sm text-gray-800">{d.hypothesis}</p>
+        <p className="text-sm text-gray-800 dark:text-[#F0EFF8]">{d.hypothesis}</p>
       </div>
       {d.experiments?.map((exp: DeliverableData, i: number) => (
-        <div key={i} className="border border-gray-100 rounded-xl p-4">
-          <p className="font-semibold text-gray-900 text-sm mb-2">{exp.name}</p>
-          <p className="text-xs text-gray-500 mb-1"><strong>Cómo:</strong> {exp.how}</p>
-          <p className="text-xs text-gray-500 mb-1"><strong>Métrica:</strong> {exp.metric}</p>
-          <p className="text-xs text-gray-500"><strong>Éxito si:</strong> {exp.success_criteria}</p>
+        <div key={i} className="border border-gray-100 dark:border-white/5 rounded-xl p-4">
+          <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm mb-2">{exp.name}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-1"><strong>Cómo:</strong> {exp.how}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-1"><strong>Métrica:</strong> {exp.metric}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0]"><strong>Éxito si:</strong> {exp.success_criteria}</p>
         </div>
       ))}
       {d.expected_learnings && (
         <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
           <p className="text-xs font-bold text-blue-700 uppercase mb-1">Aprendizajes esperados</p>
-          <p className="text-sm text-gray-700">{d.expected_learnings}</p>
+          <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{d.expected_learnings}</p>
         </div>
       )}
     </div>
@@ -65,23 +65,23 @@ function LandingView({ d }: { d: DeliverableData }) {
       </div>
       {d.ab_variants?.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Variantes A/B</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2">Variantes A/B</p>
           {d.ab_variants.map((v: DeliverableData, i: number) => (
-            <div key={i} className="border border-gray-100 rounded-xl p-3 mb-2">
-              <p className="text-xs font-semibold text-gray-700 mb-1">{v.name}</p>
-              <p className="text-sm text-gray-900 font-bold mb-1">"{v.headline}"</p>
-              <p className="text-xs text-gray-500">{v.rationale}</p>
+            <div key={i} className="border border-gray-100 dark:border-white/5 rounded-xl p-3 mb-2">
+              <p className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4] mb-1">{v.name}</p>
+              <p className="text-sm text-gray-900 dark:text-[#F0EFF8] font-bold mb-1">"{v.headline}"</p>
+              <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">{v.rationale}</p>
             </div>
           ))}
         </div>
       )}
       {d.faq?.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">FAQ sugerido</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2">FAQ sugerido</p>
           {d.faq.map((item: DeliverableData, i: number) => (
             <div key={i} className="mb-3">
-              <p className="text-sm font-semibold text-gray-900">Q: {item.q}</p>
-              <p className="text-sm text-gray-600 mt-0.5">A: {item.a}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">Q: {item.q}</p>
+              <p className="text-sm text-gray-600 dark:text-[#8B8AA0] mt-0.5">A: {item.a}</p>
             </div>
           ))}
         </div>
@@ -95,16 +95,16 @@ function InterviewView({ d }: { d: DeliverableData }) {
     <div className="space-y-4">
       <div className="bg-violet-50 rounded-xl p-4 border border-violet-100">
         <p className="text-xs font-bold text-violet-700 uppercase mb-1">Perfil del entrevistado</p>
-        <p className="text-sm text-gray-800">{d.target_profile}</p>
+        <p className="text-sm text-gray-800 dark:text-[#F0EFF8]">{d.target_profile}</p>
       </div>
       {d.phases?.map((phase: DeliverableData, i: number) => (
-        <div key={i} className="border border-gray-100 rounded-xl p-4">
+        <div key={i} className="border border-gray-100 dark:border-white/5 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="font-semibold text-gray-900 text-sm">{phase.name}</p>
+            <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm">{phase.name}</p>
             <span className="text-xs text-gray-400">{phase.duration_minutes} min</span>
           </div>
           {phase.questions?.map((q: string, j: number) => (
-            <p key={j} className="text-sm text-gray-700 mb-1.5 pl-2 border-l-2 border-teal-200">{q}</p>
+            <p key={j} className="text-sm text-gray-700 dark:text-[#C4C4D4] mb-1.5 pl-2 border-l-2 border-teal-200">{q}</p>
           ))}
           {phase.tips && <p className="text-xs text-teal-600 mt-2 italic">{phase.tips}</p>}
         </div>
@@ -112,7 +112,7 @@ function InterviewView({ d }: { d: DeliverableData }) {
       {d.green_signals?.length > 0 && (
         <div className="bg-green-50 rounded-xl p-4 border border-green-100">
           <p className="text-xs font-bold text-green-700 uppercase mb-2">Señales positivas</p>
-          {d.green_signals.map((s: string, i: number) => <p key={i} className="text-xs text-gray-700">✓ {s}</p>)}
+          {d.green_signals.map((s: string, i: number) => <p key={i} className="text-xs text-gray-700 dark:text-[#C4C4D4]">✓ {s}</p>)}
         </div>
       )}
     </div>
@@ -128,35 +128,35 @@ function TechView({ d }: { d: DeliverableData }) {
           <p className={`text-2xl font-black ${complexityColor} capitalize`}>{d.complexity}</p>
           <p className="text-xs text-gray-400">complejidad</p>
         </div>
-        <p className="text-sm text-gray-600 flex-1">{d.complexity_rationale}</p>
+        <p className="text-sm text-gray-600 dark:text-[#8B8AA0] flex-1">{d.complexity_rationale}</p>
       </div>
       {d.recommended_stack && (
-        <div className="border border-gray-100 rounded-xl p-4">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Stack recomendado</p>
+        <div className="border border-gray-100 dark:border-white/5 rounded-xl p-4">
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-3">Stack recomendado</p>
           {(['frontend', 'backend', 'database', 'hosting'] as const).map((key) =>
             d.recommended_stack[key] ? (
               <div key={key} className="flex justify-between text-sm py-1 border-b border-gray-50">
-                <span className="text-gray-500 capitalize">{key}</span>
-                <span className="font-semibold text-gray-900">{d.recommended_stack[key]}</span>
+                <span className="text-gray-500 dark:text-[#8B8AA0] capitalize">{key}</span>
+                <span className="font-semibold text-gray-900 dark:text-[#F0EFF8]">{d.recommended_stack[key]}</span>
               </div>
             ) : null
           )}
         </div>
       )}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-2xl font-black text-gray-900">{d.build_time_weeks?.mvp ?? '—'}</p>
+        <div className="bg-gray-50 dark:bg-[#0A0A0F] rounded-xl p-3 text-center">
+          <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">{d.build_time_weeks?.mvp ?? '—'}</p>
           <p className="text-xs text-gray-400">semanas MVP</p>
         </div>
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-2xl font-black text-gray-900">${d.monthly_infra_cost_usd?.min ?? '—'}</p>
+        <div className="bg-gray-50 dark:bg-[#0A0A0F] rounded-xl p-3 text-center">
+          <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">${d.monthly_infra_cost_usd?.min ?? '—'}</p>
           <p className="text-xs text-gray-400">USD/mes infra</p>
         </div>
       </div>
       {d.key_risks?.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Riesgos técnicos</p>
-          {d.key_risks.map((r: string, i: number) => <p key={i} className="text-sm text-gray-600">⚠ {r}</p>)}
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2">Riesgos técnicos</p>
+          {d.key_risks.map((r: string, i: number) => <p key={i} className="text-sm text-gray-600 dark:text-[#8B8AA0]">⚠ {r}</p>)}
         </div>
       )}
     </div>
@@ -167,16 +167,16 @@ function First100View({ d }: { d: DeliverableData }) {
   return (
     <div className="space-y-4">
       <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-        <p className="text-sm text-gray-800">{d.strategy_overview}</p>
+        <p className="text-sm text-gray-800 dark:text-[#F0EFF8]">{d.strategy_overview}</p>
       </div>
       {d.phases?.map((phase: DeliverableData, i: number) => (
-        <div key={i} className="border border-gray-100 rounded-xl p-4">
+        <div key={i} className="border border-gray-100 dark:border-white/5 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="font-semibold text-gray-900 text-sm">{phase.name}</p>
+            <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm">{phase.name}</p>
             <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">{phase.target} clientes</span>
           </div>
-          <p className="text-xs text-gray-500 mb-1"><strong>Canal:</strong> {phase.channel}</p>
-          <p className="text-xs text-gray-500 mb-1"><strong>Táctica:</strong> {phase.tactic}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-1"><strong>Canal:</strong> {phase.channel}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-1"><strong>Táctica:</strong> {phase.tactic}</p>
           <div className="flex gap-4 mt-2">
             <span className="text-xs text-gray-400">${(phase.budget_clp / 1000).toFixed(0)}K CLP</span>
             <span className="text-xs text-gray-400">{phase.time_weeks} semanas</span>
@@ -186,7 +186,7 @@ function First100View({ d }: { d: DeliverableData }) {
       {d.early_evangelists && (
         <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
           <p className="text-xs font-bold text-blue-700 uppercase mb-1">Early evangelists</p>
-          <p className="text-sm text-gray-700">{d.early_evangelists}</p>
+          <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{d.early_evangelists}</p>
         </div>
       )}
     </div>
@@ -198,16 +198,16 @@ function RevenueView({ d }: { d: DeliverableData }) {
     <div className="space-y-4">
       <div className="bg-green-50 rounded-xl p-4 border border-green-100">
         <p className="text-xs font-bold text-green-700 uppercase mb-1">Modelo recomendado: {d.recommended_model}</p>
-        <p className="text-sm text-gray-700">{d.recommended_rationale}</p>
+        <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{d.recommended_rationale}</p>
       </div>
       {d.models?.map((m: DeliverableData, i: number) => (
-        <div key={i} className="border border-gray-100 rounded-xl p-4">
+        <div key={i} className="border border-gray-100 dark:border-white/5 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="font-semibold text-gray-900 text-sm">{m.name}</p>
+            <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm">{m.name}</p>
             <span className={`text-xs font-bold ${m.fit_score >= 70 ? 'text-green-600' : m.fit_score >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{m.fit_score}%</span>
           </div>
-          <p className="text-xs text-gray-500 mb-2">{m.description}</p>
-          <p className="text-xs font-semibold text-gray-600 mb-1">Precio ejemplo: {m.example_pricing}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-2">{m.description}</p>
+          <p className="text-xs font-semibold text-gray-600 dark:text-[#8B8AA0] mb-1">Precio ejemplo: {m.example_pricing}</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
               {m.pros?.map((p: string, j: number) => <p key={j} className="text-xs text-green-700">+ {p}</p>)}
@@ -226,14 +226,14 @@ function RiskChecklistView({ d }: { d: DeliverableData }) {
   return (
     <div className="space-y-4">
       {d.critical_risks?.map((r: DeliverableData, i: number) => (
-        <div key={i} className={`border rounded-xl p-4 ${r.probability === 'high' && r.impact === 'high' ? 'border-red-200 bg-red-50' : 'border-gray-100'}`}>
+        <div key={i} className={`border rounded-xl p-4 ${r.probability === 'high' && r.impact === 'high' ? 'border-red-200 bg-red-50' : 'border-gray-100 dark:border-white/5'}`}>
           <div className="flex items-start justify-between gap-2 mb-2">
-            <p className="font-semibold text-gray-900 text-sm flex-1">{r.risk}</p>
+            <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm flex-1">{r.risk}</p>
             <div className="flex gap-1 shrink-0">
               <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${r.probability === 'high' ? 'bg-red-100 text-red-700' : r.probability === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>{r.probability}</span>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mb-1"><strong>Categoría:</strong> {r.category}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-1"><strong>Categoría:</strong> {r.category}</p>
           <p className="text-xs text-teal-700">→ {r.mitigation}</p>
         </div>
       ))}
@@ -259,36 +259,36 @@ function PitchView({ d }: { d: DeliverableData }) {
       {d.one_liner && (
         <div className="bg-teal-50 rounded-xl p-4 border border-teal-100">
           <p className="text-xs font-bold text-teal-700 uppercase mb-1">One-liner</p>
-          <p className="text-sm font-semibold text-gray-900">{d.one_liner}</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">{d.one_liner}</p>
         </div>
       )}
       {d.email_body && (
-        <div className="border border-gray-200 rounded-xl p-4 relative">
+        <div className="border border-gray-200 dark:border-white/10 rounded-xl p-4 relative">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-bold text-gray-500 uppercase">Email para inversor</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase">Email para inversor</p>
             <button onClick={handleCopy} className="text-xs font-semibold text-teal-600 hover:text-teal-800">
               {copied ? 'Copiado ✓' : 'Copiar'}
             </button>
           </div>
           <p className="text-xs text-gray-400 mb-2">Asunto: {d.subject_line}</p>
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">{d.email_body}</p>
+          <p className="text-sm text-gray-700 dark:text-[#C4C4D4] whitespace-pre-wrap">{d.email_body}</p>
         </div>
       )}
       {d.elevator_pitch && (
-        <div className="bg-gray-50 rounded-xl p-4">
-          <p className="text-xs font-bold text-gray-500 uppercase mb-2">Elevator pitch (60s)</p>
-          <p className="text-sm text-gray-700">{d.elevator_pitch}</p>
+        <div className="bg-gray-50 dark:bg-[#0A0A0F] rounded-xl p-4">
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase mb-2">Elevator pitch (60s)</p>
+          <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{d.elevator_pitch}</p>
         </div>
       )}
       {d.deck_outline?.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Estructura del deck</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2">Estructura del deck</p>
           {d.deck_outline.map((slide: DeliverableData) => (
             <div key={slide.slide} className="flex gap-3 mb-2">
-              <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center shrink-0">{slide.slide}</span>
+              <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 dark:text-[#8B8AA0] text-xs font-bold flex items-center justify-center shrink-0">{slide.slide}</span>
               <div>
-                <p className="text-sm font-semibold text-gray-900">{slide.title}</p>
-                <p className="text-xs text-gray-500">{slide.content}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">{slide.title}</p>
+                <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">{slide.content}</p>
               </div>
             </div>
           ))}
@@ -332,13 +332,13 @@ export function DeliverableTabs({ validationId, context }: Props) {
   const isLoading = loadingTab === activeTab;
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="px-5 pt-5 pb-0">
-        <h3 className="font-black text-gray-900 text-base mb-1">Entregables post-validación</h3>
+        <h3 className="font-black text-gray-900 dark:text-[#F0EFF8] text-base mb-1">Entregables post-validación</h3>
         <p className="text-xs text-gray-400 mb-4">Herramientas generadas por IA para ejecutar tu startup</p>
         {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto pb-0 border-b border-gray-100">
+        <div className="flex gap-1 overflow-x-auto pb-0 border-b border-gray-100 dark:border-white/5">
           {DELIVERABLES.map((d) => (
             <button
               key={d.id}
@@ -346,7 +346,7 @@ export function DeliverableTabs({ validationId, context }: Props) {
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold whitespace-nowrap rounded-t-lg transition-colors
                 ${activeTab === d.id
                   ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50/50'
-                  : 'text-gray-500 hover:text-gray-700'}`}
+                  : 'text-gray-500 hover:text-gray-700 dark:text-[#C4C4D4]'}`}
             >
               <span>{d.icon}</span>
               {d.label}
@@ -372,7 +372,7 @@ export function DeliverableTabs({ validationId, context }: Props) {
             <ViewComponent d={result} />
             <button
               onClick={() => setResults((prev) => { const n = {...prev}; delete n[activeTab]; return n; })}
-              className="mt-4 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:text-[#8B8AA0] transition-colors"
             >
               Regenerar
             </button>
@@ -380,7 +380,7 @@ export function DeliverableTabs({ validationId, context }: Props) {
         ) : (
           <div className="text-center py-10">
             <div className="text-4xl mb-3">{currentDeliverable.icon}</div>
-            <p className="text-sm text-gray-500 mb-5 max-w-xs mx-auto">{currentDeliverable.desc}</p>
+            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-5 max-w-xs mx-auto">{currentDeliverable.desc}</p>
             <button
               onClick={() => handleGenerate(activeTab)}
               disabled={!!loadingTab}

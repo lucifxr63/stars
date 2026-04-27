@@ -15,7 +15,7 @@ interface GenerationTask {
 
 export function StepGenerating() {
   const navigate = useNavigate();
-  const { validationId, setValidationId, stepIdea, stepMarket, stepFounder } = useValidationStore();
+  const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, validationMode } = useValidationStore();
   const [tasks, setTasks] = useState<GenerationTask[]>([
     { id: 'summary', label: 'Evaluando viabilidad e idea...', status: 'pending', type: 'summary' },
     { id: 'market', label: 'Calculando tamaño de mercado...', status: 'pending', type: 'market_sizing' },
@@ -38,6 +38,45 @@ export function StepGenerating() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
+      // Guard: si el row ya está completado no gastar tokens, solo redirigir
+      if (validationId) {
+        const { data: existing } = await supabase
+          .from('validations')
+          .select('id, status')
+          .eq('id', validationId)
+          .single();
+        if (existing?.status === 'completed') {
+          navigate(`/results/${existing.id}`, { replace: true });
+          return;
+        }
+      }
+
+      let context: any = {};
+      if (validationMode === 'detailed') {
+        context = {
+          ...stepIdea,
+          ...stepMarket,
+          founder_context: stepFounder,
+        };
+      } else {
+        const inferRes = await supabase.functions.invoke('ai-validate', {
+          body: {
+            prompt_type: 'customer_analysis',
+            context: { stepIdea },
+          },
+        });
+        const inferred = inferRes.data;
+        context = {
+          ...stepIdea,
+          customer_segment: inferred?.customer_segment ?? '',
+          target_country: 'Chile',
+          target_region: '',
+          business_model: inferred?.business_model ?? '',
+          pricing_range: '',
+          founder_context: null,
+        };
+      }
+
       // 1. Guardar o crear la validación inicial
       let currentId = validationId;
       if (!currentId) {
@@ -45,27 +84,19 @@ export function StepGenerating() {
           user_id: session.user.id,
           status: 'in_progress',
           current_step: 4,
-          ...stepIdea,
-          ...stepMarket,
-          founder_context: stepFounder,
+          validation_mode: validationMode,
+          ...context,
         }).select('id').single();
-        if (error) throw error;
-        currentId = data.id;
+        if (error || !data?.id) throw error ?? new Error('No id returned');
+        currentId = data.id as string;
         setValidationId(currentId);
       } else {
         await supabase.from('validations').update({
-          ...stepIdea,
-          ...stepMarket,
-          founder_context: stepFounder,
+          ...context,
+          validation_mode: validationMode,
           current_step: 4,
         }).eq('id', currentId);
       }
-
-      const context = {
-        ...stepIdea,
-        ...stepMarket,
-        founder_context: stepFounder,
-      };
 
       // 2. Disparar generación por bloques paralelamente
       // Marcamos todas como 'loading'
@@ -122,14 +153,14 @@ export function StepGenerating() {
       <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
         <div className="text-3xl animate-bounce">🤖</div>
       </div>
-      <h2 className="text-xl font-black text-gray-900 mb-2">Construyendo tu reporte...</h2>
-      <p className="text-sm text-gray-500 mb-8 text-center max-w-sm">
+      <h2 className="text-xl font-black text-gray-900 dark:text-[#F0EFF8] mb-2">Construyendo tu reporte...</h2>
+      <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-8 text-center max-w-sm">
         Nuestra IA está analizando todas las aristas de tu idea. Esto tomará unos segundos.
       </p>
 
       <div className="w-full space-y-3">
         {tasks.map(task => (
-          <div key={task.id} className="flex items-center justify-between p-4 bg-white border-2 border-gray-100 rounded-2xl">
+          <div key={task.id} className="flex items-center justify-between p-4 bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl">
             <span className={`text-sm font-semibold transition-colors ${
               task.status === 'pending' ? 'text-gray-400' :
               task.status === 'loading' ? 'text-indigo-600' :
@@ -137,7 +168,7 @@ export function StepGenerating() {
             }`}>
               {task.label}
             </span>
-            <div className="flex items-center bg-gray-50 px-2.5 py-1.5 rounded-full">
+            <div className="flex items-center bg-gray-50 dark:bg-[#0A0A0F] px-2.5 py-1.5 rounded-full">
               {task.status === 'pending' && <span className="text-xs text-gray-400 font-medium">En espera</span>}
               {task.status === 'loading' && (
                 <>

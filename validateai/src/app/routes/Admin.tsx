@@ -98,13 +98,13 @@ function KPI({ label, value, sub, icon, accent = '#14b8a6', trend }: {
   trend?: { value: number; label: string };
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-start gap-4">
+    <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm flex items-start gap-4">
       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: accent + '18' }}>
         <span style={{ color: accent }}>{icon}</span>
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
-        <p className="text-2xl font-black text-gray-900 leading-none">{value}</p>
+        <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8] leading-none">{value}</p>
         <div className="flex items-center gap-2 mt-1">
           {sub && <p className="text-xs text-gray-400">{sub}</p>}
           {trend && (
@@ -123,9 +123,9 @@ function Card({ title, children, className = '', action }: {
   action?: React.ReactNode;
 }) {
   return (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden ${className}`}>
+    <div className={`bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden ${className}`}>
       <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-gray-700">{title}</h3>
+        <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4]">{title}</h3>
         {action}
       </div>
       <div className="p-6">{children}</div>
@@ -271,7 +271,7 @@ export function Admin() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-gray-400">Cargando datos...</p>
@@ -281,10 +281,10 @@ export function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex">
       {/* ── Sidebar — hidden en móvil ─────────────────────────────────── */}
       <aside className="hidden lg:flex w-56 bg-gray-900 flex-shrink-0 flex-col min-h-screen sticky top-0 h-screen">
-        <div className="px-5 py-6 border-b border-white/10">
+        <div className="px-5 py-6 border-b border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
               <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -293,7 +293,7 @@ export function Admin() {
             </div>
             <div>
               <p className="text-white text-sm font-bold leading-none">ValidateAI</p>
-              <p className="text-gray-500 text-xs mt-0.5">Admin Panel</p>
+              <p className="text-gray-500 dark:text-[#8B8AA0] text-xs mt-0.5">Admin Panel</p>
             </div>
           </div>
         </div>
@@ -306,28 +306,28 @@ export function Admin() {
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 tab === item.id
                   ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/25'
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  : 'text-gray-400 hover:text-white hover:bg-white dark:bg-[#12121A]/10'
               }`}
             >
               {item.icon}
               {item.label}
               {item.id === 'users' && (
-                <span className="ml-auto text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{profiles.length}</span>
+                <span className="ml-auto text-xs bg-white dark:bg-[#12121A]/10 px-1.5 py-0.5 rounded-full">{profiles.length}</span>
               )}
               {item.id === 'validations' && (
-                <span className="ml-auto text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{validations.length}</span>
+                <span className="ml-auto text-xs bg-white dark:bg-[#12121A]/10 px-1.5 py-0.5 rounded-full">{validations.length}</span>
               )}
             </button>
           ))}
         </nav>
 
-        <div className="px-4 py-4 border-t border-white/10 space-y-2">
-          <p className="text-xs text-gray-600 px-1">
+        <div className="px-4 py-4 border-t border-gray-200 dark:border-white/10 space-y-2">
+          <p className="text-xs text-gray-600 dark:text-[#8B8AA0] px-1">
             {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
           </p>
           <button
             onClick={load}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/10 transition-all font-medium"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white dark:bg-[#12121A]/10 transition-all font-medium"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -336,7 +336,7 @@ export function Admin() {
           </button>
           <button
             onClick={() => navigate('/validate')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/10 transition-all font-medium"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white dark:bg-[#12121A]/10 transition-all font-medium"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -348,9 +348,9 @@ export function Admin() {
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <main className="flex-1 overflow-auto min-w-0">
-        <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sticky top-0 z-10">
+        <div className="bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/5 px-4 md:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sticky top-0 z-10">
           <div>
-            <h1 className="text-lg font-black text-gray-900">
+            <h1 className="text-lg font-black text-gray-900 dark:text-[#F0EFF8]">
               {NAV_ITEMS.find(n => n.id === tab)?.label}
             </h1>
             <p className="text-xs text-gray-400 mt-0.5">
@@ -401,22 +401,22 @@ export function Admin() {
 
               {/* Predicción */}
               <div className="bg-gray-900 rounded-2xl p-4 md:p-6">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Predicción — próximos 30 días</p>
+                <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-widest mb-4">Predicción — próximos 30 días</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                   <div>
                     <p className="text-3xl md:text-4xl font-black text-teal-400">{projected30}</p>
-                    <p className="text-xs text-gray-500 mt-1.5">validaciones proyectadas</p>
+                    <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1.5">validaciones proyectadas</p>
                   </div>
                   <div>
                     <p className="text-3xl md:text-4xl font-black text-violet-400">{Math.round(projected30 * completionRate / 100)}</p>
-                    <p className="text-xs text-gray-500 mt-1.5">completadas proyectadas</p>
+                    <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1.5">completadas proyectadas</p>
                   </div>
                   <div>
                     <p className="text-3xl md:text-4xl font-black text-amber-400">{avg7.toFixed(1)}</p>
-                    <p className="text-xs text-gray-500 mt-1.5">validaciones/día (prom. 7d)</p>
+                    <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1.5">validaciones/día (prom. 7d)</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-700 mt-5">Basado en promedio últimos 7 días × 30.</p>
+                <p className="text-xs text-gray-700 dark:text-[#C4C4D4] mt-5">Basado en promedio últimos 7 días × 30.</p>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
@@ -465,8 +465,8 @@ export function Admin() {
                         {industries.map((ind, i) => (
                           <div key={ind.name} className="flex items-center gap-2.5">
                             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                            <span className="text-xs text-gray-500 flex-1 truncate">{ind.name}</span>
-                            <span className="text-xs font-bold text-gray-800">{ind.value}</span>
+                            <span className="text-xs text-gray-500 dark:text-[#8B8AA0] flex-1 truncate">{ind.name}</span>
+                            <span className="text-xs font-bold text-gray-800 dark:text-[#F0EFF8]">{ind.value}</span>
                           </div>
                         ))}
                       </div>
@@ -482,12 +482,12 @@ export function Admin() {
                       {countries.map((c, i) => (
                         <div key={c.name} className="flex items-center gap-3">
                           <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                          <span className="text-xs text-gray-500 flex-1 truncate">{c.name}</span>
+                          <span className="text-xs text-gray-500 dark:text-[#8B8AA0] flex-1 truncate">{c.name}</span>
                           <div className="flex items-center gap-2">
-                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="w-20 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                               <div className="h-full rounded-full" style={{ width: `${(c.value / (countries[0]?.value ?? 1)) * 100}%`, background: COLORS[i % COLORS.length] }} />
                             </div>
-                            <span className="text-xs font-bold text-gray-700 w-4 text-right">{c.value}</span>
+                            <span className="text-xs font-bold text-gray-700 dark:text-[#C4C4D4] w-4 text-right">{c.value}</span>
                           </div>
                         </div>
                       ))}
@@ -532,7 +532,7 @@ export function Admin() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100">
+                    <tr className="border-b border-gray-100 dark:border-white/5">
                       {['Usuario', 'ID', 'Validaciones', 'Esta semana', 'Registro'].map(h => (
                         <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8 whitespace-nowrap">{h}</th>
                       ))}
@@ -544,11 +544,11 @@ export function Admin() {
                         v.user_id === p.id && new Date(v.created_at) >= oneWeekAgo
                       ).length;
                       return (
-                        <tr key={p.id} className="hover:bg-gray-50/50 transition">
+                        <tr key={p.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
                           <td className="py-3.5 pr-8">
                             <div className="flex items-center gap-3">
                               <Avatar name={p.full_name} url={p.avatar_url} size={8} />
-                              <span className="font-medium text-gray-900">
+                              <span className="font-medium text-gray-900 dark:text-[#F0EFF8]">
                                 {p.full_name ?? <span className="text-gray-300 font-normal italic">Sin nombre</span>}
                               </span>
                             </div>
@@ -556,7 +556,7 @@ export function Admin() {
                           <td className="py-3.5 pr-8 font-mono text-xs text-gray-300">{p.id.slice(0, 8)}…</td>
                           <td className="py-3.5 pr-8">
                             <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
-                              (p.validations_count ?? 0) > 0 ? 'bg-teal-50 text-teal-700' : 'bg-gray-100 text-gray-400'
+                              (p.validations_count ?? 0) > 0 ? 'bg-teal-50 text-teal-700' : 'bg-gray-100 dark:bg-white/5 text-gray-400'
                             }`}>
                               {p.validations_count}
                             </span>
@@ -592,7 +592,7 @@ export function Admin() {
                       key={f}
                       onClick={() => setStatusFilter(f)}
                       className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                        statusFilter === f ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100'
+                        statusFilter === f ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100 dark:bg-white/5'
                       }`}
                     >
                       {f === 'all' ? 'Todas' : f === 'completed' ? 'Completas' : f === 'in_progress' ? 'En progreso' : 'Archivadas'}
@@ -604,7 +604,7 @@ export function Admin() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100">
+                    <tr className="border-b border-gray-100 dark:border-white/5">
                       {['Idea', 'Usuario', 'Industria', 'País', 'Etapa', 'Estado', 'Score', 'Progreso', 'Fecha', ''].map(h => (
                         <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-4 whitespace-nowrap">{h}</th>
                       ))}
@@ -620,16 +620,16 @@ export function Admin() {
                         <>
                           <tr
                             key={v.id}
-                            className="hover:bg-gray-50/50 transition border-t border-gray-50 cursor-pointer"
+                            className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition border-t border-gray-50 cursor-pointer"
                             onClick={() => setExpandedRow(isExpanded ? null : v.id)}
                           >
-                            <td className="py-3.5 pr-4 font-medium text-gray-900 max-w-[160px] truncate">
+                            <td className="py-3.5 pr-4 font-medium text-gray-900 dark:text-[#F0EFF8] max-w-[160px] truncate">
                               {displayName ?? <span className="text-gray-300 font-normal italic">Sin nombre</span>}
                             </td>
                             <td className="py-3.5 pr-4">
                               <div className="flex items-center gap-2">
                                 <Avatar name={prof?.full_name ?? null} url={prof?.avatar_url ?? null} size={6} />
-                                <span className="text-gray-500 text-xs truncate max-w-[90px]">
+                                <span className="text-gray-500 dark:text-[#8B8AA0] text-xs truncate max-w-[90px]">
                                   {prof?.full_name ?? <span className="text-gray-300">—</span>}
                                 </span>
                               </div>
@@ -650,7 +650,7 @@ export function Admin() {
                             <td className="py-3.5 pr-4">
                               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
                                 v.status === 'completed' ? 'bg-emerald-50 text-emerald-700'
-                                : v.status === 'archived' ? 'bg-gray-100 text-gray-400'
+                                : v.status === 'archived' ? 'bg-gray-100 dark:bg-white/5 text-gray-400'
                                 : 'bg-amber-50 text-amber-600'
                               }`}>
                                 {v.status === 'completed' ? 'Completa' : v.status === 'archived' ? 'Archivada' : 'En progreso'}
@@ -665,7 +665,7 @@ export function Admin() {
                             </td>
                             <td className="py-3.5 pr-4">
                               <div className="flex items-center gap-2">
-                                <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="w-16 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                                   <div className="h-full bg-teal-400 rounded-full" style={{ width: `${(v.current_step / 6) * 100}%` }} />
                                 </div>
                                 <span className="text-xs text-gray-400">{v.current_step}/6</span>
@@ -679,19 +679,19 @@ export function Admin() {
                             </td>
                           </tr>
                           {isExpanded && (
-                            <tr key={`${v.id}-expanded`} className="bg-gray-50/70">
+                            <tr key={`${v.id}-expanded`} className="bg-gray-50 dark:bg-[#0A0A0F]/70">
                               <td colSpan={10} className="px-4 py-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                   {v.ai_feedback && (
                                     <div>
                                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Feedback AI</p>
-                                      <p className="text-xs text-gray-600 leading-relaxed line-clamp-6">{v.ai_feedback}</p>
+                                      <p className="text-xs text-gray-600 dark:text-[#8B8AA0] leading-relaxed line-clamp-6">{v.ai_feedback}</p>
                                     </div>
                                   )}
                                   {v.summary_json && (
                                     <div>
                                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Summary JSON</p>
-                                      <pre className="text-xs text-gray-500 bg-white rounded-xl p-3 overflow-auto max-h-40 border border-gray-100">
+                                      <pre className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-white dark:bg-[#12121A] rounded-xl p-3 overflow-auto max-h-40 border border-gray-100 dark:border-white/5">
                                         {JSON.stringify(v.summary_json, null, 2)}
                                       </pre>
                                     </div>
@@ -699,7 +699,7 @@ export function Admin() {
                                   {v.competitive_analysis && (
                                     <div className="col-span-2">
                                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Análisis competitivo</p>
-                                      <pre className="text-xs text-gray-500 bg-white rounded-xl p-3 overflow-auto max-h-48 border border-gray-100">
+                                      <pre className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-white dark:bg-[#12121A] rounded-xl p-3 overflow-auto max-h-48 border border-gray-100 dark:border-white/5">
                                         {JSON.stringify(v.competitive_analysis, null, 2)}
                                       </pre>
                                     </div>
@@ -757,7 +757,7 @@ export function Admin() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-100">
+                      <tr className="border-b border-gray-100 dark:border-white/5">
                         {['Validación', 'Step', 'Modelo', 'Tokens', 'Fecha'].map(h => (
                           <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8">{h}</th>
                         ))}
@@ -765,17 +765,17 @@ export function Admin() {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {aiInteractions.slice(0, 50).map(a => (
-                        <tr key={a.id} className="hover:bg-gray-50/50 transition">
+                        <tr key={a.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
                           <td className="py-3.5 pr-8 font-mono text-xs text-gray-300">{a.validation_id.slice(0, 8)}…</td>
                           <td className="py-3.5 pr-8">
-                            <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg">{a.step}</span>
+                            <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] text-xs font-bold rounded-lg">{a.step}</span>
                           </td>
                           <td className="py-3.5 pr-8">
                             <span className={`text-xs px-2 py-1 rounded-lg font-mono ${modelBadge(a.model)}`}>
                               {modelLabel(a.model)}
                             </span>
                           </td>
-                          <td className="py-3.5 pr-8 font-semibold text-gray-800">{a.tokens_used?.toLocaleString() ?? '—'}</td>
+                          <td className="py-3.5 pr-8 font-semibold text-gray-800 dark:text-[#F0EFF8]">{a.tokens_used?.toLocaleString() ?? '—'}</td>
                           <td className="py-3.5 text-xs text-gray-400">{fmt(a.created_at)}</td>
                         </tr>
                       ))}
@@ -792,13 +792,13 @@ export function Admin() {
       </main>
 
       {/* ── Bottom Nav móvil ───────────────────────────────────────────────── */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-900 border-t border-white/10 flex">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-900 border-t border-gray-200 dark:border-white/10 flex">
         {NAV_ITEMS.map(item => (
           <button
             key={item.id}
             onClick={() => setTab(item.id)}
             className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium transition-colors ${
-              tab === item.id ? 'text-teal-400' : 'text-gray-500'
+              tab === item.id ? 'text-teal-400' : 'text-gray-500 dark:text-[#8B8AA0]'
             }`}
           >
             {item.icon}

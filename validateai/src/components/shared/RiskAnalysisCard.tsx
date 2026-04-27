@@ -26,18 +26,18 @@ function DimensionCard({ label, d }: { label: string; d: RiskDimension }) {
       </div>
 
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-bold text-gray-700">{label}</span>
+        <span className="text-xs font-bold text-gray-700 dark:text-[#C4C4D4]">{label}</span>
         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${c.bg} ${c.text} border ${c.border}`}>
           {d.score} · {d.label}
         </span>
       </div>
 
-      <p className="text-xs text-gray-500 leading-snug mb-2 line-clamp-3">{d.description}</p>
+      <p className="text-xs text-gray-500 dark:text-[#8B8AA0] leading-snug mb-2 line-clamp-3">{d.description}</p>
 
       {d.keyFactors?.length > 0 && (
         <ul className="space-y-0.5">
           {d.keyFactors.map((f, i) => (
-            <li key={i} className="flex items-start gap-1.5 text-xs text-gray-500">
+            <li key={i} className="flex items-start gap-1.5 text-xs text-gray-500 dark:text-[#8B8AA0]">
               <div className={`w-1 h-1 rounded-full mt-1.5 shrink-0 ${c.bar}`} />
               <span>{f}</span>
             </li>
@@ -60,14 +60,14 @@ export function RiskAnalysisCard({ data }: Props) {
   ];
 
   return (
-    <div className="bg-white border-2 border-gray-100 rounded-2xl p-5">
+    <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${overall.bg} border-2 ${overall.border}`}>
           <span className={`text-lg font-black ${overall.text}`}>⚠</span>
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-bold text-gray-900">Análisis de Riesgos</h3>
+          <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Análisis de Riesgos</h3>
           <p className="text-xs text-gray-400">Score compuesto en 4 dimensiones (0 = mínimo, 100 = máximo riesgo)</p>
         </div>
         {/* Score general */}
@@ -99,7 +99,7 @@ export function RiskAnalysisCard({ data }: Props) {
                 <span className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
                   {i + 1}
                 </span>
-                <p className="text-sm text-gray-600 leading-relaxed">{m}</p>
+                <p className="text-sm text-gray-600 dark:text-[#8B8AA0] leading-relaxed">{m}</p>
               </li>
             ))}
           </ol>
