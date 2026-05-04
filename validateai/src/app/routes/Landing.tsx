@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { trackDemoViewed } from '@/hooks/useAnalytics';
 import { supabase } from '@/lib/supabase';
 import {
   EXAMPLE_IDEA,
@@ -264,6 +265,38 @@ function ExampleReport() {
 /* ─── Main Landing ─── */
 export function Landing() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [validationCount, setValidationCount] = useState<number | null>(null);
+
+  // Capture UTM params and persist to sessionStorage for PostHog attribution
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const utm: Record<string, string> = {};
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach((k) => {
+      const v = params.get(k);
+      if (v) utm[k] = v;
+    });
+    if (Object.keys(utm).length > 0) {
+      sessionStorage.setItem('utm_params', JSON.stringify(utm));
+      // PostHog set_once so first touch wins
+      if (typeof window !== 'undefined' && (window as any).posthog) {
+        (window as any).posthog.people?.set_once(utm);
+      }
+    }
+  }, [location.search]);
+
+  // Fetch real validation count for social proof
+  useEffect(() => {
+    import('@/lib/supabase').then(({ supabase }) => {
+      supabase
+        .from('validations')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'completed')
+        .then(({ count }) => {
+          if (count && count > 0) setValidationCount(count);
+        });
+    });
+  }, []);
 
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
@@ -362,9 +395,18 @@ export function Landing() {
                   Entrar con email →
                 </button>
               </div>
-              <p className="text-xs text-[#4A495E]">
-                Sin tarjeta de crédito · Resultados en 10 minutos
-              </p>
+              <div className="flex flex-col items-center gap-1.5">
+                <p className="text-xs text-[#4A495E]">
+                  Sin tarjeta de crédito · Resultados en 10 minutos
+                </p>
+                <Link
+                  to="/demo"
+                  onClick={() => trackDemoViewed('hero')}
+                  className="text-xs text-[#A78BFA] hover:text-[#7C6FF7] underline underline-offset-2 transition-colors"
+                >
+                  Ver ejemplo de reporte →
+                </Link>
+              </div>
             </div>
 
             {/* Floating score card */}
@@ -544,7 +586,7 @@ export function Landing() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-3 gap-4 sm:gap-8 text-center">
               {[
-                { num: '3', label: 'Pasos guiados', sub: 'proceso simple' },
+                { num: validationCount ? `+${validationCount}` : '3', label: validationCount ? 'Ideas validadas' : 'Pasos guiados', sub: validationCount ? 'y contando' : 'proceso simple' },
                 { num: '10', label: 'Minutos', sub: 'tiempo promedio' },
                 { num: '100', label: 'Puntos', sub: 'score máximo' },
               ].map((item) => (
