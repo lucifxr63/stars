@@ -113,3 +113,40 @@ Implemented via Three.js + R3F (`ChileMarketMap.tsx`), using d3-geo for projecti
 - Mentors matching (`useMentors`) is currently using a hardcoded similarity threshold and basic querying instead of the full semantic RPC.
 - Generation is fully synchronous, which blocks the UI for long prompts.
 - No tests or product analytics.
+
+
+## Estado estratégico (Mayo 2026)
+
+### Etapa actual
+Conseguir primeros usuarios. Sin usuarios pagos aún. Sin dominio propio todavía.
+
+### Prioridades activas (en orden)
+
+1. **Rate limiting por tier** — URGENTE
+   - No existe hoy. Un usuario free puede llamar los 18 prompt types sin límite.
+   - `competitive_analysis` y `market_sizing` usan web_search de Anthropic → $0.05–0.20 USD por request.
+   - Solución acordada: tabla `usage_logs` con RLS policy + guard al inicio de `ai-validate`.
+   - Diferencia límites por prompt type (los caros tienen cuota más baja).
+   - `useUserTier.ts` ya existe — usarlo como base para el enforcement.
+
+2. **PostHog analytics** — esta semana
+   - Sin datos de comportamiento hoy. Necesario para saber dónde abandona la gente en el wizard.
+   - 5 eventos clave a trackear: `wizard_step_completed`, `ai_prompt_called`, `validation_completed`, 
+     `deliverable_downloaded`, `wizard_abandoned`.
+
+3. **Checkout / pagos reales** — próximo sprint
+   - Stripe ya configurado. Falta integración.
+   - El tier resultante del pago debe persistir en `profiles` y ser leído por `useUserTier.ts`.
+
+4. **Emails transaccionales (Resend)** — bloqueado hasta tener dominio
+   - `followup-email` edge function ya existe pero sin cron trigger.
+   - Activar cuando haya dominio propio verificado en Resend.
+
+### Lo que NO es urgente ahora
+- Refactor de `ai-validate` (859 líneas pero código legible y bien estructurado)
+- Migrar generación a queue (Deno tiene 150s — no hay timeouts en producción)
+- Tests (después de monetización)
+
+### Pregunta pendiente antes de implementar rate limiting
+¿El campo `tier` del usuario vive en `profiles` o solo en Supabase auth metadata?
+Revisar `useUserTier.ts` y la migración correspondiente antes de escribir código.

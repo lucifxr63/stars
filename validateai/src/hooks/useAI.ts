@@ -11,14 +11,19 @@ type PromptType =
 export function useAI() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // Track all active controllers so concurrent Promise.all calls all get aborted on unmount/cancel
+  const activeControllersRef = useRef<Set<AbortController>>(new Set());
 
   useEffect(() => {
-    return () => { abortControllerRef.current?.abort(); };
+    return () => {
+      activeControllersRef.current.forEach((c) => c.abort());
+      activeControllersRef.current.clear();
+    };
   }, []);
 
   function cancelAI() {
-    abortControllerRef.current?.abort();
+    activeControllersRef.current.forEach((c) => c.abort());
+    activeControllersRef.current.clear();
     setLoading(false);
   }
 
@@ -28,8 +33,8 @@ export function useAI() {
     promptType: PromptType,
     context: Record<string, unknown>
   ): Promise<T | null> {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
+    const controller = new AbortController();
+    activeControllersRef.current.add(controller);
 
     setLoading(true);
     setError(null);
@@ -47,7 +52,7 @@ export function useAI() {
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ validation_id: validationId, step, prompt_type: promptType, context }),
-          signal: abortControllerRef.current.signal,
+          signal: controller.signal,
         }
       );
 
@@ -61,7 +66,8 @@ export function useAI() {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return null;
     } finally {
-      setLoading(false);
+      activeControllersRef.current.delete(controller);
+      if (activeControllersRef.current.size === 0) setLoading(false);
     }
   }
 

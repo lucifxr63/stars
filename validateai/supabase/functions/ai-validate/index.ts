@@ -783,6 +783,70 @@ serve(async (req) => {
       });
     }
 
+    // ── Tier + Rate limiting ──────────────────────────────────────────────────
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tier')
+      .eq('id', user.id)
+      .single();
+
+    const userTier = (['free', 'basic', 'pro', 'premium'].includes(profile?.tier ?? ''))
+      ? (profile!.tier as 'free' | 'basic' | 'pro' | 'premium')
+      : 'free';
+
+    const EXPENSIVE_TYPES = new Set(['competitive_analysis', 'market_sizing', 'market_signals']);
+    const DAILY_LIMITS = {
+      free:    { total: 5,   expensive: 0  },
+      basic:   { total: 20,  expensive: 2  },
+      pro:     { total: 50,  expensive: 5  },
+      premium: { total: 200, expensive: 20 },
+    };
+    const limits = DAILY_LIMITS[userTier];
+
+    if (EXPENSIVE_TYPES.has(prompt_type) && limits.expensive === 0) {
+      return new Response(JSON.stringify({
+        error: 'rate_limit_tier',
+        message: 'Este análisis requiere plan Basic o superior.',
+        tier: userTier,
+      }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
+    }
+
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+
+    const { count: totalToday } = await supabase
+      .from('ai_interactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', todayStart.toISOString());
+
+    if ((totalToday ?? 0) >= limits.total) {
+      return new Response(JSON.stringify({
+        error: 'rate_limit_daily',
+        message: `Límite diario de ${limits.total} análisis para el plan ${userTier} alcanzado.`,
+        tier: userTier,
+        limit: limits.total,
+      }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
+    }
+
+    if (EXPENSIVE_TYPES.has(prompt_type)) {
+      const { count: expToday } = await supabase
+        .from('ai_interactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .in('prompt_type', [...EXPENSIVE_TYPES])
+        .gte('created_at', todayStart.toISOString());
+
+      if ((expToday ?? 0) >= limits.expensive) {
+        return new Response(JSON.stringify({
+          error: 'rate_limit_expensive',
+          message: `Límite de ${limits.expensive} análisis de mercado para el plan ${userTier} alcanzado.`,
+          tier: userTier,
+        }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Haiku pre-pass: enriquece el contexto con idea estructurada
     let enrichedContext = context;
     const rawDescription = context.idea_description as string | undefined;
@@ -833,6 +897,7 @@ serve(async (req) => {
 
     // Log de interacción (no bloqueante)
     supabase.from('ai_interactions').insert({
+      user_id: user.id,
       validation_id,
       step,
       prompt_type,

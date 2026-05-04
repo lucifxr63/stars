@@ -77,6 +77,12 @@ export function StepGenerating() {
         };
       }
 
+      // Guard: idea_name e idea_industry son obligatorios
+      if (!context.idea_name || !context.idea_industry) {
+        toast.error('Completa el nombre e industria de tu idea antes de continuar.');
+        return;
+      }
+
       // 1. Guardar o crear la validación inicial
       let currentId = validationId;
       if (!currentId) {
