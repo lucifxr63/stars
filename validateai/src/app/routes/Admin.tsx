@@ -152,7 +152,33 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
+function PaginationBar({ page, total, pageSize, onChange }: {
+  page: number; total: number; pageSize: number; onChange: (p: number) => void;
+}) {
+  const totalPages = Math.ceil(total / pageSize);
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100 dark:border-white/5 text-xs text-gray-400">
+      <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, total)} de {total}</span>
+      <div className="flex gap-1">
+        <button
+          disabled={page === 0}
+          onClick={() => onChange(page - 1)}
+          className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+        >← Prev</button>
+        <button
+          disabled={page >= totalPages - 1}
+          onClick={() => onChange(page + 1)}
+          className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+        >Next →</button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
+
+const PAGE_SIZE = 25;
 
 export function Admin() {
   const navigate = useNavigate();
@@ -165,33 +191,48 @@ export function Admin() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
+  const [valPage, setValPage] = useState(0);
+  const [valTotal, setValTotal] = useState(0);
+  const [aiPage, setAiPage] = useState(0);
+  const [aiTotal, setAiTotal] = useState(0);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email !== ADMIN_EMAIL) navigate('/validate', { replace: true });
     });
   }, [navigate]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (vPage = 0, aPage = 0) => {
     setLoading(true);
-    const [{ data: profs }, { data: vals }, { data: ais }] = await Promise.all([
+    const vFrom = vPage * PAGE_SIZE;
+    const aFrom = aPage * PAGE_SIZE;
+
+    const [{ data: profs }, { data: vals, count: vCount }, { data: ais, count: aCount }] = await Promise.all([
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('validations')
-        .select('*, profile:profiles(full_name, avatar_url)')
-        .order('created_at', { ascending: false }),
-      supabase.from('ai_interactions').select('*').order('created_at', { ascending: false }),
+        .select('*, profile:profiles(full_name, avatar_url)', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(vFrom, vFrom + PAGE_SIZE - 1),
+      supabase.from('ai_interactions')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(aFrom, aFrom + PAGE_SIZE - 1),
     ]);
+
     const enriched = (profs ?? []).map((p: Profile) => ({
       ...p,
       validations_count: (vals ?? []).filter((v: Validation) => v.user_id === p.id).length,
     }));
     setProfiles(enriched);
     setValidations(vals ?? []);
+    setValTotal(vCount ?? 0);
     setAiInteractions(ais ?? []);
+    setAiTotal(aCount ?? 0);
     setLastRefresh(new Date());
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(valPage, aiPage); }, [load, valPage, aiPage]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const completed = validations.filter(v => v.status === 'completed');
@@ -720,6 +761,10 @@ export function Admin() {
                   <p className="text-sm text-gray-300 text-center py-12">Sin validaciones en este filtro</p>
                 )}
               </div>
+              <PaginationBar
+                page={valPage} total={valTotal} pageSize={PAGE_SIZE}
+                onChange={(p) => setValPage(p)}
+              />
             </Card>
           )}
 
@@ -764,7 +809,7 @@ export function Admin() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {aiInteractions.slice(0, 50).map(a => (
+                      {aiInteractions.map(a => (
                         <tr key={a.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
                           <td className="py-3.5 pr-8 font-mono text-xs text-gray-300">{a.validation_id.slice(0, 8)}…</td>
                           <td className="py-3.5 pr-8">
@@ -785,6 +830,10 @@ export function Admin() {
                     <p className="text-sm text-gray-300 text-center py-12">Sin interacciones AI aún</p>
                   )}
                 </div>
+                <PaginationBar
+                  page={aiPage} total={aiTotal} pageSize={PAGE_SIZE}
+                  onChange={(p) => setAiPage(p)}
+                />
               </Card>
             </>
           )}

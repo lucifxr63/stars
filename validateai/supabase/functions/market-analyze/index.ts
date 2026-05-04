@@ -64,6 +64,37 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
+    // ── Auth ─────────────────────────────────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401, headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    )
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // ── Rate limit: 10 calls/día por usuario ─────────────────────────────────
+    const todayStart = new Date()
+    todayStart.setUTCHours(0, 0, 0, 0)
+    const { count: callsToday } = await supabase
+      .from('market_ai_insights')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', todayStart.toISOString())
+    if ((callsToday ?? 0) >= 10) {
+      return new Response(JSON.stringify({ error: 'rate_limit', message: 'Límite diario de análisis de mercado alcanzado.' }), {
+        status: 429, headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // ── PASO 1: Verificar caché ───────────────────────────────────────
     const { data: existingInsight } = await supabase
       .from('market_ai_insights')
