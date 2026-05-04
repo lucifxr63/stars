@@ -8,7 +8,8 @@ const INE_BASE = 'https://rapps.ine.cl:9292'
 
 // IDs validados contra el catálogo BCCh real.
 // Sector-specific: pendiente de validación (buscar con SearchSeries&searchParam=IMACEC).
-// Por ahora solo se usan las series macro confirmadas.
+// NOTE: This is currently empty and serves as a placeholder. We are only using macro series 
+// to avoid errors fetching unverified or unstable sector-specific indices from BCCh.
 const SECTOR_SERIES: Record<string, { id: string; label: string }[]> = {}
 
 const MACRO_SERIES = [
@@ -16,9 +17,20 @@ const MACRO_SERIES = [
   { id: 'G073.IPC.V12.2023.M',  label: 'IPC variación anual' },        // validado ✓
 ]
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'https://validateai-mu.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+]
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 function bdeToIso(dateStr: string): string {
@@ -34,7 +46,8 @@ function getDateRange() {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  const cors = getCorsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
     const { idea_description, industry, validation_id } = await req.json()
@@ -42,7 +55,7 @@ serve(async (req) => {
     if (!idea_description || !industry || !validation_id) {
       return new Response(
         JSON.stringify({ error: 'idea_description, industry y validation_id son requeridos' }),
-        { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -66,7 +79,7 @@ serve(async (req) => {
           raw_series: existingInsight.raw_series,
           cached: true,
         }),
-        { headers: { ...CORS, 'Content-Type': 'application/json' } }
+        { headers: { ...cors, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -284,14 +297,14 @@ Responde SOLO con este JSON (sin texto adicional, sin markdown):
 
     return new Response(
       JSON.stringify({ caenes, insights, raw_series: rawSeriesPayload }),
-      { headers: { ...CORS, 'Content-Type': 'application/json' } }
+      { headers: { ...cors, 'Content-Type': 'application/json' } }
     )
 
   } catch (err) {
     console.error('market-analyze error:', err)
     return new Response(
       JSON.stringify({ error: 'Internal server error', detail: String(err) }),
-      { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
     )
   }
 })

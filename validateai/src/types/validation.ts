@@ -140,10 +140,8 @@ export interface UnitEconomics {
 
 export interface FounderContext {
   yearsInIndustry: number;
-  hasBuiltBefore: boolean;
   hasTechnicalCofounder: boolean;
   personallyFacedProblem: boolean;
-  networkInTargetMarket: 'none' | 'some' | 'strong';
 }
 
 export interface FounderFit {

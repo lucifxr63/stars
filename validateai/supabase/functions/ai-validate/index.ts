@@ -16,10 +16,21 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
  */
 const AI_PROVIDER = (Deno.env.get('AI_PROVIDER') ?? 'anthropic') as 'anthropic' | 'openai';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ALLOWED_ORIGINS = [
+  'https://validateai-mu.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') ?? '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type PromptType =
@@ -734,19 +745,31 @@ async function callAI(
 }
 
 // ── Handler HTTP ──────────────────────────────────────────────────────────────
+// ── Prompt type whitelist ──────────────────────────────────────────────────────
+const VALID_PROMPT_TYPES = new Set<PromptType>(Object.keys(SYSTEM_PROMPTS) as PromptType[]);
+
 serve(async (req) => {
+  const cors = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: cors });
   }
 
   try {
     const { validation_id, step, prompt_type, context } = (await req.json()) as AIRequest;
 
+    // Validate prompt_type
+    if (!VALID_PROMPT_TYPES.has(prompt_type)) {
+      return new Response(JSON.stringify({ error: `Invalid prompt_type: ${prompt_type}` }), {
+        status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Auth
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401, headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -756,7 +779,7 @@ serve(async (req) => {
     );
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401, headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -791,7 +814,7 @@ serve(async (req) => {
         console.log(`[cache hit] ${prompt_type} similarity=${cached.similarity.toFixed(3)}`);
         return new Response(
           JSON.stringify({ ...cached.analysis_data, _fromCache: true, _cacheSimilarity: cached.similarity }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          { headers: { ...cors, 'Content-Type': 'application/json' } },
         );
       }
     }
@@ -805,7 +828,7 @@ serve(async (req) => {
         supabase, ideaCacheKey, prompt_type, parsed,
         context.idea_industry as string | undefined,
         context.target_country as string | undefined,
-      ).catch(() => {/* ignore */});
+      ).catch((err) => console.warn('[cache-save] Error:', err));
     }
 
     // Log de interacción (no bloqueante)
@@ -817,16 +840,19 @@ serve(async (req) => {
       output_data: parsed,
       tokens_used: inputTokens + outputTokens,
       model,
-    }).then(() => {/* ignore */});
+    }).then(({ error: logErr }) => {
+      if (logErr) console.warn('[ai-log] Insert error:', logErr.message);
+    });
 
     return new Response(JSON.stringify(parsed), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[ai-validate] Error:', message);
     return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
     });
   }
 });

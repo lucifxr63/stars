@@ -1,15 +1,27 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
-import { Anthropic } from 'npm:@anthropic-ai/sdk'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'https://validateai-mu.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+]
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 serve(async (req) => {
+  const cors = getCorsHeaders(req)
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: cors })
   }
 
   try {
@@ -30,10 +42,8 @@ serve(async (req) => {
 
     if (error || !validation) throw new Error('Validation not found')
 
-    // 2. Llamar a Claude Haiku para anonimizar la descripción global de la idea
-    const anthropic = new Anthropic({
-      apiKey: Deno.env.get('ANTHROPIC_API_KEY') ?? '',
-    })
+    // 2. Llamar a Claude Haiku para anonimizar (fetch directo, consistente con ai-validate)
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 
     const rawText = `
     Nombre: ${validation.idea_name}
@@ -42,16 +52,33 @@ serve(async (req) => {
     Propuesta: ${validation.value_proposition}
     `
 
-    const aiRes = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      temperature: 0,
-      system: `Eres un asistente experto en privacidad y anonimización de datos. 
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 500,
+        temperature: 0,
+        system: `Eres un asistente experto en privacidad y anonimización de datos. 
 Tu tarea es leer la descripción de una startup y reescribirla en 2-3 frases de manera GENÉRICA y COMPLETAMENTE SECRETA, eliminando cualquier dato identificable, nombres propios, nombres de empresas reales, locaciones precisas o datos sensibles. Redacta el resumen preservando únicamente la mecánica del problema y solución. Responde SOLO con el texto anonimizado.`,
-      messages: [{ role: 'user', content: rawText }]
-    });
+        messages: [{ role: 'user', content: rawText }]
+      }),
+    })
 
-    const anonymizedSummary = Array.isArray(aiRes.content) ? (aiRes.content[0] as any).text : aiRes.content;
+    if (!aiRes.ok) {
+      const errText = await aiRes.text()
+      throw new Error(`Anthropic API error ${aiRes.status}: ${errText}`)
+    }
+
+    const aiData = await aiRes.json()
+    const anonymizedSummary = (aiData.content as Array<{ type: string; text?: string }>)
+      .filter((b) => b.type === 'text')
+      .map((b) => b.text ?? '')
+      .join('')
 
     // 3. Guardar en training_data
     const scoresJSON = {
@@ -73,14 +100,17 @@ Tu tarea es leer la descripción de una startup y reescribirla en 2-3 frases de 
     if (insertError) throw insertError
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json' },
       status: 200,
     })
 
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[anonymize-idea] Error:', message)
+    return new Response(JSON.stringify({ error: message }), {
+      headers: { ...cors, 'Content-Type': 'application/json' },
       status: 400,
     })
   }
 })
+

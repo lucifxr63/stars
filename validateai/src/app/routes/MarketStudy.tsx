@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useMarketAnalysis } from '@/hooks/useMarketAnalysis'
 import type { RawSeriesPoint } from '@/types/market'
@@ -7,11 +7,17 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import { TrendingUp, TrendingDown, Minus, ArrowLeft, RefreshCw, ShieldAlert, Info } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, ArrowLeft, RefreshCw, ShieldAlert, Info, Map } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import type { MarketSizing } from '@/types/validation'
+
+// Lazy load: Three.js es pesado, solo cargamos cuando se necesita
+const ChileMarketMap = lazy(() =>
+  import('@/components/market/ChileMarketMap').then(m => ({ default: m.ChileMarketMap }))
+)
 
 const TREND_CONFIG = {
   creciente:   { icon: TrendingUp,   color: 'text-green-600',  badge: 'default' as const },
@@ -118,18 +124,23 @@ export function MarketStudy() {
   const navigate = useNavigate()
   const [ideaDescription, setIdeaDescription] = useState<string | null>(null)
   const [industry, setIndustry] = useState<string | null>(null)
+  const [marketSizing, setMarketSizing] = useState<MarketSizing | null>(null)
 
   useEffect(() => {
     if (!validationId) return
     supabase
       .from('validations')
-      .select('idea_description, idea_name, idea_industry')
+      .select('idea_description, idea_name, idea_industry, market_sizing')
       .eq('id', validationId)
       .single()
       .then(({ data }) => {
         if (data) {
           setIdeaDescription(data.idea_description ?? data.idea_name)
           setIndustry(data.idea_industry)
+          // market_sizing es una columna directa en la tabla validations
+          if (data.market_sizing) {
+            setMarketSizing(data.market_sizing as MarketSizing)
+          }
         }
       })
   }, [validationId])
@@ -145,7 +156,7 @@ export function MarketStudy() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-8 flex-wrap">
@@ -190,206 +201,246 @@ export function MarketStudy() {
           </div>
         )}
 
-        {/* Content */}
+        {/* Content — two columns: info | 3D map */}
         {data && !loading && (
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_460px] gap-6 items-start">
 
-            {/* Tendencia */}
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground mb-1">{data.sector_name}</p>
-                <h2 className="text-xl font-semibold mb-3">{data.trend_description}</h2>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <TrendIcon className={`h-4 w-4 ${trendCfg.color}`} />
-                  <span className={`font-medium ${trendCfg.color}`}>
-                    {data.trend_pct > 0 ? '+' : ''}{data.trend_pct}% anual
-                  </span>
-                  <Badge variant={trendCfg.badge}>{data.trend}</Badge>
-                </div>
-              </CardContent>
-            </Card>
+            {/* ── Columna izquierda: info de mercado ── */}
+            <div className="space-y-6 min-w-0">
 
-            {/* Métricas clave */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {data.key_metrics.map((m, i) => (
-                <Card key={i}>
-                  <CardContent className="pt-4">
-                    <p className="text-xs text-muted-foreground">{m.label}</p>
-                    <p className="text-2xl font-semibold my-1">{m.value}</p>
-                    <p className="text-xs text-muted-foreground">{m.context}</p>
+              {/* Tendencia */}
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-sm text-muted-foreground mb-1">{data.sector_name}</p>
+                  <h2 className="text-xl font-semibold mb-3">{data.trend_description}</h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <TrendIcon className={`h-4 w-4 ${trendCfg.color}`} />
+                    <span className={`font-medium ${trendCfg.color}`}>
+                      {data.trend_pct > 0 ? '+' : ''}{data.trend_pct}% anual
+                    </span>
+                    <Badge variant={trendCfg.badge}>{data.trend}</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Métricas clave */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {data.key_metrics.map((m, i) => (
+                  <Card key={i}>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground">{m.label}</p>
+                      <p className="text-2xl font-semibold my-1">{m.value}</p>
+                      <p className="text-xs text-muted-foreground">{m.context}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Serie histórica real */}
+              <SeriesChart series={rawSeries} />
+
+              {/* TAM / SAM */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Tamaño de mercado</CardTitle>
+                  <p className="text-xs text-muted-foreground">{data.tam_description}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[
+                        { name: 'TAM', value: data.tam_clp },
+                        { name: 'SAM', value: data.sam_clp },
+                      ]} barSize={60}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                        <YAxis tickFormatter={formatClp} axisLine={false} tickLine={false} width={90} />
+                        <Tooltip formatter={(v) => formatClp(v as number)} />
+                        <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="hsl(var(--primary))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                    <div>
+                      <p className="text-xs text-muted-foreground">TAM — Mercado total</p>
+                      <p className="font-semibold">{formatClp(data.tam_clp)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">SAM — Mercado accesible (Chile)</p>
+                      <p className="font-semibold">{formatClp(data.sam_clp)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Fit de la idea */}
+              {data.idea_fit && (
+                <Card className="border-blue-200 bg-blue-50/30">
+                  <CardHeader>
+                    <CardTitle className="text-base text-blue-800 dark:text-blue-300">
+                      Encaje de tu idea en este mercado
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm leading-relaxed">{data.idea_fit}</p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+              )}
 
-            {/* Serie histórica real */}
-            <SeriesChart series={rawSeries} />
-
-            {/* TAM / SAM */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Tamaño de mercado</CardTitle>
-                <p className="text-xs text-muted-foreground">{data.tam_description}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[
-                      { name: 'TAM', value: data.tam_clp },
-                      { name: 'SAM', value: data.sam_clp },
-                    ]} barSize={60}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                      <YAxis tickFormatter={formatClp} axisLine={false} tickLine={false} width={90} />
-                      <Tooltip formatter={(v) => formatClp(v as number)} />
-                      <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="hsl(var(--primary))" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
-                  <div>
-                    <p className="text-xs text-muted-foreground">TAM — Mercado total</p>
-                    <p className="font-semibold">{formatClp(data.tam_clp)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">SAM — Mercado accesible (Chile)</p>
-                    <p className="font-semibold">{formatClp(data.sam_clp)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Fit de la idea */}
-            {data.idea_fit && (
-              <Card className="border-blue-200 bg-blue-50/30">
-                <CardHeader>
-                  <CardTitle className="text-base text-blue-800 dark:text-blue-300">
-                    Encaje de tu idea en este mercado
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm leading-relaxed">{data.idea_fit}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Jugadores clave */}
-            {data.key_players?.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Jugadores clave en Chile</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {data.key_players.map((p, i) => (
-                      <div key={i} className="flex items-start gap-3 py-2 border-b last:border-0">
-                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium shrink-0 ${PLAYER_TYPE_CONFIG[p.type] ?? PLAYER_TYPE_CONFIG.incumbente}`}>
-                          {p.type}
-                        </span>
-                        <div>
-                          <p className="text-sm font-semibold">{p.name}</p>
-                          {p.notes && <p className="text-xs text-muted-foreground">{p.notes}</p>}
+              {/* Jugadores clave */}
+              {data.key_players?.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Jugadores clave en Chile</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.key_players.map((p, i) => (
+                        <div key={i} className="flex items-start gap-3 py-2 border-b last:border-0">
+                          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium shrink-0 ${PLAYER_TYPE_CONFIG[p.type] ?? PLAYER_TYPE_CONFIG.incumbente}`}>
+                            {p.type}
+                          </span>
+                          <div>
+                            <p className="text-sm font-semibold">{p.name}</p>
+                            {p.notes && <p className="text-xs text-muted-foreground">{p.notes}</p>}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Barreras de entrada */}
-            {data.entry_barriers?.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <ShieldAlert className="h-4 w-4 text-orange-500" />
-                    Barreras de entrada
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {data.entry_barriers.map((b, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-orange-400 flex-shrink-0" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
+              {/* Barreras de entrada */}
+              {data.entry_barriers?.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <ShieldAlert className="h-4 w-4 text-orange-500" />
+                      Barreras de entrada
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {data.entry_barriers.map((b, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-orange-400 flex-shrink-0" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Oportunidades y riesgos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Oportunidades y riesgos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base text-green-700 dark:text-green-400">Oportunidades</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {data.opportunities.map((op, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                          {op}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base text-red-700 dark:text-red-400">Riesgos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {data.risks.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Regulación */}
+              {data.regulation && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Regulación relevante</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{data.regulation}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Estacionalidad */}
+              {data.seasonality && data.seasonality !== 'Sin estacionalidad relevante' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Estacionalidad</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{data.seasonality}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Contexto Chile */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base text-green-700 dark:text-green-400">Oportunidades</CardTitle>
+                  <CardTitle className="text-base">Contexto chileno</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {data.opportunities.map((op, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
-                        {op}
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{data.chile_context}</p>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base text-red-700 dark:text-red-400">Riesgos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {data.risks.map((r, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
-                        {r}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Datos: Banco Central de Chile (BDE) · INE · Análisis: GPT-4o-mini (OpenAI)
+              </p>
             </div>
 
-            {/* Regulación */}
-            {data.regulation && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Regulación relevante</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{data.regulation}</p>
-                </CardContent>
-              </Card>
-            )}
+            {/* ── Columna derecha: Mapa 3D ── */}
+            <div className="xl:sticky xl:top-8 space-y-3">
+              {/* Header de la columna */}
+              <div className="flex items-center gap-2">
+                <Map className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold">Distribución regional del mercado</h2>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Visualización 3D de TAM, SAM y SOM distribuidos entre las 16 regiones de Chile.
+                La altura representa el tamaño relativo del mercado. Arrastra para rotar.
+              </p>
 
-            {/* Estacionalidad */}
-            {data.seasonality && data.seasonality !== 'Sin estacionalidad relevante' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Estacionalidad</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{data.seasonality}</p>
-                </CardContent>
-              </Card>
-            )}
+              {/* Canvas 3D — altura fija para que sea sticky */}
+              <div style={{ height: '520px' }}>
+                <Suspense
+                  fallback={
+                    <div className="w-full h-full rounded-2xl border border-white/5 bg-[#030712] flex flex-col items-center justify-center gap-3 text-muted-foreground text-sm">
+                      <div className="w-8 h-8 border-2 border-muted border-t-blue-500 rounded-full animate-spin" />
+                      Cargando mapa 3D…
+                    </div>
+                  }
+                >
+                  <ChileMarketMap
+                    marketSizing={marketSizing}
+                    industry={industry}
+                  />
+                </Suspense>
+              </div>
 
-            {/* Contexto Chile */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Contexto chileno</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">{data.chile_context}</p>
-              </CardContent>
-            </Card>
+              {/* Nota */}
+              <p className="text-[10px] text-muted-foreground/60 text-center">
+                Distribución estimada · Pesos basados en PIB regional BCCh
+              </p>
+            </div>
 
-            <p className="text-xs text-center text-muted-foreground">
-              Datos: Banco Central de Chile (BDE) · INE · Análisis: GPT-4o-mini (OpenAI)
-            </p>
           </div>
         )}
       </div>

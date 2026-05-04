@@ -15,7 +15,7 @@ No test suite exists yet (known gap — see ESTADO_ACTUAL.md).
 
 ## Architecture Overview
 
-**ValidateAI** is a React 19 SPA that guides entrepreneurs through a 6-step AI-powered business validation wizard, producing a score (0–100), qualitative feedback, and an MVP plan.
+**ValidateAI** is a React 19 SPA that guides entrepreneurs through a 4-step AI-powered business validation wizard (Idea, Mercado, Fundador, Generación), producing a score (0–100), qualitative feedback, and advanced deliverables.
 
 **Production:** https://validateai-mu.vercel.app  
 **Stack:** React 19 + Vite + TypeScript + Tailwind CSS v4 + shadcn/ui + Supabase + Vercel
@@ -37,29 +37,35 @@ User fills wizard step
 
 `src/stores/validationStore.ts` holds all wizard state via Zustand with `persist` middleware (key: `validationStore`). The store is the single source of truth for:
 - `validationId` — Supabase row ID for the current session
-- `currentStep` (1–6)
-- Per-step data: `stepIdea`, `stepQuestions`, `stepCustomer`, `stepValueProp`, `stepMVP`
-- AI results: `summary`, `validationScore`, `aiFeedback`
+- `currentStep` (1–4)
+- Per-step data: `stepIdea`, `stepMarket`, `stepFounder`
+- AI results: `summary`, `validationScore`, `aiFeedback`, `score_breakdown`
 
 Call `store.reset()` to clear a session.
 
 ### Key hooks
 
-`src/hooks/useValidation.ts` provides three async functions:
-- `createValidation()` — inserts a new row in `validations`, sets `validationId` in store
-- `saveStep(stepData)` — upserts partial data into the current validation row
-- `completeValidation()` — sets `status: 'completed'` and `completed_at`
+- `useValidation.ts` — Core wizard logic (`createValidation`, `saveStep`, `completeValidation`).
+- `useAI.ts` — Frontend hook for calling the `ai-validate` edge function. Handles abort signals.
+- `useMarketAnalysis.ts` — Fetches data from `market-analyze` edge function and caches it in `market_ai_insights`.
+- `useMentors.ts` — Matches the user's idea with mentors from the `mentors` table.
+- `useTrainingData.ts` — Handles user consent and calls `anonymize-idea` to push data to `training_data`.
+- `useUserTier.ts` — Determines the user's subscription tier (`free/basic/pro/premium`) and gates features.
+- `useValidationHistory.ts` — Loads the version tree (pivots) for a given idea via the `validation_tree` view.
 
-### Edge Function (`supabase/functions/ai-validate/`)
+### Edge Functions
 
-Runs on Deno. Controlled by env var `AI_PROVIDER`:
-- `'anthropic'` (default) — uses Claude via Anthropic SDK
-- `'openai'` — uses GPT-4o-mini
+All functions run on Deno via Supabase Edge Functions.
 
-Prompt types: `questions`, `customer_analysis`, `value_prop`, `mvp_generation`, `summary`, `competitive_analysis`, `market_sizing`.  
-The last two (`competitive_analysis`, `market_sizing`) **always use Anthropic** regardless of `AI_PROVIDER`.
+1. **`ai-validate`**: Core AI routing. Controlled by env var `AI_PROVIDER` (`'anthropic'` or `'openai'`).
+   - Supports 18 prompt types: `questions`, `customer_analysis`, `value_prop`, `mvp_generation`, `summary`, `competitive_analysis`, `market_sizing`, `risk_analysis`, `unit_economics`, `founder_fit`, `market_signals`, `validation_kit`, `landing_generator`, `interview_script`, `tech_viability`, `first_100_customers`, `revenue_models`, `risk_checklist`, `pitch_letter`.
+   - Uses **RAG** for `competitive_analysis` (querying the `competitors` table).
+   - Implements semantic caching for heavy prompts via the `cached_analyses` table.
+2. **`market-analyze`**: Fetches macro-economic series from BCCh and classifies the idea via the INE API, then uses AI to extract Chilean market insights.
+3. **`anonymize-idea`**: Uses Claude Haiku to strip PII and sensitive details from an idea, storing the generic summary in `training_data` for model fine-tuning.
+4. **`followup-email`**: (Currently inactive/no cron trigger). Designed to send 7-day post-validation engagement emails via Resend.
 
-All responses must be pure JSON; `extractJSON()` strips markdown fences before parsing.
+All responses must be pure JSON; frontend extractors handle markdown stripping if necessary.
 
 ### Auth
 
@@ -67,7 +73,7 @@ Supabase auth with PKCE flow. `ProtectedLayout` (`src/app/layout.tsx`) guards al
 
 ### Admin panel
 
-Route `/admin` is restricted to `lucianoalonso2000@gmail.com` (hardcoded check). Uses Recharts for metrics, loads all data without pagination (known limitation).
+Route `/admin` is restricted to an admin email (hardcoded check). Uses Recharts for metrics, loads all data without pagination (known limitation).
 
 ## Environment Variables
 
@@ -90,12 +96,20 @@ AI_PROVIDER=anthropic   # 'anthropic' | 'openai'
 
 ## Supabase Migrations
 
-Migrations live in `supabase/migrations/`. Apply with `supabase db push` or via the Supabase dashboard. The trigger `handle_new_user` auto-creates a `profiles` row on signup.
+Migrations live in `supabase/migrations/` (18 files). Apply with `supabase db push` or via the Supabase dashboard. The trigger `handle_new_user` auto-creates a `profiles` row on signup.
+
+## 3D Chile Market Map
+
+A 3D extruded map of Chile's 16 regions in the results dashboard, showing market size per region.
+Implemented via Three.js + R3F (`ChileMarketMap.tsx`), using d3-geo for projection.
+
+---
 
 ## Known Issues
 
-- `idea_name` / `idea_industry` can be null if a user abandons Step 1 before saving
-- Admin tables load all rows into memory (no pagination)
-- PDF export via `html2canvas` is fragile
-- No rate limiting or freemium tier
-- Mobile responsive is partial
+- `idea_name` / `idea_industry` can be null if a user abandons Step 1 before saving.
+- Admin tables load all rows into memory (no pagination).
+- No API rate limiting per tier.
+- Mentors matching (`useMentors`) is currently using a hardcoded similarity threshold and basic querying instead of the full semantic RPC.
+- Generation is fully synchronous, which blocks the UI for long prompts.
+- No tests or product analytics.
