@@ -6,11 +6,11 @@ export type UserTier = 'free' | 'basic' | 'pro' | 'premium';
 export const TIER_SECTIONS = {
   free:    ['score', 'breakdown', 'questions', 'nextSteps'],
   basic:   ['score', 'breakdown', 'questions', 'client', 'valueProposition', 'nextSteps', 'risks'],
-  pro:     ['score', 'breakdown', 'questions', 'client', 'valueProposition', 'mvp', 'swot', 'nextSteps', 'risks', 'unitEconomics', 'founderFit'],
+  pro:     ['score', 'breakdown', 'questions', 'client', 'valueProposition', 'mvp', 'swot', 'nextSteps', 'risks', 'unitEconomics', 'founderFit', 'governance'],
   premium: 'all',
 } as const;
 
-export const ALL_SECTIONS = ['score', 'breakdown', 'questions', 'client', 'valueProposition', 'mvp', 'swot', 'nextSteps', 'risks', 'unitEconomics', 'founderFit', 'marketSizing', 'competitiveAnalysis'];
+export const ALL_SECTIONS = ['score', 'breakdown', 'questions', 'client', 'valueProposition', 'mvp', 'swot', 'nextSteps', 'risks', 'unitEconomics', 'founderFit', 'marketSizing', 'competitiveAnalysis', 'governance', 'fundraising'];
 
 export function getUserSections(tier: UserTier): string[] {
   if (tier === 'premium') return ALL_SECTIONS;
@@ -37,5 +37,6 @@ export function useUserTier() {
     });
   }, []);
 
-  return { tier, loading };
+  const isPremium = tier === 'premium';
+  return { tier, loading, isPremium };
 }

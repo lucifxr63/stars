@@ -124,6 +124,28 @@ export function StepMarket() {
           <ErrorMsg message={errors.pricing_range?.message} />
         </div>
 
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-2">
+            ¿Cómo vas a conseguir tus primeros 100 clientes?{' '}
+            <span className="text-gray-400 font-normal">(opcional)</span>
+          </label>
+          <p className="text-xs text-gray-400 mb-2">Ej: "Outbound en LinkedIn", "Ads en Meta", "Comunidades orgánicas en Discord"</p>
+          <select
+            {...register('acquisition_channel')}
+            className="w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500 border-gray-200 dark:border-white/8"
+          >
+            <option value="">Selecciona un canal (opcional)</option>
+            <option value="outbound_linkedin">Outbound en LinkedIn / cold email</option>
+            <option value="ads_meta">Publicidad pagada (Meta / TikTok / Google)</option>
+            <option value="comunidades_organico">Comunidades orgánicas (Discord, Reddit, grupos)</option>
+            <option value="referidos">Referidos / boca a boca</option>
+            <option value="alianzas">Alianzas con socios o canales existentes</option>
+            <option value="contenido_seo">Contenido / SEO / redes sociales</option>
+            <option value="eventos_presencial">Eventos presenciales / ferias</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+
       </div>
 
       <div className="flex gap-4">

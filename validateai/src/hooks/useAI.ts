@@ -6,7 +6,9 @@ type PromptType =
   | 'competitive_analysis' | 'market_sizing' | 'risk_analysis' | 'unit_economics'
   | 'founder_fit' | 'market_signals'
   | 'validation_kit' | 'landing_generator' | 'interview_script' | 'tech_viability'
-  | 'first_100_customers' | 'revenue_models' | 'risk_checklist' | 'pitch_letter';
+  | 'first_100_customers' | 'revenue_models' | 'risk_checklist' | 'pitch_letter'
+  | 'governance_assessment' | 'fundraising_roadmap'
+  | 'playbook_analysis';
 
 export function useAI() {
   const [loading, setLoading] = useState(false);

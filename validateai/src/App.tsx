@@ -16,6 +16,7 @@ const SharedValidation = lazy(() => import('@/app/routes/SharedValidation').then
 const IdeaHistory = lazy(() => import('@/app/routes/IdeaHistory').then((m) => ({ default: m.IdeaHistory })))
 const MarketStudy = lazy(() => import('@/app/routes/MarketStudy').then((m) => ({ default: m.MarketStudy })));
 const Pricing = lazy(() => import('@/app/routes/Pricing').then((m) => ({ default: m.Pricing })));
+const Demo = lazy(() => import('@/app/routes/Demo').then((m) => ({ default: m.Demo })));
 
 function PageLoader() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
           </Route>
           <Route path="/shared/:token" element={<SharedValidation />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/demo" element={<Demo />} />
         </Routes>
       </Suspense>
       <Toaster position="top-right" richColors />

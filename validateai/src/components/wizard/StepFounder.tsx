@@ -3,6 +3,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { StepFounderSchema, type StepFounder } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 
+const TECH_LEVELS = [
+  { value: 'non_technical', label: 'Nada técnico', desc: 'Usaríamos No-Code o contrataríamos' },
+  { value: 'some_code', label: 'Algo de código', desc: 'Podemos armar un MVP básico' },
+  { value: 'developers', label: 'Somos devs', desc: 'Equipo técnico completo' },
+] as const;
+
 function ErrorMsg({ message }: { message?: string }) {
   if (!message) return null;
   return (
@@ -35,6 +41,7 @@ export function StepFounder() {
 
   const hasTech = watch('hasTechnicalCofounder');
   const facedProblem = watch('personallyFacedProblem');
+  const techLevel = watch('tech_level');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -75,6 +82,26 @@ export function StepFounder() {
             />
             <span className="text-sm font-medium text-gray-900 dark:text-[#F0EFF8]">Tengo un Co-founder técnico o un equipo de desarrollo interno</span>
           </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
+            Nivel técnico del equipo fundador
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {TECH_LEVELS.map((level) => (
+              <label key={level.value} className="cursor-pointer">
+                <input type="radio" {...register('tech_level')} value={level.value} className="peer hidden" />
+                <div className={`p-3 border-2 rounded-2xl text-center transition-all
+                  ${techLevel === level.value
+                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
+                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}>
+                  <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{level.label}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{level.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
 
         <div>

@@ -35,9 +35,20 @@ interface ValidationState {
   setFounderFit: (data: FounderFit) => void;
   setMarketSignals: (data: MarketSignals) => void;
   setFromCache: (val: boolean) => void;
+  agentLogId: string | null;
+  premiumResult: {
+    executive_summary: string | null;
+    reddit_status: 'pending' | 'success' | 'error';
+    trends_status: 'pending' | 'success' | 'error';
+    agents: { reddit: unknown; trends: unknown };
+    errors: Record<string, string> | null;
+  } | null;
+
   setValidationMode: (mode: 'quick' | 'detailed') => void;
   setAIThinking: (val: boolean) => void;
   setValidationId: (id: string) => void;
+  setAgentLogId: (id: string) => void;
+  setPremiumResult: (result: ValidationState['premiumResult']) => void;
   reset: () => void;
 }
 
@@ -58,6 +69,8 @@ const initialState = {
   marketSignals: null,
   fromCache: false,
   validationMode: 'detailed' as const,
+  agentLogId: null,
+  premiumResult: null,
 };
 
 export const useValidationStore = create<ValidationState>()(
@@ -80,6 +93,8 @@ export const useValidationStore = create<ValidationState>()(
         setValidationMode: (mode) => set({ validationMode: mode }),
         setAIThinking: (val) => set({ aiThinking: val }),
         setValidationId: (id) => set({ validationId: id }),
+        setAgentLogId: (id) => set({ agentLogId: id }),
+        setPremiumResult: (result) => set({ premiumResult: result }),
         reset: () => set(initialState),
       }),
       { name: 'validateai-session' }

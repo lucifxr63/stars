@@ -71,6 +71,20 @@ export function StepIdea() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-1.5">
+            ¿Cómo resuelven tus clientes este problema hoy?{' '}
+            <span className="text-gray-400 font-normal">(opcional)</span>
+          </label>
+          <p className="text-xs text-gray-400 mb-2">Ej: "Usan Excel y WhatsApp", "Contratan a alguien", "No hacen nada y lo toleran"</p>
+          <input
+            {...register('current_solution')}
+            placeholder="Ej: Usan Excel y se mandan capturas por WhatsApp"
+            className={inputCls(!!errors.current_solution)}
+          />
+          <ErrorMsg message={errors.current_solution?.message} />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-3">
             Industria
           </label>

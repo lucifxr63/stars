@@ -1,4 +1,5 @@
-import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals } from '@/types/validation';
+import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch } from '@/types/validation';
+import { matchCorfoInstruments } from '@/data/corfoInstruments';
 
 // ── Public API ────────────────────────────────────────────────────────────────
 export interface PDFData {
@@ -28,6 +29,10 @@ export interface PDFData {
   unit_economics?: UnitEconomics | null;
   founder_fit?: FounderFit | null;
   market_signals?: MarketSignals | null;
+  governance_assessment?: GovernanceAssessment | null;
+  fundraising_roadmap?: FundraisingRoadmap | null;
+  playbook_analysis?: PlaybookAnalysis | null;
+  mentors?: Pick<MentorMatch, 'name' | 'bio' | 'expertise' | 'session_price_clp'>[];
   from_cache?: boolean;
 }
 
@@ -218,6 +223,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.roundedRect(x, by, fill, 3.5, 1, 1, 'F');
   };
 
+  // Separador horizontal — usado en secciones de contenido
   const divider = (extraY = 0) => {
     y += extraY;
     doc.setDrawColor(...T.dividerColor);
@@ -225,6 +231,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.line(MARGIN, y, PAGE_W - MARGIN, y);
     y += 4;
   };
+  void divider; // preservar helper para uso futuro
 
   const drawRadarChart = (
     cx: number, cy: number, r: number,
@@ -342,138 +349,216 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   };
 
+  // ── drawTable: renders a simple bordered table ────────────────────────────
+  const drawTable = (
+    headers: string[],
+    rows: string[][],
+    colWidths?: number[],
+    headerBg: [number,number,number] = T.accent,
+    headerFg: [number,number,number] = C.white,
+    rowHeight = 7,
+  ) => {
+    const totalW = CON_W;
+    const widths = colWidths ?? headers.map(() => totalW / headers.length);
+    const cellPad = 2.5;
+
+    checkPage(rowHeight + 2);
+    // Header row
+    let cx = MARGIN;
+    doc.setFillColor(...headerBg);
+    doc.roundedRect(MARGIN, y, totalW, rowHeight + 1, 1.5, 1.5, 'F');
+    for (let i = 0; i < headers.length; i++) {
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...headerFg);
+      const txt = doc.splitTextToSize(headers[i].toUpperCase(), widths[i] - cellPad * 2);
+      doc.text(txt[0] ?? '', cx + cellPad, y + rowHeight - 1.5);
+      cx += widths[i];
+    }
+    y += rowHeight + 1;
+
+    // Data rows
+    for (const [ri, row] of rows.entries()) {
+      const bgColor: [number,number,number] = ri % 2 === 0
+        ? (theme === 'dark' ? C.darkCard : [248, 250, 252] as [number, number, number])
+        : (theme === 'dark' ? C.darkBg : C.white);
+
+      // Measure max lines in row
+      let maxLines = 1;
+      const cellLines: string[][] = row.map((cell, ci) => {
+        const ls = doc.splitTextToSize(cell ?? '', widths[ci] - cellPad * 2);
+        if (ls.length > maxLines) maxLines = ls.length;
+        return ls;
+      });
+      const rh = maxLines * 4.5 + 3;
+      checkPage(rh + 1);
+
+      doc.setFillColor(...bgColor);
+      doc.rect(MARGIN, y, totalW, rh, 'F');
+      doc.setDrawColor(...T.dividerColor); doc.setLineWidth(0.2);
+      doc.rect(MARGIN, y, totalW, rh, 'D');
+
+      cx = MARGIN;
+      for (let ci = 0; ci < row.length; ci++) {
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
+        doc.text(cellLines[ci], cx + cellPad, y + 4.5);
+        cx += widths[ci];
+        if (ci < row.length - 1) {
+          doc.setDrawColor(...T.dividerColor); doc.setLineWidth(0.2);
+          doc.line(cx, y, cx, y + rh);
+        }
+      }
+      y += rh;
+    }
+    y += 4;
+  };
+
+  // ── infoCard: renders a colored card with title + body text ──────────────
+  const infoCard = (
+    title: string,
+    body: string,
+    accentColor: [number,number,number],
+    bgColor: [number,number,number],
+    fgColor: [number,number,number],
+  ) => {
+    if (!body) return;
+    const lines = doc.splitTextToSize(body, CON_W - 14);
+    const cardH = Math.max(lines.length * 5 + 14, 18);
+    checkPage(cardH + 2);
+    doc.setFillColor(...bgColor);
+    doc.setDrawColor(...accentColor); doc.setLineWidth(0.5);
+    doc.roundedRect(MARGIN, y, CON_W, cardH, 2, 2, 'FD');
+    doc.setFillColor(...accentColor);
+    doc.roundedRect(MARGIN, y, 4, cardH, 1, 1, 'F');
+    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...accentColor);
+    doc.text(title.toUpperCase(), MARGIN + 8, y + 6);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...fgColor);
+    doc.text(lines, MARGIN + 8, y + 12);
+    y += cardH + 5;
+  };
+
   // ═══════════════════════════════════════════════════════════════════════════
   // 1 · PORTADA
   // ═══════════════════════════════════════════════════════════════════════════
 
-  if (theme === 'dark') {
-    // Fondo oscuro completo + franja teal lateral
-    doc.setFillColor(...C.darkBg);
-    doc.rect(0, 0, PAGE_W, 55, 'F');
-    doc.setFillColor(...C.teal);
-    doc.rect(0, 0, 4, 55, 'F');
+  // ── PORTADA PREMIUM (página completa) ─────────────────────────────────────
+  const dateStr = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
+  const vcScore = data.playbook_analysis?.viability_score ?? (data.summary?.score as number ?? 0);
+  const vcColor: [number,number,number] = vcScore >= 70 ? C.green : vcScore >= 40 ? C.amber : C.red;
+  const vcLabel = vcScore >= 70 ? 'Viable · Pre-Seed Ready' : vcScore >= 40 ? 'Validación Pendiente' : 'Pivot Recomendado';
 
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.white);
-    doc.text('ValidateAI', 10, 16);
+  // Franja superior temática (80mm de alto)
+  const coverBgTop: [number,number,number] = theme === 'dark' ? C.darkBg : theme === 'gradient' ? C.navy : [17, 24, 39];
+  const coverBgMid: [number,number,number] = theme === 'gradient' ? C.teal : C.teal;
+  doc.setFillColor(...coverBgTop);
+  doc.rect(0, 0, PAGE_W, 80, 'F');
+  // Acento decorativo lateral izquierdo
+  doc.setFillColor(...coverBgMid);
+  doc.rect(0, 0, 5, 80, 'F');
+  // Logo / Nombre app
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
+  doc.text('ValidateAI', 10, 12);
+  doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
+  doc.text('Dossier de Inversión · Generado el ' + dateStr, 10, 18);
 
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...C.darkMid);
-    doc.text('REPORTE DE VALIDACIÓN DE IDEA DE NEGOCIO', 10, 23);
+  // Nombre de la idea
+  const ideaName = data.idea_name ?? 'Sin nombre';
+  doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+  const nameLines = doc.splitTextToSize(ideaName, PAGE_W - 30);
+  doc.text(nameLines, 10, 34);
+  const nameLinesH = nameLines.length * 9;
 
-    const dateStr = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.text(dateStr, PAGE_W - MARGIN - doc.getTextWidth(dateStr), 23);
-
-    doc.setFillColor(...C.teal);
-    doc.rect(0, 55, PAGE_W, 0.5, 'F');
-
-    y = 64;
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.dark);
-    doc.text(data.idea_name ?? 'Sin nombre', MARGIN, y);
-    y += 10;
-
-  } else if (theme === 'gradient') {
-    // Header con doble banda: teal arriba, navy degradado simulado
-    doc.setFillColor(...C.navy);
-    doc.rect(0, 0, PAGE_W, 48, 'F');
-    doc.setFillColor(...C.teal);
-    doc.rect(0, 0, PAGE_W, 28, 'F');
-
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.white);
-    doc.text('ValidateAI', MARGIN, 14);
-
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(204, 251, 241);
-    doc.text('REPORTE DE VALIDACIÓN DE IDEA DE NEGOCIO', MARGIN, 21);
-
-    const dateStr = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.setTextColor(204, 251, 241);
-    doc.text(dateStr, PAGE_W - MARGIN - doc.getTextWidth(dateStr), 21);
-
-    // Nombre en la banda naval
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.white);
-    doc.text(data.idea_name ?? 'Sin nombre', MARGIN, 42);
-
-    y = 54;
-
-  } else {
-    // CLEAN: franja teal clásica minimalista
-    doc.setFillColor(...C.teal);
-    doc.rect(0, 0, PAGE_W, 2, 'F'); // sólo línea superior fina
-    doc.setFillColor(248, 250, 252);
-    doc.rect(0, 2, PAGE_W, 38, 'F');
-
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.teal);
-    doc.text('ValidateAI', MARGIN, 16);
-
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...C.gray);
-    doc.text('REPORTE DE VALIDACIÓN DE IDEA DE NEGOCIO', MARGIN, 23);
-
-    const dateStr = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.text(dateStr, PAGE_W - MARGIN - doc.getTextWidth(dateStr), 23);
-
-    // Línea separadora teal al fondo del header
-    doc.setFillColor(...C.teal);
-    doc.rect(0, 40, PAGE_W, 1.5, 'F');
-
-    y = 48;
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.dark);
-    doc.text(data.idea_name ?? 'Sin nombre', MARGIN, y);
-    y += 10;
-  }
-
-  // Chips de metadata (comunes a los 3 temas)
-  const chipDefs: { label: string; bg: [number,number,number]; fg: [number,number,number] }[] = [
-    ...(data.idea_industry  ? [{ label: data.idea_industry.toUpperCase(), bg: C.tealLight,   fg: C.tealDark   }] : []),
-    ...(data.target_country ? [{ label: `\u{1F4CD} ${data.target_country}`, bg: C.blueLight, fg: C.blueDark  }] : []),
-    ...(data.target_region  ? [{ label: data.target_region, bg: C.blueLight, fg: C.blueDark }] : []),
-    ...(data.business_model ? [{ label: data.business_model.toUpperCase(), bg: C.purpleLight, fg: C.purple   }] : []),
-    ...(data.business_stage ? [{ label: data.business_stage.toUpperCase(), bg: C.amberLight, fg: C.amberDark }] : []),
-    ...(data.pricing_range  ? [{ label: data.pricing_range, bg: [240,253,244] as [number,number,number], fg: [22,101,52] as [number,number,number] }] : []),
-  ];
-
-  if (chipDefs.length) {
-    let cx = MARGIN;
-    for (const cd of chipDefs) {
-      if (cx + 50 > PAGE_W - MARGIN) { y += 8; cx = MARGIN; }
-      cx += chip(cd.label, cx, y, cd.bg, cd.fg);
-    }
-    y += 9;
-  }
-
-  if (data.known_competitors?.length) {
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.gray);
-    doc.text('Competidores conocidos: ', MARGIN, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.known_competitors.join(', '), MARGIN + doc.getTextWidth('Competidores conocidos: '), y);
-    y += 7;
-  }
-
-  divider(2);
-
+  // Descripción corta (máx 2 líneas)
   if (data.idea_description) {
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...T.bodyFg);
-    doc.text('Descripción de la idea', MARGIN, y);
-    y += 5;
+    const descLines = doc.splitTextToSize(data.idea_description, PAGE_W - 30);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
+    doc.text(descLines.slice(0, 2), 10, 34 + nameLinesH + 2);
+  }
+
+  // Score grande a la derecha
+  doc.setFillColor(...vcColor);
+  doc.roundedRect(PAGE_W - 50, 10, 40, 35, 3, 3, 'F');
+  doc.setFontSize(30); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+  const scoreStr = `${vcScore}`;
+  doc.text(scoreStr, PAGE_W - 50 + (40 - doc.getTextWidth(scoreStr)) / 2, 36);
+  doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+  doc.text('/100', PAGE_W - 50 + (40 - doc.getTextWidth('/100')) / 2, 41);
+  doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+  const vclW = doc.getTextWidth(vcLabel);
+  doc.text(vcLabel, PAGE_W - 50 + (40 - vclW) / 2, 47);
+
+  // Línea divisora entre portada top y sección de metadata
+  doc.setFillColor(...C.teal);
+  doc.rect(0, 80, PAGE_W, 1.5, 'F');
+
+  // Franja media gris claro con metadata
+  doc.setFillColor(248, 250, 252);
+  doc.rect(0, 81.5, PAGE_W, 50, 'F');
+
+  // Chips de metadata en la franja media
+  const metaCols = [
+    { label: 'Industria', value: data.idea_industry ?? '—' },
+    { label: 'País',      value: data.target_country ?? '—' },
+    { label: 'Modelo',    value: (data.business_model ?? '—').replace(/_/g, ' ').toUpperCase() },
+    { label: 'Etapa',     value: (data.business_stage ?? '—').toUpperCase() },
+    { label: 'Precio',    value: data.pricing_range ?? '—' },
+  ];
+  const colW2 = PAGE_W / metaCols.length;
+  for (const [i, col] of metaCols.entries()) {
+    const cx2 = i * colW2 + 5;
+    doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(107, 114, 128);
+    doc.text(col.label.toUpperCase(), cx2, 92);
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(17, 24, 39);
+    doc.text(doc.splitTextToSize(col.value, colW2 - 6)[0] ?? '—', cx2, 100);
+  }
+
+  // Propuesta de valor / descripción en la franja media
+  if (data.value_proposition) {
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
+    const vpLines = doc.splitTextToSize(`"${data.value_proposition}"`, PAGE_W - 30);
+    doc.text(vpLines.slice(0, 2), 10, 115);
+  }
+
+  // Sección de resumen de módulos incluidos (índice visual)
+  doc.setFillColor(17, 24, 39);
+  doc.rect(0, 131.5, PAGE_W, 50, 'F');
+  doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
+  doc.text('CONTENIDO DE ESTE REPORTE', 10, 142);
+
+  const sections2 = [
+    { n: '01', label: 'Veredicto VC & Harsh Truth' },
+    { n: '02', label: 'Análisis JTBD & Mom Test' },
+    { n: '03', label: 'Score Breakdown & FODA' },
+    { n: '04', label: 'Mercado: TAM / SAM / SOM' },
+    { n: '05', label: 'Análisis de Competencia' },
+    { n: '06', label: 'Unit Economics & Riesgos' },
+    { n: '07', label: 'GTM, Producto e IA' },
+    { n: '08', label: 'Hoja de Ruta MVP & Tech Stack' },
+    { n: '09', label: 'Inversión: CORFO & Mentores' },
+    { n: '10', label: 'Veredicto de Fundraising' },
+  ];
+  const colCnt = 2;
+  const colW3 = (PAGE_W - 20) / colCnt;
+  for (const [i, sec] of sections2.entries()) {
+    const col = i % colCnt;
+    const row = Math.floor(i / colCnt);
+    const sx = 10 + col * colW3;
+    const sy = 150 + row * 8;
+    doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
+    doc.text(sec.n, sx, sy);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
+    doc.text(sec.label, sx + 8, sy);
+  }
+
+  // Pie de portada
+  doc.setFontSize(6); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
+  doc.text('Confidencial · Generado por ValidateAI · validateai-mu.vercel.app', PAGE_W / 2 - 40, 185);
+
+  // Siguiente página para el contenido
+  doc.addPage();
+  y = MARGIN;
+
+  // Descripción detallada (primera sección del contenido)
+  if (data.idea_description) {
+    sectionHeader('Descripción de la Idea', C.teal);
     const n = wrapText(data.idea_description, MARGIN, CON_W, 9.5, T.bodyMid);
     y += n * 5 + 6;
   }
@@ -1366,6 +1451,360 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.text(aL, MARGIN, y);
       y += aL.length * 4.5 + 6;
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 12 · GOBERNANZA Y ESTRUCTURA LEGAL
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (data.governance_assessment) {
+    const gov = data.governance_assessment;
+    checkPage(30);
+    doc.setFillColor(...T.sectionBg);
+    doc.rect(0, y, PAGE_W, 10, 'F');
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.sectionFg);
+    doc.text('12. Gobernanza y Estructura Legal', MARGIN, y + 7);
+    y += 14;
+
+    // Estructura + Vesting en dos columnas
+    const colW = (CON_W - 4) / 2;
+    const rowY = y;
+    doc.setFillColor(...T.cardBg); doc.setDrawColor(...T.cardBorder); doc.setLineWidth(0.3);
+    doc.roundedRect(MARGIN, rowY, colW, 22, 2, 2, 'FD');
+    doc.roundedRect(MARGIN + colW + 4, rowY, colW, 22, 2, 2, 'FD');
+    doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.indigo);
+    doc.text('ESTRUCTURA RECOMENDADA', MARGIN + 3, rowY + 5);
+    doc.text('VESTING', MARGIN + colW + 7, rowY + 5);
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyFg);
+    const strLines = doc.splitTextToSize(gov.recommended_structure, colW - 6);
+    doc.text(strLines.slice(0, 2), MARGIN + 3, rowY + 9.5);
+    const vestLines = doc.splitTextToSize(gov.vesting_recommendation, colW - 6);
+    doc.text(vestLines.slice(0, 2), MARGIN + colW + 7, rowY + 9.5);
+    // Riesgo regulatorio chip
+    const riskColors: Record<string, { bg: [number,number,number]; fg: [number,number,number] }> = {
+      low:    { bg: C.greenLight, fg: C.greenDark },
+      medium: { bg: C.amberLight, fg: C.amberDark },
+      high:   { bg: [254,226,226] as [number,number,number], fg: [153,27,27] as [number,number,number] },
+    };
+    const rc = riskColors[gov.regulatory_risk] ?? riskColors.medium;
+    chip(`Riesgo Reg. ${gov.regulatory_risk === 'low' ? 'Bajo' : gov.regulatory_risk === 'medium' ? 'Medio' : 'Alto'}`,
+      MARGIN + 3, rowY + 15, rc.bg, rc.fg);
+    y = rowY + 26;
+
+    // Notas regulatorias
+    if (gov.regulatory_notes) {
+      checkPage(20);
+      doc.setFillColor(...C.amberLight); doc.setDrawColor(...C.amber); doc.setLineWidth(0.3);
+      doc.roundedRect(MARGIN, y, CON_W, 14, 2, 2, 'FD');
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.amberDark);
+      doc.text('MARCO REGULATORIO', MARGIN + 3, y + 5);
+      const rnLines = doc.splitTextToSize(gov.regulatory_notes, CON_W - 6);
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyFg);
+      doc.text(rnLines.slice(0, 2), MARGIN + 3, y + 9.5);
+      y += 18;
+    }
+
+    // Checklist legal
+    if (gov.legal_checklist.length > 0) {
+      checkPage(12);
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+      doc.text('Checklist Legal', MARGIN, y); y += 5;
+      const priorityColors: Record<string, { bg: [number,number,number]; fg: [number,number,number] }> = {
+        critical:     { bg: [254,226,226] as [number,number,number], fg: [153,27,27] as [number,number,number] },
+        important:    { bg: C.amberLight, fg: C.amberDark },
+        nice_to_have: { bg: C.lightGray, fg: C.midGray },
+      };
+      for (const item of gov.legal_checklist.slice(0, 6)) {
+        checkPage(12);
+        const pc = priorityColors[item.priority] ?? priorityColors.important;
+        doc.setFillColor(...T.cardBg); doc.setDrawColor(...T.cardBorder); doc.setLineWidth(0.3);
+        doc.roundedRect(MARGIN, y, CON_W, 10, 1.5, 1.5, 'FD');
+        chip(item.priority === 'critical' ? 'Crítico' : item.priority === 'important' ? 'Importante' : 'Deseable',
+          MARGIN + 3, y + 2.5, pc.bg, pc.fg);
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+        doc.text(item.item, MARGIN + 28, y + 4.5);
+        const descLines = doc.splitTextToSize(item.description, CON_W - 32);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...T.bodyMid);
+        doc.text(descLines.slice(0, 1), MARGIN + 28, y + 8);
+        y += 12;
+      }
+    }
+
+    // Cap Table warnings
+    if (gov.cap_table_warnings.length > 0) {
+      checkPage(14);
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.red);
+      doc.text('ADVERTENCIAS CAP TABLE', MARGIN, y); y += 4;
+      for (const w of gov.cap_table_warnings.slice(0, 3)) {
+        checkPage(8);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
+        const wLines = doc.splitTextToSize(`⚠  ${w}`, CON_W);
+        doc.text(wLines.slice(0, 2), MARGIN, y);
+        y += wLines.slice(0, 2).length * 4.5 + 2;
+      }
+    }
+    y += 4;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 13 · ESTRATEGIA DE FUNDRAISING
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (data.fundraising_roadmap) {
+    const fr = data.fundraising_roadmap;
+    checkPage(30);
+    doc.setFillColor(...T.sectionBg);
+    doc.rect(0, y, PAGE_W, 10, 'F');
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.sectionFg);
+    doc.text('13. Estrategia de Fundraising', MARGIN, y + 7);
+    y += 14;
+
+    // Readiness bar
+    checkPage(18);
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+    doc.text('Investor Readiness', MARGIN, y);
+    const readScore = fr.readiness_score ?? 0;
+    const readColor = readScore >= 70 ? C.green : readScore >= 40 ? C.amber : C.red;
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...readColor);
+    doc.text(`${readScore}/100`, PAGE_W - MARGIN - 16, y);
+    y += 4;
+    progressBar(readScore, MARGIN, y, CON_W, readColor);
+    y += 8;
+
+    // Instrumento + Ticket en dos columnas
+    checkPage(26);
+    const fColW = (CON_W - 4) / 2;
+    const fRowY = y;
+    doc.setFillColor(...T.cardBg); doc.setDrawColor(...T.cardBorder); doc.setLineWidth(0.3);
+    doc.roundedRect(MARGIN, fRowY, fColW, 24, 2, 2, 'FD');
+    doc.roundedRect(MARGIN + fColW + 4, fRowY, fColW, 24, 2, 2, 'FD');
+    doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
+    doc.text('INSTRUMENTO', MARGIN + 3, fRowY + 5);
+    doc.text('TICKET SUGERIDO (USD)', MARGIN + fColW + 7, fRowY + 5);
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+    const instrLabel: Record<string, string> = {
+      SAFE: 'SAFE Note', convertible_note: 'Nota Convertible',
+      priced_round: 'Ronda Valorizada', grant: 'Subsidio / Grant', bootstrapping: 'Bootstrapping',
+    };
+    doc.text(instrLabel[fr.recommended_instrument] ?? fr.recommended_instrument, MARGIN + 3, fRowY + 12);
+    const ticketMin = fr.suggested_ticket_size.min >= 1000 ? `$${Math.round(fr.suggested_ticket_size.min / 1000)}K` : `$${fr.suggested_ticket_size.min}`;
+    const ticketMax = fr.suggested_ticket_size.max >= 1000 ? `$${Math.round(fr.suggested_ticket_size.max / 1000)}K` : `$${fr.suggested_ticket_size.max}`;
+    doc.text(`${ticketMin} – ${ticketMax}`, MARGIN + fColW + 7, fRowY + 12);
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
+    const ratLines = doc.splitTextToSize(fr.instrument_rationale, fColW - 6);
+    doc.text(ratLines.slice(0, 2), MARGIN + 3, fRowY + 16);
+    const preMin = fr.pre_money_valuation_range.min >= 1000000 ? `$${(fr.pre_money_valuation_range.min / 1000000).toFixed(1)}M` : `$${Math.round(fr.pre_money_valuation_range.min / 1000)}K`;
+    const preMax = fr.pre_money_valuation_range.max >= 1000000 ? `$${(fr.pre_money_valuation_range.max / 1000000).toFixed(1)}M` : `$${Math.round(fr.pre_money_valuation_range.max / 1000)}K`;
+    doc.text(`Pre-money: ${preMin} – ${preMax}`, MARGIN + fColW + 7, fRowY + 16);
+    y = fRowY + 28;
+
+    // Pitch narrative
+    if (fr.pitch_narrative) {
+      checkPage(20);
+      doc.setFillColor(...C.blueLight); doc.setDrawColor(...C.blue); doc.setLineWidth(0.3);
+      doc.roundedRect(MARGIN, y, CON_W, 18, 2, 2, 'FD');
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.blueDark);
+      doc.text('NARRATIVE DEL PITCH', MARGIN + 3, y + 5);
+      doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(...T.bodyFg);
+      const pitchLines = doc.splitTextToSize(`"${fr.pitch_narrative}"`, CON_W - 6);
+      doc.text(pitchLines.slice(0, 3), MARGIN + 3, y + 10);
+      y += 22;
+    }
+
+    // Fondos recomendados
+    if (fr.recommended_funds.length > 0) {
+      checkPage(12);
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+      doc.text('Fondos Recomendados', MARGIN, y); y += 5;
+      for (const fund of fr.recommended_funds.slice(0, 5)) {
+        checkPage(10);
+        doc.setFillColor(...T.cardBg); doc.setDrawColor(...T.cardBorder); doc.setLineWidth(0.3);
+        doc.roundedRect(MARGIN, y, CON_W, 9, 1.5, 1.5, 'FD');
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+        doc.text(fund.name, MARGIN + 3, y + 4);
+        doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
+        doc.text(`${fund.focus} · ${fund.stage}`, MARGIN + 3, y + 7.5);
+        y += 11;
+      }
+    }
+
+    // Bloqueadores
+    if (fr.blockers.length > 0) {
+      checkPage(14);
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.red);
+      doc.text('BLOQUEADORES ACTUALES', MARGIN, y); y += 4;
+      for (const b of fr.blockers.slice(0, 4)) {
+        checkPage(7);
+        const bLines = doc.splitTextToSize(`✕  ${b}`, CON_W);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
+        doc.text(bLines.slice(0, 1), MARGIN, y);
+        y += 5;
+      }
+    }
+
+    // Hitos
+    if (fr.next_milestones.length > 0) {
+      checkPage(14);
+      y += 2;
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.green);
+      doc.text('HITOS ANTES DE LA RONDA', MARGIN, y); y += 4;
+      fr.next_milestones.slice(0, 4).forEach((m, i) => {
+        checkPage(7);
+        const mLines = doc.splitTextToSize(`${i + 1}.  ${m}`, CON_W);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
+        doc.text(mLines.slice(0, 1), MARGIN, y);
+        y += 5;
+      });
+    }
+    y += 4;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 14 · VEREDICTO VC (PLAYBOOK RAG) — NUEVA PÁGINA CON VISUAL CARDS
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (data.playbook_analysis) {
+    const pa = data.playbook_analysis;
+    doc.addPage();
+    y = MARGIN;
+
+    sectionHeader('Veredicto VC — Análisis Playbook', C.purple);
+
+    // Score banner
+    checkPage(26);
+    const paScore = pa.viability_score ?? 0;
+    const paColor: [number,number,number] = paScore >= 70 ? C.green : paScore >= 40 ? C.amber : C.red;
+    const paLabel = paScore >= 70 ? 'Viable para VC' : paScore >= 40 ? 'Validación Pendiente' : 'Pivot Necesario';
+    doc.setFillColor(...paColor);
+    doc.roundedRect(MARGIN, y, CON_W, 20, 3, 3, 'F');
+    doc.setFontSize(26); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+    doc.text(`${paScore}`, MARGIN + 5, y + 13);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.text('/100', MARGIN + 28, y + 13);
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+    doc.text(paLabel, MARGIN + 50, y + 9);
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    doc.text('Score de Viabilidad VC · Sin filtros de cortesía', MARGIN + 50, y + 16);
+    y += 26;
+
+    // Verdad Incómoda — card roja
+    if (pa.harsh_truth) infoCard('Verdad Incómoda', pa.harsh_truth, C.red, [254,226,226], [153,27,27]);
+    // Sesgos del Fundador — card ámbar
+    if (pa.founder_bias_warning) infoCard('Diagnóstico de Sesgos del Fundador', pa.founder_bias_warning, C.amber, [254,243,199], [146,64,14]);
+
+    // JTBD — card teal
+    if (pa.jtbd_analysis) {
+      sectionHeader('Jobs-to-be-Done (JTBD)', C.teal);
+      infoCard('¿Qué trabajo contrata el cliente?', pa.jtbd_analysis, C.teal, [204,251,241], [15,118,110]);
+    }
+
+    // Mom Test — lista numerada en cards
+    if ((pa.validation_playbook?.length ?? 0) > 0) {
+      sectionHeader('Mom Test — Pasos de Validación', C.teal);
+      drawTable(
+        ['#', 'Paso de Validación'],
+        pa.validation_playbook.map((step, i) => [String(i + 1), step]),
+        [12, CON_W - 12],
+        C.teal,
+      );
+    }
+
+    // GTM — card azul
+    if (pa.gtm_and_growth_plan) {
+      sectionHeader('Plan GTM y Crecimiento', C.blue);
+      infoCard('Canal de Adquisición Recomendado', pa.gtm_and_growth_plan, C.blue, [219,234,254], [30,64,175]);
+    }
+
+    // Producto & IA — card índigo
+    if (pa.product_ai_strategy) {
+      sectionHeader('Estrategia de Producto e IA', C.indigo);
+      infoCard('Evaluación IA vs. Blue Ocean', pa.product_ai_strategy, C.indigo, [224,231,255], [55,48,163]);
+    }
+
+    // Unit Economics Check — card ámbar
+    if (pa.unit_economics_check) {
+      sectionHeader('Diagnóstico de Unit Economics', C.amber);
+      infoCard('Viabilidad Financiera con Benchmarks', pa.unit_economics_check, C.amber, [254,243,199], [146,64,14]);
+    }
+
+    // Tech & Legal Stack — card gris
+    if (pa.tech_and_legal_stack) {
+      sectionHeader('Stack Técnico y Legal', C.midGray);
+      infoCard('No-Code Recomendado + Alertas Regulatorias', pa.tech_and_legal_stack, C.midGray, [241,245,249], [51,65,85]);
+    }
+
+    // Funding Verdict — card verde destacada
+    if (pa.funding_verdict) infoCard('Veredicto de Inversión', pa.funding_verdict, C.green, [209,250,229], [6,95,70]);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 15 · INSTRUMENTOS CORFO (solo si target_country === 'Chile')
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (data.target_country === 'Chile' && data.business_stage && data.idea_industry) {
+    const corfoMatches = matchCorfoInstruments({
+      stage: data.business_stage,
+      industry: data.idea_industry,
+      businessModel: data.business_model ?? 'b2c',
+    });
+
+    if (corfoMatches.length > 0) {
+      checkPage(30);
+      sectionHeader('Instrumentos CORFO Aplicables', [220, 38, 38]);
+
+      const fmtClp = (n: number | null) => {
+        if (!n) return '—';
+        return n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(0)}M CLP` : `$${(n / 1_000).toFixed(0)}K CLP`;
+      };
+      const CAT_LABEL: Record<string, string> = {
+        seed: 'Capital Semilla', innovation: 'Innovación',
+        acceleration: 'Aceleración', internationalization: 'Internacionalización', credit: 'Crédito',
+      };
+
+      drawTable(
+        ['Instrumento', 'Categoría', 'Monto Máximo', 'Descripción'],
+        corfoMatches.slice(0, 5).map(({ instrument: inst }) => [
+          `${inst.acronym} — ${inst.name}`,
+          CAT_LABEL[inst.category] ?? inst.category,
+          fmtClp(inst.maxAmountClp),
+          inst.description,
+        ]),
+        [40, 30, 28, CON_W - 98],
+        [220, 38, 38],
+      );
+
+      // Requisitos del primer match
+      if (corfoMatches[0]?.instrument.requirements?.length) {
+        checkPage(20);
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+        doc.text(`Requisitos — ${corfoMatches[0].instrument.name}:`, MARGIN, y);
+        y += 5;
+        for (const req of corfoMatches[0].instrument.requirements) {
+          checkPage(7);
+          const rL = doc.splitTextToSize(`• ${req}`, CON_W - 4);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...T.bodyMid);
+          doc.text(rL, MARGIN + 2, y);
+          y += rL.length * 4 + 1;
+        }
+        y += 4;
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 16 · MENTORES RECOMENDADOS
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (data.mentors?.length) {
+    checkPage(30);
+    sectionHeader('Mentores Recomendados por IA', C.teal);
+
+    drawTable(
+      ['Mentor', 'Especialidades', 'Bio', 'Sesión'],
+      data.mentors.map((m) => [
+        m.name,
+        (m.expertise ?? []).join(', '),
+        m.bio ?? '—',
+        m.session_price_clp ? `$${(m.session_price_clp / 1000).toFixed(0)}K CLP` : 'Consultar',
+      ]),
+      [32, 40, CON_W - 112, 28],
+      C.teal,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

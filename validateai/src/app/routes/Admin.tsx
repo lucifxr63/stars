@@ -367,7 +367,7 @@ export function Admin() {
             {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
           </p>
           <button
-            onClick={load}
+            onClick={() => void load()}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white dark:bg-[#12121A]/10 transition-all font-medium"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

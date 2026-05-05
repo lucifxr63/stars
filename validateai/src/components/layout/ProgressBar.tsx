@@ -1,7 +1,15 @@
 import { STEPS } from '@/utils/constants';
 
-export function ProgressBar({ current }: { current: number }) {
-  const pct = Math.round((current / STEPS.length) * 100);
+const STEPS_PREMIUM = [
+  { num: 1, label: 'Tu idea' },
+  { num: 4, label: 'Analizando' },
+] as const;
+
+export function ProgressBar({ current, mode = 'detailed' }: { current: number; mode?: 'quick' | 'detailed' }) {
+  const steps = mode === 'quick' ? STEPS_PREMIUM : STEPS;
+  // Para modo quick: step 1 → index 0, step 4 → index 1
+  const displayCurrent = mode === 'quick' ? (current >= 4 ? 2 : 1) : current;
+  const pct = Math.round((displayCurrent / steps.length) * 100);
 
   return (
     <div className="w-full max-w-3xl mx-auto">
@@ -14,48 +22,52 @@ export function ProgressBar({ current }: { current: number }) {
           />
         </div>
         <span className="text-xs font-medium text-gray-500 dark:text-[#8B8AA0] shrink-0 tabular-nums">
-          {current}/{STEPS.length}
+          {displayCurrent}/{steps.length}
         </span>
       </div>
 
       {/* Desktop — dots + línea */}
       <div className="hidden sm:flex items-center">
-        {STEPS.map((step, i) => (
+        {steps.map((step, i) => {
+          const isCompleted = displayCurrent > (i + 1);
+          const isActive    = displayCurrent === (i + 1);
+          return (
           <div key={step.num} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-1.5 shrink-0">
               <div className={`
                 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
                 transition-all duration-300
-                ${current > step.num
+                ${isCompleted
                   ? 'bg-[#7C6FF7] text-white'
-                  : current === step.num
+                  : isActive
                   ? 'bg-[#7C6FF7] text-white ring-4 ring-[#7C6FF7]/20'
                   : 'bg-gray-100 dark:bg-white/5 text-[#4A495E] border border-gray-200 dark:border-white/8'}
               `}>
-                {current > step.num ? (
+                {isCompleted ? (
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                ) : step.num}
+                ) : (i + 1)}
               </div>
               <span className={`text-[11px] font-medium whitespace-nowrap transition-colors ${
-                current >= step.num ? 'text-gray-900 dark:text-[#F0EFF8]' : 'text-[#4A495E]'
+                displayCurrent >= (i + 1) ? 'text-gray-900 dark:text-[#F0EFF8]' : 'text-[#4A495E]'
               }`}>
                 {step.label}
               </span>
             </div>
 
-            {i < STEPS.length - 1 && (
+            {i < steps.length - 1 && (
               <div className="flex-1 mx-2 mb-5">
                 <div className="h-px w-full bg-white dark:bg-[#12121A]/8 overflow-hidden rounded-full">
                   <div className={`h-full transition-all duration-500 bg-[#7C6FF7] ${
-                    current > step.num ? 'w-full' : 'w-0'
+                    isCompleted ? 'w-full' : 'w-0'
                   }`} />
                 </div>
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

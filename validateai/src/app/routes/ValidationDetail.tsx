@@ -27,10 +27,12 @@ import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted } from '@/hooks/useAnalytics';
+import { useMentors } from '@/hooks/useMentors';
 import { EvidenceWall } from '@/components/shared/EvidenceWall';
 import { GovernanceCard } from '@/components/shared/GovernanceCard';
 import { FundraisingRoadmapCard } from '@/components/shared/FundraisingRoadmapCard';
 import { TractionTracker } from '@/components/shared/TractionTracker';
+import { PlaybookAnalysisCard } from '@/components/shared/PlaybookAnalysisCard';
 import type {
   MarketSizing,
   CompetitiveAnalysis as CompetitiveAnalysisType,
@@ -41,6 +43,7 @@ import type {
   MarketSignals,
   GovernanceAssessment,
   FundraisingRoadmap,
+  PlaybookAnalysis,
 } from '@/types/validation';
 
 interface ValidationFull {
@@ -80,6 +83,10 @@ interface ValidationFull {
   market_signals: MarketSignals | null;
   governance_assessment: GovernanceAssessment | null;
   fundraising_roadmap: FundraisingRoadmap | null;
+  playbook_analysis: PlaybookAnalysis | null;
+  current_solution: string | null;
+  acquisition_channel: string | null;
+  tech_level: string | null;
   share_token: string | null;
   created_at: string;
   completed_at: string | null;
@@ -87,7 +94,7 @@ interface ValidationFull {
 }
 
 
-const DASHBOARD_TABS = ['Resumen Ejecutivo', 'Mercado y Competencia', 'Finanzas y Riesgos', 'Producto y Entrega', 'Equipo y Mentoría', 'Inversión'] as const;
+const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
 
 export function ValidationDetail() {
@@ -103,7 +110,9 @@ export function ValidationDetail() {
   const [showPivotModal, setShowPivotModal] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [generatingAdvanced, setGeneratingAdvanced] = useState(false);
-  const [activeTab, setActiveTab] = useState<DashboardTab>('Resumen Ejecutivo');
+  const [generatingVerdict, setGeneratingVerdict] = useState(false);
+  const [verdictGenerated, setVerdictGenerated] = useState(false);
+  const [activeTab, setActiveTab] = useState<DashboardTab>('Veredicto');
   const [pdfTheme, setPdfTheme] = useState<PDFTheme>(() => {
     return (localStorage.getItem('validateai_pdf_theme') as PDFTheme) ?? 'clean';
   });
@@ -117,6 +126,7 @@ export function ValidationDetail() {
   const { callAI } = useAI();
   const { tier, isPremium } = useUserTier();
   const sections = getUserSections(tier);
+  const { mentors } = useMentors(data?.idea_description);
 
   const handleThemeChange = (t: PDFTheme) => {
     setPdfTheme(t);
@@ -149,11 +159,56 @@ export function ValidationDetail() {
         .eq('validation_id', id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       if (log) setAgentLog(log as typeof agentLog);
     };
     fetch();
   }, [id, navigate]);
+
+  // Auto-genera el veredicto la primera vez que el usuario ve la pestaña
+  useEffect(() => {
+    if (
+      activeTab !== 'Veredicto' ||
+      !data ||
+      data.playbook_analysis ||
+      generatingVerdict ||
+      verdictGenerated
+    ) return;
+
+    const generate = async () => {
+      setGeneratingVerdict(true);
+      try {
+        const ctx: Record<string, unknown> = {
+          idea_name: data.idea_name,
+          idea_description: data.idea_description,
+          idea_industry: data.idea_industry,
+          target_country: data.target_country,
+          business_model: data.business_model,
+          business_stage: data.business_stage,
+          pricing_range: data.pricing_range,
+          customer_segment: data.customer_segment,
+          value_proposition: data.value_proposition,
+          differentiator: data.differentiator,
+          questions_answers: data.questions_answers,
+          // Campos enriquecidos del Wizard v2 — claves para el Prompt Maestro
+          current_solution: data.current_solution,
+          acquisition_channel: data.acquisition_channel,
+          tech_level: data.tech_level,
+        };
+        const result = await callAI<PlaybookAnalysis>(data.id, 6, 'playbook_analysis', ctx);
+        if (result) {
+          await supabase.from('validations').update({ playbook_analysis: result }).eq('id', data.id);
+          setData((prev) => prev ? { ...prev, playbook_analysis: result } : prev);
+        }
+      } catch {
+        toast.error('No se pudo generar el veredicto. Intenta de nuevo.');
+      } finally {
+        setGeneratingVerdict(false);
+        setVerdictGenerated(true);
+      }
+    };
+    generate();
+  }, [activeTab, data?.id, data?.playbook_analysis]);
 
   const needsContextModal = !data?.target_country || !data?.business_model
     || !data?.business_stage || !data?.pricing_range;
@@ -453,6 +508,8 @@ export function ValidationDetail() {
         market_signals:        freshData.market_signals ?? null,
         governance_assessment: freshData.governance_assessment ?? null,
         fundraising_roadmap:   freshData.fundraising_roadmap ?? null,
+        playbook_analysis:     freshData.playbook_analysis ?? null,
+        mentors:               mentors.length ? mentors : undefined,
       }, pdfTheme);
 
       trackDeliverableDownloaded('pdf_fresh', pdfTheme);
@@ -496,6 +553,8 @@ export function ValidationDetail() {
         market_signals:        data.market_signals ?? null,
         governance_assessment: data.governance_assessment ?? null,
         fundraising_roadmap:   data.fundraising_roadmap ?? null,
+        playbook_analysis:     data.playbook_analysis ?? null,
+        mentors:               mentors.length ? mentors : undefined,
       }, pdfTheme);
       trackDeliverableDownloaded('pdf', pdfTheme);
       toast.success('PDF descargado correctamente');
@@ -733,64 +792,112 @@ export function ValidationDetail() {
         </div>
 
         <div className="space-y-5">
-          {activeTab === 'Resumen Ejecutivo' && (
+
+          {/* ── VEREDICTO ──────────────────────────────────────────────────── */}
+          {activeTab === 'Veredicto' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Score */}
-              {summary && data.validation_score != null && (
-                <div className={`rounded-3xl border-2 p-6 ${scoreBg}`}>
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
-                    <ScoreGauge score={data.validation_score} />
-                    <div className="flex-1 text-center sm:text-left">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Análisis general</p>
-                      <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
-                    </div>
+              {generatingVerdict && (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
+                  <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <div>
+                    <p className="font-bold text-white mb-1">Analizando tu idea con el Playbook VC…</p>
+                    <p className="text-sm text-gray-400">Mom Test · JTBD · Unit Economics · Legal Chile</p>
                   </div>
                 </div>
               )}
 
-              {/* Data Summary */}
-              <div className="bg-gray-50 dark:bg-[#0A0A0F] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Datos de la validación</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                  {[
-                    { label: 'Segmento', value: data.customer_segment },
-                    { label: 'Propuesta de valor', value: data.value_proposition },
-                    { label: 'Diferenciador', value: data.differentiator },
-                  ].filter((i) => i.value).map((item) => (
-                    <div key={item.label} className="bg-white dark:bg-[#12121A] rounded-xl p-3 border border-gray-100 dark:border-white/5 shadow-sm">
-                      <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
-                      <p className="text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] leading-snug">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {!generatingVerdict && data.playbook_analysis && (
+                <>
+                  <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 flex items-center gap-3">
+                    <span className="text-violet-400 text-lg shrink-0">⚡</span>
+                    <p className="text-xs text-violet-300 leading-relaxed">
+                      <strong className="text-violet-200">Veredicto VC</strong> — Análisis generado con los Playbooks de Validación, Economics, Legal Chile y Tech Stack. Sin filtros de cortesía.
+                    </p>
+                  </div>
 
-              {/* Idea description */}
-              {data.idea_description && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Descripción de la idea</p>
-                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.idea_description}</p>
+                  {/* Score */}
+                  {summary && data.validation_score != null && (
+                    <div className={`rounded-3xl border-2 p-6 ${scoreBg}`}>
+                      <div className="flex flex-col sm:flex-row items-center gap-6">
+                        <ScoreGauge score={data.playbook_analysis.viability_score ?? data.validation_score} />
+                        <div className="flex-1 text-center sm:text-left">
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
+                          <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {data.score_breakdown && <ScoreBreakdown data={data.score_breakdown} />}
+
+                  <PlaybookAnalysisCard data={data.playbook_analysis} />
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => {
+                        setData((prev) => prev ? { ...prev, playbook_analysis: null } : prev);
+                        setVerdictGenerated(false);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 transition"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Regenerar veredicto
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {!generatingVerdict && !data.playbook_analysis && verdictGenerated && (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-8 flex flex-col items-center gap-4 text-center">
+                  <p className="text-sm text-gray-400">No se pudo generar el veredicto.</p>
+                  <button
+                    onClick={() => setVerdictGenerated(false)}
+                    className="px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 transition"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── VALIDACIÓN ─────────────────────────────────────────────────── */}
+          {activeTab === 'Validación' && (
+            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* JTBD Analysis */}
+              {data.playbook_analysis?.jtbd_analysis && (
+                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🎯</span>
+                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Jobs-to-be-Done</p>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.jtbd_analysis}</p>
                 </div>
               )}
 
-              {/* Score breakdown */}
-              {data.score_breakdown && <ScoreBreakdown data={data.score_breakdown} />}
+              {/* Mom Test Playbook */}
+              {(data.playbook_analysis?.validation_playbook?.length ?? 0) > 0 && (
+                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-lg">📋</span>
+                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Mom Test — Pasos de Validación</p>
+                  </div>
+                  <ol className="space-y-3">
+                    {data.playbook_analysis!.validation_playbook.map((step, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-teal-500 text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                        <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{step}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
 
-              {/* Fortalezas y debilidades */}
-              <SwotMatrix 
-                strengths={summary?.strengths || []} 
-                weaknesses={summary?.weaknesses || []} 
-              />
-              
-              {/* Próximos pasos */}
-              <NextStepsTimeline
-                steps={summary?.next_steps || []}
-              />
-
-              {/* ── Premium: Executive Summary + Evidence Wall ─────────────── */}
+              {/* Evidence Wall — Premium */}
               {isPremium && agentLog && (
                 <>
-                  {/* Executive Summary card */}
                   {agentLog.executive_summary && (
                     <div className="rounded-2xl border-2 border-[#7C6FF7]/30 bg-[#7C6FF7]/5 p-5">
                       <div className="flex items-center gap-2 mb-3">
@@ -799,31 +906,52 @@ export function ValidationDetail() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
                         </div>
-                        <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">
-                          Resumen Ejecutivo Premium
-                        </p>
+                        <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">Resumen Ejecutivo Premium</p>
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">
-                        {agentLog.executive_summary}
-                      </p>
+                      <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{agentLog.executive_summary}</p>
                     </div>
                   )}
-
-                  {/* Evidence Wall */}
                   <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">
-                      Evidencia de Mercado
-                    </p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Evidencia de Mercado</p>
                     <EvidenceWall agentLog={agentLog as any} />
                   </div>
                 </>
               )}
+
+              {!data.playbook_analysis && !generatingVerdict && (
+                <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F] p-8 text-center">
+                  <p className="text-sm text-gray-400 mb-2">El análisis de validación se genera en la pestaña <strong>Veredicto</strong>.</p>
+                </div>
+              )}
             </div>
           )}
 
-          {activeTab === 'Mercado y Competencia' && (
+          {/* ── ESTRATEGIA ─────────────────────────────────────────────────── */}
+          {activeTab === 'Estrategia' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Market sizing */}
+              {/* GTM & Growth Plan */}
+              {data.playbook_analysis?.gtm_and_growth_plan && (
+                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🚀</span>
+                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.gtm_and_growth_plan}</p>
+                </div>
+              )}
+
+              {/* Product & AI Strategy */}
+              {data.playbook_analysis?.product_ai_strategy && (
+                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🤖</span>
+                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.product_ai_strategy}</p>
+                </div>
+              )}
+
+              {/* Market Sizing */}
               {data.market_sizing && <MarketFunnel data={data.market_sizing} />}
 
               {/* Señales de Mercado */}
@@ -838,26 +966,34 @@ export function ValidationDetail() {
                 />
               ) : null}
 
-              {/* Competitive analysis */}
+              {/* SWOT */}
+              {(summary?.strengths?.length || summary?.weaknesses?.length) && (
+                <SwotMatrix
+                  strengths={summary?.strengths || []}
+                  weaknesses={summary?.weaknesses || []}
+                />
+              )}
+
+              {/* Competitive Analysis */}
               {data.competitive_analysis && <CompetitiveAnalysis data={data.competitive_analysis} />}
             </div>
           )}
 
-          {activeTab === 'Finanzas y Riesgos' && (
+          {/* ── FINANZAS ───────────────────────────────────────────────────── */}
+          {activeTab === 'Finanzas' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Análisis de Riesgos */}
-              {data.risk_analysis ? (
-                <RiskAnalysisCard data={data.risk_analysis} />
-              ) : !sections.includes('risks') ? (
-                <LockedSection
-                  title="Análisis de Riesgos"
-                  description="Score compuesto de riesgo en 4 dimensiones con mitigaciones concretas."
-                  requiredTier="basic"
-                  hint="Riesgo de mercado, técnico, regulatorio y timing"
-                />
-              ) : null}
+              {/* Unit Economics Check (RAG) */}
+              {data.playbook_analysis?.unit_economics_check && (
+                <div className="bg-white dark:bg-[#12121A] border-2 border-amber-100 dark:border-amber-500/20 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">💰</span>
+                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Diagnóstico de Unit Economics</p>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.unit_economics_check}</p>
+                </div>
+              )}
 
-              {/* Unit Economics */}
+              {/* Unit Economics detallado */}
               {data.unit_economics ? (
                 <UnitEconomicsCard data={data.unit_economics} />
               ) : !sections.includes('unitEconomics') ? (
@@ -869,23 +1005,35 @@ export function ValidationDetail() {
                 />
               ) : null}
 
-              {/* CORFO Instruments */}
-              {data.target_country === 'Chile' && data.business_stage && data.idea_industry && (
-                <div className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
-                  <CorfoFunds
-                    stage={data.business_stage}
-                    industry={data.idea_industry}
-                    businessModel={data.business_model ?? 'b2c'}
-                  />
-                </div>
-              )}
+              {/* Análisis de Riesgos */}
+              {data.risk_analysis ? (
+                <RiskAnalysisCard data={data.risk_analysis} />
+              ) : !sections.includes('risks') ? (
+                <LockedSection
+                  title="Análisis de Riesgos"
+                  description="Score compuesto de riesgo en 4 dimensiones con mitigaciones concretas."
+                  requiredTier="basic"
+                  hint="Riesgo de mercado, técnico, regulatorio y timing"
+                />
+              ) : null}
             </div>
           )}
 
-          {activeTab === 'Producto y Entrega' && (
+          {/* ── HOJA DE RUTA ───────────────────────────────────────────────── */}
+          {activeTab === 'Hoja de Ruta' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* MVP */}
-              {/* MVP */}
+              {/* Tech & Legal Stack (RAG) */}
+              {data.playbook_analysis?.tech_and_legal_stack && (
+                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">⚙️</span>
+                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
+                </div>
+              )}
+
+              {/* MVP Kanban */}
               <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Plan de MVP</h3>
                 <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 dark:bg-teal-500/10 dark:border-teal-500/20 rounded-xl p-3 mb-4">
@@ -897,12 +1045,13 @@ export function ValidationDetail() {
                     </p>
                   </div>
                 </div>
+                <KanbanMVP features={data.mvp_features || []} userFlow={data.mvp_user_flow} />
+              </div>
 
-                  <KanbanMVP 
-                    features={data.mvp_features || []} 
-                    userFlow={data.mvp_user_flow} 
-                  />
-                </div>
+              {/* Próximos pasos */}
+              {(summary?.next_steps?.length ?? 0) > 0 && (
+                <NextStepsTimeline steps={summary!.next_steps} />
+              )}
 
               {/* Regulatory Roadmap */}
               {data.target_country === 'Chile' && data.idea_industry && (
@@ -911,7 +1060,7 @@ export function ValidationDetail() {
                 </div>
               )}
 
-              {/* Deliverable Tabs */}
+              {/* Deliverables */}
               <DeliverableTabs
                 validationId={data.id}
                 context={{
@@ -933,8 +1082,20 @@ export function ValidationDetail() {
             </div>
           )}
 
-          {activeTab === 'Equipo y Mentoría' && (
+          {/* ── INVERSIÓN ──────────────────────────────────────────────────── */}
+          {activeTab === 'Inversión' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Funding Verdict (RAG) */}
+              {data.playbook_analysis?.funding_verdict && (
+                <div className="bg-white dark:bg-[#12121A] border-2 border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🏦</span>
+                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Veredicto de Inversión</p>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.funding_verdict}</p>
+                </div>
+              )}
+
               {/* Founder-Market Fit */}
               {data.founder_fit ? (
                 <FounderFitCard data={data.founder_fit} />
@@ -947,17 +1108,18 @@ export function ValidationDetail() {
                 />
               ) : null}
 
-              {/* Mentor Recommendations */}
-              <MentorRecommendations
-                ideaDescription={data.idea_description}
-                founderGaps={data.founder_fit?.gaps}
-              />
-            </div>
-          )}
+              {/* CORFO */}
+              {data.target_country === 'Chile' && data.business_stage && data.idea_industry && (
+                <div className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+                  <CorfoFunds
+                    stage={data.business_stage}
+                    industry={data.idea_industry}
+                    businessModel={data.business_model ?? 'b2c'}
+                  />
+                </div>
+              )}
 
-          {activeTab === 'Inversión' && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Gobernanza y Estructura Legal */}
+              {/* Gobernanza */}
               {data.governance_assessment ? (
                 <GovernanceCard data={data.governance_assessment} />
               ) : !sections.includes('governance') ? (
@@ -1003,7 +1165,7 @@ export function ValidationDetail() {
                 </div>
               )}
 
-              {/* Traction Tracker — Pro+ */}
+              {/* Traction Tracker */}
               {sections.includes('governance') ? (
                 <TractionTracker validationId={data.id} />
               ) : (
@@ -1014,6 +1176,12 @@ export function ValidationDetail() {
                   hint="Los inversores piden tracción. Documenta cada señal."
                 />
               )}
+
+              {/* Mentor Recommendations */}
+              <MentorRecommendations
+                ideaDescription={data.idea_description}
+                founderGaps={data.founder_fit?.gaps}
+              />
             </div>
           )}
         </div>

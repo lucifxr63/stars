@@ -18,10 +18,12 @@ export function useValidation() {
         idea_name: store.stepIdea.idea_name ?? null,
         idea_description: store.stepIdea.idea_description ?? null,
         idea_industry: store.stepIdea.idea_industry ?? null,
+        current_solution: store.stepIdea.current_solution ?? null,
         target_country: store.stepMarket.target_country ?? null,
         target_region: store.stepMarket.target_region ?? null,
         business_model: store.stepMarket.business_model ?? null,
         pricing_range: store.stepMarket.pricing_range ?? null,
+        acquisition_channel: store.stepMarket.acquisition_channel ?? null,
       })
       .select('id')
       .single();

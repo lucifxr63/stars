@@ -163,3 +163,26 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Hide scrollbar while keeping scroll functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Extra-small breakpoint utility (375px — iPhone SE) */
+@media (min-width: 375px) {
+  .xs\:inline { display: inline; }
+  .xs\:hidden { display: none; }
+}
+
+/* Touch-friendly tap targets on mobile — only primary action buttons */
+@media (max-width: 640px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

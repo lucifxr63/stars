@@ -13,6 +13,10 @@ export function initAnalytics() {
     capture_pageleave: true,
     autocapture: false,
     persistence: 'localStorage',
+    disable_session_recording: true,
+    enable_heatmaps: false,
+    // Silencia errores de red cuando el ad-blocker corta las requests
+    on_xhr_error: () => {},
   });
   initialized = true;
 }

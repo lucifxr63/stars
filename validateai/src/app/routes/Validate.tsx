@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
+import { useUserTier } from '@/hooks/useUserTier';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -10,6 +11,8 @@ import { StepIdea } from '@/components/wizard/StepIdea';
 import { StepMarket } from '@/components/wizard/StepMarket';
 import { StepFounder } from '@/components/wizard/StepFounder';
 import { StepGenerating } from '@/components/wizard/StepGenerating';
+import { trackWizardStep, trackWizardAbandoned } from '@/hooks/useAnalytics';
+import { OnboardingOverlay, useOnboarding } from '@/components/shared/OnboardingOverlay';
 
 const STEP_COMPONENTS: Record<number, React.FC> = {
   1: StepIdea,
@@ -27,8 +30,38 @@ const STEP_TITLES: Record<number, { title: string; hint: string }> = {
 
 export function Validate() {
   const navigate = useNavigate();
-  const { currentStep, validationId, reset } = useValidationStore();
+  const { currentStep, validationId, reset, setValidationMode, validationMode } = useValidationStore();
+  const { isPremium, loading: tierLoading } = useUserTier();
+  const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
   const StepComponent = STEP_COMPONENTS[currentStep];
+  const prevStep = useRef(currentStep);
+
+  // Track step completions
+  useEffect(() => {
+    if (currentStep > prevStep.current && currentStep < 4) {
+      const name = STEP_TITLES[prevStep.current]?.title ?? `Step ${prevStep.current}`;
+      trackWizardStep(prevStep.current, name, validationMode);
+    }
+    prevStep.current = currentStep;
+  }, [currentStep, validationMode]);
+
+  // Track abandonment on unmount before step 4
+  useEffect(() => {
+    return () => {
+      const step = prevStep.current;
+      if (step < 4) {
+        const name = STEP_TITLES[step]?.title ?? `Step ${step}`;
+        trackWizardAbandoned(step, name);
+      }
+    };
+  }, []);
+
+  // Sincronizar validationMode con el tier del usuario en cada mount
+  useEffect(() => {
+    if (tierLoading) return;
+    const targetMode = isPremium ? 'quick' : 'detailed';
+    if (validationMode !== targetMode) setValidationMode(targetMode);
+  }, [tierLoading, isPremium]);
 
   useEffect(() => {
     if (!validationId) {
@@ -56,20 +89,28 @@ export function Validate() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
+      {showOnboarding && <OnboardingOverlay onDone={dismissOnboarding} />}
       <Header />
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 md:py-10">
         {/* Progress */}
         <div className="mb-8">
-          <ProgressBar current={currentStep} />
+          <ProgressBar current={currentStep} mode={validationMode} />
         </div>
 
         {/* Step header */}
         {currentStep < 4 && (
           <div className="mb-5 px-1">
-            <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-1">
-              Paso {currentStep} de 3
-            </p>
+            {validationMode === 'detailed' && (
+              <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-1">
+                Paso {currentStep} de 3
+              </p>
+            )}
+            {validationMode === 'quick' && (
+              <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-1">
+                Validación Premium
+              </p>
+            )}
             <h1 className="font-heading text-2xl font-bold text-gray-900 dark:text-[#F0EFF8]">{meta?.title}</h1>
             <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mt-0.5">{meta?.hint}</p>
           </div>

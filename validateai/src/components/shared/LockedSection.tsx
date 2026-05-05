@@ -1,3 +1,5 @@
+import { trackUpgradeClick } from '@/hooks/useAnalytics';
+
 interface Props {
   title: string;
   description: string;
@@ -47,6 +49,7 @@ export function LockedSection({ title, description, requiredTier, hint }: Props)
 
         <a
           href="/pricing"
+          onClick={() => trackUpgradeClick(title, requiredTier)}
           className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all
             ${tc.bg} ${tc.color} ${tc.border} border-2 hover:opacity-80 active:scale-[0.98]`}
         >

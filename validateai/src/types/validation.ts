@@ -27,6 +27,7 @@ export const StepIdeaSchema = z.object({
   idea_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
   idea_description: z.string().min(20, 'Describe tu problema y solución de manera detallada').max(2000),
   idea_industry: IndustryEnum,
+  current_solution: z.string().max(300).optional(),
 });
 
 export const StepMarketSchema = z.object({
@@ -35,12 +36,16 @@ export const StepMarketSchema = z.object({
   target_region: z.string().optional(),
   business_model: z.enum(BUSINESS_MODELS),
   pricing_range: z.string().min(1, 'Selecciona un rango de precio'),
+  acquisition_channel: z.string().max(200).optional(),
 });
+
+export const TechLevelEnum = z.enum(['non_technical', 'some_code', 'developers']);
 
 export const StepFounderSchema = z.object({
   yearsInIndustry: z.number().min(0).max(50),
   hasTechnicalCofounder: z.boolean(),
   personallyFacedProblem: z.boolean(),
+  tech_level: TechLevelEnum.optional(),
 });
 
 export const ValidationSchema = z.object({
@@ -142,6 +147,8 @@ export interface FounderContext {
   yearsInIndustry: number;
   hasTechnicalCofounder: boolean;
   personallyFacedProblem: boolean;
+  hasBuiltBefore?: boolean;
+  networkInTargetMarket?: 'none' | 'some' | 'strong';
 }
 
 export interface FounderFit {
@@ -212,6 +219,56 @@ export interface ValidationVersion {
   completed_at: string | null;
   status: string;
   depth: number;
+}
+
+// ─── SPRINT B: Inversión ─────────────────────────────────────────────────────
+
+export interface GovernanceLegalItem {
+  item: string;
+  priority: 'critical' | 'important' | 'nice_to_have';
+  description: string;
+}
+
+export interface GovernanceAssessment {
+  recommended_structure: string;
+  founding_team_split: string;
+  vesting_recommendation: string;
+  legal_checklist: GovernanceLegalItem[];
+  regulatory_risk: 'low' | 'medium' | 'high';
+  regulatory_notes: string;
+  cap_table_warnings: string[];
+}
+
+export interface FundraisingFund {
+  name: string;
+  focus: string;
+  stage: string;
+  url: string | null;
+}
+
+export interface FundraisingRoadmap {
+  recommended_instrument: 'SAFE' | 'convertible_note' | 'priced_round' | 'grant' | 'bootstrapping';
+  instrument_rationale: string;
+  suggested_ticket_size: { min: number; max: number; currency: 'USD' };
+  pre_money_valuation_range: { min: number; max: number; currency: 'USD' };
+  recommended_funds: FundraisingFund[];
+  pitch_narrative: string;
+  readiness_score: number;
+  blockers: string[];
+  next_milestones: string[];
+}
+
+export interface PlaybookAnalysis {
+  harsh_truth: string;
+  jtbd_analysis: string;
+  validation_playbook: string[];
+  unit_economics_check: string;
+  tech_and_legal_stack: string;
+  gtm_and_growth_plan: string;
+  funding_verdict: string;
+  product_ai_strategy: string;
+  founder_bias_warning: string;
+  viability_score: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -418,8 +418,8 @@ export function MarketStudy() {
                 La altura representa el tamaño relativo del mercado. Arrastra para rotar.
               </p>
 
-              {/* Canvas 3D — altura fija para que sea sticky */}
-              <div style={{ height: '520px' }}>
+              {/* Canvas 3D — oculto en mobile (Three.js no rinde bien en pantallas pequeñas) */}
+              <div className="hidden sm:block" style={{ height: '520px' }}>
                 <Suspense
                   fallback={
                     <div className="w-full h-full rounded-2xl border border-white/5 bg-[#030712] flex flex-col items-center justify-center gap-3 text-muted-foreground text-sm">

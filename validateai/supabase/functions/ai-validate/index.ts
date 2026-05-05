@@ -38,7 +38,9 @@ type PromptType =
   | 'competitive_analysis' | 'market_sizing' | 'risk_analysis' | 'unit_economics'
   | 'founder_fit' | 'market_signals'
   | 'validation_kit' | 'landing_generator' | 'interview_script' | 'tech_viability'
-  | 'first_100_customers' | 'revenue_models' | 'risk_checklist' | 'pitch_letter';
+  | 'first_100_customers' | 'revenue_models' | 'risk_checklist' | 'pitch_letter'
+  | 'governance_assessment' | 'fundraising_roadmap'
+  | 'playbook_analysis';
 
 interface AIRequest {
   validation_id: string;
@@ -162,8 +164,10 @@ INSTRUCCIONES:
 1. TAM (Total Addressable Market): Estima el mercado total global de esta industria/categoría. Cita reportes de mercado si los conoces (Statista, Grand View Research, etc.).
 2. SAM (Serviceable Addressable Market): Filtra por el país objetivo, el modelo de negocio y el segmento específico.
 3. SOM (Serviceable Obtainable Market): Estima la porción realista capturable en 1-2 años considerando etapa actual, competidores, pricing y barreras de entrada.
+   - Si el contexto incluye "bde_macro_context", úsalo para ajustar el SOM según el ciclo económico real del país objetivo (IPC alto → menor disposición a pagar → SOM conservador; IPC estable → SOM normal).
 4. Todos los valores en USD. Presenta como RANGOS (low-high), nunca cifras exactas.
 5. Para cada tier indica source_notes con la fuente y nivel de confianza.
+   - Si usaste datos BCCh reales del campo "bde_macro_context", indícalo en source_notes del SAM/SOM.
 6. Incluye las asunciones clave del SOM en el campo assumptions.
 
 Responde SOLO con JSON válido con esta estructura exacta, sin texto adicional, sin markdown:
@@ -220,6 +224,11 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
 IMPORTANTE: Responde siempre en español.
 Usa rangos (min-max) cuando la incertidumbre sea alta. Basa los cálculos en el pricing y mercado objetivo indicados.
 Siempre en la moneda del mercado objetivo (CLP si es Chile, USD si es mercado global).
+
+Si el contexto incluye "industry_benchmarks", úsalos como punto de partida para calibrar los rangos:
+- Los benchmarks son promedios de mercado para esa industria y modelo de negocio.
+- Ajústalos según el precio específico, país y etapa de la idea.
+- Menciona en assumptions si te basaste en los benchmarks provistos.
 
 - CAC: costo estimado para conseguir 1 cliente de pago
 - LTV: ingreso total esperado por cliente durante su vida útil
@@ -480,7 +489,50 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
   ],
   "target_investors": ["Tipo de inversor ideal 1", "Tipo de inversor ideal 2"],
   "ask": "Cuánto se busca levantar y para qué"
-}`
+}`,
+
+  governance_assessment: `Eres un abogado corporativo especializado en startups de Latinoamérica y Chile.
+Analiza la idea de negocio y genera una evaluación de gobernanza y estructura legal para que el fundador
+pueda armar una empresa investible.
+IMPORTANTE: Responde siempre en español. Contextualiza según el país objetivo indicado.
+
+Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+{
+  "recommended_structure": "SpA (Sociedad por Acciones) — estructura recomendada para startups en Chile",
+  "founding_team_split": "Recomendación sobre distribución del equity entre co-fundadores",
+  "vesting_recommendation": "Esquema de vesting recomendado (ej: 4 años con cliff de 1 año)",
+  "legal_checklist": [
+    { "item": "Nombre del ítem legal", "priority": "critical", "description": "Por qué es importante" }
+  ],
+  "regulatory_risk": "low",
+  "regulatory_notes": "Notas sobre el marco regulatorio específico para esta industria en el país objetivo",
+  "cap_table_warnings": ["Advertencia sobre estructura de cap table que podría dificultar levantamiento de capital"]
+}
+Los valores válidos para priority son: critical, important, nice_to_have
+Los valores válidos para regulatory_risk son: low, medium, high`,
+
+  playbook_analysis: `__PLAYBOOK_DYNAMIC__`,
+
+  fundraising_roadmap: `Eres un asesor de fundraising para startups en etapa temprana en Latinoamérica.
+Genera una hoja de ruta de levantamiento de capital personalizada para la idea de negocio, etapa y país indicados.
+IMPORTANTE: Responde siempre en español. Incluye fondos reales y relevantes para el ecosistema LatAm.
+
+Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+{
+  "recommended_instrument": "SAFE",
+  "instrument_rationale": "Por qué este instrumento es el más adecuado para la etapa actual",
+  "suggested_ticket_size": { "min": 50000, "max": 150000, "currency": "USD" },
+  "pre_money_valuation_range": { "min": 500000, "max": 1500000, "currency": "USD" },
+  "recommended_funds": [
+    { "name": "Nombre del fondo", "focus": "Foco sectorial", "stage": "Pre-seed / Seed", "url": "https://..." }
+  ],
+  "pitch_narrative": "Párrafo de 100-150 palabras con el narrative del pitch para inversores",
+  "readiness_score": 65,
+  "blockers": ["Bloqueo 1 que impide levantar capital ahora"],
+  "next_milestones": ["Hito 1 a alcanzar antes de la ronda"]
+}
+Los valores válidos para recommended_instrument son: SAFE, convertible_note, priced_round, grant, bootstrapping
+readiness_score es 0-100 donde 100 = listo para levantar hoy`
 };
 
 // ── Embeddings (OpenAI text-embedding-3-small) ───────────────────────────────
@@ -514,6 +566,70 @@ async function retrieveRelevantCompetitors(
   });
   return data ?? [];
 }
+
+// ── RAG: playbook retrieval ───────────────────────────────────────────────────
+const RAG_TAGS_BY_PROMPT: Partial<Record<PromptType, string[]>> = {
+  playbook_analysis:    ['VALIDATION', 'MOM_TEST', 'JTBD', 'UNIT_ECONOMICS', 'FINANCE', 'LEGAL', 'CHILE', 'TECH', 'NO_CODE', 'MVP', 'GROWTH', 'GTM', 'B2B_SALES', 'PLG', 'FUNDING', 'VC', 'PITCH_DECK', 'LATAM', 'PRODUCT_STRATEGY', 'AI', 'BLUE_OCEAN', 'UX', 'PSYCHOLOGY', 'BIASES', 'FOUNDER_RISK', 'POST_MORTEM'],
+  validation_kit:       ['VALIDATION', 'MOM_TEST', 'JTBD'],
+  unit_economics:       ['UNIT_ECONOMICS', 'FINANCE', 'BENCHMARKS', 'LATAM'],
+  risk_checklist:       ['LEGAL', 'CHILE', 'COMPLIANCE'],
+  tech_viability:       ['TECH', 'NO_CODE', 'MVP', 'ARCHITECTURE'],
+  governance_assessment: ['LEGAL', 'CHILE', 'FINTECH', 'COMPLIANCE'],
+};
+
+async function retrieveRagPlaybooks(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  queryText: string,
+  promptType: PromptType,
+  matchCount = 4,
+): Promise<string> {
+  const tags = RAG_TAGS_BY_PROMPT[promptType];
+  if (!tags) return '';
+  const embedding = await generateEmbedding(queryText);
+  if (!embedding) return '';
+  const { data } = await supabase.rpc('search_rag_playbooks', {
+    query_embedding: embedding,
+    filter_tags: tags,
+    match_threshold: 0.45,
+    match_count: matchCount,
+  });
+  if (!data || data.length === 0) return '';
+  return (data as Array<{ title: string; content: string }>)
+    .map((chunk) => `## ${chunk.title}\n${chunk.content}`)
+    .join('\n\n---\n\n');
+}
+
+const PLAYBOOK_MASTER_PROMPT = (ragChunks: string) => `# SYSTEM ROLE
+Actúa como un Venture Builder experto, un Inversor de Capital de Riesgo (VC) implacable y un especialista legal/financiero en el ecosistema de Startups de LatAm (enfocado en Chile). Tu objetivo NO es complacer al emprendedor, sino evitar que construya algo que nadie quiere (riesgo del 42% según CB Insights).
+
+# DIRECTRICES PRINCIPALES (REGLAS DE ORO)
+1. Metodología Lean & Mom Test: Exige siempre el "Aprendizaje Validado". Prohíbe al usuario hacer preguntas sesgadas. Oblígalo a aplicar el "Mom Test".
+2. Framework JTBD (Jobs-to-be-Done): Analiza el mercado por el "trabajo" que el cliente intenta resolver, no solo demografía.
+3. Unit Economics Realistas: Usa los benchmarks proporcionados en el contexto. Si el usuario proyecta costos irreales en LatAm, corrígelo con datos de la industria.
+4. Validación Técnica y No-Code: Recomienda el stack técnico exacto (ej. Bubble, FlutterFlow, Softr) según el tipo de proyecto para validar rápido.
+5. Cumplimiento y Regulación (Chile/LatAm): Evalúa el riesgo regulatorio. Aplica los criterios de la Ley Fintech o Ley de Protección de Datos (21.719) si corresponde.
+6. Estrategia GTM y Ventas: Evalúa si la idea necesita Product-Led Growth (PLG) o Growth Hacking/Outbound B2B. Identifica el canal de adquisición con mayor potencial de tracción inicial. Para B2B recomienda secuencias de outreach; para B2C recomienda loops virales o comunidades.
+7. Evaluación de Inversión: Dictamina con criterios VC si el proyecto tiene madurez para levantar Pre-Seed (producto, equipo, señales de mercado) o si primero debe validar con Bootstrapping o un grant (ej. StartupChile). Sé explícito sobre qué hitos deben cumplirse antes de hablar con inversores.
+8. Estrategia de Producto e IA: Si la idea usa IA, evalúa críticamente si es realmente necesaria según el framework JTBD/Blue Ocean o si es solo "hype" tecnológico que encarece el MVP sin agregar valor diferencial. Si no usa IA, evalúa si podría crear una ventaja competitiva sostenible.
+9. Diagnóstico Psicológico del Fundador: Identifica si el fundador está cayendo en "Sesgo de Confirmación" (busca validar lo que ya cree), "Ilusión de Control" (sobreestima su capacidad de ejecución), "Efecto Dunning-Kruger" (subestima la complejidad del mercado) u otros sesgos cognitivos comunes en fundadores, basándote en cómo describe el problema y la solución.
+
+# CONTEXTO RAG — PLAYBOOKS DE METODOLOGÍA
+${ragChunks || '(Sin contexto adicional disponible)'}
+
+Responde SOLO con JSON válido en español, sin texto adicional, sin markdown:
+{
+  "harsh_truth": "Un párrafo directo y honesto sobre el principal riesgo de fracaso",
+  "jtbd_analysis": "Cuál es el verdadero Job-to-be-Done que el cliente contrata",
+  "validation_playbook": ["Paso 1 exacto usando Mom Test", "Paso 2", "Paso 3"],
+  "unit_economics_check": "Evaluación de viabilidad financiera con benchmarks de la industria",
+  "tech_and_legal_stack": "Recomendación No-Code específica y advertencias legales en Chile",
+  "gtm_and_growth_plan": "El canal de adquisición recomendado (PLG / outbound B2B / community-led) y la táctica inicial concreta para los primeros 30 días",
+  "funding_verdict": "Dictamen explícito: ¿Pre-Seed con VC, grant/acceleradora, o bootstrapping primero? Indica qué hitos faltan antes de levantar capital",
+  "product_ai_strategy": "Evaluación técnica y de mercado (Blue Ocean): si usa IA, ¿es necesaria o es hype? Si no usa IA, ¿debería? Qué ventaja competitiva real otorga",
+  "founder_bias_warning": "Diagnóstico duro sobre los sesgos psicológicos detectados (Confirmación, Ilusión de Control, Dunning-Kruger, etc.) y cómo están distorsionando la visión del negocio",
+  "viability_score": 65
+}`;
 
 // ── Analysis cache ────────────────────────────────────────────────────────────
 async function checkAnalysisCache(
@@ -599,6 +715,7 @@ async function preprocessIdea(rawDescription: string): Promise<StructuredIdea | 
 async function callAnthropic(
   promptType: PromptType,
   context: Record<string, unknown>,
+  systemOverride?: string,
 ): Promise<AIResult> {
   if (!ANTHROPIC_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY no está configurada en los secrets de Supabase.');
@@ -612,7 +729,7 @@ async function callAnthropic(
     system: [
       {
         type: 'text',
-        text: SYSTEM_PROMPTS[promptType],
+        text: systemOverride ?? SYSTEM_PROMPTS[promptType],
         cache_control: { type: 'ephemeral' },
       },
     ],
@@ -668,6 +785,7 @@ async function callAnthropic(
 async function callOpenAI(
   promptType: PromptType,
   context: Record<string, unknown>,
+  systemOverride?: string,
 ): Promise<AIResult> {
   if (!OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY no está configurada en los secrets de Supabase.');
@@ -683,7 +801,13 @@ async function callOpenAI(
       model: 'gpt-4o-mini',
       max_tokens: 4096,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPTS[promptType] },
+        {
+          role: 'system',
+          content: (() => {
+            const p = systemOverride ?? SYSTEM_PROMPTS[promptType];
+            return /json/i.test(p) ? p : `${p}\n\nResponde SOLO con JSON válido, sin texto adicional, sin markdown.`;
+          })(),
+        },
         {
           role: 'user',
           content: `${buildMarketContext(context)}\n\n${JSON.stringify(context)}`,
@@ -718,31 +842,99 @@ async function callOpenAI(
 async function callAI(
   promptType: PromptType,
   context: Record<string, unknown>,
+  systemOverride?: string,
 ): Promise<AIResult> {
-  // Prompts que requieren web_search: solo Anthropic los soporta
+  // Prompts que idealmente usan web_search (solo Anthropic), pero si no hay créditos caen a OpenAI
   const requiresAnthropic = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
 
-  if (requiresAnthropic) {
-    return callAnthropic(promptType, context);
+  if (requiresAnthropic && ANTHROPIC_API_KEY) {
+    try {
+      return await callAnthropic(promptType, context, systemOverride);
+    } catch (err) {
+      console.warn(`[callAI] Anthropic failed for ${promptType}, falling back to OpenAI:`, err);
+    }
   }
 
   // Para el resto, usar el provider configurado con fallback
   if (AI_PROVIDER === 'openai') {
-    if (OPENAI_API_KEY) return callOpenAI(promptType, context);
+    if (OPENAI_API_KEY) return callOpenAI(promptType, context, systemOverride);
     console.warn('AI_PROVIDER=openai pero no hay OPENAI_API_KEY. Usando Anthropic como fallback.');
-    return callAnthropic(promptType, context);
+    return callAnthropic(promptType, context, systemOverride);
   }
 
   // Default: Anthropic
-  if (ANTHROPIC_API_KEY) return callAnthropic(promptType, context);
+  if (ANTHROPIC_API_KEY) return callAnthropic(promptType, context, systemOverride);
   // Último fallback: intentar OpenAI si hay key
   if (OPENAI_API_KEY) {
     console.warn('No hay ANTHROPIC_API_KEY. Usando OpenAI como fallback.');
-    return callOpenAI(promptType, context);
+    return callOpenAI(promptType, context, systemOverride);
   }
 
   throw new Error('No hay ningún AI provider configurado. Agrega ANTHROPIC_API_KEY o OPENAI_API_KEY a los secrets de Supabase.');
 }
+
+// ── Sector benchmarks (CAC / LTV / churn medians by industry + model) ────────
+// Source: Profitwell 2024, ChartMogul Benchmarks 2024, OpenView SaaS 2024
+// All values in USD unless noted. Updated: 2026-05.
+const SECTOR_BENCHMARKS: Record<string, Record<string, {
+  cac_usd: { min: number; max: number };
+  ltv_usd: { min: number; max: number };
+  monthly_churn_pct: { min: number; max: number };
+  payback_months: { min: number; max: number };
+  gross_margin_pct: number;
+  note: string;
+}>> = {
+  saas: {
+    b2b: { cac_usd: { min: 200, max: 800 }, ltv_usd: { min: 1500, max: 6000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 75, note: 'B2B SaaS mediana 2024 — ChartMogul' },
+    b2c: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 80, max: 400 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 70, note: 'B2C SaaS mediana 2024 — Profitwell' },
+    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 3000 }, monthly_churn_pct: { min: 2, max: 6 }, payback_months: { min: 4, max: 15 }, gross_margin_pct: 72, note: 'SaaS genérico — benchmark promedio 2024' },
+  },
+  fintech: {
+    b2b: { cac_usd: { min: 400, max: 1200 }, ltv_usd: { min: 3000, max: 15000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'Fintech B2B — altos costos de compliance y onboarding' },
+    b2c: { cac_usd: { min: 30, max: 120 }, ltv_usd: { min: 150, max: 800 }, monthly_churn_pct: { min: 2, max: 7 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 45, note: 'Fintech B2C LATAM — benchmark Kushki/Fintual 2023' },
+    default: { cac_usd: { min: 100, max: 600 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1, max: 5 }, payback_months: { min: 6, max: 20 }, gross_margin_pct: 50, note: 'Fintech genérico LATAM' },
+  },
+  edtech: {
+    b2b: { cac_usd: { min: 300, max: 900 }, ltv_usd: { min: 2000, max: 8000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 6, max: 15 }, gross_margin_pct: 65, note: 'EdTech B2B — ventas institucionales (colegios, empresas)' },
+    b2c: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 300 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 68, note: 'EdTech B2C LATAM — churn alto en primeros 3 meses' },
+    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 1500 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 66, note: 'EdTech genérico' },
+  },
+  healthtech: {
+    b2b: { cac_usd: { min: 500, max: 2000 }, ltv_usd: { min: 5000, max: 30000 }, monthly_churn_pct: { min: 0.5, max: 1.5 }, payback_months: { min: 12, max: 36 }, gross_margin_pct: 60, note: 'HealthTech B2B — ciclos de venta largos (6-18 meses)' },
+    b2c: { cac_usd: { min: 40, max: 150 }, ltv_usd: { min: 200, max: 1000 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 5, max: 15 }, gross_margin_pct: 55, note: 'HealthTech B2C — retención alta si genera resultados' },
+    default: { cac_usd: { min: 150, max: 800 }, ltv_usd: { min: 800, max: 8000 }, monthly_churn_pct: { min: 1, max: 6 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 57, note: 'HealthTech genérico' },
+  },
+  ecommerce: {
+    b2c: { cac_usd: { min: 10, max: 50 }, ltv_usd: { min: 50, max: 350 }, monthly_churn_pct: { min: 5, max: 15 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 35, note: 'E-commerce B2C — márgenes bajos, volumen necesario' },
+    marketplace: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 100, max: 600 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 30, note: 'Marketplace — take rate 10-20%' },
+    default: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 7 }, gross_margin_pct: 32, note: 'E-commerce genérico LATAM' },
+  },
+  marketplace: {
+    default: { cac_usd: { min: 25, max: 100 }, ltv_usd: { min: 120, max: 700 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 30, note: 'Marketplace — 2 lados del mercado (supply + demand)' },
+  },
+  logistics: {
+    b2b: { cac_usd: { min: 300, max: 1000 }, ltv_usd: { min: 2500, max: 12000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 8, max: 20 }, gross_margin_pct: 25, note: 'Logística B2B — márgenes bajos, alto volumen' },
+    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1.5, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 25, note: 'Logística genérico LATAM' },
+  },
+  foodtech: {
+    b2c: { cac_usd: { min: 8, max: 30 }, ltv_usd: { min: 40, max: 200 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 5 }, gross_margin_pct: 28, note: 'FoodTech B2C — altísimo churn, retention es el reto' },
+    b2b: { cac_usd: { min: 200, max: 700 }, ltv_usd: { min: 1500, max: 7000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 5, max: 14 }, gross_margin_pct: 32, note: 'FoodTech B2B (restaurantes, dark kitchens)' },
+    default: { cac_usd: { min: 20, max: 200 }, ltv_usd: { min: 80, max: 2000 }, monthly_churn_pct: { min: 4, max: 15 }, payback_months: { min: 2, max: 10 }, gross_margin_pct: 30, note: 'FoodTech genérico' },
+  },
+  proptech: {
+    b2b: { cac_usd: { min: 400, max: 1500 }, ltv_usd: { min: 3000, max: 20000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 10, max: 30 }, gross_margin_pct: 60, note: 'PropTech B2B — ciclos largos, alta retención' },
+    default: { cac_usd: { min: 100, max: 800 }, ltv_usd: { min: 500, max: 8000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'PropTech genérico' },
+  },
+  social: {
+    b2c: { cac_usd: { min: 1, max: 15 }, ltv_usd: { min: 5, max: 80 }, monthly_churn_pct: { min: 10, max: 25 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 70, note: 'Social B2C — monetización por ads o freemium' },
+    default: { cac_usd: { min: 2, max: 20 }, ltv_usd: { min: 10, max: 100 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 65, note: 'Social genérico' },
+  },
+  other: {
+    b2b: { cac_usd: { min: 200, max: 700 }, ltv_usd: { min: 1200, max: 6000 }, monthly_churn_pct: { min: 1.5, max: 5 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 55, note: 'B2B genérico — ajustar por sector específico' },
+    b2c: { cac_usd: { min: 15, max: 80 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 50, note: 'B2C genérico — ajustar por producto y precio' },
+    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 2000 }, monthly_churn_pct: { min: 2, max: 8 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 52, note: 'Benchmarks genéricos 2024' },
+  },
+};
 
 // ── Handler HTTP ──────────────────────────────────────────────────────────────
 // ── Prompt type whitelist ──────────────────────────────────────────────────────
@@ -866,6 +1058,56 @@ serve(async (req) => {
       }
     }
 
+    // RAG: inyectar playbooks metodológicos según el tipo de prompt
+    let ragSystemOverride: string | undefined;
+    const ragQueryText = rawDescription
+      ? `${rawDescription} ${context.target_country ?? ''} ${context.business_model ?? ''}`.trim()
+      : '';
+
+    if (ragQueryText && RAG_TAGS_BY_PROMPT[prompt_type]) {
+      const ragChunks = await retrieveRagPlaybooks(supabase, ragQueryText, prompt_type);
+      if (ragChunks) {
+        if (prompt_type === 'playbook_analysis') {
+          // Para playbook_analysis el prompt completo es el Maestro con RAG incrustado
+          ragSystemOverride = PLAYBOOK_MASTER_PROMPT(ragChunks);
+        } else {
+          // Para otros tipos, inyectar el contexto al final del prompt actual
+          const basePrompt = SYSTEM_PROMPTS[prompt_type];
+          ragSystemOverride = `${basePrompt}\n\n# CONTEXTO METODOLÓGICO ADICIONAL (RAG)\n${ragChunks}`;
+        }
+      }
+    }
+
+    // BCCh macro: inyectar últimas series IPC para market_sizing
+    if (prompt_type === 'market_sizing') {
+      const { data: bdeRows } = await supabase
+        .from('market_bde_data')
+        .select('series_desc, obs_date, value')
+        .in('series_id', ['G073.IPC.IND.2023.M', 'G073.IPC.V12.2023.M'])
+        .order('obs_date', { ascending: false })
+        .limit(6);
+
+      if (bdeRows && bdeRows.length > 0) {
+        const summary = bdeRows.map(
+          (r: { series_desc: string; obs_date: string; value: number }) =>
+            `${r.series_desc} (${r.obs_date}): ${r.value}`,
+        ).join(' | ');
+        enrichedContext = { ...enrichedContext, bde_macro_context: summary };
+      }
+    }
+
+    // Benchmarks sectoriales: inyectar para unit_economics
+    if (prompt_type === 'unit_economics') {
+      const industry = (context.idea_industry ?? context.industry ?? '') as string;
+      const model    = (context.business_model ?? '') as string;
+      const benchmark = SECTOR_BENCHMARKS[industry]?.[model]
+        ?? SECTOR_BENCHMARKS[industry]?.['default']
+        ?? null;
+      if (benchmark) {
+        enrichedContext = { ...enrichedContext, industry_benchmarks: benchmark };
+      }
+    }
+
     // Caché: verificar si existe un análisis similar reciente
     const cacheableTypes = ['summary', 'risk_analysis', 'unit_economics', 'market_sizing'];
     const ideaCacheKey = rawDescription
@@ -884,7 +1126,7 @@ serve(async (req) => {
     }
 
     // Llamada AI con routing dual
-    const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext);
+    const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride);
 
     // Guardar en caché (no bloqueante)
     if (ideaCacheKey && cacheableTypes.includes(prompt_type)) {

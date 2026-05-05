@@ -52,38 +52,6 @@ function MapScene({
   );
 }
 
-// ─── Loading skeleton 3D ──────────────────────────────────────────────────────
-function MapLoading() {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '12px',
-        color: '#64748b',
-        fontSize: '13px',
-      }}
-    >
-      <div
-        style={{
-          width: '40px',
-          height: '40px',
-          border: '2px solid #334155',
-          borderTopColor: '#3b82f6',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }}
-      />
-      <span>Cargando mapa de Chile…</span>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
-
 // ─── Selector de métrica ──────────────────────────────────────────────────────
 const METRIC_OPTIONS: { key: MapMetric; icon: typeof Globe; label: string; sublabel: string }[] = [
   { key: 'TAM', icon: Globe,  label: 'TAM', sublabel: 'Total' },
