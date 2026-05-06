@@ -9,12 +9,6 @@ import {
   Circle,
   G,
 } from '@react-pdf/renderer';
-// react-pdf's SVGTextProps types are incomplete (no fontSize/fontFamily).
-// This wrapper isolates the `any` cast to one controlled place.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SvgText(props: Record<string, any>) {
-  return <Text {...props} />;
-}
 import { styles, colors } from './pdfStyles';
 import type { PDFData } from '@/lib/pdf';
 import type {
@@ -85,112 +79,78 @@ function gridPoints(level: number): string {
   }).join(' ');
 }
 
-// react-pdf SVG Text doesn't support textAnchor fully in all versions;
-// we nudge x manually based on which side of center the label lands.
-function labelAnchor(i: number): { anchor: string; dx: number } {
-  const a = radarAngle(i);
-  const cos = Math.cos(a);
-  if (cos > 0.15)  return { anchor: 'start',  dx:  3 };
-  if (cos < -0.15) return { anchor: 'end',    dx: -3 };
-  return             { anchor: 'middle', dx:  0 };
-}
 
 function RadarChart({ sb }: { sb: ScoreBreakdown }) {
-  const values = RADAR_KEYS.map(({ key }) => sb[key]);
+  // Normalize 0-100 scores to 0-1 fractions for geometry calculations
+  const values = RADAR_KEYS.map(({ key }) => Math.min((sb[key] ?? 0) / 100, 1));
   const dataPolygon = polygonPoints(values);
   const GRID_LEVELS = [0.25, 0.5, 0.75, 1];
 
   return (
-    <Svg viewBox="0 0 160 160" width={160} height={160}>
-      {/* Grid pentagons */}
-      {GRID_LEVELS.map((lvl) => (
-        <Polygon
-          key={lvl}
-          points={gridPoints(lvl)}
-          fill="none"
-          stroke={lvl === 1 ? '#3A4E68' : '#2A3A52'}
-          strokeWidth={lvl === 1 ? 0.8 : 0.5}
-        />
-      ))}
-
-      {/* Axis spokes */}
-      {RADAR_KEYS.map((_, i) => {
-        const tip = radarPoint(R, i);
-        return (
-          <Line
-            key={i}
-            x1={CX}
-            y1={CY}
-            x2={tip.x}
-            y2={tip.y}
-            stroke="#2A3A52"
-            strokeWidth={0.5}
+    <View>
+      <Svg viewBox="0 0 160 160" width={160} height={160}>
+        {/* Grid pentagons */}
+        {GRID_LEVELS.map((lvl) => (
+          <Polygon
+            key={lvl}
+            points={gridPoints(lvl)}
+            fill="none"
+            stroke={lvl === 1 ? '#3A4E68' : '#2A3A52'}
+            strokeWidth={lvl === 1 ? 0.8 : 0.5}
           />
-        );
-      })}
+        ))}
 
-      {/* Data polygon — filled area */}
-      <Polygon
-        points={dataPolygon}
-        fill={`${colors.accent}33`}
-        stroke={colors.accent}
-        strokeWidth={1.5}
-      />
+        {/* Axis spokes */}
+        {RADAR_KEYS.map((_, i) => {
+          const tip = radarPoint(R, i);
+          return (
+            <Line
+              key={i}
+              x1={CX}
+              y1={CY}
+              x2={tip.x}
+              y2={tip.y}
+              stroke="#2A3A52"
+              strokeWidth={0.5}
+            />
+          );
+        })}
 
-      {/* Data vertices */}
-      {values.map((v, i) => {
-        const { x, y } = radarPoint(R * Math.min(v, 1), i);
-        return (
-          <G key={i}>
-            <Circle cx={x} cy={y} r={3} fill={colors.accent} />
-            <Circle cx={x} cy={y} r={1.5} fill={colors.white} />
-          </G>
-        );
-      })}
+        {/* Data polygon — filled area */}
+        <Polygon
+          points={dataPolygon}
+          fill={`${colors.accent}33`}
+          stroke={colors.accent}
+          strokeWidth={1.5}
+        />
 
-      {/* Center dot */}
-      <Circle cx={CX} cy={CY} r={2} fill="#2A3A52" />
+        {/* Data vertices */}
+        {values.map((v, i) => {
+          const { x, y } = radarPoint(R * v, i);
+          return (
+            <G key={i}>
+              <Circle cx={x} cy={y} r={3} fill={colors.accent} />
+              <Circle cx={x} cy={y} r={1.5} fill={colors.white} />
+            </G>
+          );
+        })}
 
-      {/* Labels */}
-      {RADAR_KEYS.map(({ label }, i) => {
-        const { x, y } = radarPoint(RL, i);
-        const { anchor, dx } = labelAnchor(i);
-        // Nudge label above/below based on vertical position
-        const a = radarAngle(i);
-        const dy = Math.sin(a) < -0.15 ? -3 : Math.sin(a) > 0.15 ? 5 : 1;
-        return (
-          <SvgText
-            key={i}
-            x={x + dx}
-            y={y + dy}
-            fontSize={6.5}
-            fill={colors.muted}
-            textAnchor={anchor as 'start' | 'middle' | 'end'}
-            fontFamily="Helvetica"
-          >
-            {label}
-          </SvgText>
-        );
-      })}
+        {/* Center dot */}
+        <Circle cx={CX} cy={CY} r={2} fill="#2A3A52" />
+      </Svg>
 
-      {/* Score value near each vertex */}
-      {values.map((v, i) => {
-        const { x, y } = radarPoint(R * Math.min(v, 1) + 8, i);
-        return (
-          <SvgText
-            key={i}
-            x={x}
-            y={y}
-            fontSize={6}
-            fill={colors.accent}
-            textAnchor="middle"
-            fontFamily="Helvetica-Bold"
-          >
-            {Math.round(v * 100)}
-          </SvgText>
-        );
-      })}
-    </Svg>
+      {/* Axis labels rendered outside SVG (react-pdf Text in SVG context is unsupported) */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+        {RADAR_KEYS.map(({ label, key }, i) => (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginRight: 6 }}>
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent }} />
+            <Text style={{ fontSize: 7, color: colors.muted }}>
+              {label}: {sb[key] ?? 0}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -219,16 +179,15 @@ function BulletList({ items }: { items: string[] }) {
 }
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
-  // ScoreBreakdown values are 0–1 fractions
-  const pct = Math.min(value, 1);
-  const display = Math.round(pct * 100);
+  // ScoreBreakdown values are 0–100
+  const display = Math.round(Math.min(value, 100));
   const color = scoreColor(display);
   return (
     <View style={styles.scoreRow}>
       <Text style={styles.scoreLabel}>{label}</Text>
       <View style={styles.scoreBar}>
         <View
-          style={[styles.scoreBarFill, { width: `${pct * 100}%`, backgroundColor: color }]}
+          style={[styles.scoreBarFill, { width: `${display}%`, backgroundColor: color }]}
         />
       </View>
       <Text style={[styles.scoreValue, { color }]}>{display}</Text>
@@ -514,7 +473,7 @@ function FinancialsPage({ data }: { data: PDFData }) {
                 ['LTV/CAC',      `${ue.ltvCacRatio.value.toFixed(1)}x (${ue.ltvCacRatio.assessment})`],
                 ['Payback',      `${ue.paybackMonths.min}–${ue.paybackMonths.max} meses`],
                 ['Break-even',   `${ue.breakEvenUsers.toLocaleString()} usuarios`],
-                ['Churn mensual',`${(ue.monthlyChurnEstimate * 100).toFixed(1)}%`],
+                ['Churn mensual',`${ue.monthlyChurnEstimate}%`],
               ].map(([label, val], i) => (
                 <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                   <Text style={{ fontSize: 9, color: colors.muted }}>{label}</Text>

@@ -1925,6 +1925,10 @@ export async function generatePremiumPDF(data: PDFData): Promise<void> {
   const a    = document.createElement('a');
   a.href     = url;
   a.download = `ValidateAI_Dossier_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  // Delay revoke so the browser can start reading the blob URL before it's released
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

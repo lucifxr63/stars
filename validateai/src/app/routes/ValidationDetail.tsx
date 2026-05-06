@@ -111,7 +111,11 @@ export function ValidationDetail() {
   const [reanalyzing, setReanalyzing] = useState(false);
   const [generatingAdvanced, setGeneratingAdvanced] = useState(false);
   const [generatingVerdict, setGeneratingVerdict] = useState(false);
-  const [verdictGenerated, setVerdictGenerated] = useState(false);
+  // Persiste en sessionStorage por validationId para sobrevivir navegaciones dentro de la sesión
+  const verdictSessionKey = `verdict_generated_${id}`;
+  const [verdictGenerated, setVerdictGenerated] = useState(
+    () => sessionStorage.getItem(verdictSessionKey) === 'true'
+  );
   const [activeTab, setActiveTab] = useState<DashboardTab>('Veredicto');
   const [pdfTheme, setPdfTheme] = useState<PDFTheme>(() => {
     return (localStorage.getItem('validateai_pdf_theme') as PDFTheme) ?? 'clean';
@@ -177,6 +181,9 @@ export function ValidationDetail() {
 
     const generate = async () => {
       setGeneratingVerdict(true);
+      // Marcar en sessionStorage ANTES de la llamada para evitar doble disparo
+      sessionStorage.setItem(verdictSessionKey, 'true');
+      setVerdictGenerated(true);
       try {
         const ctx: Record<string, unknown> = {
           idea_name: data.idea_name,
@@ -190,7 +197,6 @@ export function ValidationDetail() {
           value_proposition: data.value_proposition,
           differentiator: data.differentiator,
           questions_answers: data.questions_answers,
-          // Campos enriquecidos del Wizard v2 — claves para el Prompt Maestro
           current_solution: data.current_solution,
           acquisition_channel: data.acquisition_channel,
           tech_level: data.tech_level,
@@ -198,12 +204,19 @@ export function ValidationDetail() {
         const result = await callAI<PlaybookAnalysis>(data.id, 6, 'playbook_analysis', ctx);
         if (result) {
           setData((prev) => prev ? { ...prev, playbook_analysis: result } : prev);
+          // Save explícito desde el cliente como fallback al save del edge function
+          supabase
+            .from('validations')
+            .update({ playbook_analysis: result })
+            .eq('id', data.id)
+            .then(({ error }) => {
+              if (error) console.warn('[veredicto] Fallback save error:', error.message);
+            });
         }
       } catch {
         toast.error('No se pudo generar el veredicto. Intenta de nuevo.');
       } finally {
         setGeneratingVerdict(false);
-        setVerdictGenerated(true);
       }
     };
     generate();

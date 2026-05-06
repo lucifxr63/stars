@@ -5,6 +5,7 @@ import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
 import { toast } from 'sonner';
 import { trackWizardStep, trackValidationCompleted } from '@/hooks/useAnalytics';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type GenerationStatus = 'pending' | 'loading' | 'success' | 'error';
 
@@ -273,44 +274,139 @@ export function StepGenerating() {
     }
   };
 
+  const completedCount = tasks.filter(t => t.status === 'success' || t.status === 'error').length;
+  const progressPct = Math.round((completedCount / tasks.length) * 100);
+
+  const TASK_DESCRIPTIONS: Record<string, string> = {
+    summary:              'Analizando viabilidad con criterios de inversor VC',
+    market_sizing:        'Estimando TAM/SAM/SOM con datos del mercado objetivo',
+    competitive_analysis: 'Mapeando competidores e identificando gaps de mercado',
+    risk_analysis:        'Evaluando riesgos de mercado, técnicos y regulatorios',
+    unit_economics:       'Calculando CAC, LTV y métricas financieras clave',
+    founder_fit:          'Evaluando fit fundador-mercado y Unfair Advantage',
+  };
+
   if (isPremium || validationMode === 'quick') {
     return <PremiumTerminal />;
   }
 
   return (
-    <div className="flex flex-col items-center justify-center py-10">
-      <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
-        <div className="text-3xl animate-bounce">🤖</div>
+    <div className="flex flex-col py-8 space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-100 dark:border-indigo-800/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg className="w-7 h-7 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-black text-gray-900 dark:text-[#F0EFF8] mb-1">
+          Validando tu idea con criterios VC
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-[#8B8AA0] max-w-sm mx-auto leading-relaxed">
+          Nuestros agentes analizan viabilidad, mercado y competencia en paralelo.
+        </p>
       </div>
-      <h2 className="text-xl font-black text-gray-900 dark:text-[#F0EFF8] mb-2">Construyendo tu reporte...</h2>
-      <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-8 text-center max-w-sm">
-        Nuestra IA está analizando todas las aristas de tu idea. Esto tomará unos segundos.
-      </p>
 
-      <div className="w-full space-y-3">
+      {/* Barra de progreso global */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs font-medium">
+          <span className="text-gray-500 dark:text-[#8B8AA0]">Progreso del análisis</span>
+          <span className="text-indigo-600 dark:text-indigo-400 tabular-nums">{progressPct}%</span>
+        </div>
+        <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Tasks */}
+      <div className="space-y-2.5">
         {tasks.map(task => (
-          <div key={task.id} className="flex items-center justify-between p-4 bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl">
-            <span className={`text-sm font-semibold transition-colors ${
-              task.status === 'pending' ? 'text-gray-400' :
-              task.status === 'loading' ? 'text-indigo-600' :
-              task.status === 'success' ? 'text-emerald-600' : 'text-red-500'
-            }`}>
-              {task.label}
-            </span>
-            <div className="flex items-center bg-gray-50 dark:bg-[#0A0A0F] px-2.5 py-1.5 rounded-full">
-              {task.status === 'pending' && <span className="text-xs text-gray-400 font-medium">En espera</span>}
-              {task.status === 'loading' && (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mr-1.5" />
-                  <span className="text-xs text-indigo-600 font-bold">Generando</span>
-                </>
+          <div
+            key={task.id}
+            className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 ${
+              task.status === 'success'
+                ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30'
+                : task.status === 'loading'
+                ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/30'
+                : task.status === 'error'
+                ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30'
+                : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
+            }`}
+          >
+            {/* Status icon */}
+            <div className="shrink-0">
+              {task.status === 'pending' && (
+                <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-white/20" />
+                </div>
               )}
-              {task.status === 'success' && <span className="text-xs text-emerald-600 font-black">✓ Listo</span>}
-              {task.status === 'error' && <span className="text-xs text-red-500 font-bold">Error</span>}
+              {task.status === 'loading' && (
+                <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-800/30 flex items-center justify-center">
+                  <div className="w-3.5 h-3.5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                </div>
+              )}
+              {task.status === 'success' && (
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-800/30 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {task.status === 'error' && (
+                <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-800/30 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Label + description */}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-semibold leading-tight ${
+                task.status === 'success' ? 'text-emerald-700 dark:text-emerald-400' :
+                task.status === 'loading' ? 'text-indigo-700 dark:text-indigo-300' :
+                task.status === 'error'   ? 'text-red-600 dark:text-red-400' :
+                'text-gray-400 dark:text-[#4A495E]'
+              }`}>
+                {task.label}
+              </p>
+              {task.status === 'loading' && TASK_DESCRIPTIONS[task.type] && (
+                <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5 leading-tight">
+                  {TASK_DESCRIPTIONS[task.type]}
+                </p>
+              )}
+            </div>
+
+            {/* Badge */}
+            <div className="shrink-0">
+              {task.status === 'pending' && <span className="text-xs text-gray-300 dark:text-[#4A495E] font-medium">En espera</span>}
+              {task.status === 'loading' && <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold animate-pulse">Analizando...</span>}
+              {task.status === 'success' && <span className="text-xs text-emerald-600 font-black">Listo</span>}
+              {task.status === 'error'   && <span className="text-xs text-red-500 font-bold">Parcial</span>}
             </div>
           </div>
         ))}
       </div>
+
+      {/* Preview skeleton del reporte final */}
+      {progressPct < 100 && (
+        <div className="space-y-2 opacity-40">
+          <p className="text-xs font-medium text-gray-400 dark:text-[#4A495E] uppercase tracking-wide">Vista previa del reporte</p>
+          <div className="p-4 bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/5 rounded-2xl space-y-3">
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-4/5" />
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
