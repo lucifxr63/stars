@@ -274,6 +274,28 @@ function CoverPage({ data }: { data: PDFData }) {
           <Text style={styles.coverMetaValue}>{date}</Text>
         </View>
       </View>
+
+      {/* "Audited by ValidateAI Pro" stamp — PLG watermark */}
+      {data.due_diligence && (
+        <View style={{
+          marginHorizontal: 40,
+          marginTop: 12,
+          paddingVertical: 6,
+          paddingHorizontal: 12,
+          backgroundColor: '#7C6FF7',
+          borderRadius: 6,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+        }}>
+          <Text style={{ fontSize: 7, color: '#ffffff', fontWeight: 'bold', letterSpacing: 0.5 }}>
+            ✓ AUDITED BY VALIDATEAI PRO · validateai-mu.vercel.app
+          </Text>
+          <Text style={{ fontSize: 7, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>
+            DD Score: {data.due_diligence.total}/100
+          </Text>
+        </View>
+      )}
     </Page>
   );
 }
@@ -621,6 +643,107 @@ function InvestmentPage({ data }: { data: PDFData }) {
   );
 }
 
+// ── Due Diligence Page ─────────────────────────────────────────────────────────
+
+function DueDiligencePage({ data }: { data: PDFData }) {
+  const dd = data.due_diligence!;
+  const readinessLabel =
+    dd.investorReadiness === 'ready'      ? 'LISTO PARA RONDA' :
+    dd.investorReadiness === 'developing' ? 'EN DESARROLLO'    :
+    dd.investorReadiness === 'early'      ? 'ETAPA TEMPRANA'   : 'NO LISTO';
+  const scoreCol = dd.total >= 70 ? colors.green : dd.total >= 45 ? colors.amber : colors.red;
+
+  const DIMS: { key: keyof typeof dd.dimensions; label: string }[] = [
+    { key: 'financiero', label: 'Financiero' },
+    { key: 'legal',      label: 'Legal'      },
+    { key: 'mercado',    label: 'Mercado'    },
+    { key: 'equipo',     label: 'Equipo'     },
+    { key: 'traccion',   label: 'Tracción'   },
+  ];
+
+  return (
+    <Page size="A4" style={styles.page}>
+      {/* Header */}
+      <View style={{ backgroundColor: '#7C6FF7', padding: 20, marginBottom: 24 }}>
+        <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, marginBottom: 4 }}>
+          DUE DILIGENCE SCORE
+        </Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff' }}>
+          Preparación para Ronda de Inversión
+        </Text>
+      </View>
+
+      <View style={{ paddingHorizontal: 28 }}>
+        {/* Score hero */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: scoreCol, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#ffffff' }}>{dd.total}</Text>
+            <Text style={{ fontSize: 7, color: 'rgba(255,255,255,0.8)' }}>/100</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={[styles.pill, { backgroundColor: scoreCol + '22', color: scoreCol, alignSelf: 'flex-start', marginBottom: 4 }]}>
+              <Text style={{ fontSize: 8, fontWeight: 'bold', color: scoreCol }}>{readinessLabel}</Text>
+            </View>
+            <Text style={{ fontSize: 8.5, color: '#475569', lineHeight: 1.5 }}>
+              Score de preparación evaluado en 5 dimensiones: Financiero, Legal, Mercado, Equipo y Tracción.
+              Un score de 80+ indica readiness para primera reunión con inversores VC.
+            </Text>
+          </View>
+        </View>
+
+        {/* Dimension bars */}
+        <Text style={{ fontSize: 8, fontWeight: 'bold', color: colors.muted, letterSpacing: 0.8, marginBottom: 10 }}>
+          DESGLOSE POR DIMENSIÓN
+        </Text>
+        {DIMS.map(({ key, label }) => {
+          const dim = dd.dimensions[key];
+          const dc = dim.score >= 70 ? colors.green : dim.score >= 45 ? colors.amber : colors.red;
+          return (
+            <View key={key} style={{ marginBottom: 10 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
+                <Text style={{ fontSize: 8.5, fontWeight: 'bold', color: '#334155' }}>{label}</Text>
+                <Text style={{ fontSize: 8.5, fontWeight: 'bold', color: dc }}>{dim.score}/100</Text>
+              </View>
+              <View style={{ height: 5, backgroundColor: '#E5E7EB', borderRadius: 3 }}>
+                <View style={{ height: 5, width: `${dim.score}%`, backgroundColor: dc, borderRadius: 3 }} />
+              </View>
+              {dim.gaps.length > 0 && (
+                <Text style={{ fontSize: 6.5, color: colors.muted, marginTop: 2 }}>
+                  {dim.gaps.slice(0, 2).join(' · ')}
+                </Text>
+              )}
+            </View>
+          );
+        })}
+
+        {/* Top Gaps */}
+        {dd.topGaps.length > 0 && (
+          <View style={{ marginTop: 16 }}>
+            <Text style={{ fontSize: 8, fontWeight: 'bold', color: colors.muted, letterSpacing: 0.8, marginBottom: 8 }}>
+              GAPS CRÍTICOS — QUÉ EXIGIRÁ UN INVERSOR
+            </Text>
+            {dd.topGaps.slice(0, 5).map((gap, i) => (
+              <View key={i} style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
+                <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+                  <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#DC2626' }}>{i + 1}</Text>
+                </View>
+                <Text style={{ flex: 1, fontSize: 8, color: '#334155', lineHeight: 1.5 }}>{gap}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Stamp */}
+        <View style={{ marginTop: 20, padding: 8, backgroundColor: '#7C6FF7', borderRadius: 4, alignItems: 'center' }}>
+          <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#ffffff', letterSpacing: 0.5 }}>
+            ✓ AUDITED BY VALIDATEAI PRO · validateai-mu.vercel.app
+          </Text>
+        </View>
+      </View>
+    </Page>
+  );
+}
+
 // ── Root Document ──────────────────────────────────────────────────────────────
 
 export function InvestmentDossier({ data }: { data: PDFData }) {
@@ -635,6 +758,7 @@ export function InvestmentDossier({ data }: { data: PDFData }) {
       <ExecutiveSummaryPage data={data} />
       <MarketPage data={data} />
       <FinancialsPage data={data} />
+      {data.due_diligence && <DueDiligencePage data={data} />}
       <InvestmentPage data={data} />
     </Document>
   );

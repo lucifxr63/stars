@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { StepIdea, StepMarket, StepFounder, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals } from '@/types/validation';
+import type {
+  StepIdea, StepMarket, StepFounder,
+  RiskAnalysis, UnitEconomics, FounderFit, MarketSignals,
+  ExtractedProjectData, PendingQuestion, DueDiligenceScore, UploadStatus,
+} from '@/types/validation';
 
 interface ValidationState {
   validationId: string | null;
@@ -50,6 +54,19 @@ interface ValidationState {
   setAgentLogId: (id: string) => void;
   setPremiumResult: (result: ValidationState['premiumResult']) => void;
   reset: () => void;
+
+  // ── Due Diligence ──────────────────────────────────────────────────────────
+  extractedData: ExtractedProjectData | null;
+  pendingQuestions: PendingQuestion[];
+  dueDiligenceScore: DueDiligenceScore | null;
+  uploadStatus: UploadStatus;
+  activeTaskCard: string | null;
+
+  setExtractedData: (data: ExtractedProjectData) => void;
+  setPendingQuestions: (questions: PendingQuestion[]) => void;
+  setDueDiligenceScore: (score: DueDiligenceScore) => void;
+  setUploadStatus: (status: UploadStatus) => void;
+  setActiveTaskCard: (card: string | null) => void;
 }
 
 const initialState = {
@@ -71,6 +88,11 @@ const initialState = {
   validationMode: 'detailed' as const,
   agentLogId: null,
   premiumResult: null,
+  extractedData: null,
+  pendingQuestions: [],
+  dueDiligenceScore: null,
+  uploadStatus: 'idle' as UploadStatus,
+  activeTaskCard: null,
 };
 
 export const useValidationStore = create<ValidationState>()(
@@ -96,6 +118,11 @@ export const useValidationStore = create<ValidationState>()(
         setAgentLogId: (id) => set({ agentLogId: id }),
         setPremiumResult: (result) => set({ premiumResult: result }),
         reset: () => set(initialState),
+        setExtractedData: (data) => set({ extractedData: data }),
+        setPendingQuestions: (questions) => set({ pendingQuestions: questions }),
+        setDueDiligenceScore: (score) => set({ dueDiligenceScore: score }),
+        setUploadStatus: (status) => set({ uploadStatus: status }),
+        setActiveTaskCard: (card) => set({ activeTaskCard: card }),
       }),
       { name: 'validateai-session' }
     )

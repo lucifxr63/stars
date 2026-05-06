@@ -40,6 +40,7 @@ export function ExportPDF() {
         founder_fit:          null,
         market_signals:       null,
         from_cache:           store.fromCache,
+        due_diligence:        store.dueDiligenceScore ?? null,
       });
       toast.success('PDF descargado correctamente');
     } catch {

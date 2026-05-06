@@ -33,6 +33,7 @@ import { GovernanceCard } from '@/components/shared/GovernanceCard';
 import { FundraisingRoadmapCard } from '@/components/shared/FundraisingRoadmapCard';
 import { TractionTracker } from '@/components/shared/TractionTracker';
 import { PlaybookAnalysisCard } from '@/components/shared/PlaybookAnalysisCard';
+import { DueDiligenceScoreCard } from '@/components/shared/DueDiligenceScoreCard';
 import type {
   MarketSizing,
   CompetitiveAnalysis as CompetitiveAnalysisType,
@@ -44,6 +45,8 @@ import type {
   GovernanceAssessment,
   FundraisingRoadmap,
   PlaybookAnalysis,
+  DueDiligenceScore,
+  ExtractedProjectData,
 } from '@/types/validation';
 
 interface ValidationFull {
@@ -91,10 +94,12 @@ interface ValidationFull {
   created_at: string;
   completed_at: string | null;
   version: number;
+  due_diligence_score: DueDiligenceScore | null;
+  due_diligence_extracted: ExtractedProjectData | null;
 }
 
 
-const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión'] as const;
+const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión', 'Due Diligence'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
 
 export function ValidationDetail() {
@@ -507,6 +512,7 @@ export function ValidationDetail() {
         playbook_analysis:     freshData.playbook_analysis ?? null,
         mentors:               mentors.length ? mentors : undefined,
         validation_score:      freshData.validation_score ?? null,
+        due_diligence:         freshData.due_diligence_score ?? null,
       }, pdfTheme);
 
       trackDeliverableDownloaded('pdf_fresh', pdfTheme);
@@ -553,6 +559,7 @@ export function ValidationDetail() {
         playbook_analysis:     data.playbook_analysis ?? null,
         mentors:               mentors.length ? mentors : undefined,
         validation_score:      data.validation_score ?? null,
+        due_diligence:         data.due_diligence_score ?? null,
       });
       trackDeliverableDownloaded('pdf_premium', pdfTheme);
       toast.success('PDF premium descargado');
@@ -1182,6 +1189,40 @@ export function ValidationDetail() {
               />
             </div>
           )}
+          {/* ── DUE DILIGENCE ──────────────────────────────────────────────── */}
+          {activeTab === 'Due Diligence' && (
+            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {data.due_diligence_score ? (
+                <DueDiligenceScoreCard
+                  score={data.due_diligence_score}
+                  extractedData={data.due_diligence_extracted}
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-4 py-14 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center">
+                    <svg className="w-7 h-7 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-gray-800 dark:text-[#F0EFF8] mb-1">
+                      Due Diligence Score no generado
+                    </h3>
+                    <p className="text-sm text-gray-400 dark:text-[#8B8AA0] max-w-sm leading-relaxed">
+                      Sube tu Pitch Deck o Business Plan en el flujo de validación para obtener tu score automatizado de preparación para ronda.
+                    </p>
+                  </div>
+                  <a
+                    href="/validate"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#7C6FF7]/25"
+                  >
+                    Subir documento →
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
 

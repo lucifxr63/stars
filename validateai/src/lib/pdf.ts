@@ -1,4 +1,4 @@
-import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch } from '@/types/validation';
+import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore } from '@/types/validation';
 import { matchCorfoInstruments } from '@/data/corfoInstruments';
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -35,6 +35,7 @@ export interface PDFData {
   mentors?: Pick<MentorMatch, 'name' | 'bio' | 'expertise' | 'session_price_clp'>[];
   validation_score?: number | null;
   from_cache?: boolean;
+  due_diligence?: DueDiligenceScore | null;
 }
 
 export type PDFTheme = 'dark' | 'clean' | 'gradient';
@@ -1847,6 +1848,84 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         y += 4;
       }
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 15b · DUE DILIGENCE SCORE (si disponible)
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (data.due_diligence) {
+    const dd = data.due_diligence;
+    checkPage(60);
+    sectionHeader('Due Diligence Score — Preparación para Ronda de Inversión', [124, 111, 247]);
+
+    // Score hero row
+    const ddColor: [number,number,number] = dd.total >= 70 ? C.green : dd.total >= 45 ? C.amber : C.red;
+    const readinessLabel = dd.investorReadiness === 'ready' ? 'LISTO PARA RONDA' : dd.investorReadiness === 'developing' ? 'EN DESARROLLO' : dd.investorReadiness === 'early' ? 'ETAPA TEMPRANA' : 'NO LISTO';
+    doc.setFillColor(...ddColor);
+    doc.roundedRect(MARGIN, y, 36, 18, 2, 2, 'F');
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.white);
+    doc.text(`${dd.total}`, MARGIN + 6, y + 12);
+    doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+    doc.text('/100', MARGIN + 22, y + 12);
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...ddColor);
+    doc.text(readinessLabel, MARGIN + 40, y + 9);
+    doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.gray);
+    doc.text('Score de preparación para due diligence de inversores VC.', MARGIN + 40, y + 15);
+    y += 24;
+
+    // 5 dimension bars
+    const DIMS: { key: keyof typeof dd.dimensions; label: string }[] = [
+      { key: 'financiero', label: 'Financiero' },
+      { key: 'legal',      label: 'Legal' },
+      { key: 'mercado',    label: 'Mercado' },
+      { key: 'equipo',     label: 'Equipo' },
+      { key: 'traccion',   label: 'Tracción' },
+    ];
+    const barW = (CON_W - 40) / DIMS.length;
+    for (const [i, dim] of DIMS.entries()) {
+      const bx = MARGIN + i * barW;
+      const dimScore = dd.dimensions[dim.key].score;
+      const dimColor: [number,number,number] = dimScore >= 70 ? C.green : dimScore >= 45 ? C.amber : C.red;
+      // Background track
+      doc.setFillColor(229, 231, 235);
+      doc.roundedRect(bx, y, barW - 4, 5, 1, 1, 'F');
+      // Fill
+      doc.setFillColor(...dimColor);
+      doc.roundedRect(bx, y, Math.max(2, (barW - 4) * dimScore / 100), 5, 1, 1, 'F');
+      // Label + score
+      doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.gray);
+      doc.text(dim.label.toUpperCase(), bx, y + 10);
+      doc.setTextColor(...dimColor);
+      doc.text(`${dimScore}`, bx, y + 15);
+    }
+    y += 22;
+
+    // Top gaps
+    if (dd.topGaps.length > 0) {
+      checkPage(30);
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+      doc.text('Gaps críticos detectados:', MARGIN, y);
+      y += 6;
+      for (const gap of dd.topGaps.slice(0, 5)) {
+        checkPage(10);
+        doc.setFillColor(254, 226, 226);
+        doc.roundedRect(MARGIN, y - 1, 3, 4, 0.5, 0.5, 'F');
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.gray);
+        const gapLines = doc.splitTextToSize(gap, CON_W - 10);
+        doc.text(gapLines, MARGIN + 5, y + 2);
+        y += gapLines.length * 4.5 + 3;
+      }
+    }
+
+    // "Audited by ValidateAI Pro" stamp
+    checkPage(20);
+    y += 4;
+    doc.setFillColor(124, 111, 247);
+    doc.roundedRect(MARGIN, y, CON_W, 12, 2, 2, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+    const stampText = 'Audited by ValidateAI Pro · validateai-mu.vercel.app';
+    doc.text(stampText, MARGIN + (CON_W - doc.getTextWidth(stampText)) / 2, y + 8);
+    y += 18;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

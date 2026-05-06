@@ -271,6 +271,81 @@ export interface PlaybookAnalysis {
   viability_score: number;
 }
 
+// ─── DUE DILIGENCE ───────────────────────────────────────────────────────────
+
+export type DDDimension = 'financiero' | 'legal' | 'mercado' | 'equipo' | 'traccion';
+
+export type ExtractionConfidence = Record<string, number>; // 0–1 por campo
+
+export interface ExtractedProjectData {
+  projectName?: string;
+  problem?: string;
+  solution?: string;
+  revenueModel?: string;
+  // Unit economics
+  ltv?: number;
+  cac?: number;
+  paybackPeriod?: number; // months
+  mrr?: number;
+  arr?: number;
+  // Traction
+  hasPaidCustomers?: boolean;
+  customerCount?: number;
+  // Team
+  teamSize?: number;
+  founderBackground?: string;
+  // Legal Chile/LATAM
+  legalCompliance?: {
+    ley21719?: boolean; // Ley de Datos Personales Chile
+    ley21521?: boolean; // Ley Fintech Chile
+  };
+  // Market
+  tam?: string;
+  targetMarket?: string;
+  // Meta
+  extractionConfidence: ExtractionConfidence;
+  sourceFileName?: string;
+  sourceMimeType?: 'application/pdf' | 'application/json';
+}
+
+export interface PendingQuestion {
+  field: keyof Omit<ExtractedProjectData, 'extractionConfidence' | 'sourceFileName' | 'sourceMimeType'>;
+  question: string;
+  dimension: DDDimension;
+  priority: 'critical' | 'important' | 'nice_to_have';
+}
+
+export interface DueDiligenceScoreDimension {
+  score: number; // 0–100
+  label: string;
+  gaps: string[];
+}
+
+export interface DueDiligenceScore {
+  total: number; // 0–100
+  dimensions: {
+    financiero: DueDiligenceScoreDimension;
+    legal: DueDiligenceScoreDimension;
+    mercado: DueDiligenceScoreDimension;
+    equipo: DueDiligenceScoreDimension;
+    traccion: DueDiligenceScoreDimension;
+  };
+  investorReadiness: 'not_ready' | 'early' | 'developing' | 'ready';
+  topGaps: string[]; // máx 5, ordenados por impacto
+}
+
+export type UploadStatus = 'idle' | 'uploading' | 'parsing' | 'gap-analysis' | 'done' | 'error';
+
+export const DD_TASK_CARDS: string[] = [
+  'Extrayendo modelo de ingresos...',
+  'Verificando unit economics (LTV, CAC, Payback)...',
+  'Mapeando estructura del equipo fundador...',
+  'Analizando tracción y evidencia de clientes...',
+  'Revisando cumplimiento Ley 21.719 (Datos)...',
+  'Revisando cumplimiento Ley 21.521 (Fintech)...',
+  'Calculando gaps de due diligence...',
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type StepIdea = z.infer<typeof StepIdeaSchema>;
