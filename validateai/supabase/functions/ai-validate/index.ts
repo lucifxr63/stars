@@ -1165,6 +1165,25 @@ serve(async (req) => {
       const cached = await checkAnalysisCache(supabase, ideaCacheKey, prompt_type);
       if (cached) {
         console.log(`[cache hit] ${prompt_type} similarity=${cached.similarity.toFixed(3)}`);
+
+        // Persist cached result so the PDF and UI have the data even on cache hits
+        if (validation_id) {
+          const cacheUpdates: Record<string, unknown> = {};
+          const p = cached.analysis_data;
+          if (prompt_type === 'summary') {
+            cacheUpdates.summary_json     = p;
+            cacheUpdates.validation_score = typeof p.score === 'number' ? p.score : null;
+            cacheUpdates.ai_feedback      = typeof p.feedback === 'string' ? p.feedback : null;
+            cacheUpdates.score_breakdown  = p.score_breakdown ?? null;
+          } else if (prompt_type === 'risk_analysis')  { cacheUpdates.risk_analysis  = p; }
+          else if (prompt_type === 'unit_economics')   { cacheUpdates.unit_economics  = p; }
+          else if (prompt_type === 'market_sizing')    { cacheUpdates.market_sizing   = p; }
+          if (Object.keys(cacheUpdates).length > 0) {
+            supabase.from('validations').update(cacheUpdates).eq('id', validation_id)
+              .then(({ error: e }) => { if (e) console.warn('[cache-persist]', e.message); });
+          }
+        }
+
         return new Response(
           JSON.stringify({ ...cached.analysis_data, _fromCache: true, _cacheSimilarity: cached.similarity }),
           { headers: { ...cors, 'Content-Type': 'application/json' } },
