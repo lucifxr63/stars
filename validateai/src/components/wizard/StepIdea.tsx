@@ -42,7 +42,14 @@ export function StepIdea() {
 
   return (
     <div className="space-y-6">
-      <FlowSelector value={validationMode} onChange={setValidationMode} />
+      <FlowSelector value={validationMode} onChange={(mode) => {
+        setValidationMode(mode);
+        if (mode === 'detailed') {
+          setStep(1);
+        } else {
+          setStep(2);
+        }
+      }} />
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-5">
         <div>
