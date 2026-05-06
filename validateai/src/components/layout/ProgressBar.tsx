@@ -1,14 +1,15 @@
 import { STEPS } from '@/utils/constants';
 
 const STEPS_PREMIUM = [
-  { num: 1, label: 'Tu idea' },
-  { num: 4, label: 'Analizando' },
+  { num: 1, label: 'Documento' },
+  { num: 2, label: 'Tu idea' },
+  { num: 3, label: 'Analizando' },
 ] as const;
 
 export function ProgressBar({ current, mode = 'detailed' }: { current: number; mode?: 'quick' | 'detailed' }) {
   const steps = mode === 'quick' ? STEPS_PREMIUM : STEPS;
-  // Para modo quick: step 1 → index 0, step 4 → index 1
-  const displayCurrent = mode === 'quick' ? (current >= 4 ? 2 : 1) : current;
+  // Para modo quick: step 1→1, step 2→2, step 3→3
+  const displayCurrent = mode === 'quick' ? Math.min(current, 3) : current;
   const pct = Math.round((displayCurrent / steps.length) * 100);
 
   return (
