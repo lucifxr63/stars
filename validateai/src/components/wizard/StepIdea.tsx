@@ -33,8 +33,10 @@ export function StepIdea() {
 
   const onSubmit = (data: StepIdea) => {
     updateStepIdea(data);
-    if (validationMode === 'quick') {
-      setStep(4);
+    if (validationMode === 'premium') {
+      setStep(3);
+    } else if (validationMode === 'quick') {
+      setStep(2);
     } else {
       nextStep();
     }
@@ -42,14 +44,12 @@ export function StepIdea() {
 
   return (
     <div className="space-y-6">
-      <FlowSelector value={validationMode} onChange={(mode) => {
-        setValidationMode(mode);
-        if (mode === 'detailed') {
-          setStep(1);
-        } else {
-          setStep(2);
-        }
-      }} />
+      {validationMode !== 'premium' && (
+        <FlowSelector value={validationMode as 'quick' | 'detailed'} onChange={(mode) => {
+          setValidationMode(mode);
+          setStep(1); // Always stay on step 1 when switching between manual modes
+        }} />
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-5">
         <div>

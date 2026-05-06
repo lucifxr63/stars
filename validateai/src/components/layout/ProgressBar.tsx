@@ -6,10 +6,18 @@ const STEPS_PREMIUM = [
   { num: 3, label: 'Analizando' },
 ] as const;
 
-export function ProgressBar({ current, mode = 'detailed' }: { current: number; mode?: 'quick' | 'detailed' }) {
-  const steps = mode === 'quick' ? STEPS_PREMIUM : STEPS;
-  // Para modo quick: step 1→1, step 2→2, step 3→3
-  const displayCurrent = mode === 'quick' ? Math.min(current, 3) : current;
+const STEPS_QUICK = [
+  { num: 1, label: 'Tu idea' },
+  { num: 2, label: 'Analizando' },
+] as const;
+
+export function ProgressBar({ current, mode = 'detailed' }: { current: number; mode?: 'quick' | 'detailed' | 'premium' }) {
+  const steps = mode === 'premium' ? STEPS_PREMIUM : (mode === 'quick' ? STEPS_QUICK : STEPS);
+  
+  // Para modo premium: 1→1, 2→2, 3→3
+  // Para modo quick: 1→1, 2→2
+  // Para modo detailed: 1→1, 2→2, 3→3, 4→4
+  const displayCurrent = Math.min(current, steps.length);
   const pct = Math.round((displayCurrent / steps.length) * 100);
 
   return (

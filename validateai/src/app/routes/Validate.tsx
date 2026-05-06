@@ -23,11 +23,17 @@ const STEP_COMPONENTS_DETAILED: Record<number, React.FC> = {
   4: StepGenerating,
 };
 
-// Flujo premium (quick): Upload → Idea → Generando
-const STEP_COMPONENTS_QUICK: Record<number, React.FC> = {
+// Flujo premium (premium): Upload → Idea → Generando
+const STEP_COMPONENTS_PREMIUM: Record<number, React.FC> = {
   1: StepUpload,
   2: StepIdea,
   3: StepGenerating,
+};
+
+// Flujo rápido manual (quick): Idea → Generando
+const STEP_COMPONENTS_QUICK: Record<number, React.FC> = {
+  1: StepIdea,
+  2: StepGenerating,
 };
 
 const STEP_TITLES_DETAILED: Record<number, { title: string; hint: string }> = {
@@ -37,10 +43,15 @@ const STEP_TITLES_DETAILED: Record<number, { title: string; hint: string }> = {
   4: { title: 'Analizando...', hint: 'La IA está construyendo tu validación' },
 };
 
-const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
+const STEP_TITLES_PREMIUM: Record<number, { title: string; hint: string }> = {
   1: { title: 'Sube tu documento', hint: 'La IA extrae todo de tu Pitch Deck automáticamente' },
   2: { title: 'Tu idea', hint: 'Confirma o completa los datos extraídos' },
   3: { title: 'Analizando...', hint: 'Generando tu Due Diligence Score' },
+};
+
+const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
+  1: { title: 'Tu idea', hint: 'Define el problema y la solución' },
+  2: { title: 'Analizando...', hint: 'La IA está construyendo tu validación' },
 };
 
 export function Validate() {
@@ -49,15 +60,17 @@ export function Validate() {
   const { isPremium, loading: tierLoading } = useUserTier();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
 
-  const isQuick = validationMode === 'quick';
-  const stepMap   = isQuick ? STEP_COMPONENTS_QUICK  : STEP_COMPONENTS_DETAILED;
-  const titleMap  = isQuick ? STEP_TITLES_QUICK      : STEP_TITLES_DETAILED;
+  const isPremiumMode = validationMode === 'premium';
+  const isQuickMode = validationMode === 'quick';
+  
+  const stepMap = isPremiumMode ? STEP_COMPONENTS_PREMIUM : (isQuickMode ? STEP_COMPONENTS_QUICK : STEP_COMPONENTS_DETAILED);
+  const titleMap = isPremiumMode ? STEP_TITLES_PREMIUM : (isQuickMode ? STEP_TITLES_QUICK : STEP_TITLES_DETAILED);
   const StepComponent = stepMap[currentStep] ?? STEP_COMPONENTS_DETAILED[currentStep];
   const prevStep = useRef(currentStep);
 
   // Track step completions
   useEffect(() => {
-    const lastStep = isQuick ? 3 : 4;
+    const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
     if (currentStep > prevStep.current && currentStep < lastStep) {
       const name = titleMap[prevStep.current]?.title ?? `Step ${prevStep.current}`;
       trackWizardStep(prevStep.current, name, validationMode);
@@ -69,7 +82,7 @@ export function Validate() {
   useEffect(() => {
     return () => {
       const step = prevStep.current;
-      const lastStep = isQuick ? 3 : 4;
+      const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
       if (step < lastStep) {
         const name = titleMap[step]?.title ?? `Step ${step}`;
         trackWizardAbandoned(step, name);
@@ -81,8 +94,10 @@ export function Validate() {
   // Sincronizar validationMode con el tier del usuario en cada mount
   useEffect(() => {
     if (tierLoading) return;
-    const targetMode = isPremium ? 'quick' : 'detailed';
-    if (validationMode !== targetMode) setValidationMode(targetMode);
+    const targetMode = isPremium ? 'premium' : 'detailed';
+    if (validationMode !== targetMode && validationMode !== 'quick') {
+      setValidationMode(targetMode);
+    }
   }, [tierLoading, isPremium]);
 
   useEffect(() => {
@@ -121,14 +136,14 @@ export function Validate() {
         </div>
 
         {/* Step header */}
-        {((isQuick && currentStep < 3) || (!isQuick && currentStep < 4)) && (
+        {((isPremiumMode && currentStep < 3) || (isQuickMode && currentStep < 2) || (!isPremiumMode && !isQuickMode && currentStep < 4)) && (
           <div className="mb-5 px-1">
-            {!isQuick && (
+            {!isPremiumMode && (
               <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-1">
-                Paso {currentStep} de 3
+                Paso {currentStep} de {isQuickMode ? 1 : 3}
               </p>
             )}
-            {isQuick && (
+            {isPremiumMode && (
               <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-1">
                 ✦ Validación Premium · Paso {currentStep} de 2
               </p>

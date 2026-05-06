@@ -33,7 +33,7 @@ export function resetAnalytics() {
 
 // ── Typed event helpers ───────────────────────────────────────────────────────
 
-export function trackWizardStep(step: number, stepName: string, mode: 'quick' | 'detailed') {
+export function trackWizardStep(step: number, stepName: string, mode: 'quick' | 'detailed' | 'premium') {
   if (!PH_KEY) return;
   posthog.capture('wizard_step_completed', { step, step_name: stepName, mode });
 }

@@ -24,7 +24,7 @@ interface ValidationState {
   founderFit: FounderFit | null;
   marketSignals: MarketSignals | null;
   fromCache: boolean;
-  validationMode: 'quick' | 'detailed';
+  validationMode: 'quick' | 'detailed' | 'premium';
 
   setStep: (step: number) => void;
   nextStep: () => void;
@@ -48,7 +48,7 @@ interface ValidationState {
     errors: Record<string, string> | null;
   } | null;
 
-  setValidationMode: (mode: 'quick' | 'detailed') => void;
+  setValidationMode: (mode: 'quick' | 'detailed' | 'premium') => void;
   setAIThinking: (val: boolean) => void;
   setValidationId: (id: string) => void;
   setAgentLogId: (id: string) => void;

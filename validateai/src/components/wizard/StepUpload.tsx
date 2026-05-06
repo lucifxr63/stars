@@ -356,7 +356,10 @@ export function StepUpload() {
       {/* Skip option */}
       <div className="text-center pt-1">
         <button
-          onClick={nextStep}
+          onClick={() => {
+            useValidationStore.getState().setValidationMode('detailed');
+            useValidationStore.getState().setStep(1);
+          }}
           className="text-xs text-gray-400 dark:text-[#4A495E] hover:text-gray-600 dark:hover:text-[#8B8AA0] underline underline-offset-2 transition-colors"
         >
           Prefiero llenar el formulario manualmente →
