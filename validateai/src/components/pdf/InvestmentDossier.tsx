@@ -50,7 +50,6 @@ const RADAR_KEYS: { key: keyof ScoreBreakdown; label: string }[] = [
 const CX = 80;
 const CY = 80;
 const R  = 58; // max radius for data polygon
-const RL = 72; // radius for label placement (beyond grid)
 const N  = 5;
 const ANGLE_OFFSET = -Math.PI / 2; // start from top
 
