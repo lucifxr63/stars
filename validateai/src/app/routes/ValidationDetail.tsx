@@ -528,38 +528,90 @@ export function ValidationDetail() {
     if (!data) return;
     setPdfLoading(true);
     try {
+      const ctx: Record<string, unknown> = {
+        idea_name: data.idea_name, idea_description: data.idea_description,
+        idea_industry: data.idea_industry, target_country: data.target_country,
+        target_region: data.target_region ?? null, business_model: data.business_model,
+        business_stage: data.business_stage, pricing_range: data.pricing_range,
+        known_competitors: data.known_competitors ?? [],
+        customer_segment: data.customer_segment, customer_pain_points: data.customer_pain_points,
+        value_proposition: data.value_proposition, differentiator: data.differentiator,
+        mvp_type: data.mvp_type, mvp_features: data.mvp_features,
+        questions_answers: data.questions_answers,
+      };
+
+      // Run any missing core analyses before generating the PDF
+      let current = { ...data };
+      const missing = {
+        summary:    !data.summary_json || data.validation_score == null,
+        market:     !data.market_sizing,
+        competitive:!data.competitive_analysis,
+      };
+
+      if (missing.summary || missing.market || missing.competitive) {
+        toast.info('Generando análisis faltantes, un momento…');
+        const tasks: Promise<void>[] = [];
+
+        if (missing.summary) {
+          tasks.push(
+            callAI<{ score: number; score_breakdown: ScoreBreakdownType; feedback: string; strengths: string[]; weaknesses: string[]; next_steps: string[] }>(
+              data.id, 6, 'summary', ctx,
+            ).then((r) => {
+              if (r) current = { ...current, summary_json: r as typeof data.summary_json, validation_score: r.score, score_breakdown: r.score_breakdown, ai_feedback: r.feedback };
+            }),
+          );
+        }
+        if (missing.market) {
+          tasks.push(
+            callAI<MarketSizing>(data.id, 5, 'market_sizing', ctx).then((r) => {
+              if (r) current = { ...current, market_sizing: r };
+            }),
+          );
+        }
+        if (missing.competitive) {
+          tasks.push(
+            callAI<CompetitiveAnalysisType>(data.id, 3, 'competitive_analysis', ctx).then((r) => {
+              if (r) current = { ...current, competitive_analysis: r };
+            }),
+          );
+        }
+
+        await Promise.all(tasks);
+        setData(current);
+      }
+
       await generatePremiumPDF({
-        idea_name:             data.idea_name ?? undefined,
-        idea_description:      data.idea_description ?? undefined,
-        idea_industry:         data.idea_industry ?? undefined,
-        target_country:        data.target_country ?? undefined,
-        target_region:         data.target_region ?? undefined,
-        business_model:        data.business_model ?? undefined,
-        business_stage:        data.business_stage ?? undefined,
-        pricing_range:         data.pricing_range ?? undefined,
-        known_competitors:     data.known_competitors ?? undefined,
-        questions_answers:     data.questions_answers ?? undefined,
-        customer_segment:      data.customer_segment ?? undefined,
-        customer_pain_points:  data.customer_pain_points ?? undefined,
-        value_proposition:     data.value_proposition ?? undefined,
-        differentiator:        data.differentiator ?? undefined,
-        mvp_type:              data.mvp_type ?? undefined,
-        mvp_features:          data.mvp_features ?? undefined,
-        mvp_user_flow:         data.mvp_user_flow ?? undefined,
-        summary:               (data.summary_json ?? {}) as Record<string, unknown>,
-        market_sizing:         data.market_sizing ?? null,
-        competitive_analysis:  data.competitive_analysis ?? null,
-        score_breakdown:       data.score_breakdown ?? null,
-        risk_analysis:         data.risk_analysis ?? null,
-        unit_economics:        data.unit_economics ?? null,
-        founder_fit:           data.founder_fit ?? null,
-        market_signals:        data.market_signals ?? null,
-        governance_assessment: data.governance_assessment ?? null,
-        fundraising_roadmap:   data.fundraising_roadmap ?? null,
-        playbook_analysis:     data.playbook_analysis ?? null,
+        idea_name:             current.idea_name ?? undefined,
+        idea_description:      current.idea_description ?? undefined,
+        idea_industry:         current.idea_industry ?? undefined,
+        target_country:        current.target_country ?? undefined,
+        target_region:         current.target_region ?? undefined,
+        business_model:        current.business_model ?? undefined,
+        business_stage:        current.business_stage ?? undefined,
+        pricing_range:         current.pricing_range ?? undefined,
+        known_competitors:     current.known_competitors ?? undefined,
+        questions_answers:     current.questions_answers ?? undefined,
+        customer_segment:      current.customer_segment ?? undefined,
+        customer_pain_points:  current.customer_pain_points ?? undefined,
+        value_proposition:     current.value_proposition ?? undefined,
+        differentiator:        current.differentiator ?? undefined,
+        mvp_type:              current.mvp_type ?? undefined,
+        mvp_features:          current.mvp_features ?? undefined,
+        mvp_user_flow:         current.mvp_user_flow ?? undefined,
+        summary:               (current.summary_json ?? {}) as Record<string, unknown>,
+        market_sizing:         current.market_sizing ?? null,
+        competitive_analysis:  current.competitive_analysis ?? null,
+        score_breakdown:       current.score_breakdown ?? null,
+        risk_analysis:         current.risk_analysis ?? null,
+        unit_economics:        current.unit_economics ?? null,
+        founder_fit:           current.founder_fit ?? null,
+        market_signals:        current.market_signals ?? null,
+        governance_assessment: current.governance_assessment ?? null,
+        fundraising_roadmap:   current.fundraising_roadmap ?? null,
+        playbook_analysis:     current.playbook_analysis ?? null,
         mentors:               mentors.length ? mentors : undefined,
-        validation_score:      data.validation_score ?? null,
-        due_diligence:         data.due_diligence_score ?? null,
+        validation_score:      current.validation_score ?? null,
+        due_diligence:         current.due_diligence_score ?? null,
       });
       trackDeliverableDownloaded('pdf_premium', pdfTheme);
       toast.success('PDF premium descargado');
