@@ -18,7 +18,7 @@ import { MentorRecommendations } from '@/components/shared/MentorRecommendations
 import { CorfoFunds } from '@/components/shared/CorfoFunds';
 import { DeliverableTabs } from '@/components/shared/DeliverableTabs';
 import { RegulatoryRoadmap } from '@/components/shared/RegulatoryRoadmap';
-import { generateValidationPDF, PDF_THEMES } from '@/lib/pdf';
+import { generateValidationPDF, generatePremiumPDF, PDF_THEMES } from '@/lib/pdf';
 import type { PDFTheme } from '@/lib/pdf';
 import { ReanalyzeModal } from '@/components/shared/ReanalyzeModal';
 import { SwotMatrix } from '@/components/shared/SwotMatrix';
@@ -197,7 +197,6 @@ export function ValidationDetail() {
         };
         const result = await callAI<PlaybookAnalysis>(data.id, 6, 'playbook_analysis', ctx);
         if (result) {
-          await supabase.from('validations').update({ playbook_analysis: result }).eq('id', data.id);
           setData((prev) => prev ? { ...prev, playbook_analysis: result } : prev);
         }
       } catch {
@@ -298,23 +297,7 @@ export function ValidationDetail() {
           : Promise.resolve(null),
       ]);
 
-      const updates: Record<string, unknown> = {
-        target_country, target_region, business_model, business_stage,
-        pricing_range, known_competitors,
-      };
-      if (competitiveResult) updates.competitive_analysis = competitiveResult;
-      if (sizingResult) updates.market_sizing = sizingResult;
-      if (summaryResult) {
-        updates.score_breakdown = summaryResult.score_breakdown;
-        updates.validation_score = summaryResult.score;
-        updates.ai_feedback = summaryResult.feedback;
-        updates.summary_json = summaryResult;
-      }
-
-      const { error: saveError } = await supabase
-        .from('validations').update(updates).eq('id', data.id);
-      if (saveError) throw saveError;
-
+      // La edge function ya persistió los resultados de IA en la DB.
       setData((prev) => prev ? {
         ...prev,
         target_country, target_region: target_region ?? null,
@@ -325,7 +308,7 @@ export function ValidationDetail() {
           score_breakdown: summaryResult.score_breakdown,
           validation_score: summaryResult.score,
           ai_feedback: summaryResult.feedback,
-          summary_json: summaryResult,
+          summary_json: summaryResult as unknown as typeof prev.summary_json,
         } : {}),
       } : prev);
 
@@ -370,18 +353,18 @@ export function ValidationDetail() {
         missingAdvanced.fundraising ? callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx)   : Promise.resolve(null),
       ]);
 
-      const updates: Record<string, unknown> = {};
-      if (riskResult)        updates.risk_analysis         = riskResult;
-      if (unitResult)        updates.unit_economics        = unitResult;
-      if (founderResult)     updates.founder_fit           = founderResult;
-      if (signalsResult)     updates.market_signals        = signalsResult;
-      if (governanceResult)  updates.governance_assessment = governanceResult;
-      if (fundraisingResult) updates.fundraising_roadmap   = fundraisingResult;
+      // La edge function ya persistió cada resultado en la DB.
+      // Actualizamos solo el estado local para refrescar la UI sin reload.
+      const localUpdates: Record<string, unknown> = {};
+      if (riskResult)        localUpdates.risk_analysis         = riskResult;
+      if (unitResult)        localUpdates.unit_economics        = unitResult;
+      if (founderResult)     localUpdates.founder_fit           = founderResult;
+      if (signalsResult)     localUpdates.market_signals        = signalsResult;
+      if (governanceResult)  localUpdates.governance_assessment = governanceResult;
+      if (fundraisingResult) localUpdates.fundraising_roadmap   = fundraisingResult;
 
-      if (Object.keys(updates).length > 0) {
-        const { error } = await supabase.from('validations').update(updates).eq('id', data.id);
-        if (error) throw error;
-        setData((prev) => prev ? { ...prev, ...updates } : prev);
+      if (Object.keys(localUpdates).length > 0) {
+        setData((prev) => prev ? { ...prev, ...localUpdates } : prev);
       }
 
       toast.success('Análisis avanzados generados');
@@ -510,6 +493,7 @@ export function ValidationDetail() {
         fundraising_roadmap:   freshData.fundraising_roadmap ?? null,
         playbook_analysis:     freshData.playbook_analysis ?? null,
         mentors:               mentors.length ? mentors : undefined,
+        validation_score:      freshData.validation_score ?? null,
       }, pdfTheme);
 
       trackDeliverableDownloaded('pdf_fresh', pdfTheme);
@@ -525,7 +509,7 @@ export function ValidationDetail() {
     if (!data) return;
     setPdfLoading(true);
     try {
-      await generateValidationPDF({
+      await generatePremiumPDF({
         idea_name:             data.idea_name ?? undefined,
         idea_description:      data.idea_description ?? undefined,
         idea_industry:         data.idea_industry ?? undefined,
@@ -555,9 +539,10 @@ export function ValidationDetail() {
         fundraising_roadmap:   data.fundraising_roadmap ?? null,
         playbook_analysis:     data.playbook_analysis ?? null,
         mentors:               mentors.length ? mentors : undefined,
-      }, pdfTheme);
-      trackDeliverableDownloaded('pdf', pdfTheme);
-      toast.success('PDF descargado correctamente');
+        validation_score:      data.validation_score ?? null,
+      });
+      trackDeliverableDownloaded('pdf_premium', pdfTheme);
+      toast.success('PDF premium descargado');
     } catch {
       toast.error('No se pudo generar el PDF.');
     } finally {
@@ -659,7 +644,7 @@ export function ValidationDetail() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   </svg>
                 )}
-                <span className="hidden xs:inline">Descargar </span>PDF
+                <span className="hidden xs:inline">Descargar </span>Dossier
               </button>
 
               {/* Compartir Rápido */}

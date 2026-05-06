@@ -244,19 +244,8 @@ export function StepGenerating() {
           });
 
           if (!res.ok) throw new Error('Failed');
-          const result = await res.json();
-          
-          // Guardar resultado en DB
-          const updates: Record<string, any> = {};
-          if (task.type === 'summary') {
-            updates.summary_json = result;
-            updates.validation_score = result.score;
-            updates.ai_feedback = result.feedback;
-            updates.score_breakdown = result.score_breakdown;
-          } else {
-            updates[task.type] = result;
-          }
-          await supabase.from('validations').update(updates).eq('id', currentId);
+          // La Edge Function persiste los resultados directamente en la DB
+          await res.json();
           updateTaskStatus(task.id, 'success');
         } catch {
           updateTaskStatus(task.id, 'error');

@@ -1137,6 +1137,45 @@ serve(async (req) => {
       ).catch((err) => console.warn('[cache-save] Error:', err));
     }
 
+    // Persistencia bloqueante: el backend es el SSOT para campos derivados
+    if (validation_id) {
+      const persistUpdates: Record<string, unknown> = {};
+
+      if (prompt_type === 'summary') {
+        const scoreVal = typeof parsed.score === 'number' ? parsed.score : null;
+        persistUpdates.summary_json     = parsed;
+        persistUpdates.validation_score = scoreVal;
+        persistUpdates.ai_feedback      = typeof parsed.feedback === 'string' ? parsed.feedback : null;
+        persistUpdates.score_breakdown  = parsed.score_breakdown ?? null;
+      } else if (prompt_type === 'competitive_analysis') {
+        persistUpdates.competitive_analysis = parsed;
+      } else if (prompt_type === 'market_sizing') {
+        persistUpdates.market_sizing = parsed;
+      } else if (prompt_type === 'risk_analysis') {
+        persistUpdates.risk_analysis = parsed;
+      } else if (prompt_type === 'unit_economics') {
+        persistUpdates.unit_economics = parsed;
+      } else if (prompt_type === 'founder_fit') {
+        persistUpdates.founder_fit = parsed;
+      } else if (prompt_type === 'market_signals') {
+        persistUpdates.market_signals = parsed;
+      } else if (prompt_type === 'governance_assessment') {
+        persistUpdates.governance_assessment = parsed;
+      } else if (prompt_type === 'fundraising_roadmap') {
+        persistUpdates.fundraising_roadmap = parsed;
+      } else if (prompt_type === 'playbook_analysis') {
+        persistUpdates.playbook_analysis = parsed;
+      }
+
+      if (Object.keys(persistUpdates).length > 0) {
+        const { error: persistErr } = await supabase
+          .from('validations')
+          .update(persistUpdates)
+          .eq('id', validation_id);
+        if (persistErr) console.warn('[persist] Error saving to validations:', persistErr.message);
+      }
+    }
+
     // Log de interacción (no bloqueante)
     supabase.from('ai_interactions').insert({
       user_id: user.id,

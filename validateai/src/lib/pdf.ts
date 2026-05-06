@@ -33,6 +33,7 @@ export interface PDFData {
   fundraising_roadmap?: FundraisingRoadmap | null;
   playbook_analysis?: PlaybookAnalysis | null;
   mentors?: Pick<MentorMatch, 'name' | 'bio' | 'expertise' | 'session_price_clp'>[];
+  validation_score?: number | null;
   from_cache?: boolean;
 }
 
@@ -349,69 +350,94 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   };
 
-  // ── drawTable: renders a simple bordered table ────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // MOTOR GEOMÉTRICO — primitivas robustas
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const CELL_PAD   = 2.5;  // padding interno de celda (mm)
+  const LINE_H     = 4.5;  // altura de línea de texto (mm)
+  const HDR_H      = 8;    // altura de fila de cabecera (mm)
+  const PAGE_FLOOR = 270;  // margen inferior de seguridad (mm)
+
+  // ── drawTable ─────────────────────────────────────────────────────────────
+  // Gestiona zebra-striping, saltos de página con cabecera repetida,
+  // y altura dinámica de celda según contenido multi-línea.
   const drawTable = (
     headers: string[],
     rows: string[][],
     colWidths?: number[],
     headerBg: [number,number,number] = T.accent,
     headerFg: [number,number,number] = C.white,
-    rowHeight = 7,
   ) => {
+    if (!rows.length) return;
     const totalW = CON_W;
     const widths = colWidths ?? headers.map(() => totalW / headers.length);
-    const cellPad = 2.5;
 
-    checkPage(rowHeight + 2);
-    // Header row
-    let cx = MARGIN;
-    doc.setFillColor(...headerBg);
-    doc.roundedRect(MARGIN, y, totalW, rowHeight + 1, 1.5, 1.5, 'F');
-    for (let i = 0; i < headers.length; i++) {
-      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...headerFg);
-      const txt = doc.splitTextToSize(headers[i].toUpperCase(), widths[i] - cellPad * 2);
-      doc.text(txt[0] ?? '', cx + cellPad, y + rowHeight - 1.5);
-      cx += widths[i];
-    }
-    y += rowHeight + 1;
-
-    // Data rows
-    for (const [ri, row] of rows.entries()) {
-      const bgColor: [number,number,number] = ri % 2 === 0
-        ? (theme === 'dark' ? C.darkCard : [248, 250, 252] as [number, number, number])
-        : (theme === 'dark' ? C.darkBg : C.white);
-
-      // Measure max lines in row
-      let maxLines = 1;
-      const cellLines: string[][] = row.map((cell, ci) => {
-        const ls = doc.splitTextToSize(cell ?? '', widths[ci] - cellPad * 2);
-        if (ls.length > maxLines) maxLines = ls.length;
-        return ls;
+    // Pre-compute cell text so we only call splitTextToSize once per cell
+    const computed: { lines: string[][]; rowH: number }[] = rows.map((row) => {
+      let maxL = 1;
+      const lines = row.map((cell, ci) => {
+        const ls = doc.splitTextToSize(String(cell ?? ''), widths[ci] - CELL_PAD * 2);
+        if (ls.length > maxL) maxL = ls.length;
+        return ls as string[];
       });
-      const rh = maxLines * 4.5 + 3;
-      checkPage(rh + 1);
+      return { lines, rowH: maxL * LINE_H + CELL_PAD * 2 };
+    });
+
+    // Draw header row — extracted so it can be repeated after page break
+    const renderHeader = () => {
+      doc.setFillColor(...headerBg);
+      doc.roundedRect(MARGIN, y, totalW, HDR_H, 2, 2, 'F');
+      let cx = MARGIN;
+      for (let i = 0; i < headers.length; i++) {
+        doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...headerFg);
+        doc.text(headers[i].toUpperCase(), cx + CELL_PAD, y + HDR_H - 2);
+        cx += widths[i];
+      }
+      y += HDR_H;
+    };
+
+    checkPage(HDR_H + 4);
+    renderHeader();
+
+    // Data rows with page-break logic
+    for (const [ri, { lines, rowH }] of computed.entries()) {
+      // Will this row overflow the page?
+      if (y + rowH > PAGE_FLOOR) {
+        doc.addPage();
+        y = MARGIN;
+        renderHeader(); // repeat header on new page
+      }
+
+      const isEven = ri % 2 === 0;
+      const bgColor: [number,number,number] = isEven
+        ? (theme === 'dark' ? C.darkCard : [248, 250, 252])
+        : (theme === 'dark' ? C.darkBg   : C.white);
 
       doc.setFillColor(...bgColor);
-      doc.rect(MARGIN, y, totalW, rh, 'F');
-      doc.setDrawColor(...T.dividerColor); doc.setLineWidth(0.2);
-      doc.rect(MARGIN, y, totalW, rh, 'D');
+      doc.rect(MARGIN, y, totalW, rowH, 'F');
+      doc.setDrawColor(...T.dividerColor); doc.setLineWidth(0.15);
+      doc.rect(MARGIN, y, totalW, rowH, 'D');
 
-      cx = MARGIN;
-      for (let ci = 0; ci < row.length; ci++) {
+      let cx = MARGIN;
+      for (let ci = 0; ci < lines.length; ci++) {
         doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
-        doc.text(cellLines[ci], cx + cellPad, y + 4.5);
+        doc.text(lines[ci], cx + CELL_PAD, y + CELL_PAD + LINE_H - 0.5);
         cx += widths[ci];
-        if (ci < row.length - 1) {
-          doc.setDrawColor(...T.dividerColor); doc.setLineWidth(0.2);
-          doc.line(cx, y, cx, y + rh);
+        if (ci < lines.length - 1) {
+          doc.setDrawColor(...T.dividerColor); doc.setLineWidth(0.15);
+          doc.line(cx, y, cx, y + rowH);
         }
       }
-      y += rh;
+      y += rowH;
     }
-    y += 4;
+    y += 5;
   };
 
-  // ── infoCard: renders a colored card with title + body text ──────────────
+  // ── infoCard ──────────────────────────────────────────────────────────────
+  // Renderiza texto largo de IA en contenedores con borde lateral semántico.
+  // Si el cuerpo no cabe en la página restante, lo divide en chunks y dibuja
+  // una tarjeta por chunk ("continuación" en las siguientes).
   const infoCard = (
     title: string,
     body: string,
@@ -419,20 +445,73 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     bgColor: [number,number,number],
     fgColor: [number,number,number],
   ) => {
-    if (!body) return;
-    const lines = doc.splitTextToSize(body, CON_W - 14);
-    const cardH = Math.max(lines.length * 5 + 14, 18);
-    checkPage(cardH + 2);
-    doc.setFillColor(...bgColor);
-    doc.setDrawColor(...accentColor); doc.setLineWidth(0.5);
-    doc.roundedRect(MARGIN, y, CON_W, cardH, 2, 2, 'FD');
-    doc.setFillColor(...accentColor);
-    doc.roundedRect(MARGIN, y, 4, cardH, 1, 1, 'F');
-    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...accentColor);
-    doc.text(title.toUpperCase(), MARGIN + 8, y + 6);
-    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...fgColor);
-    doc.text(lines, MARGIN + 8, y + 12);
-    y += cardH + 5;
+    if (!body?.trim()) return;
+
+    const BODY_W    = CON_W - 14;
+    const TITLE_H   = 14;     // título + padding superior
+    const BODY_LINE = 5;      // altura de línea de cuerpo
+
+    const allLines: string[] = doc.splitTextToSize(body, BODY_W);
+
+    // Calcula cuántas líneas caben en el espacio restante de la página actual
+    const linesPerPage = (availableH: number) =>
+      Math.max(1, Math.floor((availableH - TITLE_H) / BODY_LINE));
+
+    let remaining = [...allLines];
+    let isFirst   = true;
+
+    while (remaining.length > 0) {
+      const availH = PAGE_FLOOR - y;
+      const maxL   = linesPerPage(availH);
+
+      // Si no cabe ni el título, nueva página
+      if (availH < TITLE_H + BODY_LINE) {
+        doc.addPage();
+        y = MARGIN;
+      }
+
+      const chunk     = remaining.slice(0, linesPerPage(PAGE_FLOOR - y));
+      remaining       = remaining.slice(chunk.length);
+      const cardTitle = isFirst ? title : `${title} (cont.)`;
+      const cardH     = Math.max(chunk.length * BODY_LINE + TITLE_H, 18);
+
+      checkPage(Math.min(cardH, 40)); // al menos un bloque mínimo
+      doc.setFillColor(...bgColor);
+      doc.setDrawColor(...accentColor); doc.setLineWidth(0.5);
+      doc.roundedRect(MARGIN, y, CON_W, cardH, 2, 2, 'FD');
+      doc.setFillColor(...accentColor);
+      doc.roundedRect(MARGIN, y, 4, cardH, 1, 1, 'F');
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...accentColor);
+      doc.text(cardTitle.toUpperCase(), MARGIN + 8, y + 7);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...fgColor);
+      doc.text(chunk, MARGIN + 8, y + TITLE_H);
+      y += cardH + 4;
+      isFirst = false;
+      void maxL; // usado implícitamente en el cálculo del primer chunk
+    }
+  };
+
+  // ── drawKPI: fila de métricas numéricas en tarjetas side-by-side ──────────
+  const drawKPI = (
+    metrics: { label: string; value: string; color: [number,number,number] }[],
+  ) => {
+    if (!metrics.length) return;
+    const kpiW = (CON_W - (metrics.length - 1) * 2) / metrics.length;
+    checkPage(22);
+    for (const [i, m] of metrics.entries()) {
+      const kx = MARGIN + i * (kpiW + 2);
+      const cardBg: [number,number,number] = theme === 'dark' ? C.darkCard : [248, 250, 252];
+      doc.setFillColor(...cardBg);
+      doc.roundedRect(kx, y, kpiW, 20, 2, 2, 'F');
+      doc.setFillColor(...m.color);
+      doc.roundedRect(kx, y, kpiW, 3.5, 1, 1, 'F');
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyMid);
+      const lbl = doc.splitTextToSize(m.label, kpiW - 4);
+      doc.text(lbl[0] ?? '', kx + 2, y + 9);
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...m.color);
+      doc.text(m.value, kx + 2, y + 17);
+    }
+    y += 24;
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -441,7 +520,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
   // ── PORTADA PREMIUM (página completa) ─────────────────────────────────────
   const dateStr = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
-  const vcScore = data.playbook_analysis?.viability_score ?? (data.summary?.score as number ?? 0);
+  const vcScore = data.playbook_analysis?.viability_score ?? data.validation_score ?? (data.summary?.score as number ?? 0);
   const vcColor: [number,number,number] = vcScore >= 70 ? C.green : vcScore >= 40 ? C.amber : C.red;
   const vcLabel = vcScore >= 70 ? 'Viable · Pre-Seed Ready' : vcScore >= 40 ? 'Validación Pendiente' : 'Pivot Recomendado';
 
@@ -519,7 +598,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
   // Sección de resumen de módulos incluidos (índice visual)
   doc.setFillColor(17, 24, 39);
-  doc.rect(0, 131.5, PAGE_W, 50, 'F');
+  doc.rect(0, 131.5, PAGE_W, 66, 'F');
   doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
   doc.text('CONTENIDO DE ESTE REPORTE', 10, 142);
 
@@ -550,7 +629,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
   // Pie de portada
   doc.setFontSize(6); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
-  doc.text('Confidencial · Generado por ValidateAI · validateai-mu.vercel.app', PAGE_W / 2 - 40, 185);
+  doc.text('Confidencial · Generado por ValidateAI · validateai-mu.vercel.app', PAGE_W / 2 - 40, 202);
 
   // Siguiente página para el contenido
   doc.addPage();
@@ -566,7 +645,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   // ═══════════════════════════════════════════════════════════════════════════
   // 2 · SCORE PRINCIPAL
   // ═══════════════════════════════════════════════════════════════════════════
-  const score = (data.summary?.score as number) ?? 0;
+  const score = data.validation_score ?? (data.summary?.score as number) ?? 0;
   const scoreColor: [number,number,number] = score >= 70 ? C.green : score >= 40 ? C.amber : C.red;
   const scoreLabel = score >= 70 ? 'Bien validada' : score >= 40 ? 'Validación parcial' : 'Necesita trabajo';
 
@@ -1012,30 +1091,13 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     const ratioColor: [number,number,number] = ue.ltvCacRatio.value >= 5 ? C.green : ue.ltvCacRatio.value >= 3 ? C.amber : C.red;
     const ratioLabel = ue.ltvCacRatio.value >= 5 ? 'Saludable' : ue.ltvCacRatio.value >= 3 ? 'Viable' : 'Crítico';
 
-    const metrics = [
-      { label: 'CAC', value: fmtRange(ue.cac.min, ue.cac.max), color: C.blue },
-      { label: 'LTV', value: fmtRange(ue.ltv.min, ue.ltv.max), color: C.indigo },
-      { label: `Ratio LTV/CAC  ${ue.ltvCacRatio.value.toFixed(1)}x`, value: ratioLabel, color: ratioColor },
-      { label: 'Break-even', value: `${ue.breakEvenUsers} usuarios`, color: C.teal },
-    ];
-
-    checkPage(30);
-    const mW = (CON_W - 6) / 4;
-    for (let i = 0; i < metrics.length; i++) {
-      const { label, value, color } = metrics[i];
-      const xOff = MARGIN + i * (mW + 2);
-      const cardBg: [number,number,number] = theme === 'dark' ? C.darkCard : [248, 250, 252];
-      doc.setFillColor(...cardBg);
-      doc.roundedRect(xOff, y, mW, 22, 2, 2, 'F');
-      doc.setFillColor(...color);
-      doc.roundedRect(xOff, y, mW, 3.5, 1, 1, 'F');
-      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyMid);
-      const lL = doc.splitTextToSize(label, mW - 4);
-      doc.text(lL, xOff + 2, y + 8.5);
-      doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...color);
-      doc.text(value, xOff + 2, y + 17);
-    }
-    y += 26;
+    drawKPI([
+      { label: 'CAC Estimado',         value: fmtRange(ue.cac.min, ue.cac.max),          color: C.blue   },
+      { label: 'LTV Estimado',         value: fmtRange(ue.ltv.min, ue.ltv.max),          color: C.indigo },
+      { label: `LTV/CAC · ${ue.ltvCacRatio.value.toFixed(1)}x`, value: ratioLabel,       color: ratioColor },
+      { label: 'Break-even',           value: `${ue.breakEvenUsers} usuarios`,           color: C.teal   },
+      { label: 'Payback',              value: `${ue.paybackMonths.min}–${ue.paybackMonths.max} meses`, color: C.purple },
+    ]);
 
     // BarChart CAC vs LTV
     checkPage(40);
@@ -1847,4 +1909,22 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   }
 
   doc.save(`ValidateAI_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`);
+}
+
+// ── Premium PDF (react-pdf/renderer) ─────────────────────────────────────────
+// Generates a Blob and triggers a browser download.
+
+export async function generatePremiumPDF(data: PDFData): Promise<void> {
+  const { pdf } = await import('@react-pdf/renderer');
+  const { InvestmentDossier } = await import('@/components/pdf/InvestmentDossier');
+  const { createElement } = await import('react');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await pdf(createElement(InvestmentDossier, { data }) as any).toBlob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `ValidateAI_Dossier_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
