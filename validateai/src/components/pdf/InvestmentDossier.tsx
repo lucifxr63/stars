@@ -746,6 +746,9 @@ function DueDiligencePage({ data }: { data: PDFData }) {
 // ── Root Document ──────────────────────────────────────────────────────────────
 
 export function InvestmentDossier({ data }: { data: PDFData }) {
+  const hasFinancials   = !!(data.unit_economics || data.risk_analysis);
+  const hasInvestment   = !!(data.fundraising_roadmap || data.founder_fit || data.playbook_analysis?.funding_verdict);
+
   return (
     <Document
       title={data.idea_name ?? 'Investment Dossier'}
@@ -756,9 +759,9 @@ export function InvestmentDossier({ data }: { data: PDFData }) {
       <CoverPage data={data} />
       <ExecutiveSummaryPage data={data} />
       <MarketPage data={data} />
-      <FinancialsPage data={data} />
+      {hasFinancials   && <FinancialsPage data={data} />}
       {data.due_diligence && <DueDiligencePage data={data} />}
-      <InvestmentPage data={data} />
+      {hasInvestment   && <InvestmentPage data={data} />}
     </Document>
   );
 }

@@ -543,7 +543,7 @@ export function ValidationDetail() {
       // Run any missing core analyses before generating the PDF
       let current = { ...data };
       const missing = {
-        summary:    !data.summary_json || data.validation_score == null,
+        summary:    !data.summary_json && data.validation_score == null,
         market:     !data.market_sizing,
         competitive:!data.competitive_analysis,
       };
