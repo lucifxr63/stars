@@ -1,0 +1,19 @@
++3.2% en 30 días. Sin moverte. Sin tomar una sola decisión operativa. Tu margen ya se redujo.
+
+El dólar observado llegó a $893 CLP según el Banco Central de Chile, y si tu startup SaaS paga AWS, Stripe o cualquier stack en USD, no necesitas hacer nada malo para perder rentabilidad.
+
+El problema es estructural, no operativo.
+
+Cuando el tipo de cambio pasa de $865 a $893 en un mes, cada dólar que gastas en infraestructura te cuesta un 3.2% más en pesos. Sin inflación local. Sin contrataciones nuevas. Sin errores de ejecución.
+
+Tu EBITDA se comprimió solo.
+
+Y la mayoría de los founders chilenos todavía no tiene esto en su dashboard de métricas semanales.
+
+La zona de confort está bajo los $900. Estamos rozando ese límite, y la volatilidad del ±3% proyectada hace que el riesgo no sea teórico, es inminente.
+
+→ El gráfico adjunto muestra exactamente en qué zona opera tu startup hoy y cuándo deberías encender la alarma.
+
+¿Tu modelo financiero tiene sensibilidad al tipo de cambio incorporada, o sigues planificando como si el USD/CLP fuera una constante?
+
+#StartupsLatAm #SaaS #VentureCapital #FinanzasParaFounders #Startups

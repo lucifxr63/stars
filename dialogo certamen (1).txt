@@ -1,0 +1,196 @@
+Lo armé como **guion hablado de 12 minutos**, con aproximadamente **1 minuto 10 segundos por diapositiva**. Está basado en el contenido de tus 10 diapositivas: problema, datos, preparación, modelos, validación y despliegue. 
+
+---
+
+# Guion de presentación — 12 minutos
+
+## Diapositiva 1 — Manuel
+
+**Portada e introducción del proyecto**
+**Tiempo estimado: 1:10 min**
+
+“Buenos días, profesor y compañeros. Somos el grupo compuesto por César López, Luciano Abarca, Daniel Paredes, Manuel Vidal y Vicente Poblete. Hoy vamos a presentar nuestro proyecto titulado *Predicción de Condición de Egreso Hospitalario mediante Spark ML*.
+
+El objetivo principal de este trabajo fue construir un pipeline de Big Data usando Apache Spark ML, siguiendo la metodología CRISP-DM. Nuestro problema consiste en predecir la condición de egreso hospitalario de pacientes en Chile, es decir, si un paciente egresa vivo o fallecido.
+
+Para esto trabajamos con datos administrativos de egresos hospitalarios del año 2024. La gracia del proyecto no es solo entrenar un modelo, sino desarrollar un flujo completo: comprender el problema, analizar los datos, preparar variables, entrenar modelos, evaluarlos y finalmente proponer cómo podría desplegarse en un entorno real.
+
+Esta presentación está dividida en las seis fases de CRISP-DM, desde el entendimiento del negocio hasta la propuesta de despliegue.”
+
+**Transición:**
+“Ahora paso a explicar la primera fase, donde definimos el problema de negocio.”
+
+---
+
+## Diapositiva 2 — Manuel
+
+**Fase 1: Entendimiento del negocio**
+**Tiempo estimado: 1:10 min**
+
+“En la primera fase buscamos entender el problema real. En los egresos hospitalarios, cada paciente termina su hospitalización con una condición de salida: puede egresar vivo o puede fallecer durante la hospitalización.
+
+La pregunta de negocio que planteamos fue: ¿qué características permiten predecir la condición de egreso de un paciente? Esto es importante porque, si se logra identificar anticipadamente a pacientes con mayor riesgo, el sistema hospitalario podría priorizar recursos, apoyar el triaje, activar alertas tempranas y mejorar la gestión clínica.
+
+Desde el punto de vista de Machine Learning, transformamos esta pregunta en un problema de clasificación binaria. La clase cero representa egreso vivo y la clase uno representa egreso fallecido.
+
+Como el problema está fuertemente desbalanceado, no basta con mirar solo accuracy. Por eso definimos como métrica principal el AUC-ROC, y también analizamos F1-Score, recall y precisión. En especial, nos interesa el recall de la clase fallecida, porque no detectar a un paciente de alto riesgo es el error más crítico.”
+
+**Transición:**
+“Con el problema definido, César continuará con la fase de entendimiento de los datos.”
+
+---
+
+## Diapositiva 3 — César
+
+**Fase 2: Entendimiento de los datos**
+**Tiempo estimado: 1:15 min**
+
+“En esta fase trabajamos con el dataset EGRESOS_2024, correspondiente a registros administrativos de egresos hospitalarios de Chile.
+
+El conjunto de datos tiene 1.048.575 registros y 15 variables. Este volumen justifica el uso de Spark, porque estamos trabajando con más de un millón de filas y con transformaciones que pueden escalar mejor en un entorno distribuido.
+
+Las variables incluyen información categórica, como sexo, grupo etario, región, previsión y país de origen. También hay variables clínicas, como los diagnósticos CIE-10, principalmente DIAG1 y DIAG2.
+
+Uno de los puntos más importantes que encontramos fue el fuerte desbalance de clases. El 97,54% de los registros corresponde a pacientes que egresaron vivos, mientras que solo el 2,46% corresponde a pacientes fallecidos. Esto convierte a la clase fallecida en una clase minoritaria crítica.
+
+Además, el entorno técnico utilizado fue Python, Java 17 y PySpark 3.5, con una configuración local de Spark usando 12 cores. También se detectó una GPU RTX 4060, que usamos más adelante para un modelo complementario con XGBoost.”
+
+**Transición:**
+“En la siguiente diapositiva veremos los hallazgos más importantes del análisis exploratorio.”
+
+---
+
+## Diapositiva 4 — César
+
+**EDA masiva: distribución y calidad de datos**
+**Tiempo estimado: 1:10 min**
+
+“Durante el análisis exploratorio usamos funciones nativas de Spark, como groupBy, count y describe, para revisar la calidad y distribución de los datos.
+
+Encontramos varios hallazgos importantes. Primero, la variable DIAS_ESTADA tenía una media de 6,22 días, pero también un valor máximo extremo de 15.162 días. Esto nos indicó que existían outliers muy fuertes. Además, decidimos no usar DIAS_ESTADA como predictor principal, porque es una variable que se conoce al final de la hospitalización y podría generar fuga temporal.
+
+También observamos que DIAG2 tenía un 90,02% de valores ausentes. Por eso no la usamos directamente como diagnóstico secundario, sino que construimos una variable indicadora llamada TIENE_DIAG2.
+
+Otro punto fue la existencia de duplicados completos: 215.967 registros, equivalentes al 20,6%. Esto se consideró dentro del diagnóstico de calidad de datos.
+
+Finalmente, el principal desafío fue el desbalance: más de un millón de pacientes vivos frente a poco más de veinticinco mil fallecidos. Por eso, en las fases siguientes usamos pesos de clase y métricas adecuadas para problemas desbalanceados.”
+
+**Transición:**
+“Ahora Dani va a explicar cómo preparamos los datos y construimos el pipeline de Spark ML.”
+
+---
+
+## Diapositiva 5 — Dani
+
+**Fase 3: Limpieza, features y pipeline de preparación**
+**Tiempo estimado: 1:15 min**
+
+“En la fase de preparación de datos construimos un pipeline reproducible usando Spark ML. Primero aplicamos filtros básicos: dejamos solo registros con condición de egreso válida, verificamos que todos fueran del año 2024 y limpiamos variables de texto.
+
+Luego creamos la variable objetivo label. El valor cero corresponde a pacientes vivos y el valor uno a pacientes fallecidos.
+
+Después hicimos ingeniería de características. A partir de DIAG1 extraímos el primer carácter para construir CAPITULO_CIE10, que resume el diagnóstico principal en grandes grupos clínicos. También creamos TIENE_DIAG2 para indicar si el paciente tenía diagnóstico secundario, y ES_CHILE para identificar si el país de origen era Chile.
+
+Una decisión importante fue excluir DIAS_ESTADA como predictor. Aunque es una variable interesante, no estaría disponible al inicio de la hospitalización, por lo tanto usarla podría generar fuga de información.
+
+Finalmente, las variables categóricas fueron procesadas con StringIndexer y OneHotEncoder. Las numéricas se integraron junto con las categóricas mediante VectorAssembler, generando un vector final de 102 componentes.”
+
+**Transición:**
+“En la siguiente parte veremos cómo manejamos el desbalance entre vivos y fallecidos.”
+
+---
+
+## Diapositiva 6 — Dani
+
+**Separación train/test y ponderación por clase**
+**Tiempo estimado: 1:10 min**
+
+“Después de preparar las variables, dividimos los datos en entrenamiento y prueba usando una proporción 80/20, con seed 2026 para que el experimento fuera reproducible.
+
+El conjunto de entrenamiento quedó con 838.608 registros, mientras que el conjunto de prueba quedó con 209.967 registros. Dentro de ambos conjuntos se mantuvo una distribución muy similar: la mayoría de los casos corresponde a pacientes vivos y una proporción pequeña a fallecidos.
+
+Para enfrentar el desbalance usamos pesos de clase. La clase viva recibió un peso bajo, cercano a 0,51, mientras que la clase fallecida recibió un peso alto, cercano a 20,26. Esto significa que durante el entrenamiento el modelo penaliza mucho más los errores cometidos sobre la clase minoritaria.
+
+Esta estrategia es más adecuada para Spark que duplicar registros, porque no rompe la lógica distribuida ni aumenta artificialmente el tamaño del dataset. En resumen, esta fase dejó listo un pipeline escalable y reproducible para alimentar los modelos.”
+
+**Transición:**
+“Ahora Luciano va a presentar los modelos entrenados y sus primeros resultados.”
+
+---
+
+## Diapositiva 7 — Luciano
+
+**Fase 4: Modelos entrenados**
+**Tiempo estimado: 1:15 min**
+
+“En la fase de modelado implementamos dos enfoques principales dentro de Spark ML.
+
+El primer enfoque fue Regresión Logística regularizada. Probamos tres variantes: L2 o Ridge, L1 o Lasso, y Elastic Net. La ventaja de estos modelos es que son interpretables, porque permiten analizar los coeficientes y entender qué variables aumentan o reducen el riesgo de fallecimiento.
+
+El segundo enfoque fue Random Forest, un modelo basado en árboles. Este modelo puede capturar relaciones no lineales e interacciones entre variables, algo que la regresión logística no siempre logra.
+
+Además, incluimos XGBoost con GPU como modelo complementario. Este modelo obtuvo un AUC-ROC de 0,8638 y un recall de fallecidos de 0,83. Sin embargo, no lo consideramos el modelo principal porque para entrenarlo tuvimos que convertir datos Spark a NumPy, perdiendo parte de la escalabilidad distribuida.
+
+La idea técnica fue comparar interpretabilidad contra capacidad predictiva: regresión logística para explicación y Random Forest para mejor balance operativo.”
+
+**Transición:**
+“Ahora revisemos los resultados iniciales y las variables más relevantes.”
+
+---
+
+## Diapositiva 8 — Luciano
+
+**Resultados iniciales y variables relevantes**
+**Tiempo estimado: 1:15 min**
+
+“En los resultados iniciales, la Regresión Logística L2 obtuvo el mayor AUC-ROC entre los modelos base, con 0,8570. También logró el mayor recall de fallecidos, con 0,7946, es decir, detectó cerca del 79,5% de los pacientes fallecidos.
+
+Random Forest obtuvo un AUC-ROC de 0,8480 y un F1-Score de 0,8463. Aunque su recall fue un poco menor que el de L2, tuvo un mejor equilibrio general entre las métricas.
+
+Al analizar las variables más importantes, los resultados fueron clínicamente coherentes. Entre los principales factores de riesgo aparecen los grupos de edad avanzada, especialmente 85 años o más y 80 a 84 años. También aparecen capítulos CIE-10 asociados a enfermedades respiratorias, circulatorias e infecciosas.
+
+Por otro lado, variables como el capítulo CIE-10 O, relacionado con embarazo, parto y puerperio, y los grupos etarios más jóvenes, se asociaron a menor riesgo. Esto refuerza que el modelo está capturando patrones clínicamente razonables.”
+
+**Transición:**
+“Ahora Vicente explicará la validación cruzada y la comparación final de modelos.”
+
+---
+
+## Diapositiva 9 — Vicente
+
+**Fase 5: Validación cruzada y comparación final**
+**Tiempo estimado: 1:20 min**
+
+“En la fase de evaluación usamos CrossValidator con cinco folds. La métrica de selección fue AUC-ROC, porque es más robusta en problemas desbalanceados.
+
+Para la Regresión Logística L1 probamos distintos valores de regParam y maxIter. La mejor configuración fue regParam igual a 0,001 y maxIter igual a 100. Este modelo obtuvo un AUC-ROC final de 0,8602, F1-Score de 0,8337 y un tiempo de entrenamiento de 217,5 segundos.
+
+Para Random Forest probamos numTrees de 50 y 100, y maxDepth de 5 y 10. La mejor configuración fue 100 árboles y profundidad máxima 10. Este modelo obtuvo AUC-ROC de 0,8511, F1-Score de 0,8450 y recall ponderado de 0,7631, con un tiempo de 389,6 segundos.
+
+Aunque la regresión logística tuvo un AUC ligeramente mayor, Random Forest presentó mejor F1-Score y mejor balance operativo. Por eso lo seleccionamos como modelo principal, dejando la Regresión Logística L1 como apoyo para interpretación y auditoría.”
+
+**Transición:**
+“Finalmente, revisemos cómo podría llevarse este pipeline a producción y cuál es el valor de negocio.”
+
+---
+
+## Diapositiva 10 — Vicente
+
+**Fase 6: Despliegue, conclusión y valor de negocio**
+**Tiempo estimado: 1:25 min**
+
+“Para la fase de despliegue propusimos una arquitectura en la nube. La idea es que los archivos mensuales del DEIS se depositen en un bucket S3 o en DBFS. Luego, un flujo en Databricks Autoloader podría cargar los datos, aplicar el pipeline de Spark ML, registrar métricas en MLflow y guardar el mejor modelo en un Model Registry.
+
+Después, el modelo podría exponerse como un endpoint REST para que un sistema hospitalario envíe las variables del paciente y reciba una probabilidad de riesgo. Esa probabilidad permitiría activar alertas tempranas para revisión clínica.
+
+Recomendamos Databricks porque integra Spark, MLflow, Delta Lake, Autoloader y Model Serving. Como alternativa también se podría usar AWS EMR junto con SageMaker.
+
+La conclusión técnica es que Random Forest detecta aproximadamente 77 de cada 100 pacientes fallecidos. Esto no reemplaza la decisión médica, pero sí puede funcionar como sistema de apoyo para priorizar recursos, camas UCI y seguimiento intensivo.
+
+Como trabajo futuro proponemos reentrenamiento mensual, ajuste del umbral de decisión, monitoreo de drift y validación clínica con expertos. En resumen, el proyecto demuestra que Spark ML puede transformar registros administrativos masivos en una herramienta escalable de apoyo a la gestión hospitalaria.”
+
+---
+
+# Cierre grupal opcional — 20 segundos
+
+“Con esto cerramos la presentación. En síntesis, seguimos las seis fases de CRISP-DM, construimos un pipeline completo con Spark ML, comparamos modelos interpretables y no lineales, y seleccionamos Random Forest como modelo principal por su mejor equilibrio operativo para el problema clínico. Muchas gracias.”

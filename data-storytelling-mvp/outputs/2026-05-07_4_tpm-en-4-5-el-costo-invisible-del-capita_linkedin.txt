@@ -1,0 +1,23 @@
+4.5% de TPM parece un número abstracto. Para un founder pre-revenue, puede ser la diferencia entre sobrevivir o quebrar.
+
+Chile sigue en zona de alerta para financiamiento vía deuda.
+
+No estamos en los picos de 2023, pero tampoco en territorio donde un crédito de desarrollo sea una decisión trivial. A tasa variable, un préstamo mal estructurado puede comerte 6 meses de runway sin que te des cuenta.
+
+El problema real no es la tasa en sí.
+
+Es que muchos founders toman deuda como si vivieran en un entorno de tasas bajas — sin modelar escenarios de stress, sin entender el impacto en su burn, sin considerar que el servicio de deuda no espera a que cierres tu próxima ronda.
+
+Aquí el dilema concreto:
+
+Por debajo del 4%, la deuda puede ser una herramienta inteligente para no diluirte. Por encima del 5%, el equity — aunque duele en cap table — suele ser más barato que los intereses. A 4.5% estás en tierra de nadie: ni claramente barato, ni claramente caro.
+
+Y esa ambigüedad es donde se cometen los peores errores de capital allocation. 📊
+
+Revisa el gráfico adjunto para ver el benchmark actual y las zonas de referencia.
+
+**La pregunta para los que están en la sala:**
+
+¿Estás modelando el impacto de la TPM en tu runway antes de firmar cualquier instrumento de deuda, o sigues tomando esa decisión basado en el monto disponible y no en el costo real del capital?
+
+#StartupsLatAm #VentureCapital #SaaS #FinanciamientoStartups #EcosistemaChile

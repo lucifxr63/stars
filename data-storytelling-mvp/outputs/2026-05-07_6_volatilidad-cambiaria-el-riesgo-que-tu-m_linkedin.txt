@@ -1,0 +1,19 @@
+$34 pesos de oscilación en 20 días. Eso no es ruido de mercado — es un agujero en tu P&L que nadie está midiendo.
+
+El USD/CLP se movió entre $876 y $910 en las últimas 4 semanas.
+
+Si tu startup factura en CLP pero paga AWS, Stripe, Notion, Hubspot o cualquier stack SaaS en USD, ese rango no es un dato macroeconómico. Es tu margen evaporándose en silencio.
+
+La zona "saludable" está por debajo de $30 de rango. Hoy estamos en $34. No es catastrófico — pero es el umbral donde los modelos financieros construidos sobre un tipo de cambio fijo empiezan a mentirte.
+
+¿El umbral de peligro real? Rango superior a $50, que implica una volatilidad de ~3.8%. A ese nivel, una proyección de 12 meses construida con un FX estático es ficción contable.
+
+Y sin embargo, la mayoría de los decks que veo en etapa seed y Serie A no tienen una sola línea de sensibilidad cambiaria.
+
+La cobertura cambiaria no es algo que haces cuando llegás a Serie B. Es lo que distingue a un operador serio de un founder que confunde suerte con modelo.
+
+→ La infografía adjunta muestra el rango diario de los últimos 20 días y los umbrales críticos de volatilidad, con datos del Banco Central de Chile al 07/05/2026.
+
+¿Tu modelo financiero actual tiene algún escenario de estrés cambiario, o estás corriendo con FX fijo y cruzando los dedos? 👇
+
+#StartupsLatAm #FinanzasParaFounders #SaaS #VentureCapital #Chile
