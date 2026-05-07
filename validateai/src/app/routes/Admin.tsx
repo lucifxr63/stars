@@ -10,13 +10,14 @@ import { supabase } from '@/lib/supabase';
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'content';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'health' | 'content';
 type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
 
 interface Profile {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  tier: string | null;
   created_at: string;
   validations_count?: number;
 }
@@ -43,7 +44,9 @@ interface Validation {
 interface AiInteraction {
   id: string;
   validation_id: string;
+  user_id: string;
   step: number;
+  prompt_type: string | null;
   model: string;
   tokens_used: number | null;
   created_at: string;
@@ -150,6 +153,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
     id: 'ai', label: 'AI Usage',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+  },
+  {
+    id: 'health', label: 'Sistema',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>,
   },
   {
     id: 'content', label: 'Contenido',
@@ -315,6 +322,78 @@ export function Admin() {
   // Filtro de validaciones
   const filteredValidations = statusFilter === 'all' ? validations : validations.filter(v => v.status === statusFilter);
 
+  // ── Sistema / Health ──────────────────────────────────────────────────────
+
+  // Funnel de wizard
+  const wizardFunnel = [
+    { step: 'Iniciaron', count: validations.length },
+    { step: 'Paso 1', count: validations.filter(v => v.current_step >= 1).length },
+    { step: 'Paso 2', count: validations.filter(v => v.current_step >= 2).length },
+    { step: 'Paso 3', count: validations.filter(v => v.current_step >= 3).length },
+    { step: 'Completaron', count: completed.length },
+  ];
+
+  // Distribución de tiers
+  const tierCounts = { free: 0, basic: 0, pro: 0 };
+  profiles.forEach(p => {
+    const t = (p.tier ?? 'free') as keyof typeof tierCounts;
+    if (t in tierCounts) tierCounts[t]++;
+    else tierCounts.free++;
+  });
+  const tierDist = [
+    { name: 'Free', value: tierCounts.free, color: '#9ca3af' },
+    { name: 'Basic', value: tierCounts.basic, color: '#f59e0b' },
+    { name: 'Pro', value: tierCounts.pro, color: '#8b5cf6' },
+  ];
+
+  // Prompt types más usados
+  const promptMap: Record<string, { count: number; tokens: number }> = {};
+  aiInteractions.forEach(a => {
+    const k = a.prompt_type ?? 'unknown';
+    if (!promptMap[k]) promptMap[k] = { count: 0, tokens: 0 };
+    promptMap[k].count++;
+    promptMap[k].tokens += a.tokens_used ?? 0;
+  });
+  const topPrompts = Object.entries(promptMap)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 10)
+    .map(([type, { count, tokens }]) => ({ type, count, tokens }));
+
+  // Distribución de modelos
+  const modelMap: Record<string, number> = {};
+  aiInteractions.forEach(a => {
+    const k = modelLabel(a.model) || 'unknown';
+    modelMap[k] = (modelMap[k] ?? 0) + 1;
+  });
+  const modelDist = Object.entries(modelMap)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, value], i) => ({ name, value, color: COLORS[i % COLORS.length] }));
+
+  // Top usuarios por tokens
+  const userTokenMap: Record<string, { tokens: number; calls: number; name: string }> = {};
+  aiInteractions.forEach(a => {
+    if (!a.user_id) return;
+    if (!userTokenMap[a.user_id]) {
+      const prof = profiles.find(p => p.id === a.user_id);
+      userTokenMap[a.user_id] = { tokens: 0, calls: 0, name: prof?.full_name ?? a.user_id.slice(0, 8) };
+    }
+    userTokenMap[a.user_id].tokens += a.tokens_used ?? 0;
+    userTokenMap[a.user_id].calls++;
+  });
+  const topUsers = Object.values(userTokenMap)
+    .sort((a, b) => b.tokens - a.tokens)
+    .slice(0, 5);
+
+  // Paso de mayor abandono
+  const abandonStep = (() => {
+    let maxDrop = 0; let dropStep = '—';
+    for (let i = 0; i < wizardFunnel.length - 1; i++) {
+      const drop = wizardFunnel[i].count - wizardFunnel[i + 1].count;
+      if (drop > maxDrop) { maxDrop = drop; dropStep = `${wizardFunnel[i].step} → ${wizardFunnel[i + 1].step}`; }
+    }
+    return dropStep;
+  })();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F]">
@@ -404,6 +483,7 @@ export function Admin() {
               {tab === 'users' && `${profiles.length} usuarios · ${usersThisWeek} esta semana`}
               {tab === 'validations' && `${completed.length} completadas · ${inProgress.length} en progreso`}
               {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
+              {tab === 'health' && `Funnel · Tiers · Prompts · Modelos`}
               {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
             </p>
           </div>
@@ -575,57 +655,74 @@ export function Admin() {
 
           {/* ══ USUARIOS ═══════════════════════════════════════════════════ */}
           {tab === 'users' && (
-            <Card title={`${profiles.length} usuarios`}>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-white/5">
-                      {['Usuario', 'ID', 'Validaciones', 'Esta semana', 'Registro'].map(h => (
-                        <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8 whitespace-nowrap">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {profiles.map(p => {
-                      const userValsThisWeek = validations.filter(v =>
-                        v.user_id === p.id && new Date(v.created_at) >= oneWeekAgo
-                      ).length;
-                      return (
-                        <tr key={p.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
-                          <td className="py-3.5 pr-8">
-                            <div className="flex items-center gap-3">
-                              <Avatar name={p.full_name} url={p.avatar_url} size={8} />
-                              <span className="font-medium text-gray-900 dark:text-[#F0EFF8]">
-                                {p.full_name ?? <span className="text-gray-300 font-normal italic">Sin nombre</span>}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3.5 pr-8 font-mono text-xs text-gray-300">{p.id.slice(0, 8)}…</td>
-                          <td className="py-3.5 pr-8">
-                            <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
-                              (p.validations_count ?? 0) > 0 ? 'bg-teal-50 text-teal-700' : 'bg-gray-100 dark:bg-white/5 text-gray-400'
-                            }`}>
-                              {p.validations_count}
-                            </span>
-                          </td>
-                          <td className="py-3.5 pr-8">
-                            {userValsThisWeek > 0 ? (
-                              <span className="text-xs font-semibold text-emerald-600">+{userValsThisWeek}</span>
-                            ) : (
-                              <span className="text-xs text-gray-300">—</span>
-                            )}
-                          </td>
-                          <td className="py-3.5 text-xs text-gray-400">{fmt(p.created_at)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                {profiles.length === 0 && (
-                  <p className="text-sm text-gray-300 text-center py-12">Sin usuarios registrados aún</p>
-                )}
+            <>
+              <div className="grid grid-cols-3 gap-3 md:gap-4">
+                {tierDist.map(t => (
+                  <KPI key={t.name} label={`Plan ${t.name}`} value={t.value}
+                    sub={profiles.length ? `${Math.round((t.value / profiles.length) * 100)}% del total` : '—'}
+                    accent={t.color}
+                    icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>}
+                  />
+                ))}
               </div>
-            </Card>
+              <Card title={`${profiles.length} usuarios`}>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-white/5">
+                        {['Usuario', 'Tier', 'Validaciones', 'Esta semana', 'Registro'].map(h => (
+                          <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8 whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {profiles.map(p => {
+                        const userValsThisWeek = validations.filter(v =>
+                          v.user_id === p.id && new Date(v.created_at) >= oneWeekAgo
+                        ).length;
+                        const tier = p.tier ?? 'free';
+                        const tierColor = tier === 'pro' ? 'bg-violet-50 text-violet-700'
+                          : tier === 'basic' ? 'bg-amber-50 text-amber-700'
+                          : 'bg-gray-100 text-gray-500';
+                        return (
+                          <tr key={p.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
+                            <td className="py-3.5 pr-8">
+                              <div className="flex items-center gap-3">
+                                <Avatar name={p.full_name} url={p.avatar_url} size={8} />
+                                <span className="font-medium text-gray-900 dark:text-[#F0EFF8]">
+                                  {p.full_name ?? <span className="text-gray-300 font-normal italic">Sin nombre</span>}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 pr-8">
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full capitalize ${tierColor}`}>{tier}</span>
+                            </td>
+                            <td className="py-3.5 pr-8">
+                              <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
+                                (p.validations_count ?? 0) > 0 ? 'bg-teal-50 text-teal-700' : 'bg-gray-100 dark:bg-white/5 text-gray-400'
+                              }`}>
+                                {p.validations_count}
+                              </span>
+                            </td>
+                            <td className="py-3.5 pr-8">
+                              {userValsThisWeek > 0 ? (
+                                <span className="text-xs font-semibold text-emerald-600">+{userValsThisWeek}</span>
+                              ) : (
+                                <span className="text-xs text-gray-300">—</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 text-xs text-gray-400">{fmt(p.created_at)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {profiles.length === 0 && (
+                    <p className="text-sm text-gray-300 text-center py-12">Sin usuarios registrados aún</p>
+                  )}
+                </div>
+              </Card>
+            </>
           )}
 
           {/* ══ VALIDACIONES ═══════════════════════════════════════════════ */}
@@ -804,30 +901,51 @@ export function Admin() {
                 </ResponsiveContainer>
               </Card>
 
+              <Card title="Top prompt types — tokens acumulados">
+                {topPrompts.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={Math.max(200, topPrompts.length * 32)}>
+                    <BarChart data={topPrompts} layout="vertical" barCategoryGap="25%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                      <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: '#9ca3af' }} width={130} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}
+                        formatter={(val: number, name: string) => [val.toLocaleString(), name === 'tokens' ? 'Tokens' : 'Llamadas']}
+                      />
+                      <Bar dataKey="tokens" fill="#8b5cf6" radius={[0, 6, 6, 0]} name="tokens" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </Card>
+
               <Card title="Interacciones recientes">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-white/5">
-                        {['Validación', 'Step', 'Modelo', 'Tokens', 'Fecha'].map(h => (
-                          <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8">{h}</th>
+                        {['Validación', 'Tipo de prompt', 'Modelo', 'Tokens', 'Fecha'].map(h => (
+                          <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-6">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {aiInteractions.map(a => (
                         <tr key={a.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
-                          <td className="py-3.5 pr-8 font-mono text-xs text-gray-300">{a.validation_id.slice(0, 8)}…</td>
-                          <td className="py-3.5 pr-8">
-                            <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] text-xs font-bold rounded-lg">{a.step}</span>
+                          <td className="py-3.5 pr-6 font-mono text-xs text-gray-300">{a.validation_id.slice(0, 8)}…</td>
+                          <td className="py-3.5 pr-6">
+                            <span className="text-xs px-2 py-1 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] font-mono">
+                              {a.prompt_type ?? `step ${a.step}`}
+                            </span>
                           </td>
-                          <td className="py-3.5 pr-8">
+                          <td className="py-3.5 pr-6">
                             <span className={`text-xs px-2 py-1 rounded-lg font-mono ${modelBadge(a.model)}`}>
                               {modelLabel(a.model)}
                             </span>
                           </td>
-                          <td className="py-3.5 pr-8 font-semibold text-gray-800 dark:text-[#F0EFF8]">{a.tokens_used?.toLocaleString() ?? '—'}</td>
-                          <td className="py-3.5 text-xs text-gray-400">{fmt(a.created_at)}</td>
+                          <td className="py-3.5 pr-6 font-semibold text-gray-800 dark:text-[#F0EFF8]">{a.tokens_used?.toLocaleString() ?? '—'}</td>
+                          <td className="py-3.5 text-xs text-gray-400 whitespace-nowrap">{fmt(a.created_at)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -843,6 +961,202 @@ export function Admin() {
               </Card>
             </>
           )}
+          {/* ══ SISTEMA / HEALTH ══════════════════════════════════════════════ */}
+          {tab === 'health' && (
+            <>
+              {/* KPIs */}
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+                <KPI
+                  label="Tasa de completitud"
+                  value={`${completionRate}%`}
+                  sub="wizard completo"
+                  accent="#14b8a6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <KPI
+                  label="Mayor abandono"
+                  value={abandonStep}
+                  sub="punto de drop más alto"
+                  accent="#ef4444"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>}
+                />
+                <KPI
+                  label="Modelo dominante"
+                  value={modelDist[0]?.name ?? '—'}
+                  sub={modelDist[0] ? `${modelDist[0].value} llamadas` : 'Sin datos'}
+                  accent="#8b5cf6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+                />
+                <KPI
+                  label="Prompt más llamado"
+                  value={topPrompts[0]?.type ?? '—'}
+                  sub={topPrompts[0] ? `${topPrompts[0].count} veces` : 'Sin datos'}
+                  accent="#f59e0b"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>}
+                />
+              </div>
+
+              {/* Funnel + Tiers */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                <Card title="Funnel de wizard">
+                  {validations.length === 0 ? (
+                    <div className="h-[220px] flex items-center justify-center text-sm text-gray-300">Sin validaciones aún</div>
+                  ) : (
+                    <div className="space-y-3 py-2">
+                      {wizardFunnel.map((f, i) => {
+                        const pct = wizardFunnel[0].count > 0 ? Math.round((f.count / wizardFunnel[0].count) * 100) : 0;
+                        const dropPct = i > 0 && wizardFunnel[i - 1].count > 0
+                          ? Math.round(((wizardFunnel[i - 1].count - f.count) / wizardFunnel[i - 1].count) * 100)
+                          : null;
+                        return (
+                          <div key={f.step}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-gray-600 dark:text-[#C4C4D4]">{f.step}</span>
+                              <div className="flex items-center gap-3">
+                                {dropPct !== null && dropPct > 0 && (
+                                  <span className="text-xs text-red-400 font-medium">↓ {dropPct}% abandono</span>
+                                )}
+                                <span className="text-xs font-black text-gray-900 dark:text-[#F0EFF8] w-16 text-right">
+                                  {f.count} <span className="font-normal text-gray-400">({pct}%)</span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="h-2.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${pct}%`,
+                                  background: i === wizardFunnel.length - 1 ? '#14b8a6' : COLORS[i % COLORS.length],
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card>
+
+                <Card title="Distribución de tiers">
+                  {profiles.length === 0 ? (
+                    <div className="h-[220px] flex items-center justify-center text-sm text-gray-300">Sin usuarios aún</div>
+                  ) : (
+                    <div className="flex items-center gap-6">
+                      <ResponsiveContainer width="55%" height={200}>
+                        <PieChart>
+                          <Pie data={tierDist} dataKey="value" cx="50%" cy="50%" outerRadius={80} innerRadius={44} paddingAngle={3}>
+                            {tierDist.map((t, i) => <Cell key={i} fill={t.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex-1 space-y-4">
+                        {tierDist.map(t => (
+                          <div key={t.name}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ background: t.color }} />
+                                <span className="text-xs font-semibold text-gray-600 dark:text-[#C4C4D4]">{t.name}</span>
+                              </div>
+                              <span className="text-xs font-black text-gray-900 dark:text-[#F0EFF8]">{t.value}</span>
+                            </div>
+                            <div className="h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${profiles.length ? (t.value / profiles.length) * 100 : 0}%`, background: t.color }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </div>
+
+              {/* Prompts ranking + Modelos + Top usuarios */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                <Card title="Ranking de prompt types — llamadas">
+                  {topPrompts.length === 0 ? (
+                    <div className="h-[240px] flex items-center justify-center text-sm text-gray-300">Sin interacciones AI aún</div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {topPrompts.map((p, i) => (
+                        <div key={p.type} className="flex items-center gap-3">
+                          <span className="w-5 text-xs font-black text-gray-300 text-right flex-shrink-0">{i + 1}</span>
+                          <span className="text-xs font-mono text-gray-600 dark:text-[#8B8AA0] flex-1 truncate">{p.type}</span>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="w-20 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-teal-400" style={{ width: `${(p.count / (topPrompts[0]?.count ?? 1)) * 100}%` }} />
+                            </div>
+                            <span className="text-xs font-bold text-gray-700 dark:text-[#C4C4D4] w-6 text-right">{p.count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+
+                <Card title="Distribución de modelos AI">
+                  {modelDist.length === 0 ? (
+                    <div className="h-[200px] flex items-center justify-center text-sm text-gray-300">Sin interacciones AI aún</div>
+                  ) : (
+                    <div className="flex items-center gap-6">
+                      <ResponsiveContainer width="50%" height={180}>
+                        <PieChart>
+                          <Pie data={modelDist} dataKey="value" cx="50%" cy="50%" outerRadius={70} innerRadius={32} paddingAngle={3}>
+                            {modelDist.map((m, i) => <Cell key={i} fill={m.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex-1 space-y-3">
+                        {modelDist.map(m => (
+                          <div key={m.name} className="flex items-center gap-2.5">
+                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: m.color }} />
+                            <span className="text-xs font-mono text-gray-500 dark:text-[#8B8AA0] flex-1 truncate">{m.name}</span>
+                            <span className="text-xs font-bold text-gray-800 dark:text-[#F0EFF8]">{m.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+
+                <Card title="Top usuarios por tokens consumidos" className="xl:col-span-2">
+                  {topUsers.length === 0 ? (
+                    <div className="h-[120px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-100 dark:border-white/5">
+                            {['#', 'Usuario', 'Tokens', 'Llamadas AI', 'Tokens / llamada', 'Costo est.'].map(h => (
+                              <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-8">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {topUsers.map((u, i) => {
+                            const costEst = ((u.tokens / 1_000_000) * 3).toFixed(4);
+                            const tokPerCall = u.calls > 0 ? Math.round(u.tokens / u.calls).toLocaleString() : '—';
+                            return (
+                              <tr key={u.name} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
+                                <td className="py-3.5 pr-8 text-xs font-black text-gray-300">{i + 1}</td>
+                                <td className="py-3.5 pr-8 font-medium text-gray-900 dark:text-[#F0EFF8] text-xs">{u.name}</td>
+                                <td className="py-3.5 pr-8 font-bold text-gray-800 dark:text-[#F0EFF8] text-sm">{u.tokens.toLocaleString()}</td>
+                                <td className="py-3.5 pr-8 text-xs text-gray-400">{u.calls}</td>
+                                <td className="py-3.5 pr-8 text-xs text-gray-400">{tokPerCall}</td>
+                                <td className="py-3.5 text-xs font-semibold text-amber-600">${costEst}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Card>
+              </div>
+            </>
+          )}
+
           {tab === 'content' && (
             <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400 text-sm">Cargando motor de contenido...</div>}>
               <DataStoryEngine />

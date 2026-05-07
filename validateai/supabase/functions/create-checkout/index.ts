@@ -7,9 +7,8 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // Variant IDs de Lemon Squeezy (Products → Variants en el dashboard)
 const VARIANT_IDS: Record<string, string> = {
-  basic:   Deno.env.get('LS_VARIANT_BASIC')!,
-  pro:     Deno.env.get('LS_VARIANT_PRO')!,
-  premium: Deno.env.get('LS_VARIANT_PREMIUM')!,
+  basic: Deno.env.get('LS_VARIANT_BASIC')!,
+  pro:   Deno.env.get('LS_VARIANT_PRO')!,
 };
 
 const LS_STORE_ID = Deno.env.get('LS_STORE_ID')!;
@@ -57,7 +56,7 @@ serve(async (req) => {
     }
 
     const { tier, success_url, cancel_url } = await req.json() as {
-      tier: 'basic' | 'pro' | 'premium';
+      tier: 'basic' | 'pro';
       success_url: string;
       cancel_url: string;
     };

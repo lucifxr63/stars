@@ -871,6 +871,7 @@ async function callAnthropic(
   promptType: PromptType,
   context: Record<string, unknown>,
   systemOverride?: string,
+  tier?: 'free' | 'basic' | 'pro',
 ): Promise<AIResult> {
   if (!ANTHROPIC_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY no está configurada en los secrets de Supabase.');
@@ -878,8 +879,10 @@ async function callAnthropic(
 
   const useWebSearch = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
 
+  const selectedModel = tier === 'free' ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-20250514';
+
   const body: Record<string, unknown> = {
-    model: 'claude-sonnet-4-20250514',
+    model: selectedModel,
     max_tokens: 4096,
     system: [
       {
@@ -933,7 +936,7 @@ async function callAnthropic(
     parsed,
     inputTokens: data.usage?.input_tokens ?? 0,
     outputTokens: data.usage?.output_tokens ?? 0,
-    model: 'claude-sonnet-4-20250514',
+    model: selectedModel,
   };
 }
 
@@ -998,13 +1001,14 @@ async function callAI(
   promptType: PromptType,
   context: Record<string, unknown>,
   systemOverride?: string,
+  tier?: 'free' | 'basic' | 'pro',
 ): Promise<AIResult> {
   // Prompts que idealmente usan web_search (solo Anthropic), pero si no hay créditos caen a OpenAI
   const requiresAnthropic = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
 
   if (requiresAnthropic && ANTHROPIC_API_KEY) {
     try {
-      return await callAnthropic(promptType, context, systemOverride);
+      return await callAnthropic(promptType, context, systemOverride, tier);
     } catch (err) {
       console.warn(`[callAI] Anthropic failed for ${promptType}, falling back to OpenAI:`, err);
     }
@@ -1014,11 +1018,11 @@ async function callAI(
   if (AI_PROVIDER === 'openai') {
     if (OPENAI_API_KEY) return callOpenAI(promptType, context, systemOverride);
     console.warn('AI_PROVIDER=openai pero no hay OPENAI_API_KEY. Usando Anthropic como fallback.');
-    return callAnthropic(promptType, context, systemOverride);
+    return callAnthropic(promptType, context, systemOverride, tier);
   }
 
   // Default: Anthropic
-  if (ANTHROPIC_API_KEY) return callAnthropic(promptType, context, systemOverride);
+  if (ANTHROPIC_API_KEY) return callAnthropic(promptType, context, systemOverride, tier);
   // Último fallback: intentar OpenAI si hay key
   if (OPENAI_API_KEY) {
     console.warn('No hay ANTHROPIC_API_KEY. Usando OpenAI como fallback.');
@@ -1137,18 +1141,17 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    const userTier = (['free', 'basic', 'pro', 'premium'].includes(profile?.tier ?? ''))
-      ? (profile!.tier as 'free' | 'basic' | 'pro' | 'premium')
+    const userTier = (['free', 'basic', 'pro'].includes(profile?.tier ?? ''))
+      ? (profile!.tier as 'free' | 'basic' | 'pro')
       : 'free';
 
     const EXPENSIVE_TYPES = new Set(['competitive_analysis', 'market_sizing', 'market_signals']);
-    const DAILY_LIMITS = {
-      free:    { total: 5,   expensive: 0  },
-      basic:   { total: 20,  expensive: 2  },
-      pro:     { total: 50,  expensive: 5  },
-      premium: { total: 200, expensive: 20 },
+    const MONTHLY_LIMITS = {
+      free:  { total: 3,  expensive: 0  },
+      basic: { total: 15, expensive: 5  },
+      pro:   { total: 50, expensive: 50 },
     };
-    const limits = DAILY_LIMITS[userTier];
+    const limits = MONTHLY_LIMITS[userTier];
 
     if (EXPENSIVE_TYPES.has(prompt_type) && limits.expensive === 0) {
       return new Response(JSON.stringify({
@@ -1158,33 +1161,33 @@ serve(async (req) => {
       }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
-    const todayStart = new Date();
-    todayStart.setUTCHours(0, 0, 0, 0);
+    const now = new Date();
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
-    const { count: totalToday } = await supabase
+    const { count: totalThisMonth } = await supabase
       .from('ai_interactions')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .gte('created_at', todayStart.toISOString());
+      .gte('created_at', monthStart.toISOString());
 
-    if ((totalToday ?? 0) >= limits.total) {
+    if ((totalThisMonth ?? 0) >= limits.total) {
       return new Response(JSON.stringify({
-        error: 'rate_limit_daily',
-        message: `Límite diario de ${limits.total} análisis para el plan ${userTier} alcanzado.`,
+        error: 'rate_limit_monthly',
+        message: `Límite mensual de ${limits.total} análisis para el plan ${userTier} alcanzado.`,
         tier: userTier,
         limit: limits.total,
       }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
     if (EXPENSIVE_TYPES.has(prompt_type)) {
-      const { count: expToday } = await supabase
+      const { count: expThisMonth } = await supabase
         .from('ai_interactions')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .in('prompt_type', [...EXPENSIVE_TYPES])
-        .gte('created_at', todayStart.toISOString());
+        .gte('created_at', monthStart.toISOString());
 
-      if ((expToday ?? 0) >= limits.expensive) {
+      if ((expThisMonth ?? 0) >= limits.expensive) {
         return new Response(JSON.stringify({
           error: 'rate_limit_expensive',
           message: `Límite de ${limits.expensive} análisis de mercado para el plan ${userTier} alcanzado.`,
@@ -1281,7 +1284,7 @@ serve(async (req) => {
     }
 
     // Llamada AI con routing dual
-    const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride);
+    const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride, userTier);
 
     // Guardar en caché (no bloqueante)
     if (ideaCacheKey && cacheableTypes.includes(prompt_type)) {
