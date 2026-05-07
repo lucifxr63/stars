@@ -25,10 +25,12 @@ function ErrorMsg({ message }: { message?: string }) {
 export function StepMarket() {
   const { stepMarket, updateStepMarket, nextStep, prevStep } = useValidationStore();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<StepMarket>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<StepMarket>({
     resolver: zodResolver(StepMarketSchema),
     defaultValues: stepMarket as StepMarket,
   });
+
+  const selectedModel = watch('business_model');
 
   const onSubmit = (data: StepMarket) => {
     updateStepMarket(data);
@@ -90,17 +92,21 @@ export function StepMarket() {
           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
             Modelo de negocio <span className="text-red-400">*</span>
           </label>
+          <input type="hidden" {...register('business_model')} />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {BUSINESS_MODELS.map((m) => (
-              <label key={m} className="cursor-pointer">
-                <input type="radio" {...register('business_model')} value={m} className="peer hidden" />
-                <div className="px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium
-                                text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-[#0A0A0F]
-                                peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600
-                                hover:border-indigo-300 hover:text-indigo-600 transition-all duration-150">
-                  {BUSINESS_MODEL_LABELS[m]}
-                </div>
-              </label>
+              <button
+                key={m}
+                type="button"
+                onClick={() => setValue('business_model', m as StepMarket['business_model'], { shouldValidate: true })}
+                className={`px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium transition-all duration-150
+                  ${selectedModel === m
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-[#0A0A0F] hover:border-indigo-300 hover:text-indigo-600'
+                  }`}
+              >
+                {BUSINESS_MODEL_LABELS[m]}
+              </button>
             ))}
           </div>
           {errors.business_model && <ErrorMsg message="Selecciona un modelo de negocio" />}
