@@ -104,35 +104,51 @@ export default function DataStoryEngine() {
             Authorization: `Bearer ${token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            validationId: 'admin-content',
+            validation_id: 'admin-content-engine',
             step: 0,
-            promptType: 'market_signals',
+            prompt_type: 'market_signals',
             context: {
               idea_name: 'DataShield Content Engine',
-              idea_description:
-                'Genera un tema de Data Storytelling para LinkedIn orientado a founders B2B en LatAm. Responde SOLO con un JSON válido con este formato exacto: {"tag_sistema":"/SYS/TEMA/2026","titulo":"...","subtitulo":"...","metrica":"...","benchmark":"...","saludable":"...","peligro":"...","insight":"...","copyLinkedIn":"..."}',
-              idea_industry: 'SaaS / Marketing',
+              idea_description: 'Genera un tema de Data Storytelling para LinkedIn orientado a founders B2B en LatAm. Al final de tu análisis incluye un bloque JSON con este formato exacto (sin markdown): {"tag_sistema":"/SYS/TEMA/2026","titulo":"...","subtitulo":"...","metrica":"...","benchmark":"...","saludable":"...","peligro":"...","insight":"...","copyLinkedIn":"..."}',
+              idea_industry: 'SaaS / Venture Capital',
               target_country: 'Chile',
+              target_region: 'LatAm',
+              business_model: 'B2B SaaS',
               business_stage: 'growth',
             },
           }),
         }
       );
 
-      if (!res.ok) throw new Error('Error del servidor de IA');
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error ?? `HTTP ${res.status}`);
+      }
       const raw = await res.json();
 
-      // Intentar parsear JSON estructurado del response
-      const text: string =
-        typeof raw === 'string' ? raw : raw.result ?? raw.content ?? JSON.stringify(raw);
-      const match = text.match(/\{[\s\S]*\}/);
+      // El response puede ser el objeto parsed directamente o tener un wrapper
+      const text = typeof raw === 'string' ? raw : JSON.stringify(raw);
+      const match = text.match(/\{[^{}]*"titulo"[^{}]*\}/s) ?? text.match(/\{[\s\S]*?\}/);
       if (match) {
-        const parsed = JSON.parse(match[0]);
-        setPostData(prev => ({ ...prev, ...parsed }));
-        toast.success('Contenido sugerido por IA');
+        try {
+          const parsed = JSON.parse(match[0]);
+          if (parsed.titulo) {
+            setPostData(prev => ({ ...prev, ...parsed }));
+            toast.success('Contenido sugerido por IA');
+          } else {
+            // El JSON es el análisis completo, extraer campos útiles
+            setPostData(prev => ({
+              ...prev,
+              insight: parsed.summary ?? parsed.signals?.[0] ?? parsed.insight ?? text.slice(0, 300),
+            }));
+            toast.success('Insight actualizado por IA');
+          }
+        } catch {
+          setPostData(prev => ({ ...prev, insight: text.slice(0, 300) }));
+          toast.info('Insight actualizado');
+        }
       } else {
-        // Si no viene JSON, al menos actualizar el insight con el texto
-        setPostData(prev => ({ ...prev, insight: text.slice(0, 200) }));
+        setPostData(prev => ({ ...prev, insight: text.slice(0, 300) }));
         toast.success('Insight actualizado por IA');
       }
     } catch (err) {

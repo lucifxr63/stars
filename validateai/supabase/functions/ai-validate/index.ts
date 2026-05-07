@@ -19,6 +19,7 @@ const AI_PROVIDER = (Deno.env.get('AI_PROVIDER') ?? 'anthropic') as 'anthropic' 
 const ALLOWED_ORIGINS = [
   'https://validateai-mu.vercel.app',
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000',
 ];
 
