@@ -912,7 +912,7 @@ export function Admin() {
                       <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: '#9ca3af' }} width={130} />
                       <Tooltip
                         contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}
-                        formatter={(val: unknown, name: string) => [(val as number)?.toLocaleString() ?? '0', name === 'tokens' ? 'Tokens' : 'Llamadas']}
+                        formatter={(val: unknown, name: unknown) => [(val as number)?.toLocaleString() ?? '0', name === 'tokens' ? 'Tokens' : 'Llamadas']}
                       />
                       <Bar dataKey="tokens" fill="#8b5cf6" radius={[0, 6, 6, 0]} name="tokens" />
                     </BarChart>
