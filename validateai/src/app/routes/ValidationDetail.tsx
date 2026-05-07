@@ -143,7 +143,7 @@ export function ValidationDetail() {
     trends_status: 'success' | 'error' | 'pending';
   } | null>(null);
   const { callAI } = useAI();
-  const { tier, isPremium } = useUserTier();
+  const { tier, isPro: isPremium } = useUserTier();
   const sections = getUserSections(tier);
   const { mentors } = useMentors(data?.idea_description);
 

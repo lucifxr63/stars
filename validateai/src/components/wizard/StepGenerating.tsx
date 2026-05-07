@@ -78,7 +78,7 @@ export function StepGenerating() {
   const navigate = useNavigate();
   const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, validationMode,
           setPremiumResult, setAgentLogId } = useValidationStore();
-  const { isPremium } = useUserTier();
+  const { isPro: isPremium } = useUserTier();
   const [tasks, setTasks] = useState<GenerationTask[]>([
     { id: 'summary', label: 'Evaluando viabilidad e idea...', status: 'pending', type: 'summary' },
     { id: 'market', label: 'Calculando tamaño de mercado...', status: 'pending', type: 'market_sizing' },
