@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { toPng } from 'html-to-image';
 import { Line, Bar } from 'react-chartjs-2';
 import {
