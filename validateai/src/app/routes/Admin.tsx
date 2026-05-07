@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+const DataStoryEngine = lazy(() => import('@/components/admin/DataStoryEngine'));
 import { useNavigate } from 'react-router-dom';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -9,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'content';
 type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
 
 interface Profile {
@@ -149,6 +150,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
     id: 'ai', label: 'AI Usage',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+  },
+  {
+    id: 'content', label: 'Contenido',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
   },
 ];
 
@@ -399,6 +404,7 @@ export function Admin() {
               {tab === 'users' && `${profiles.length} usuarios · ${usersThisWeek} esta semana`}
               {tab === 'validations' && `${completed.length} completadas · ${inProgress.length} en progreso`}
               {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
+              {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
             </p>
           </div>
         </div>
@@ -836,6 +842,11 @@ export function Admin() {
                 />
               </Card>
             </>
+          )}
+          {tab === 'content' && (
+            <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400 text-sm">Cargando motor de contenido...</div>}>
+              <DataStoryEngine />
+            </Suspense>
           )}
         </div>
       </main>

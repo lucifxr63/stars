@@ -10,8 +10,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    // @react-pdf/renderer usa workers internos que no deben pre-bundlearse con Vite
-    exclude: ['@react-pdf/renderer'],
+    include: [
+      '@react-pdf/renderer',
+    ],
   },
 
 })

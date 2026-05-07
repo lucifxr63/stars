@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { useAI } from '@/hooks/useAI';
+import { generateLeanRoadmapPDF, generateUnitEconomicsPDF, generateCompliancePDF } from '@/lib/pdf';
+import type { LeanRoadmap, FinancialProjection, ComplianceRoadmap, UnitEconomics } from '@/types/validation';
 
 interface Props {
   validationId: string;
   context: Record<string, unknown>;
+  unitEconomics?: UnitEconomics | null;
 }
 
 const DELIVERABLES = [
-  { id: 'validation_kit',      label: 'Kit 48h',       icon: '🧪', desc: 'Experimentos concretos para validar en 48 horas' },
-  { id: 'landing_generator',   label: 'Landing',        icon: '🖥️', desc: 'Copy completo para tu página de preventa' },
-  { id: 'interview_script',    label: 'Entrevistas',    icon: '🎤', desc: 'Guión para entrevistas de usuario' },
-  { id: 'tech_viability',      label: 'Tech Stack',     icon: '⚙️', desc: 'Análisis técnico y stack recomendado' },
-  { id: 'first_100_customers', label: 'Primeros 100',   icon: '📣', desc: 'Plan para conseguir tus primeros 100 clientes' },
-  { id: 'revenue_models',      label: 'Monetización',   icon: '💰', desc: 'Comparativa de modelos de ingreso' },
-  { id: 'risk_checklist',      label: 'Riesgos',        icon: '⚠️', desc: 'Checklist de riesgos y criterios go/no-go' },
-  { id: 'pitch_letter',        label: 'Pitch',          icon: '📝', desc: 'Email y elevator pitch para inversores' },
+  { id: 'validation_kit',      label: 'Kit 48h',       icon: '🧪', desc: 'Experimentos concretos para validar en 48 horas',          isPdf: false },
+  { id: 'landing_generator',   label: 'Landing',        icon: '🖥️', desc: 'Copy completo para tu página de preventa',                 isPdf: false },
+  { id: 'interview_script',    label: 'Entrevistas',    icon: '🎤', desc: 'Guión para entrevistas de usuario',                        isPdf: false },
+  { id: 'tech_viability',      label: 'Tech Stack',     icon: '⚙️', desc: 'Análisis técnico y stack recomendado',                     isPdf: false },
+  { id: 'first_100_customers', label: 'Primeros 100',   icon: '📣', desc: 'Plan para conseguir tus primeros 100 clientes',            isPdf: false },
+  { id: 'revenue_models',      label: 'Monetización',   icon: '💰', desc: 'Comparativa de modelos de ingreso',                        isPdf: false },
+  { id: 'risk_checklist',      label: 'Riesgos',        icon: '⚠️', desc: 'Checklist de riesgos y criterios go/no-go',                isPdf: false },
+  { id: 'pitch_letter',        label: 'Pitch',          icon: '📝', desc: 'Email y elevator pitch para inversores',                   isPdf: false },
+  { id: 'lean_roadmap',        label: 'Roadmap MVP',    icon: '🗺️', desc: 'Plan de sprints tácticos para construir el MVP',           isPdf: true  },
+  { id: 'financial_projection',label: 'Unit Economics', icon: '📊', desc: 'Proyección financiera 12 meses y estrategia de crecimiento', isPdf: true },
+  { id: 'compliance_roadmap',  label: 'Legal Chile',    icon: '⚖️', desc: 'Roadmap regulatorio y societario para el ecosistema chileno', isPdf: true },
 ] as const;
 
 type DeliverableId = typeof DELIVERABLES[number]['id'];
@@ -298,7 +304,197 @@ function PitchView({ d }: { d: DeliverableData }) {
   );
 }
 
-const VIEWS: Record<DeliverableId, React.ComponentType<{ d: DeliverableData }>> = {
+// ── PDF deliverable views ─────────────────────────────────────────────────────
+
+function LeanRoadmapView({ d, context }: { d: LeanRoadmap; context: Record<string, unknown> }) {
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await generateLeanRoadmapPDF({ ...context, lean_roadmap: d, idea_name: context.idea_name as string });
+    } finally {
+      setDownloading(false);
+    }
+  };
+  const approachColors: Record<string, string> = { no_code: '#10B981', low_code: '#F59E0B', full_code: '#3B82F6' };
+  const approachLabels: Record<string, string> = { no_code: 'No-Code', low_code: 'Low-Code', full_code: 'Full Code' };
+  const color = approachColors[d.architecture_approach] ?? '#10B981';
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-wrap gap-2">
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: color + '22', color }}>
+            {approachLabels[d.architecture_approach]}
+          </span>
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-[#C4C4D4]">
+            {d.total_weeks} semanas · ${d.mvp_cost_usd.min}–{d.mvp_cost_usd.max} USD
+          </span>
+        </div>
+        <button onClick={handleDownload} disabled={downloading}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 transition disabled:opacity-50">
+          {downloading ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : '↓'}
+          {downloading ? 'Generando PDF…' : 'Descargar PDF'}
+        </button>
+      </div>
+      <p className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-gray-50 dark:bg-white/5 rounded-xl p-3">{d.rationale}</p>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {d.recommended_tools.map((t) => (
+          <span key={t} className="px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 text-xs font-semibold border border-teal-200 dark:border-teal-500/20">{t}</span>
+        ))}
+      </div>
+      {d.sprints.map((s, i) => (
+        <div key={i} className="border border-gray-100 dark:border-white/5 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">Sprint {i + 1} — {s.name}</p>
+            <div className="flex gap-2">
+              <span className="text-xs text-gray-400">{s.duration_weeks} sem.</span>
+              <span className="text-xs bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#8B8AA0] px-2 py-0.5 rounded-full">{s.stack}</span>
+            </div>
+          </div>
+          <p className="text-xs text-teal-600 dark:text-teal-400 mb-2 italic">{s.goal}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-1">Must Have</p>
+              {s.must_haves.map((f, j) => <p key={j} className="text-xs text-gray-600 dark:text-[#8B8AA0]">✓ {f}</p>)}
+            </div>
+            {s.nice_to_haves.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nice to Have</p>
+                {s.nice_to_haves.map((f, j) => <p key={j} className="text-xs text-gray-400">○ {f}</p>)}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FinancialProjectionView({ d, context, unitEconomics }: { d: FinancialProjection; context: Record<string, unknown>; unitEconomics?: UnitEconomics | null }) {
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await generateUnitEconomicsPDF({ ...context, financial_projection: d, unit_economics: unitEconomics ?? null, idea_name: context.idea_name as string });
+    } finally {
+      setDownloading(false);
+    }
+  };
+  const verdictColor = d.model_verdict === 'strong' ? 'text-green-600' : d.model_verdict === 'moderate' ? 'text-amber-600' : 'text-red-600';
+  const verdictBg    = d.model_verdict === 'strong' ? 'bg-green-50 border-green-200 dark:bg-green-500/10 dark:border-green-500/20' : d.model_verdict === 'moderate' ? 'bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20' : 'bg-red-50 border-red-200 dark:bg-red-500/10 dark:border-red-500/20';
+  const strategyLabel = d.growth_strategy === 'plg' ? 'Product-Led Growth' : d.growth_strategy === 'sales_led' ? 'Sales-Led Growth' : 'Modelo Híbrido';
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className={`px-3 py-1.5 rounded-xl border text-xs font-bold ${verdictBg} ${verdictColor}`}>
+          {d.model_verdict === 'strong' ? 'Modelo Sólido' : d.model_verdict === 'moderate' ? 'Potencial Moderado' : 'Riesgo Alto'}
+          {' · '}{strategyLabel}
+        </div>
+        <button onClick={handleDownload} disabled={downloading}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 transition disabled:opacity-50">
+          {downloading ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : '↓'}
+          {downloading ? 'Generando PDF…' : 'Descargar PDF'}
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Break-even', val: `Mes ${d.break_even_month}`, color: 'text-teal-600' },
+          { label: 'Revenue Año 1', val: `$${d.year1_revenue_usd.toLocaleString()} USD`, color: 'text-green-600' },
+          { label: 'Estrategia', val: strategyLabel, color: 'text-blue-600' },
+        ].map(({ label, val, color }) => (
+          <div key={label} className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 text-center">
+            <p className="text-xs text-gray-400 mb-1">{label}</p>
+            <p className={`text-sm font-bold ${color}`}>{val}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-gray-50 dark:bg-white/5 rounded-xl p-3">{d.model_verdict_reason}</p>
+      <div>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Proyección MRR (meses 1–12)</p>
+        <div className="grid grid-cols-6 gap-1">
+          {d.monthly_projection.map((p) => {
+            const max = Math.max(...d.monthly_projection.map((m) => m.mrr_usd), 1);
+            const h = Math.max(4, (p.mrr_usd / max) * 60);
+            return (
+              <div key={p.month} className="flex flex-col items-center gap-1">
+                <div className="w-full flex items-end justify-center" style={{ height: 64 }}>
+                  <div className="w-full rounded-t-md bg-teal-500/70" style={{ height: h }} title={`M${p.month}: $${p.mrr_usd}`} />
+                </div>
+                <span className="text-[9px] text-gray-400">M{p.month}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {d.key_assumptions.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Supuestos clave</p>
+          {d.key_assumptions.map((a, i) => <p key={i} className="text-xs text-gray-600 dark:text-[#8B8AA0] mb-1">› {a}</p>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComplianceView({ d, context }: { d: ComplianceRoadmap; context: Record<string, unknown> }) {
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await generateCompliancePDF({ ...context, compliance_roadmap: d, idea_name: context.idea_name as string });
+    } finally {
+      setDownloading(false);
+    }
+  };
+  const riskColors: Record<string, string> = { high: 'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:border-red-500/20', medium: 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20', low: 'text-green-600 bg-green-50 border-green-200 dark:bg-green-500/10 dark:border-green-500/20' };
+  const riskLabel = { high: 'Riesgo Alto', medium: 'Riesgo Medio', low: 'Riesgo Bajo' };
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <span className={`px-3 py-1.5 rounded-xl border text-xs font-bold ${riskColors[d.overall_risk_level]}`}>
+          {riskLabel[d.overall_risk_level]} · {d.constitution.recommended_entity}
+        </span>
+        <button onClick={handleDownload} disabled={downloading}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 transition disabled:opacity-50">
+          {downloading ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : '↓'}
+          {downloading ? 'Generando PDF…' : 'Descargar PDF'}
+        </button>
+      </div>
+      <p className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-gray-50 dark:bg-white/5 rounded-xl p-3">{d.risk_rationale}</p>
+      <div>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Leyes Aplicables</p>
+        {d.regulatory.applicable_laws.map((law, i) => (
+          <div key={i} className="border border-gray-100 dark:border-white/5 rounded-xl p-3 mb-2">
+            <div className="flex items-start gap-2 mb-1">
+              <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${law.risk_level === 'high' ? 'bg-red-100 text-red-700' : law.risk_level === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>{law.risk_level.toUpperCase()}</span>
+              <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-xs">{law.law}</p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-1">{law.description}</p>
+            <p className="text-xs text-teal-600 dark:text-teal-400">→ {law.action_required}</p>
+          </div>
+        ))}
+      </div>
+      <div>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Pacto de Accionistas</p>
+        <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3">
+          <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1">{d.shareholders.vesting_recommendation}</p>
+          <div className="flex gap-4 mt-2">
+            <span className="text-xs text-gray-500">Cliff: <strong className="text-gray-700 dark:text-[#C4C4D4]">{d.shareholders.cliff_months} meses</strong></span>
+            <span className="text-xs text-gray-500">Drag-along: <strong className={d.shareholders.drag_along ? 'text-green-600' : 'text-red-600'}>{d.shareholders.drag_along ? 'Sí' : 'No'}</strong></span>
+            <span className="text-xs text-gray-500">Tag-along: <strong className={d.shareholders.tag_along ? 'text-green-600' : 'text-red-600'}>{d.shareholders.tag_along ? 'Sí' : 'No'}</strong></span>
+          </div>
+        </div>
+      </div>
+      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3">
+        <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+          ⚠️ <strong>Aviso Legal:</strong> Recomendación estratégica generada por IA. No constituye asesoría legal formal. Consulta a un abogado especializado antes de tomar decisiones legales o societarias.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const VIEWS: Record<Exclude<DeliverableId, 'lean_roadmap' | 'financial_projection' | 'compliance_roadmap'>, React.ComponentType<{ d: DeliverableData }>> = {
   validation_kit:      ValidationKitView,
   landing_generator:   LandingView,
   interview_script:    InterviewView,
@@ -309,7 +505,9 @@ const VIEWS: Record<DeliverableId, React.ComponentType<{ d: DeliverableData }>> 
   pitch_letter:        PitchView,
 };
 
-export function DeliverableTabs({ validationId, context }: Props) {
+const PDF_IDS = new Set<DeliverableId>(['lean_roadmap', 'financial_projection', 'compliance_roadmap']);
+
+export function DeliverableTabs({ validationId, context, unitEconomics }: Props) {
   const [activeTab, setActiveTab] = useState<DeliverableId>('validation_kit');
   const [results, setResults] = useState<Partial<Record<DeliverableId, DeliverableData>>>({});
   const [loadingTab, setLoadingTab] = useState<DeliverableId | null>(null);
@@ -327,7 +525,8 @@ export function DeliverableTabs({ validationId, context }: Props) {
   };
 
   const currentDeliverable = DELIVERABLES.find((d) => d.id === activeTab)!;
-  const ViewComponent = VIEWS[activeTab];
+  const isPdfTab = PDF_IDS.has(activeTab);
+  const ViewComponent = !isPdfTab ? VIEWS[activeTab as keyof typeof VIEWS] : null;
   const result = results[activeTab];
   const isLoading = loadingTab === activeTab;
 
@@ -360,7 +559,12 @@ export function DeliverableTabs({ validationId, context }: Props) {
 
       {/* Content */}
       <div className="p-5">
-        <p className="text-xs text-gray-400 mb-4">{currentDeliverable.desc}</p>
+        <div className="flex items-center gap-2 mb-4">
+          <p className="text-xs text-gray-400 flex-1">{currentDeliverable.desc}</p>
+          {currentDeliverable.isPdf && (
+            <span className="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-[10px] font-bold shrink-0">PDF</span>
+          )}
+        </div>
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -369,7 +573,18 @@ export function DeliverableTabs({ validationId, context }: Props) {
           </div>
         ) : result ? (
           <div>
-            <ViewComponent d={result} />
+            {/* PDF deliverables render their own specialised views */}
+            {isPdfTab && activeTab === 'lean_roadmap' && (
+              <LeanRoadmapView d={result as LeanRoadmap} context={context} />
+            )}
+            {isPdfTab && activeTab === 'financial_projection' && (
+              <FinancialProjectionView d={result as FinancialProjection} context={context} unitEconomics={unitEconomics} />
+            )}
+            {isPdfTab && activeTab === 'compliance_roadmap' && (
+              <ComplianceView d={result as ComplianceRoadmap} context={context} />
+            )}
+            {/* Standard text deliverables */}
+            {!isPdfTab && ViewComponent && <ViewComponent d={result} />}
             <button
               onClick={() => setResults((prev) => { const n = {...prev}; delete n[activeTab]; return n; })}
               className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:text-[#8B8AA0] transition-colors"
