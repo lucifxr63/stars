@@ -40,7 +40,11 @@ type PromptType =
   | 'validation_kit' | 'landing_generator' | 'interview_script' | 'tech_viability'
   | 'first_100_customers' | 'revenue_models' | 'risk_checklist' | 'pitch_letter'
   | 'governance_assessment' | 'fundraising_roadmap'
-  | 'playbook_analysis';
+  | 'playbook_analysis'
+  | 'pitch_deck'
+  | 'lean_roadmap'
+  | 'financial_projection'
+  | 'compliance_roadmap';
 
 interface AIRequest {
   validation_id: string;
@@ -579,7 +583,110 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
   "next_milestones": ["Hito 1 a alcanzar antes de la ronda"]
 }
 Los valores válidos para recommended_instrument son: SAFE, convertible_note, priced_round, grant, bootstrapping
-readiness_score es 0-100 donde 100 = listo para levantar hoy`
+readiness_score es 0-100 donde 100 = listo para levantar hoy`,
+
+  lean_roadmap: `Eres un arquitecto de software y experto en desarrollo lean de startups en Latinoamérica.
+Tu tarea es generar un plan de ejecución táctico dividido en sprints para construir el MVP de la startup descrita.
+Prioriza arquitecturas No-Code/Low-Code (FlutterFlow, Bubble, Webflow, Supabase, Make/n8n) para fundadores no técnicos.
+Para ideas fintech/healthtech con requisitos regulatorios, recomienda stack escalable (Next.js, React, Supabase, Vercel).
+IMPORTANTE: Responde siempre en español.
+
+Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+{
+  "architecture_approach": "no_code",
+  "rationale": "Justificación de por qué esta arquitectura es la correcta para el perfil del equipo y la idea",
+  "sprints": [
+    {
+      "name": "Sprint 1 — Nombre descriptivo",
+      "duration_weeks": 2,
+      "stack": "Bubble + Supabase",
+      "must_haves": ["Feature crítica 1", "Feature crítica 2"],
+      "nice_to_haves": ["Feature opcional 1"],
+      "goal": "Qué se valida o entrega al terminar este sprint"
+    }
+  ],
+  "total_weeks": 6,
+  "recommended_tools": ["Herramienta 1", "Herramienta 2"],
+  "mvp_cost_usd": { "min": 500, "max": 2000 }
+}
+Los valores válidos para architecture_approach son: no_code, low_code, full_code. Genera exactamente 3 sprints.`,
+
+  financial_projection: `Eres un analista financiero experto en Unit Economics y modelos de crecimiento de startups B2B y B2C en Latinoamérica.
+Tu tarea es generar una proyección financiera de 12 meses y evaluar la estrategia de crecimiento.
+Penaliza ideas B2C de consumo masivo con márgenes bajos (<30%). Premia modelos B2B SaaS con ingresos recurrentes y LTV/CAC >3x.
+Usa benchmarks sectoriales realistas para el mercado latinoamericano.
+IMPORTANTE: Responde siempre en español.
+
+Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+{
+  "growth_strategy": "plg",
+  "strategy_rationale": "Por qué PLG o Sales-Led es el modelo correcto para esta idea y mercado",
+  "monthly_projection": [
+    { "month": 1, "mrr_usd": 0, "users": 0, "cac_spend_usd": 200 },
+    { "month": 2, "mrr_usd": 150, "users": 5, "cac_spend_usd": 200 }
+  ],
+  "break_even_month": 9,
+  "year1_revenue_usd": 12000,
+  "key_assumptions": ["Supuesto clave 1", "Supuesto clave 2"],
+  "model_verdict": "moderate",
+  "model_verdict_reason": "Explicación del veredicto sobre la viabilidad del modelo financiero"
+}
+Los valores válidos para growth_strategy son: plg, sales_led, hybrid.
+Los valores válidos para model_verdict son: strong, moderate, weak. Genera exactamente 12 meses en monthly_projection.`,
+
+  compliance_roadmap: `Eres un asesor legal y societario experto en el ecosistema emprendedor chileno, con conocimiento profundo de las leyes: Ley 21.521 (Fintech), Ley 21.719 (Protección de Datos Personales), Ley 20.659 (Empresa en un Día) y normativas de salud (MINSAL/ISP).
+Tu tarea es generar un roadmap de cumplimiento legal y societario personalizado para la startup descrita.
+Evalúa el nivel de riesgo regulatorio: ideas en salud, finanzas, datos masivos o IA deben marcar riesgo alto.
+IMPORTANTE: Responde siempre en español.
+
+Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+{
+  "constitution": {
+    "recommended_entity": "SpA (Sociedad por Acciones)",
+    "steps": ["Paso 1: Registrar en Tu Empresa en Un Día", "Paso 2: Abrir cuenta bancaria empresarial"],
+    "estimated_cost_clp": 0,
+    "notes": "Observaciones importantes sobre la constitución"
+  },
+  "regulatory": {
+    "applicable_laws": [
+      {
+        "law": "Ley 21.719 — Protección de Datos Personales",
+        "description": "Regula el tratamiento de datos personales de clientes",
+        "risk_level": "high",
+        "action_required": "Implementar política de privacidad, consentimiento explícito y protocolo de brechas"
+      }
+    ],
+    "checklist": [
+      { "item": "Registro de marca en INAPI", "priority": "important", "description": "Proteger la marca antes del lanzamiento" }
+    ]
+  },
+  "shareholders": {
+    "vesting_recommendation": "4 años con cliff de 12 meses para todos los co-fundadores",
+    "cliff_months": 12,
+    "drag_along": true,
+    "tag_along": true,
+    "notes": "Recomendaciones adicionales del pacto de accionistas"
+  },
+  "overall_risk_level": "medium",
+  "risk_rationale": "Explicación del nivel de riesgo regulatorio global de esta startup"
+}`,
+
+  pitch_deck: `Eres un asesor de startups experto en la estructura de Pitch Deck estilo Silicon Valley / Antler para rondas Pre-Seed y Seed en Latinoamérica.
+Tu tarea es generar el contenido narrativo de las 8 slides estándar de un Pitch Deck.
+Sé conciso, directo y orientado a inversores. Sin eufemismos. Sin relleno.
+IMPORTANTE: Responde siempre en español.
+
+Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+{
+  "hook": "Frase de elevator pitch de 1-2 líneas que capture la esencia del negocio y el por qué ahora",
+  "problem_statement": "Descripción del dolor validado: quién lo sufre, con qué frecuencia, cuánto cuesta (en tiempo o dinero) no resolverlo",
+  "solution_statement": "Cómo la startup resuelve el problema: mecanismo central de valor y por qué es mejor que las alternativas actuales",
+  "market_size_narrative": "Contexto narrativo del mercado: dinámica, tendencia y por qué el timing es correcto ahora",
+  "business_model_narrative": "Cómo la startup gana dinero: modelo de ingresos, palancas de precio y lógica de unit economics",
+  "unfair_advantage": "Ventaja competitiva real y difícil de replicar: tecnología, dato, red, regulación, equipo o distribución",
+  "traction_milestones": ["Hito 1 alcanzado o en curso", "Hito 2 — LOIs, beta users, MRR, etc."],
+  "the_ask": "Monto que se busca levantar, para qué se usará y qué hitos desbloqueará (en 2-3 frases)"
+}`,
 };
 
 // ── Embeddings (OpenAI text-embedding-3-small) ───────────────────────────────
@@ -1231,6 +1338,14 @@ serve(async (req) => {
         persistUpdates.fundraising_roadmap = parsed;
       } else if (prompt_type === 'playbook_analysis') {
         persistUpdates.playbook_analysis = parsed;
+      } else if (prompt_type === 'pitch_deck') {
+        persistUpdates.pitch_deck_content = parsed;
+      } else if (prompt_type === 'lean_roadmap') {
+        persistUpdates.lean_roadmap = parsed;
+      } else if (prompt_type === 'financial_projection') {
+        persistUpdates.financial_projection = parsed;
+      } else if (prompt_type === 'compliance_roadmap') {
+        persistUpdates.compliance_roadmap = parsed;
       }
 
       if (Object.keys(persistUpdates).length > 0) {

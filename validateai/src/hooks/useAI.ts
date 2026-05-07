@@ -8,7 +8,11 @@ type PromptType =
   | 'validation_kit' | 'landing_generator' | 'interview_script' | 'tech_viability'
   | 'first_100_customers' | 'revenue_models' | 'risk_checklist' | 'pitch_letter'
   | 'governance_assessment' | 'fundraising_roadmap'
-  | 'playbook_analysis';
+  | 'playbook_analysis'
+  | 'pitch_deck'
+  | 'lean_roadmap'
+  | 'financial_projection'
+  | 'compliance_roadmap';
 
 export function useAI() {
   const [loading, setLoading] = useState(false);

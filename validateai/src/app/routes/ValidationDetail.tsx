@@ -18,9 +18,10 @@ import { MentorRecommendations } from '@/components/shared/MentorRecommendations
 import { CorfoFunds } from '@/components/shared/CorfoFunds';
 import { DeliverableTabs } from '@/components/shared/DeliverableTabs';
 import { RegulatoryRoadmap } from '@/components/shared/RegulatoryRoadmap';
-import { generateValidationPDF, generatePremiumPDF, PDF_THEMES } from '@/lib/pdf';
+import { generateValidationPDF, generatePitchDeckPDF, PDF_THEMES } from '@/lib/pdf';
 import type { PDFTheme } from '@/lib/pdf';
 import { ReanalyzeModal } from '@/components/shared/ReanalyzeModal';
+import { PDFExportModal } from '@/components/shared/PDFExportModal';
 import { SwotMatrix } from '@/components/shared/SwotMatrix';
 import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
@@ -47,6 +48,10 @@ import type {
   PlaybookAnalysis,
   DueDiligenceScore,
   ExtractedProjectData,
+  PitchDeckContent,
+  LeanRoadmap,
+  FinancialProjection,
+  ComplianceRoadmap,
 } from '@/types/validation';
 
 interface ValidationFull {
@@ -96,6 +101,10 @@ interface ValidationFull {
   version: number;
   due_diligence_score: DueDiligenceScore | null;
   due_diligence_extracted: ExtractedProjectData | null;
+  pitch_deck_content: PitchDeckContent | null;
+  lean_roadmap: LeanRoadmap | null;
+  financial_projection: FinancialProjection | null;
+  compliance_roadmap: ComplianceRoadmap | null;
 }
 
 
@@ -107,8 +116,9 @@ export function ValidationDetail() {
   const navigate = useNavigate();
   const [data, setData] = useState<ValidationFull | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pdfLoading, setPdfLoading] = useState(false);
   const [updatePdfLoading, setUpdatePdfLoading] = useState(false);
+  const [pitchDeckLoading, setPitchDeckLoading] = useState(false);
+  const [showPDFModal, setShowPDFModal] = useState(false);
   const [, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [showReanalyzeModal, setShowReanalyzeModal] = useState(false);
@@ -249,6 +259,60 @@ export function ValidationDetail() {
     fundraising: !data?.fundraising_roadmap  && sections.includes('fundraising'),
   };
   const hasAdvancedToGenerate = Object.values(missingAdvanced).some(Boolean);
+
+  // Nuevos módulos PDF (lean_roadmap, financial_projection, compliance_roadmap)
+  const missingNewModules = {
+    lean_roadmap:         !data?.lean_roadmap,
+    financial_projection: !data?.financial_projection,
+    compliance_roadmap:   !data?.compliance_roadmap,
+  };
+  const hasNewModulesToGenerate = Object.values(missingNewModules).some(Boolean);
+  const [generatingNewModules, setGeneratingNewModules] = useState(false);
+
+  const handleGenerateNewModules = async () => {
+    if (!data) return;
+    setGeneratingNewModules(true);
+    try {
+      const ctx: Record<string, unknown> = {
+        idea_name: data.idea_name,
+        idea_description: data.idea_description,
+        idea_industry: data.idea_industry,
+        target_country: data.target_country,
+        target_region: data.target_region ?? null,
+        business_model: data.business_model,
+        business_stage: data.business_stage,
+        pricing_range: data.pricing_range,
+        known_competitors: data.known_competitors ?? [],
+        customer_segment: data.customer_segment,
+        customer_pain_points: data.customer_pain_points,
+        value_proposition: data.value_proposition,
+        differentiator: data.differentiator,
+        mvp_type: data.mvp_type,
+        mvp_features: data.mvp_features,
+        questions_answers: data.questions_answers,
+      };
+
+      const [leanResult, financialResult, complianceResult] = await Promise.all([
+        missingNewModules.lean_roadmap         ? callAI<LeanRoadmap>(data.id, 6, 'lean_roadmap', ctx)              : Promise.resolve(null),
+        missingNewModules.financial_projection  ? callAI<FinancialProjection>(data.id, 6, 'financial_projection', ctx) : Promise.resolve(null),
+        missingNewModules.compliance_roadmap    ? callAI<ComplianceRoadmap>(data.id, 6, 'compliance_roadmap', ctx)  : Promise.resolve(null),
+      ]);
+
+      const localUpdates: Record<string, unknown> = {};
+      if (leanResult)       localUpdates.lean_roadmap         = leanResult;
+      if (financialResult)  localUpdates.financial_projection = financialResult;
+      if (complianceResult) localUpdates.compliance_roadmap   = complianceResult;
+
+      if (Object.keys(localUpdates).length > 0) {
+        setData((prev) => prev ? { ...prev, ...localUpdates } : prev);
+        toast.success('Nuevos módulos generados correctamente');
+      }
+    } catch {
+      toast.error('No se pudieron generar los nuevos módulos. Intenta de nuevo.');
+    } finally {
+      setGeneratingNewModules(false);
+    }
+  };
 
   const handleReanalyzeClick = () => {
     if (!data) return;
@@ -524,101 +588,64 @@ export function ValidationDetail() {
     }
   };
 
-  const handleExportPDF = async () => {
+
+  const handleExportPitchDeck = async () => {
     if (!data) return;
-    setPdfLoading(true);
+    setPitchDeckLoading(true);
     try {
       const ctx: Record<string, unknown> = {
-        idea_name: data.idea_name, idea_description: data.idea_description,
-        idea_industry: data.idea_industry, target_country: data.target_country,
-        target_region: data.target_region ?? null, business_model: data.business_model,
-        business_stage: data.business_stage, pricing_range: data.pricing_range,
-        known_competitors: data.known_competitors ?? [],
-        customer_segment: data.customer_segment, customer_pain_points: data.customer_pain_points,
-        value_proposition: data.value_proposition, differentiator: data.differentiator,
-        mvp_type: data.mvp_type, mvp_features: data.mvp_features,
+        idea_name: data.idea_name,
+        idea_description: data.idea_description,
+        idea_industry: data.idea_industry,
+        target_country: data.target_country,
+        business_model: data.business_model,
+        business_stage: data.business_stage,
+        pricing_range: data.pricing_range,
+        customer_segment: data.customer_segment,
+        customer_pain_points: data.customer_pain_points,
+        value_proposition: data.value_proposition,
+        differentiator: data.differentiator,
         questions_answers: data.questions_answers,
       };
 
-      // Run any missing core analyses before generating the PDF
-      let current = { ...data };
-      const missing = {
-        summary:    !data.summary_json && data.validation_score == null,
-        market:     !data.market_sizing,
-        competitive:!data.competitive_analysis,
-      };
-
-      if (missing.summary || missing.market || missing.competitive) {
-        toast.info('Generando análisis faltantes, un momento…');
-        const tasks: Promise<void>[] = [];
-
-        if (missing.summary) {
-          tasks.push(
-            callAI<{ score: number; score_breakdown: ScoreBreakdownType; feedback: string; strengths: string[]; weaknesses: string[]; next_steps: string[] }>(
-              data.id, 6, 'summary', ctx,
-            ).then((r) => {
-              if (r) current = { ...current, summary_json: r as typeof data.summary_json, validation_score: r.score, score_breakdown: r.score_breakdown, ai_feedback: r.feedback };
-            }),
-          );
+      let pitchContent = data.pitch_deck_content;
+      if (!pitchContent) {
+        toast.info('Generando narrativa del Pitch Deck…');
+        pitchContent = await callAI<PitchDeckContent>(data.id, 6, 'pitch_deck', ctx);
+        if (pitchContent) {
+          setData((prev) => prev ? { ...prev, pitch_deck_content: pitchContent } : prev);
+          supabase.from('validations').update({ pitch_deck_content: pitchContent }).eq('id', data.id)
+            .then(({ error }) => { if (error) console.warn('[pitch-deck] save error:', error.message); });
         }
-        if (missing.market) {
-          tasks.push(
-            callAI<MarketSizing>(data.id, 5, 'market_sizing', ctx).then((r) => {
-              if (r) current = { ...current, market_sizing: r };
-            }),
-          );
-        }
-        if (missing.competitive) {
-          tasks.push(
-            callAI<CompetitiveAnalysisType>(data.id, 3, 'competitive_analysis', ctx).then((r) => {
-              if (r) current = { ...current, competitive_analysis: r };
-            }),
-          );
-        }
-
-        await Promise.all(tasks);
-        setData(current);
       }
 
-      await generatePremiumPDF({
-        idea_name:             current.idea_name ?? undefined,
-        idea_description:      current.idea_description ?? undefined,
-        idea_industry:         current.idea_industry ?? undefined,
-        target_country:        current.target_country ?? undefined,
-        target_region:         current.target_region ?? undefined,
-        business_model:        current.business_model ?? undefined,
-        business_stage:        current.business_stage ?? undefined,
-        pricing_range:         current.pricing_range ?? undefined,
-        known_competitors:     current.known_competitors ?? undefined,
-        questions_answers:     current.questions_answers ?? undefined,
-        customer_segment:      current.customer_segment ?? undefined,
-        customer_pain_points:  current.customer_pain_points ?? undefined,
-        value_proposition:     current.value_proposition ?? undefined,
-        differentiator:        current.differentiator ?? undefined,
-        mvp_type:              current.mvp_type ?? undefined,
-        mvp_features:          current.mvp_features ?? undefined,
-        mvp_user_flow:         current.mvp_user_flow ?? undefined,
-        summary:               (current.summary_json ?? {}) as Record<string, unknown>,
-        market_sizing:         current.market_sizing ?? null,
-        competitive_analysis:  current.competitive_analysis ?? null,
-        score_breakdown:       current.score_breakdown ?? null,
-        risk_analysis:         current.risk_analysis ?? null,
-        unit_economics:        current.unit_economics ?? null,
-        founder_fit:           current.founder_fit ?? null,
-        market_signals:        current.market_signals ?? null,
-        governance_assessment: current.governance_assessment ?? null,
-        fundraising_roadmap:   current.fundraising_roadmap ?? null,
-        playbook_analysis:     current.playbook_analysis ?? null,
-        mentors:               mentors.length ? mentors : undefined,
-        validation_score:      current.validation_score ?? null,
-        due_diligence:         current.due_diligence_score ?? null,
+      await generatePitchDeckPDF({
+        idea_name:            data.idea_name ?? undefined,
+        idea_description:     data.idea_description ?? undefined,
+        idea_industry:        data.idea_industry ?? undefined,
+        target_country:       data.target_country ?? undefined,
+        business_model:       data.business_model ?? undefined,
+        business_stage:       data.business_stage ?? undefined,
+        pricing_range:        data.pricing_range ?? undefined,
+        customer_pain_points: data.customer_pain_points ?? undefined,
+        value_proposition:    data.value_proposition ?? undefined,
+        differentiator:       data.differentiator ?? undefined,
+        mvp_features:         data.mvp_features ?? undefined,
+        market_sizing:        data.market_sizing ?? null,
+        unit_economics:       data.unit_economics ?? null,
+        competitive_analysis: data.competitive_analysis ?? null,
+        fundraising_roadmap:  data.fundraising_roadmap ?? null,
+        validation_score:     data.validation_score ?? null,
+        pitch_deck_content:   pitchContent ?? null,
       });
-      trackDeliverableDownloaded('pdf_premium', pdfTheme);
-      toast.success('PDF premium descargado');
-    } catch {
-      toast.error('No se pudo generar el PDF.');
+
+      trackDeliverableDownloaded('pitch_deck', pdfTheme);
+      toast.success('Pitch Deck descargado');
+    } catch (err) {
+      console.error('[Pitch Deck] Error:', err);
+      toast.error('No se pudo generar el Pitch Deck.');
     } finally {
-      setPdfLoading(false);
+      setPitchDeckLoading(false);
     }
   };
 
@@ -663,6 +690,33 @@ export function ValidationDetail() {
           <span className="text-gray-700 dark:text-[#C4C4D4] font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
         </div>
 
+        {/* Banner: Nuevos módulos disponibles */}
+        {hasNewModulesToGenerate && !generatingNewModules && (
+          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/25">
+            <div className="flex items-start gap-3">
+              <span className="text-xl mt-0.5">✦</span>
+              <div>
+                <p className="text-sm font-bold text-teal-800 dark:text-teal-300">Nuevos módulos disponibles</p>
+                <p className="text-xs text-teal-700/80 dark:text-teal-400/80 mt-0.5">
+                  Haz clic en <strong>Re-analizar Idea</strong> para generar tu Roadmap Legal, Financiero y de MVP con la versión más reciente de la IA.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleGenerateNewModules}
+              className="shrink-0 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition"
+            >
+              Re-analizar Idea
+            </button>
+          </div>
+        )}
+        {generatingNewModules && (
+          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/25">
+            <span className="animate-spin text-teal-600">⏳</span>
+            <p className="text-sm font-bold text-teal-700 dark:text-teal-300">Generando nuevos módulos con la IA más reciente...</p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6 space-y-4">
           {/* Título */}
@@ -702,20 +756,15 @@ export function ValidationDetail() {
             
             {/* Acciones y Menú Dropdown */}
             <div className="flex flex-wrap items-center gap-2 shrink-0 relative z-20 w-full sm:w-auto">
-              {/* Botón Principal: Descargar PDF */}
+              {/* Botón Principal: Exportar PDFs */}
               <button
-                onClick={handleExportPDF}
-                disabled={pdfLoading}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 active:scale-[0.98] transition disabled:opacity-50"
-                title="Descargar PDF con los datos actuales"
+                onClick={() => setShowPDFModal(true)}
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 active:scale-[0.98] transition"
+                title="Exportar documentos PDF"
               >
-                {pdfLoading ? (
-                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                  </svg>
-                )}
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
                 <span className="hidden xs:inline">Descargar </span>Dossier
               </button>
 
@@ -1120,19 +1169,26 @@ export function ValidationDetail() {
               {/* Deliverables */}
               <DeliverableTabs
                 validationId={data.id}
+                unitEconomics={data.unit_economics}
                 context={{
                   idea_name: data.idea_name,
                   idea_description: data.idea_description,
                   idea_industry: data.idea_industry,
                   target_country: data.target_country,
+                  target_region: data.target_region,
                   business_model: data.business_model,
                   business_stage: data.business_stage,
                   pricing_range: data.pricing_range,
                   customer_segment: data.customer_segment,
+                  customer_pain_points: data.customer_pain_points,
                   value_proposition: data.value_proposition,
                   differentiator: data.differentiator,
                   mvp_type: data.mvp_type,
+                  mvp_features: data.mvp_features,
                   mvp_user_flow: data.mvp_user_flow,
+                  known_competitors: data.known_competitors,
+                  questions_answers: data.questions_answers,
+                  tech_level: data.tech_level,
                   validation_score: data.validation_score,
                 }}
               />
@@ -1222,6 +1278,36 @@ export function ValidationDetail() {
                 </div>
               )}
 
+              {/* Pitch Deck Export */}
+              <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">🎯</span>
+                      <p className="text-sm font-bold text-gray-800 dark:text-[#F0EFF8]">Investor Pitch Deck</p>
+                      <span className="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-[10px] font-bold">8 slides</span>
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-[#8B8AA0]">
+                      {data.pitch_deck_content ? 'Narrativa generada · listo para descargar' : 'Genera la narrativa de las 8 slides con IA y descarga el PDF'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleExportPitchDeck}
+                    disabled={pitchDeckLoading}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50 shrink-0"
+                  >
+                    {pitchDeckLoading ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                      </svg>
+                    )}
+                    {pitchDeckLoading ? 'Generando…' : 'Descargar Pitch Deck'}
+                  </button>
+                </div>
+              </div>
+
               {/* Traction Tracker */}
               {sections.includes('governance') ? (
                 <TractionTracker validationId={data.id} />
@@ -1301,6 +1387,16 @@ export function ValidationDetail() {
             ctx.founderContext,
           )}
           onCancel={() => setShowReanalyzeModal(false)}
+        />
+      )}
+
+      {/* Modal exportar PDFs */}
+      {showPDFModal && data && (
+        <PDFExportModal
+          data={data}
+          onClose={() => setShowPDFModal(false)}
+          onDataUpdate={(updates) => setData(prev => prev ? { ...prev, ...updates } as ValidationFull : prev)}
+          mentors={mentors}
         />
       )}
 

@@ -1,4 +1,4 @@
-import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore } from '@/types/validation';
+import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore, PitchDeckContent, LeanRoadmap, FinancialProjection, ComplianceRoadmap } from '@/types/validation';
 import { matchCorfoInstruments } from '@/data/corfoInstruments';
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -36,6 +36,10 @@ export interface PDFData {
   validation_score?: number | null;
   from_cache?: boolean;
   due_diligence?: DueDiligenceScore | null;
+  pitch_deck_content?: PitchDeckContent | null;
+  lean_roadmap?: LeanRoadmap | null;
+  financial_projection?: FinancialProjection | null;
+  compliance_roadmap?: ComplianceRoadmap | null;
 }
 
 export type PDFTheme = 'dark' | 'clean' | 'gradient';
@@ -2009,5 +2013,77 @@ export async function generatePremiumPDF(data: PDFData): Promise<void> {
   a.click();
   document.body.removeChild(a);
   // Delay revoke so the browser can start reading the blob URL before it's released
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function generateLeanRoadmapPDF(data: PDFData): Promise<void> {
+  const { pdf } = await import('@react-pdf/renderer');
+  const { LeanRoadmapPDF } = await import('@/components/pdf/LeanRoadmapPDF');
+  const { createElement } = await import('react');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await pdf(createElement(LeanRoadmapPDF, { data }) as any).toBlob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `ValidateAI_LeanRoadmap_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function generateUnitEconomicsPDF(data: PDFData): Promise<void> {
+  const { pdf } = await import('@react-pdf/renderer');
+  const { UnitEconomicsPDF } = await import('@/components/pdf/UnitEconomicsPDF');
+  const { createElement } = await import('react');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await pdf(createElement(UnitEconomicsPDF, { data }) as any).toBlob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `ValidateAI_UnitEconomics_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function generateCompliancePDF(data: PDFData): Promise<void> {
+  const { pdf } = await import('@react-pdf/renderer');
+  const { ComplianceRoadmapPDF } = await import('@/components/pdf/ComplianceRoadmapPDF');
+  const { createElement } = await import('react');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await pdf(createElement(ComplianceRoadmapPDF, { data }) as any).toBlob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `ValidateAI_Compliance_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function generatePitchDeckPDF(data: PDFData): Promise<void> {
+  const { pdf } = await import('@react-pdf/renderer');
+  const { PitchDeckOutline } = await import('@/components/pdf/PitchDeckOutline');
+  const { createElement } = await import('react');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await pdf(createElement(PitchDeckOutline, { data }) as any).toBlob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `ValidateAI_PitchDeck_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

@@ -348,6 +348,90 @@ export const DD_TASK_CARDS: string[] = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─── LEAN ROADMAP ────────────────────────────────────────────────────────────
+
+export interface LeanSprint {
+  name: string;
+  duration_weeks: number;
+  stack: string;
+  must_haves: string[];
+  nice_to_haves: string[];
+  goal: string;
+}
+
+export interface LeanRoadmap {
+  architecture_approach: 'no_code' | 'low_code' | 'full_code';
+  rationale: string;
+  sprints: LeanSprint[];
+  total_weeks: number;
+  recommended_tools: string[];
+  mvp_cost_usd: { min: number; max: number };
+}
+
+// ─── FINANCIAL PROJECTION ────────────────────────────────────────────────────
+
+export interface MonthlyProjection {
+  month: number;
+  mrr_usd: number;
+  users: number;
+  cac_spend_usd: number;
+}
+
+export interface FinancialProjection {
+  growth_strategy: 'plg' | 'sales_led' | 'hybrid';
+  strategy_rationale: string;
+  monthly_projection: MonthlyProjection[];
+  break_even_month: number;
+  year1_revenue_usd: number;
+  key_assumptions: string[];
+  model_verdict: 'strong' | 'moderate' | 'weak';
+  model_verdict_reason: string;
+}
+
+// ─── COMPLIANCE ROADMAP ───────────────────────────────────────────────────────
+
+export interface ComplianceLaw {
+  law: string;
+  description: string;
+  risk_level: 'high' | 'medium' | 'low';
+  action_required: string;
+}
+
+export interface ComplianceRoadmap {
+  constitution: {
+    recommended_entity: string;
+    steps: string[];
+    estimated_cost_clp: number;
+    notes: string;
+  };
+  regulatory: {
+    applicable_laws: ComplianceLaw[];
+    checklist: { item: string; priority: 'critical' | 'important' | 'nice_to_have'; description: string }[];
+  };
+  shareholders: {
+    vesting_recommendation: string;
+    cliff_months: number;
+    drag_along: boolean;
+    tag_along: boolean;
+    notes: string;
+  };
+  overall_risk_level: 'high' | 'medium' | 'low';
+  risk_rationale: string;
+}
+
+// ─── PITCH DECK ──────────────────────────────────────────────────────────────
+
+export interface PitchDeckContent {
+  hook: string;
+  problem_statement: string;
+  solution_statement: string;
+  market_size_narrative: string;
+  business_model_narrative: string;
+  unfair_advantage: string;
+  traction_milestones: string[];
+  the_ask: string;
+}
+
 export type StepIdea = z.infer<typeof StepIdeaSchema>;
 export type StepMarket = z.infer<typeof StepMarketSchema>;
 export type StepFounder = z.infer<typeof StepFounderSchema>;
