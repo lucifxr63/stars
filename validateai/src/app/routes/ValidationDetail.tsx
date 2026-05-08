@@ -26,6 +26,8 @@ import { SwotMatrix } from '@/components/shared/SwotMatrix';
 import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
+import { useFigmaIntegration } from '@/hooks/useFigmaIntegration';
+import { FigmaPanel } from '@/components/figma/FigmaPanel';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted } from '@/hooks/useAnalytics';
 import { useMentors } from '@/hooks/useMentors';
@@ -108,7 +110,7 @@ interface ValidationFull {
 }
 
 
-const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión', 'Due Diligence'] as const;
+const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión', 'Due Diligence', 'Diseño'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
 
 export function ValidationDetail() {
@@ -132,6 +134,7 @@ export function ValidationDetail() {
     () => sessionStorage.getItem(verdictSessionKey) === 'true'
   );
   const [activeTab, setActiveTab] = useState<DashboardTab>('Veredicto');
+  const figma = useFigmaIntegration(id);
   const [pdfTheme, setPdfTheme] = useState<PDFTheme>(() => {
     return (localStorage.getItem('validateai_pdf_theme') as PDFTheme) ?? 'clean';
   });
@@ -1328,6 +1331,11 @@ export function ValidationDetail() {
             </div>
           )}
           {/* ── DUE DILIGENCE ──────────────────────────────────────────────── */}
+          {activeTab === 'Diseño' && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <FigmaPanel figma={figma} validationId={id!} />
+            </div>
+          )}
           {activeTab === 'Due Diligence' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {data.due_diligence_score ? (

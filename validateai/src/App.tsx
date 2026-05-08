@@ -17,6 +17,7 @@ const IdeaHistory = lazy(() => import('@/app/routes/IdeaHistory').then((m) => ({
 const MarketStudy = lazy(() => import('@/app/routes/MarketStudy').then((m) => ({ default: m.MarketStudy })));
 const Pricing = lazy(() => import('@/app/routes/Pricing').then((m) => ({ default: m.Pricing })));
 const Demo = lazy(() => import('@/app/routes/Demo').then((m) => ({ default: m.Demo })));
+const FigmaCallback = lazy(() => import('@/app/routes/FigmaCallback').then((m) => ({ default: m.FigmaCallback })));
 
 function PageLoader() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/shared/:token" element={<SharedValidation />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/demo" element={<Demo />} />
+          <Route path="/figma/callback" element={<FigmaCallback />} />
         </Routes>
       </Suspense>
       <Toaster position="top-right" richColors />
