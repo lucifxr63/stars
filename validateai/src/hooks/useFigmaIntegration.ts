@@ -142,10 +142,6 @@ export function useFigmaIntegration(validationId?: string) {
     fileKey: string,
     options?: { pageId?: string; appCategory?: string }
   ) => {
-    if (!validationId) {
-      toast.error('Se necesita una validación activa para escanear Figma');
-      return;
-    }
     try {
       setScanning(true);
       const auth = await getAuthHeader();
@@ -155,7 +151,7 @@ export function useFigmaIntegration(validationId?: string) {
         body: JSON.stringify({
           file_key: fileKey,
           page_id: options?.pageId,
-          validation_id: validationId,
+          ...(validationId ? { validation_id: validationId } : {}),
           app_category: options?.appCategory,
         }),
       });

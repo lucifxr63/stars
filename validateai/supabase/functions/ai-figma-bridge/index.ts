@@ -336,12 +336,12 @@ serve(async (req) => {
       const { file_key, page_id, validation_id, app_category } = await req.json() as {
         file_key: string;
         page_id?: string;
-        validation_id: string;
+        validation_id?: string;
         app_category?: string;
       };
 
-      if (!file_key || !validation_id) {
-        return json({ error: 'file_key and validation_id are required' }, 400, cors);
+      if (!file_key) {
+        return json({ error: 'file_key is required' }, 400, cors);
       }
 
       const { data: conn } = await supabase

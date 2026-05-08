@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 const DataStoryEngine = lazy(() => import('@/components/admin/DataStoryEngine'));
 const FigmaAdminPanel = lazy(() => import('@/components/figma/FigmaAdminPanel').then(m => ({ default: m.FigmaAdminPanel })));
+const SitemapPanel = lazy(() => import('@/components/admin/SitemapPanel').then(m => ({ default: m.SitemapPanel })));
 import { useNavigate } from 'react-router-dom';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -11,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'health' | 'content' | 'figma';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'health' | 'content' | 'figma' | 'sitemap';
 type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
 
 interface Profile {
@@ -166,6 +167,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
     id: 'figma', label: 'Figma',
     icon: <svg className="w-4 h-4" viewBox="0 0 38 57" fill="currentColor"><path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z" opacity=".9"/><path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" opacity=".5"/><path d="M19 0v19h9.5a9.5 9.5 0 0 0 0-19H19z" opacity=".7"/><path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" opacity=".6"/><path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" opacity=".8"/></svg>,
+  },
+  {
+    id: 'sitemap', label: 'Sitemap',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>,
   },
 ];
 
@@ -491,6 +496,7 @@ export function Admin() {
               {tab === 'health' && `Funnel · Tiers · Prompts · Modelos`}
               {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
               {tab === 'figma' && 'Conecta tu cuenta y escanea el mapa de navegación de tus prototipos'}
+              {tab === 'sitemap' && `Árbol de navegación de validateai-mu.vercel.app · ${16} rutas`}
             </p>
           </div>
         </div>
@@ -1171,6 +1177,11 @@ export function Admin() {
           {tab === 'figma' && (
             <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400 text-sm">Cargando Figma...</div>}>
               <FigmaAdminPanel />
+            </Suspense>
+          )}
+          {tab === 'sitemap' && (
+            <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400 text-sm">Cargando sitemap...</div>}>
+              <SitemapPanel />
             </Suspense>
           )}
         </div>
