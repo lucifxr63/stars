@@ -253,8 +253,9 @@ function CarouselPreview({ slides, theme, platform }: PreviewProps) {
 // ── Main CarouselEditor ───────────────────────────────────────────────────────
 
 interface CarouselEditorProps {
-  validationId: string;
-  context: Record<string, unknown>;
+  validationId?: string;
+  context?: Record<string, unknown>;
+  hideConfig?: boolean;
 }
 
 const PLATFORMS: { value: CarouselPlatform; label: string; desc: string; icon: string }[] = [
@@ -268,7 +269,7 @@ const THEMES: { value: CarouselTheme; label: string; icon: string }[] = [
   { value: 'gradient', label: 'Gradient', icon: '🌈' },
 ];
 
-export function CarouselEditor({ validationId, context }: CarouselEditorProps) {
+export function CarouselEditor({ validationId, context, hideConfig }: CarouselEditorProps) {
   const {
     platform, theme, campaign, status, error,
     setPlatform, setTheme,
@@ -295,6 +296,7 @@ export function CarouselEditor({ validationId, context }: CarouselEditorProps) {
   };
 
   const handleGenerate = () => {
+    if (!validationId || !context) return;
     generateCarousel(validationId, context);
     setActiveSlideId(null);
     setShowPreview(false);
@@ -329,6 +331,7 @@ export function CarouselEditor({ validationId, context }: CarouselEditorProps) {
   // ── Estados: idle / generating / error / done ────────────────────────────
 
   if (status === 'idle' || (!campaign && status !== 'generating')) {
+    if (hideConfig) return null;
     return (
       <div className="space-y-6">
         {/* Platform selector */}

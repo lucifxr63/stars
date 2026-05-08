@@ -32,6 +32,7 @@ interface CarouselState {
 
   // ── Generación y persistencia ───────────────────────────────────────────────
   generateCarousel: (validationId: string, context: Record<string, unknown>) => Promise<void>;
+  generateStory: (center: string, frame: string, customData: string, adminData: Record<string, unknown>) => Promise<void>;
   saveCampaign: () => Promise<void>;
   reset: () => void;
 }
@@ -91,6 +92,40 @@ export const useCarouselStore = create<CarouselState>()(
               status: 'done',
               campaign: {
                 validationId,
+                platform,
+                theme,
+                title: data.campaign_title,
+                slides: data.slides,
+                version: (get().campaign?.version ?? 0) + 1,
+              },
+            });
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Error desconocido';
+            set({ status: 'error', error: msg });
+          }
+        },
+
+        generateStory: async (center, frame, customData, adminData) => {
+          set({ status: 'generating', error: null });
+          try {
+            const { data, error } = await supabase.functions.invoke<GenerateCarouselResponse>(
+              'generate-content-story',
+              {
+                body: {
+                  platform: get().platform,
+                  context: { center, frame, customData, adminData },
+                },
+              }
+            );
+
+            if (error) throw new Error(error.message);
+            if (!data) throw new Error('Respuesta vacía del servidor');
+
+            const { platform, theme } = get();
+            set({
+              status: 'done',
+              campaign: {
+                validationId: 'admin-story',
                 platform,
                 theme,
                 title: data.campaign_title,

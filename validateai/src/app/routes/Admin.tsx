@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
-const DataStoryEngine = lazy(() => import('@/components/admin/DataStoryEngine'));
+const ContentStudio = lazy(() => import('@/components/admin/ContentStudio').then(m => ({ default: m.ContentStudio })));
 const FigmaAdminPanel = lazy(() => import('@/components/figma/FigmaAdminPanel').then(m => ({ default: m.FigmaAdminPanel })));
 const SitemapPanel = lazy(() => import('@/components/admin/SitemapPanel').then(m => ({ default: m.SitemapPanel })));
 import { useNavigate } from 'react-router-dom';
@@ -1171,7 +1171,17 @@ export function Admin() {
 
           {tab === 'content' && (
             <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400 text-sm">Cargando motor de contenido...</div>}>
-              <DataStoryEngine />
+              <ContentStudio
+                adminData={{
+                  usersTotal: profiles.length,
+                  validationsTotal: validations.length,
+                  completedValidations: completed.length,
+                  aiInteractionsTotal: aiInteractions.length,
+                  topIndustries: industries,
+                  topModels: modelDist,
+                  topPrompts: topPrompts,
+                }}
+              />
             </Suspense>
           )}
           {tab === 'figma' && (
