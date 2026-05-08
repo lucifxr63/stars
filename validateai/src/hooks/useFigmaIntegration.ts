@@ -113,21 +113,29 @@ export function useFigmaIntegration(validationId?: string) {
     }
   }, []);
 
-  const fetchFiles = useCallback(async () => {
+  const resolveUrl = useCallback(async (figmaUrl: string): Promise<{ file_key: string; file_name: string; pages: { id: string; name: string }[] } | null> => {
     try {
       setLoading(true);
       const auth = await getAuthHeader();
-      const res = await fetch(`${EDGE_BASE}/ai-figma-bridge/files`, {
-        headers: { Authorization: auth },
+      const res = await fetch(`${EDGE_BASE}/ai-figma-bridge/resolve-url`, {
+        method: 'POST',
+        headers: { Authorization: auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ figma_url: figmaUrl }),
       });
-      const data = await res.json() as { files?: FigmaFile[]; error?: string };
+      const data = await res.json() as { file_key?: string; file_name?: string; pages?: { id: string; name: string }[]; error?: string };
       if (data.error) throw new Error(data.error);
-      setFiles(data.files ?? []);
+      return { file_key: data.file_key!, file_name: data.file_name!, pages: data.pages ?? [] };
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error al obtener archivos de Figma');
+      toast.error(err instanceof Error ? err.message : 'Error al resolver la URL de Figma');
+      return null;
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // kept for compatibility but no longer used
+  const fetchFiles = useCallback(async () => {
+    setFiles([]);
   }, []);
 
   const scanFile = useCallback(async (
@@ -188,6 +196,7 @@ export function useFigmaIntegration(validationId?: string) {
     connect,
     disconnect,
     fetchFiles,
+    resolveUrl,
     scanFile,
     refetchStatus: fetchStatus,
   };

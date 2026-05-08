@@ -287,9 +287,21 @@ serve(async (req) => {
     );
     if (authError || !user) return json({ error: 'Unauthorized' }, 401, cors);
 
-    // GET /ai-figma-bridge/files
-    // Returns list of recent Figma files for the user
-    if (req.method === 'GET' && path === 'files') {
+    // POST /ai-figma-bridge/resolve-url
+    // Extracts file key from a Figma URL and fetches basic file metadata
+    if (req.method === 'POST' && path === 'resolve-url') {
+      const { figma_url } = await req.json() as { figma_url: string };
+      if (!figma_url) return json({ error: 'figma_url is required' }, 400, cors);
+
+      // Extract key from URLs like:
+      // https://www.figma.com/file/KEY/Name
+      // https://www.figma.com/design/KEY/Name
+      // https://www.figma.com/proto/KEY/Name
+      const match = figma_url.match(/figma\.com\/(?:file|design|proto)\/([a-zA-Z0-9]+)/);
+      if (!match) return json({ error: 'URL de Figma inválida. Usa el enlace del archivo desde Figma.' }, 400, cors);
+
+      const fileKey = match[1];
+
       const { data: conn } = await supabase
         .from('figma_connections')
         .select('access_token')
@@ -298,20 +310,24 @@ serve(async (req) => {
 
       if (!conn) return json({ error: 'No Figma connection found' }, 404, cors);
 
-      const filesRes = await fetch('https://api.figma.com/v1/me/files?page_size=20', {
+      // Fetch just the file name using depth=1 (minimal payload)
+      const metaRes = await fetch(`https://api.figma.com/v1/files/${fileKey}?depth=1`, {
         headers: { Authorization: `Bearer ${conn.access_token}` },
       });
 
-      if (!filesRes.ok) {
-        const err = await filesRes.text();
-        throw new Error(`Figma files API error: ${err}`);
+      if (!metaRes.ok) {
+        if (metaRes.status === 403) return json({ error: 'Sin acceso a ese archivo. Asegúrate de ser colaborador en Figma.' }, 403, cors);
+        if (metaRes.status === 404) return json({ error: 'Archivo no encontrado. Verifica la URL.' }, 404, cors);
+        throw new Error(`Figma API error: ${metaRes.status}`);
       }
 
-      const filesData = await filesRes.json() as {
-        files: Array<{ key: string; name: string; last_modified: string; thumbnail_url?: string }>;
-      };
+      const meta = await metaRes.json() as { name: string; version: string; document: { children: Array<{ id: string; name: string }> } };
 
-      return json({ files: filesData.files ?? [] }, 200, cors);
+      return json({
+        file_key: fileKey,
+        file_name: meta.name,
+        pages: meta.document.children.map((p) => ({ id: p.id, name: p.name })),
+      }, 200, cors);
     }
 
     // POST /ai-figma-bridge/scan

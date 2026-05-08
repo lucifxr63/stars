@@ -9,18 +9,35 @@ interface Insight {
   description: string;
 }
 
+interface ResolvedFile {
+  file_key: string;
+  file_name: string;
+  pages: { id: string; name: string }[];
+}
+
 export function FigmaAdminPanel() {
   const figma = useFigmaIntegration();
-  const [showFiles, setShowFiles] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [resolved, setResolved] = useState<ResolvedFile | null>(null);
+  const [selectedPage, setSelectedPage] = useState<string>('');
 
-  async function handleShowFiles() {
-    await figma.fetchFiles();
-    setShowFiles(true);
+  async function handleResolve() {
+    const result = await figma.resolveUrl(urlInput.trim());
+    if (result) {
+      setResolved(result);
+      setSelectedPage(result.pages[0]?.id ?? '');
+    }
   }
 
-  async function handleScan(fileKey: string) {
-    setShowFiles(false);
-    await figma.scanFile(fileKey);
+  async function handleScan() {
+    if (!resolved) return;
+    await figma.scanFile(resolved.file_key, { pageId: selectedPage || undefined });
+  }
+
+  function handleReset() {
+    setResolved(null);
+    setUrlInput('');
+    setSelectedPage('');
   }
 
   // ── Not connected ──────────────────────────────────────────────────────────
@@ -35,11 +52,11 @@ export function FigmaAdminPanel() {
             Conecta tu cuenta de Figma
           </h2>
           <p className="text-sm text-gray-400 dark:text-[#8B8AA0] leading-relaxed max-w-sm">
-            ValidateAI leerá la estructura de tus prototipos y generará un mapa de
-            navegación interactivo con análisis de IA.
+            ValidateAI leerá la estructura de tus prototipos y generará un mapa
+            de navegación interactivo con análisis de IA.
           </p>
-          <p className="text-xs text-gray-400 dark:text-[#8B8AA0]/60 mt-2">
-            Solo lectura · Solo estructura y nombres de capas · Sin acceso a imágenes privadas
+          <p className="text-xs text-gray-400/60 mt-2">
+            Solo lectura · Solo estructura y nombres de capas
           </p>
         </div>
         <button
@@ -49,117 +66,130 @@ export function FigmaAdminPanel() {
         >
           {figma.loading
             ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            : <FigmaIcon className="w-4 h-4" />
-          }
+            : <FigmaIcon className="w-4 h-4" />}
           Conectar con Figma
         </button>
       </div>
     );
   }
 
-  // ── Connected — show file picker or map ──────────────────────────────────
   return (
     <div className="space-y-6 max-w-5xl">
 
-      {/* Connection header */}
+      {/* Connection status bar */}
       <div className="flex items-center justify-between flex-wrap gap-3 p-4 rounded-2xl bg-white dark:bg-[#13121F] border border-gray-100 dark:border-[#2A2940]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#7C6FF7]/10 flex items-center justify-center">
             <FigmaIcon className="w-5 h-5 text-[#7C6FF7]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800 dark:text-[#F0EFF8]">
-              Figma conectado
-            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <p className="text-sm font-semibold text-gray-800 dark:text-[#F0EFF8]">
+                Figma conectado · @{figma.status.figma_handle}
+              </p>
+            </div>
             <p className="text-xs text-gray-400 dark:text-[#8B8AA0]">
-              @{figma.status.figma_handle}
-              {figma.status.created_at && ` · vinculado el ${new Date(figma.status.created_at).toLocaleDateString('es-CL')}`}
+              Pega la URL de tu archivo para escanear su mapa de navegación
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleShowFiles}
-            disabled={figma.loading || figma.scanning}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#7C6FF7] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50"
-          >
-            {figma.loading
-              ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              : <ScanIcon className="w-3.5 h-3.5" />
-            }
-            Escanear archivo
-          </button>
-          <button
-            onClick={figma.disconnect}
-            className="text-xs text-gray-400 hover:text-red-400 transition-colors"
-          >
-            Desconectar
-          </button>
-        </div>
+        <button
+          onClick={figma.disconnect}
+          className="text-xs text-gray-400 hover:text-red-400 transition-colors"
+        >
+          Desconectar
+        </button>
       </div>
 
-      {/* File picker */}
-      {showFiles && (
-        <div className="rounded-2xl border border-[#2A2940] bg-[#13121F] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[#F0EFF8]">
-              Elige el archivo a escanear
-            </h3>
-            <button
-              onClick={() => setShowFiles(false)}
-              className="text-xs text-[#8B8AA0] hover:text-[#F0EFF8] transition-colors"
-            >
-              Cancelar
+      {/* URL input */}
+      {!resolved && (
+        <div className="rounded-2xl border border-[#2A2940] bg-[#13121F] p-5 space-y-3">
+          <div>
+            <label className="text-sm font-semibold text-[#F0EFF8] block mb-1">
+              URL del archivo de Figma
+            </label>
+            <p className="text-xs text-[#8B8AA0] mb-3">
+              Copia el enlace desde Figma → botón "Compartir" → "Copiar enlace"
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !figma.loading && urlInput.trim() && handleResolve()}
+                placeholder="https://www.figma.com/design/AbCdEf123/Mi-App"
+                className="flex-1 px-3 py-2.5 rounded-xl bg-[#0D0C1A] border border-[#2A2940] text-sm text-[#F0EFF8] placeholder-[#8B8AA0]/50 focus:outline-none focus:border-[#7C6FF7] transition-colors"
+              />
+              <button
+                onClick={handleResolve}
+                disabled={figma.loading || !urlInput.trim()}
+                className="px-4 py-2.5 bg-[#7C6FF7] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50 shrink-0"
+              >
+                {figma.loading
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin block" />
+                  : 'Verificar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Page selector after resolve */}
+      {resolved && !figma.map && !figma.scanning && (
+        <div className="rounded-2xl border border-[#7C6FF7]/30 bg-[#13121F] p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-[#8B8AA0]">Archivo encontrado</p>
+              <p className="text-base font-bold text-[#F0EFF8]">{resolved.file_name}</p>
+            </div>
+            <button onClick={handleReset} className="text-xs text-[#8B8AA0] hover:text-[#F0EFF8] transition-colors">
+              Cambiar URL
             </button>
           </div>
-          {figma.files.length === 0 ? (
-            <p className="text-sm text-[#8B8AA0] text-center py-8">
-              No se encontraron archivos en tu cuenta de Figma.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {figma.files.map((file) => (
-                <button
-                  key={file.key}
-                  onClick={() => handleScan(file.key)}
-                  disabled={figma.scanning}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-[#2A2940] hover:border-[#7C6FF7]/50 hover:bg-[#7C6FF7]/5 transition-all text-left group disabled:opacity-50"
-                >
-                  {file.thumbnail_url ? (
-                    <img
-                      src={file.thumbnail_url}
-                      alt={file.name}
-                      className="w-12 h-12 rounded-lg object-cover shrink-0 border border-[#2A2940]"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
-                      <FigmaIcon className="w-6 h-6 text-[#7C6FF7]" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-[#F0EFF8] truncate group-hover:text-[#7C6FF7] transition-colors">
-                      {file.name}
-                    </p>
-                    <p className="text-xs text-[#8B8AA0] mt-0.5">
-                      Modificado {new Date(file.last_modified).toLocaleDateString('es-CL')}
-                    </p>
-                  </div>
-                  <span className="text-[#7C6FF7] text-lg opacity-0 group-hover:opacity-100 transition-opacity shrink-0">→</span>
-                </button>
-              ))}
+
+          {resolved.pages.length > 1 && (
+            <div>
+              <label className="text-xs font-semibold text-[#8B8AA0] block mb-2">
+                Selecciona la página a escanear
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {resolved.pages.map((page) => (
+                  <button
+                    key={page.id}
+                    onClick={() => setSelectedPage(page.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      selectedPage === page.id
+                        ? 'bg-[#7C6FF7] text-white'
+                        : 'bg-[#2A2940] text-[#8B8AA0] hover:text-[#F0EFF8]'
+                    }`}
+                  >
+                    {page.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+
+          <button
+            onClick={handleScan}
+            disabled={figma.scanning}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50"
+          >
+            <ScanIcon className="w-4 h-4" />
+            Escanear mapa de navegación
+          </button>
         </div>
       )}
 
       {/* Scanning indicator */}
       {figma.scanning && (
-        <div className="rounded-xl bg-[#7C6FF7]/5 border border-[#7C6FF7]/20 p-4 flex items-center gap-3">
-          <span className="w-5 h-5 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin shrink-0" />
+        <div className="rounded-xl bg-[#7C6FF7]/5 border border-[#7C6FF7]/20 p-5 flex items-center gap-4">
+          <span className="w-6 h-6 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin shrink-0" />
           <div>
             <p className="text-sm font-semibold text-[#F0EFF8]">Escaneando prototipo...</p>
-            <p className="text-xs text-[#8B8AA0]">
-              Detectando pantallas, conexiones y generando análisis de IA
+            <p className="text-xs text-[#8B8AA0] mt-0.5">
+              Extrayendo pantallas, conexiones y generando análisis de IA
             </p>
           </div>
         </div>
@@ -168,7 +198,6 @@ export function FigmaAdminPanel() {
       {/* Map result */}
       {figma.map && !figma.scanning && (
         <div className="space-y-4">
-          {/* Map header */}
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8]">
@@ -177,7 +206,9 @@ export function FigmaAdminPanel() {
               <p className="text-xs text-gray-400 dark:text-[#8B8AA0] mt-0.5">
                 Página: <span className="font-medium">{figma.map.page_name}</span>
                 {' · '}
-                <span className="text-emerald-400 font-medium">{(figma.map.nodes as unknown[]).length} pantallas</span>
+                <span className="text-emerald-400 font-medium">
+                  {(figma.map.nodes as unknown[]).length} pantallas
+                </span>
                 {' · '}
                 {(figma.map.edges as unknown[]).length} conexiones
                 {' · '}
@@ -185,42 +216,22 @@ export function FigmaAdminPanel() {
               </p>
             </div>
             <button
-              onClick={handleShowFiles}
-              disabled={figma.loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#7C6FF7] border border-[#7C6FF7]/30 rounded-lg hover:bg-[#7C6FF7]/10 transition-colors disabled:opacity-40"
+              onClick={handleReset}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#7C6FF7] border border-[#7C6FF7]/30 rounded-lg hover:bg-[#7C6FF7]/10 transition-colors"
             >
               <ScanIcon className="w-3 h-3" />
-              Cambiar archivo
+              Nuevo escaneo
             </button>
           </div>
 
-          {/* AI Insights */}
           {figma.map.ai_insights && (
             <AIInsightsSection insights={figma.map.ai_insights as Record<string, unknown>} />
           )}
 
-          {/* Navigation Canvas */}
           <NavigationCanvas
             nodes={figma.map.nodes as ReactFlowNodeData[]}
             edges={figma.map.edges as ReactFlowEdgeData[]}
           />
-        </div>
-      )}
-
-      {/* Empty state — connected but no map yet */}
-      {!figma.map && !figma.scanning && !showFiles && (
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#2A2940] flex items-center justify-center">
-            <ScanIcon className="w-7 h-7 text-[#8B8AA0]" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[#F0EFF8] mb-1">
-              Ningún archivo escaneado aún
-            </p>
-            <p className="text-xs text-[#8B8AA0]">
-              Haz clic en "Escanear archivo" para analizar tu prototipo de Figma
-            </p>
-          </div>
         </div>
       )}
     </div>
@@ -250,17 +261,12 @@ function AIInsightsSection({ insights }: { insights: Record<string, unknown> }) 
           </span>
         )}
       </div>
-
-      {summary && (
-        <p className="text-sm text-[#8B8AA0] leading-relaxed">{summary}</p>
-      )}
-
+      {summary && <p className="text-sm text-[#8B8AA0] leading-relaxed">{summary}</p>}
       {ratio && (
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#7C6FF7]/10 border border-[#7C6FF7]/20">
-          <span className="text-xs font-semibold text-[#7C6FF7]">Arquitectura: {ratio}</span>
-        </div>
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 text-xs font-semibold text-[#7C6FF7]">
+          Arquitectura: {ratio}
+        </span>
       )}
-
       {items.length > 0 && (
         <div className="space-y-2">
           {items.map((item, i) => (
@@ -269,10 +275,9 @@ function AIInsightsSection({ insights }: { insights: Record<string, unknown> }) 
               item.type === 'warning' ? 'bg-amber-500/5 border-amber-500/20' :
               'bg-[#7C6FF7]/5 border-[#7C6FF7]/20'
             }`}>
-              <span className={`mt-0.5 text-lg leading-none ${
+              <span className={`text-base leading-none mt-0.5 ${
                 item.type === 'error' ? 'text-red-400' :
-                item.type === 'warning' ? 'text-amber-400' :
-                'text-[#7C6FF7]'
+                item.type === 'warning' ? 'text-amber-400' : 'text-[#7C6FF7]'
               }`}>
                 {item.type === 'error' ? '✕' : item.type === 'warning' ? '!' : 'i'}
               </span>
@@ -284,7 +289,6 @@ function AIInsightsSection({ insights }: { insights: Record<string, unknown> }) 
           ))}
         </div>
       )}
-
       {recommendation && (
         <div className="pt-3 border-t border-[#2A2940]">
           <p className="text-xs font-semibold text-[#7C6FF7] mb-1">Recomendación principal</p>
