@@ -142,7 +142,7 @@ export function SitemapPanel() {
       id: p.id,
       type: 'page',
       position: { x: p.x, y: p.y },
-      data: p,
+      data: p as unknown as Record<string, unknown>,
     })),
     []
   );
@@ -231,7 +231,7 @@ export function SitemapPanel() {
           />
           <MiniMap
             style={{ background: '#13121F', border: '1px solid #2A2940', borderRadius: 8 }}
-            nodeColor={(n) => TYPE_STYLES[(n.data as PageMeta).type]?.dot ?? '#4B4A6A'}
+            nodeColor={(n) => TYPE_STYLES[(n.data as unknown as PageMeta).type]?.dot ?? '#4B4A6A'}
             maskColor="rgba(13,12,26,0.75)"
           />
         </ReactFlow>
