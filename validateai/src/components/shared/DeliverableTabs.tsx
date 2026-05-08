@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAI } from '@/hooks/useAI';
 import { generateLeanRoadmapPDF, generateUnitEconomicsPDF, generateCompliancePDF } from '@/lib/pdf';
 import type { LeanRoadmap, FinancialProjection, ComplianceRoadmap, UnitEconomics } from '@/types/validation';
+import { CarouselEditor } from '@/components/carousel/CarouselEditor';
 
 interface Props {
   validationId: string;
@@ -21,6 +22,7 @@ const DELIVERABLES = [
   { id: 'lean_roadmap',        label: 'Roadmap MVP',    icon: '🗺️', desc: 'Plan de sprints tácticos para construir el MVP',           isPdf: true  },
   { id: 'financial_projection',label: 'Unit Economics', icon: '📊', desc: 'Proyección financiera 12 meses y estrategia de crecimiento', isPdf: true },
   { id: 'compliance_roadmap',  label: 'Legal Chile',    icon: '⚖️', desc: 'Roadmap regulatorio y societario para el ecosistema chileno', isPdf: true },
+  { id: 'carousel',            label: 'Carrusel',       icon: '🎠', desc: 'Carrusel de contenido para LinkedIn e Instagram generado con IA', isPdf: false },
 ] as const;
 
 type DeliverableId = typeof DELIVERABLES[number]['id'];
@@ -494,7 +496,7 @@ function ComplianceView({ d, context }: { d: ComplianceRoadmap; context: Record<
   );
 }
 
-const VIEWS: Record<Exclude<DeliverableId, 'lean_roadmap' | 'financial_projection' | 'compliance_roadmap'>, React.ComponentType<{ d: DeliverableData }>> = {
+const VIEWS: Record<Exclude<DeliverableId, 'lean_roadmap' | 'financial_projection' | 'compliance_roadmap' | 'carousel'>, React.ComponentType<{ d: DeliverableData }>> = {
   validation_kit:      ValidationKitView,
   landing_generator:   LandingView,
   interview_script:    InterviewView,
@@ -506,6 +508,7 @@ const VIEWS: Record<Exclude<DeliverableId, 'lean_roadmap' | 'financial_projectio
 };
 
 const PDF_IDS = new Set<DeliverableId>(['lean_roadmap', 'financial_projection', 'compliance_roadmap']);
+const CUSTOM_IDS = new Set<DeliverableId>(['carousel']);
 
 export function DeliverableTabs({ validationId, context, unitEconomics }: Props) {
   const [activeTab, setActiveTab] = useState<DeliverableId>('validation_kit');
@@ -526,7 +529,8 @@ export function DeliverableTabs({ validationId, context, unitEconomics }: Props)
 
   const currentDeliverable = DELIVERABLES.find((d) => d.id === activeTab)!;
   const isPdfTab = PDF_IDS.has(activeTab);
-  const ViewComponent = !isPdfTab ? VIEWS[activeTab as keyof typeof VIEWS] : null;
+  const isCustomTab = CUSTOM_IDS.has(activeTab);
+  const ViewComponent = !isPdfTab && !isCustomTab ? VIEWS[activeTab as keyof typeof VIEWS] : null;
   const result = results[activeTab];
   const isLoading = loadingTab === activeTab;
 
@@ -566,12 +570,17 @@ export function DeliverableTabs({ validationId, context, unitEconomics }: Props)
           )}
         </div>
 
-        {isLoading ? (
+        {/* Carousel tab renders its own self-contained editor */}
+        {isCustomTab && activeTab === 'carousel' && (
+          <CarouselEditor validationId={validationId} context={context} />
+        )}
+
+        {!isCustomTab && isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <div className="w-8 h-8 border-3 border-teal-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-gray-400">Generando con IA...</p>
           </div>
-        ) : result ? (
+        ) : !isCustomTab && result ? (
           <div>
             {/* PDF deliverables render their own specialised views */}
             {isPdfTab && activeTab === 'lean_roadmap' && (
@@ -592,7 +601,7 @@ export function DeliverableTabs({ validationId, context, unitEconomics }: Props)
               Regenerar
             </button>
           </div>
-        ) : (
+        ) : !isCustomTab ? (
           <div className="text-center py-10">
             <div className="text-4xl mb-3">{currentDeliverable.icon}</div>
             <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-5 max-w-xs mx-auto">{currentDeliverable.desc}</p>
@@ -606,7 +615,7 @@ export function DeliverableTabs({ validationId, context, unitEconomics }: Props)
               Generar {currentDeliverable.label}
             </button>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
