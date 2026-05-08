@@ -889,7 +889,7 @@ export function ValidationDetail() {
             <button
               key={t}
               onClick={() => { setActiveTab(t); trackTabView(t); }}
-              className={`flex-1 min-w-[max-content] px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 ${
+              className={`shrink-0 px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 whitespace-nowrap ${
                 activeTab === t
                   ? 'bg-teal-50 text-teal-700 shadow-sm border border-teal-100'
                   : 'text-gray-500 hover:text-gray-800 dark:text-[#F0EFF8] hover:bg-gray-50 dark:bg-[#0A0A0F] border border-transparent'
