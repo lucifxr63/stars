@@ -653,7 +653,7 @@ export function ValidationDetail() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
         <Header />
-        <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 space-y-4">
+        <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-10 space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-white/5 p-6 animate-pulse">
               <div className="h-4 bg-gray-100 dark:bg-white/5 rounded w-1/3 mb-3" />
@@ -682,7 +682,7 @@ export function ValidationDetail() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
       <Header />
 
-      <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
           <Link to="/results" className="hover:text-teal-600 transition">Mis validaciones</Link>
@@ -929,10 +929,10 @@ export function ValidationDetail() {
                   </div>
 
                   {/* Left Column: Score & Breakdown */}
-                  <div className="md:col-span-8 flex flex-col gap-4">
+                  <div className="md:col-span-7 flex flex-col gap-4">
                     {/* Score */}
                     {summary && data.validation_score != null && (
-                      <div className={`rounded-3xl border-2 p-6 h-full flex items-center ${scoreBg}`}>
+                      <div className={`rounded-3xl border-2 p-6 flex items-center ${scoreBg}`}>
                         <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
                           <ScoreGauge score={data.playbook_analysis.viability_score ?? data.validation_score} />
                           <div className="flex-1 text-center sm:text-left">
@@ -944,14 +944,14 @@ export function ValidationDetail() {
                     )}
                     
                     {data.score_breakdown && (
-                      <div className="h-full">
+                      <div>
                         <ScoreBreakdown data={data.score_breakdown} />
                       </div>
                     )}
                   </div>
 
                   {/* Right Column: Playbook Analysis / Alertas */}
-                  <div className="md:col-span-4 flex flex-col gap-4">
+                  <div className="md:col-span-5 flex flex-col gap-4">
                     <div className="h-full">
                       <PlaybookAnalysisCard data={data.playbook_analysis} />
                     </div>
