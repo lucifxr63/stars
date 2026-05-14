@@ -867,34 +867,45 @@ export function ValidationDetail() {
           </div>
         </div>
 
-        {/* TABS NAVIGATION */}
-        {/* Mobile: select dropdown */}
-        <div className="sm:hidden mb-6">
-          <select
-            value={activeTab}
-            onChange={(e) => { setActiveTab(e.target.value as DashboardTab); trackTabView(e.target.value); }}
-            className="w-full px-4 py-2.5 bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-800 dark:text-[#F0EFF8] shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40"
-          >
-            {DASHBOARD_TABS.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-        {/* Desktop: tab buttons */}
-        <div className="hidden sm:flex bg-white dark:bg-[#12121A] rounded-xl border border-gray-200 dark:border-white/10 p-1 mb-6 overflow-x-auto hide-scrollbar shadow-sm">
-          {DASHBOARD_TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => { setActiveTab(t); trackTabView(t); }}
-              className={`shrink-0 px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 whitespace-nowrap ${
-                activeTab === t
-                  ? 'bg-teal-50 text-teal-700 shadow-sm border border-teal-100'
-                  : 'text-gray-500 hover:text-gray-800 dark:text-[#F0EFF8] hover:bg-gray-50 dark:bg-[#0A0A0F] border border-transparent'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+        {/* GRID NAVIGATION */}
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          {DASHBOARD_TABS.map((t, i) => {
+            const isActive = activeTab === t;
+            let icon = '';
+            let hasData = false;
+            
+            switch (t) {
+              case 'Veredicto': icon = '⚡'; hasData = data.playbook_analysis != null; break;
+              case 'Validación': icon = '✅'; hasData = data.summary_json != null; break;
+              case 'Estrategia': icon = '🚀'; hasData = data.market_sizing != null; break;
+              case 'Finanzas': icon = '💰'; hasData = data.unit_economics != null; break;
+              case 'Hoja de Ruta': icon = '🗺️'; hasData = data.lean_roadmap != null; break;
+              case 'Inversión': icon = '📈'; hasData = data.fundraising_roadmap != null; break;
+              case 'Due Diligence': icon = '🔍'; hasData = data.due_diligence_score != null; break;
+            }
+
+            const isLastOdd = DASHBOARD_TABS.length % 2 !== 0 && i === DASHBOARD_TABS.length - 1;
+
+            return (
+              <button
+                key={t}
+                onClick={() => { setActiveTab(t); trackTabView(t); }}
+                className={`relative flex items-center justify-center gap-2 px-3 py-3 text-sm font-bold rounded-xl transition-all duration-200 border ${
+                  isLastOdd ? 'col-span-2' : 'col-span-1'
+                } ${
+                  isActive
+                    ? 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-500/10 dark:text-teal-300 dark:border-teal-500/30 shadow-sm shadow-teal-500/10'
+                    : 'bg-white dark:bg-[#12121A] text-gray-600 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 hover:border-teal-300/50'
+                }`}
+              >
+                <span>{icon}</span>
+                <span className="truncate">{t}</span>
+                {hasData && (
+                  <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-teal-500' : 'bg-teal-400 opacity-60'}`} title="Datos disponibles"></span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <div className="space-y-5">
