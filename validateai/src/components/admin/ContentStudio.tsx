@@ -1,467 +1,420 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState } from 'react';
 import { useCarouselStore } from '@/stores/carouselStore';
 import { CarouselEditor } from '@/components/carousel/CarouselEditor';
-import { supabase } from '@/lib/supabase';
 import type { CarouselPlatform, CarouselTheme } from '@/types/carousel';
 
-interface AdminData {
+// ── Tipos ─────────────────────────────────────────────────────────────────────
+
+export interface AdminData {
   usersTotal: number;
   validationsTotal: number;
   completedValidations: number;
+  completionRate: number;
+  avgScore: number;
+  totalTokens: number;
+  projected30: number;
+  abandonStep: string;
   aiInteractionsTotal: number;
-  topIndustries: any[];
-  topModels: any[];
-  topPrompts: any[];
-  [key: string]: any;
+  topIndustries: { name: string; value: number }[];
+  topCountries: { name: string; value: number }[];
+  topStages: { stage: string; count: number }[];
+  topModels: { name: string; value: number; color: string }[];
+  topPrompts: { type: string; count: number; tokens: number }[];
+  tierDist: { name: string; value: number; color: string }[];
+  scoreDist: { label: string; count: number }[];
 }
 
-interface ContentStudioProps {
+interface Props {
   adminData: AdminData;
 }
 
-const INTERNAL_CENTERS = [
-  { id: 'metrics', label: 'Métricas de plataforma', icon: '📊', desc: 'Usuarios, completitud y crecimiento' },
-  { id: 'trends', label: 'Tendencias de mercado', icon: '📈', desc: 'Industrias, países y modelos más comunes' },
-  { id: 'patterns', label: 'Patrones de validación', icon: '🧩', desc: 'Scores, abandono y comportamiento' },
-  { id: 'ai', label: 'AI Usage', icon: '🤖', desc: 'Modelos, tokens y tipos de prompts' },
+// ── Centros de información ────────────────────────────────────────────────────
+
+const DATA_CENTERS = [
+  {
+    id: 'metrics' as const,
+    icon: '📊',
+    label: 'Métricas de plataforma',
+    desc: 'Usuarios, validaciones, scores y proyecciones de crecimiento',
+    color: 'teal',
+  },
+  {
+    id: 'market_trends' as const,
+    icon: '🌎',
+    label: 'Tendencias de mercado',
+    desc: 'Industrias, países y modelos de negocio más validados',
+    color: 'violet',
+  },
+  {
+    id: 'validation_patterns' as const,
+    icon: '🧠',
+    label: 'Patrones de validación',
+    desc: 'Qué diferencia las ideas exitosas de las que fallan',
+    color: 'amber',
+  },
+  {
+    id: 'ai_usage' as const,
+    icon: '⚡',
+    label: 'AI Usage',
+    desc: 'Modelos, prompts y cómo la IA transforma el proceso',
+    color: 'blue',
+  },
+  {
+    id: 'custom' as const,
+    icon: '✏️',
+    label: 'Tema personalizado',
+    desc: 'Define tu propio ángulo narrativo con datos como respaldo',
+    color: 'gray',
+  },
 ];
 
-const FRAMES = [
-  { id: 'PAS', label: 'Problema, Agitación, Solución', desc: 'Ideal para educar sobre un dolor' },
-  { id: 'AIDA', label: 'Atención, Interés, Deseo, Acción', desc: 'Ideal para generar interés y conversión' },
-  { id: 'HERO', label: 'El Viaje del Héroe', desc: 'Narrativa inspiradora basada en casos de éxito' },
+type CenterId = typeof DATA_CENTERS[number]['id'];
+
+const COLOR_MAP: Record<string, { border: string; bg: string; text: string; badge: string }> = {
+  teal:   { border: 'border-teal-400',   bg: 'bg-teal-50 dark:bg-teal-500/10',    text: 'text-teal-700 dark:text-teal-400',   badge: 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400' },
+  violet: { border: 'border-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10', text: 'text-violet-700 dark:text-violet-400', badge: 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400' },
+  amber:  { border: 'border-amber-400',  bg: 'bg-amber-50 dark:bg-amber-500/10',  text: 'text-amber-700 dark:text-amber-400',  badge: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' },
+  blue:   { border: 'border-blue-400',   bg: 'bg-blue-50 dark:bg-blue-500/10',    text: 'text-blue-700 dark:text-blue-400',   badge: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' },
+  gray:   { border: 'border-gray-300',   bg: 'bg-gray-50 dark:bg-white/5',         text: 'text-gray-600 dark:text-gray-400',   badge: 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300' },
+};
+
+// ── DataPreview ───────────────────────────────────────────────────────────────
+
+function DataPreview({ center, adminData }: { center: CenterId; adminData: AdminData }) {
+  if (center === 'metrics') {
+    return (
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'Usuarios',          val: adminData.usersTotal },
+          { label: 'Validaciones',      val: adminData.validationsTotal },
+          { label: 'Completadas',       val: adminData.completedValidations },
+          { label: 'Completación',      val: `${adminData.completionRate}%` },
+          { label: 'Score promedio',    val: `${adminData.avgScore}/100` },
+          { label: 'Proyección 30d',    val: `+${adminData.projected30}` },
+        ].map(({ label, val }) => (
+          <div key={label} className="bg-white dark:bg-white/5 rounded-xl p-3 text-center border border-gray-100 dark:border-white/5">
+            <p className="text-[9px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+            <p className="text-sm font-black text-gray-900 dark:text-[#F0EFF8]">{val}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (center === 'market_trends') {
+    return (
+      <div className="space-y-3">
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5">Top industrias</p>
+          <div className="flex flex-wrap gap-1.5">
+            {adminData.topIndustries.slice(0, 5).map(({ name, value }) => (
+              <span key={name} className="px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 text-xs font-semibold border border-violet-200 dark:border-violet-500/20">
+                {name} · {value}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5">Top países</p>
+          <div className="flex flex-wrap gap-1.5">
+            {adminData.topCountries.slice(0, 5).map(({ name, value }) => (
+              <span key={name} className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-xs font-semibold">
+                {name} · {value}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (center === 'validation_patterns') {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white dark:bg-white/5 rounded-xl p-3 text-center border border-gray-100 dark:border-white/5">
+            <p className="text-[9px] text-gray-400 uppercase mb-1">Score promedio</p>
+            <p className="text-lg font-black text-amber-600">{adminData.avgScore}/100</p>
+          </div>
+          <div className="bg-white dark:bg-white/5 rounded-xl p-3 text-center border border-gray-100 dark:border-white/5">
+            <p className="text-[9px] text-gray-400 uppercase mb-1">Mayor abandono</p>
+            <p className="text-xs font-bold text-red-500 leading-tight">{adminData.abandonStep}</p>
+          </div>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5">Distribución de scores</p>
+          <div className="flex gap-1.5">
+            {adminData.scoreDist.map(({ label, count }) => (
+              <div key={label} className="flex-1 text-center">
+                <div className="bg-amber-100 dark:bg-amber-500/20 rounded-lg py-1.5 mb-1">
+                  <p className="text-sm font-black text-amber-700 dark:text-amber-400">{count}</p>
+                </div>
+                <p className="text-[9px] text-gray-400">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (center === 'ai_usage') {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white dark:bg-white/5 rounded-xl p-3 text-center border border-gray-100 dark:border-white/5">
+            <p className="text-[9px] text-gray-400 uppercase mb-1">Interacciones AI</p>
+            <p className="text-lg font-black text-blue-600">{adminData.aiInteractionsTotal.toLocaleString()}</p>
+          </div>
+          <div className="bg-white dark:bg-white/5 rounded-xl p-3 text-center border border-gray-100 dark:border-white/5">
+            <p className="text-[9px] text-gray-400 uppercase mb-1">Total tokens</p>
+            <p className="text-lg font-black text-blue-600">{(adminData.totalTokens / 1000).toFixed(0)}K</p>
+          </div>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5">Top prompts</p>
+          <div className="space-y-1">
+            {adminData.topPrompts.slice(0, 3).map(({ type, count }) => (
+              <div key={type} className="flex items-center justify-between">
+                <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[72%]">{type}</span>
+                <span className="text-xs font-bold text-blue-600 shrink-0">{count}×</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <p className="text-xs text-gray-400 italic">
+      Define tu tema. Los datos de plataforma se usarán como evidencia de respaldo.
+    </p>
+  );
+}
+
+// ── Selectores reutilizables ──────────────────────────────────────────────────
+
+const PLATFORMS: { value: CarouselPlatform; label: string; icon: string; desc: string }[] = [
+  { value: 'linkedin',  label: 'LinkedIn',  icon: '💼', desc: 'PDF · 1:1 · B2B' },
+  { value: 'instagram', label: 'Instagram', icon: '📸', desc: 'ZIP · 4:5 · B2C' },
 ];
 
 const THEMES: { value: CarouselTheme; label: string; icon: string }[] = [
-  { value: 'clean', label: 'Clean', icon: '⬜' },
-  { value: 'dark', label: 'Dark', icon: '⬛' },
+  { value: 'clean',    label: 'Clean',    icon: '⬜' },
+  { value: 'dark',     label: 'Dark',     icon: '⬛' },
   { value: 'gradient', label: 'Gradient', icon: '🌈' },
 ];
 
-const PLATFORMS: { value: CarouselPlatform; label: string; desc: string; icon: string }[] = [
-  { value: 'linkedin', label: 'LinkedIn', desc: 'PDF · Cuadrado 1:1', icon: '💼' },
-  { value: 'instagram', label: 'Instagram', desc: 'PNG ZIP · Vertical 4:5', icon: '📸' },
+const FRAMES: { value: 'pas' | 'aida'; label: string; desc: string }[] = [
+  { value: 'pas',  label: 'PAS',  desc: 'Problema → Agitación → Solución' },
+  { value: 'aida', label: 'AIDA', desc: 'Atención → Interés → Deseo → Acción' },
 ];
 
-export function ContentStudio({ adminData }: ContentStudioProps) {
-  // Tabs: 'internal' | 'api' | 'manual'
-  const [activeTab, setActiveTab] = useState<'internal' | 'api' | 'manual'>('internal');
-  
-  // Internal State
-  const [selectedCenter, setSelectedCenter] = useState('metrics');
-  
-  // API State
-  const [apiProvider, setApiProvider] = useState<'cmf' | 'sii'>('cmf');
-  const [cmfIndicator, setCmfIndicator] = useState('dolar');
-  const [siiEndpoint, setSiiEndpoint] = useState('uf_mes');
-  const [siiParam, setSiiParam] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  
-  const [syncLoading, setSyncLoading] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
-  
-  const [dbKnowledge, setDbKnowledge] = useState<any[]>([]);
-  const [loadingKnowledge, setLoadingKnowledge] = useState(false);
+// ── ContentStudio ─────────────────────────────────────────────────────────────
 
-  // Manual State
-  const [customData, setCustomData] = useState('');
+export function ContentStudio({ adminData }: Props) {
+  const [selectedCenter, setSelectedCenter] = useState<CenterId>('metrics');
+  const [frame, setFrame] = useState<'pas' | 'aida'>('pas');
+  const [customTopic, setCustomTopic] = useState('');
+  const [phase, setPhase] = useState<'configure' | 'editor'>('configure');
 
-  // Config State
-  const [selectedFrame, setSelectedFrame] = useState('PAS');
-  const { platform, theme, setPlatform, setTheme, generateStory, status } = useCarouselStore();
+  const { platform, theme, status, setPlatform, setTheme, generateStory, reset } = useCarouselStore();
 
-  useEffect(() => {
-    if (activeTab === 'api') {
-      fetchKnowledgeBase();
-    }
-  }, [activeTab]);
+  const center = DATA_CENTERS.find((c) => c.id === selectedCenter)!;
+  const colors = COLOR_MAP[center.color];
 
-  const fetchKnowledgeBase = async () => {
-    setLoadingKnowledge(true);
-    try {
-      const { data, error } = await supabase
-        .from('economic_knowledge')
-        .select('*')
-        .order('updated_at', { ascending: false });
-      
-      if (error) throw error;
-      setDbKnowledge(data || []);
-    } catch (err) {
-      console.error('Error fetching knowledge base', err);
-    } finally {
-      setLoadingKnowledge(false);
-    }
+  const buildSnapshot = (): Record<string, unknown> => {
+    if (selectedCenter === 'custom') return adminData as unknown as Record<string, unknown>;
+    const keyMap: Record<CenterId, (keyof AdminData)[]> = {
+      metrics:             ['usersTotal', 'validationsTotal', 'completedValidations', 'completionRate', 'avgScore', 'projected30', 'totalTokens'],
+      market_trends:       ['topIndustries', 'topCountries', 'topStages', 'validationsTotal'],
+      validation_patterns: ['avgScore', 'completionRate', 'scoreDist', 'abandonStep', 'completedValidations'],
+      ai_usage:            ['aiInteractionsTotal', 'totalTokens', 'topModels', 'topPrompts'],
+      custom:              [],
+    };
+    const snap: Record<string, unknown> = {};
+    for (const k of keyMap[selectedCenter]) snap[k] = adminData[k];
+    return snap;
   };
 
-  const handleSyncAPI = async () => {
-    setSyncLoading(true);
-    setSyncMessage(null);
-    try {
-      let payload = {};
-      if (apiProvider === 'cmf') {
-        payload = { provider: 'CMF', indicator: cmfIndicator };
-      } else {
-        payload = { provider: 'SII', indicator: siiEndpoint, param: siiParam };
-      }
-
-      const { data, error } = await supabase.functions.invoke('sync-economic-data', {
-        body: payload
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      setSyncMessage({ type: 'success', text: 'Datos sincronizados correctamente en la BD' });
-      fetchKnowledgeBase(); // refresh
-    } catch (err) {
-      setSyncMessage({ type: 'error', text: err instanceof Error ? err.message : 'Error al sincronizar API' });
-    } finally {
-      setSyncLoading(false);
-    }
+  const handleGenerate = async () => {
+    setPhase('editor');
+    await generateStory(selectedCenter, frame, customTopic, buildSnapshot());
   };
 
-  const handleGenerate = () => {
-    let finalCustomData = customData;
-    let finalCenter = selectedCenter;
-
-    if (activeTab === 'api') {
-      finalCenter = `RAG APIs Económicas`;
-      // We send ALL the cached knowledge base entries as context so the AI can use them.
-      // In a real RAG with large DB we'd use vector search. Here we just serialize the table.
-      const recentContext = dbKnowledge.map(k => `${k.provider} - ${k.indicator} (Actualizado: ${new Date(k.updated_at).toLocaleDateString()}):\n${k.context_text}`).join('\n\n');
-      finalCustomData = recentContext || 'No hay datos en caché aún.';
-    } else if (activeTab === 'manual') {
-      finalCenter = 'Data Manual / RAG';
-    } else {
-      finalCustomData = ''; // internal data only
-    }
-
-    generateStory(finalCenter, selectedFrame, finalCustomData, adminData);
+  const handleBack = () => {
+    reset();
+    setPhase('configure');
   };
 
-  const getInternalPreview = () => {
-    switch (selectedCenter) {
-      case 'metrics':
-        return {
-          'Total Usuarios': adminData.usersTotal,
-          'Total Validaciones': adminData.validationsTotal,
-          'Completadas': adminData.completedValidations,
-        };
-      case 'trends':
-        return {
-          'Top Industrias': adminData.topIndustries.slice(0, 3).map((i: any) => i.name).join(', '),
-        };
-      case 'ai':
-        return {
-          'Total Interacciones AI': adminData.aiInteractionsTotal,
-          'Modelos Dominantes': adminData.topModels.slice(0, 2).map((m: any) => m.name).join(', '),
-          'Prompt más usado': adminData.topPrompts[0]?.type || 'N/A',
-        };
-      case 'patterns':
-        return {
-          'Completitud': `${Math.round((adminData.completedValidations / Math.max(1, adminData.validationsTotal)) * 100)}%`,
-        };
-      default:
-        return {};
-    }
-  };
+  // ── Fase editor ───────────────────────────────────────────────────────────
+
+  if (phase === 'editor') {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={handleBack}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition flex items-center gap-1"
+          >
+            ← Cambiar centro
+          </button>
+          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${colors.badge}`}>
+            {center.icon} {center.label}
+          </span>
+          <span className="text-[10px] text-gray-400">
+            {frame.toUpperCase()} · {platform === 'linkedin' ? 'LinkedIn' : 'Instagram'} · {theme}
+          </span>
+        </div>
+        <CarouselEditor validationId="admin-story" context={{}} />
+      </div>
+    );
+  }
+
+  // ── Fase configuración ────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-8">
-      {/* ── 1. Configuración de Fuente y Narrativa ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        
-        {/* Izquierda: Selección de datos */}
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-[#12121A] p-6 rounded-2xl border border-gray-100 dark:border-white/5">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-4 uppercase tracking-wide">
-              1. Selecciona la fuente de datos
-            </h2>
+    <div className="space-y-6 max-w-3xl">
 
-            {/* TABS */}
-            <div className="flex bg-gray-100 dark:bg-[#0A0A0F] p-1 rounded-xl mb-6">
-              {[
-                { id: 'internal', label: '📊 Validaciones' },
-                { id: 'api', label: '🌐 APIs Públicas (RAG)' },
-                { id: 'manual', label: '🧠 Manual' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex-1 text-xs font-bold py-2 rounded-lg transition-all ${
-                    activeTab === tab.id 
-                      ? 'bg-white dark:bg-[#1C1C24] text-teal-600 dark:text-teal-400 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* CONTENIDO TAB INTERNA */}
-            {activeTab === 'internal' && (
-              <div className="space-y-6 animate-in fade-in">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {INTERNAL_CENTERS.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setSelectedCenter(c.id)}
-                      className={`flex flex-col items-start p-3 rounded-xl border transition-all text-left
-                        ${selectedCenter === c.id
-                          ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-500/10'
-                          : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
-                        }`}
-                    >
-                      <span className="text-xl mb-1">{c.icon}</span>
-                      <span className="text-xs font-bold text-gray-900 dark:text-white">{c.label}</span>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{c.desc}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4]">Preview de datos internos</p>
-                  <div className="bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl p-4 text-xs font-mono text-gray-600 dark:text-gray-300">
-                    {Object.entries(getInternalPreview()).map(([k, v]) => (
-                      <div key={k} className="flex justify-between py-1 border-b border-gray-200/50 dark:border-white/5 last:border-0">
-                        <span>{k}:</span>
-                        <span className="font-bold">{v as React.ReactNode}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* CONTENIDO TAB APIs PUBLICAS (RAG) */}
-            {activeTab === 'api' && (
-              <div className="space-y-5 animate-in fade-in">
-                
-                {/* Visualización del Knowledge Base (RAG) */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4]">Base de Conocimiento Económico (Caché)</p>
-                    <button onClick={fetchKnowledgeBase} className="text-xs text-teal-500 hover:text-teal-600">🔄 Actualizar vista</button>
-                  </div>
-                  
-                  <div className="bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl p-3 h-40 overflow-y-auto">
-                    {loadingKnowledge ? (
-                      <p className="text-xs text-gray-500 text-center py-4">Cargando base de conocimiento...</p>
-                    ) : dbKnowledge.length === 0 ? (
-                      <p className="text-xs text-gray-500 text-center py-4">Aún no has sincronizado ningún dato. Sincroniza desde abajo.</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {dbKnowledge.map(k => (
-                          <li key={k.id} className="flex justify-between items-center text-xs border-b border-gray-200/50 dark:border-white/5 pb-2 last:border-0">
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">{k.provider} - {k.indicator}</span>
-                            <span className="text-gray-500">{new Date(k.updated_at).toLocaleString()}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-gray-500 leading-tight">
-                    *Al generar el carrusel, la IA leerá **toda esta tabla** sin consumir tokens de la API Gateway.
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-gray-100 dark:border-white/10">
-                  <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-3">Sincronizar Nueva Información (Gasta Créditos/Tokens)</h3>
-                  
-                  <div className="flex gap-2 mb-4">
-                    <button
-                      onClick={() => setApiProvider('cmf')}
-                      className={`flex-1 py-2 text-xs font-bold border rounded-lg ${apiProvider === 'cmf' ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400' : 'border-gray-200 dark:border-white/10 text-gray-500'}`}
-                    >
-                      🏦 CMF Chile
-                    </button>
-                    <button
-                      onClick={() => setApiProvider('sii')}
-                      className={`flex-1 py-2 text-xs font-bold border rounded-lg ${apiProvider === 'sii' ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400' : 'border-gray-200 dark:border-white/10 text-gray-500'}`}
-                    >
-                      🏢 SII (API Gateway)
-                    </button>
-                  </div>
-
-                  {apiProvider === 'cmf' && (
-                    <div className="space-y-3 mb-4">
-                      <select
-                        value={cmfIndicator}
-                        onChange={(e) => setCmfIndicator(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl p-3 text-sm text-gray-900 dark:text-white outline-none focus:border-teal-500"
-                      >
-                        <option value="dolar">Dólar</option>
-                        <option value="euro">Euro</option>
-                        <option value="uf">Unidad de Fomento (UF)</option>
-                        <option value="utm">Unidad Tributaria Mensual (UTM)</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {apiProvider === 'sii' && (
-                    <div className="space-y-4 mb-4">
-                      <div className="space-y-3">
-                        <select
-                          value={siiEndpoint}
-                          onChange={(e) => setSiiEndpoint(e.target.value)}
-                          className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl p-3 text-sm text-gray-900 dark:text-white outline-none focus:border-teal-500"
-                        >
-                          <option value="uf_mes">UF Mensual</option>
-                          <option value="uf_anio">UF Anual</option>
-                          <option value="corr_monetaria">Corrección Monetaria Anual</option>
-                        </select>
-                      </div>
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={siiParam}
-                          onChange={(e) => setSiiParam(e.target.value)}
-                          placeholder={siiEndpoint.includes('mes') ? 'YYYY-MM' : 'YYYY'}
-                          className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl p-3 text-sm text-gray-900 dark:text-white outline-none focus:border-teal-500"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleSyncAPI}
-                    disabled={syncLoading}
-                    className="w-full py-2 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold text-xs rounded-lg transition-all shadow-sm"
-                  >
-                    {syncLoading ? 'Sincronizando y guardando...' : '📥 Llamar a API y Guardar en Caché'}
-                  </button>
-
-                  {syncMessage && (
-                    <div className={`mt-3 p-3 text-xs rounded-xl border ${
-                      syncMessage.type === 'error' 
-                        ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
-                        : 'bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20'
-                    }`}>
-                      {syncMessage.text}
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            )}
-
-            {/* CONTENIDO TAB MANUAL */}
-            {activeTab === 'manual' && (
-              <div className="space-y-2 animate-in fade-in">
-                <label className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4]">
-                  Pega contexto directo, recortes de PDF o outputs de tu RAG manual:
-                </label>
-                <textarea
-                  value={customData}
-                  onChange={(e) => setCustomData(e.target.value)}
-                  placeholder="Ej: Según el reporte de tendencias tecnológicas del Q3..."
-                  rows={8}
-                  className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl p-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Derecha: Configuración Narrativa y Visual */}
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-[#12121A] p-6 rounded-2xl border border-gray-100 dark:border-white/5">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-4 uppercase tracking-wide">
-              2. Formato y Narrativa
-            </h2>
-            
-            <div className="space-y-5">
-              {/* Frame */}
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-2 block">Marco Narrativo</label>
-                <div className="flex flex-col gap-2">
-                  {FRAMES.map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setSelectedFrame(f.id)}
-                      className={`px-3 py-2 text-left rounded-lg border text-xs ${
-                        selectedFrame === f.id
-                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400'
-                          : 'border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300'
-                      }`}
-                    >
-                      <span className="font-bold">{f.id}</span> — <span className="opacity-80">{f.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Plataforma */}
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-2 block">Plataforma</label>
-                <div className="flex gap-3">
-                  {PLATFORMS.map((p) => (
-                    <button
-                      key={p.value}
-                      onClick={() => setPlatform(p.value)}
-                      className={`flex-1 flex items-center gap-2 p-2.5 rounded-lg border text-left transition-all
-                        ${platform === p.value
-                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
-                          : 'border-gray-200 dark:border-white/10 hover:border-gray-300'
-                        }`}
-                    >
-                      <span className="text-lg">{p.icon}</span>
-                      <div>
-                        <p className="font-bold text-xs text-gray-900 dark:text-[#F0EFF8]">{p.label}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tema */}
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-2 block">Tema visual</label>
-                <div className="flex gap-2">
-                  {THEMES.map((t) => (
-                    <button
-                      key={t.value}
-                      onClick={() => setTheme(t.value)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all
-                        ${theme === t.value
-                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400'
-                          : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-[#8B8AA0] hover:border-gray-400'
-                        }`}
-                    >
-                      {t.icon} {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+      {/* Centros de información */}
+      <div>
+        <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-3">
+          Centro de información
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+          {DATA_CENTERS.map((c) => {
+            const cl = COLOR_MAP[c.color];
+            const active = selectedCenter === c.id;
+            return (
               <button
-                onClick={handleGenerate}
-                disabled={status === 'generating'}
-                className="w-full py-3 mt-2 bg-teal-500 text-white text-sm font-bold rounded-xl hover:bg-teal-600 active:scale-[0.98] transition-all disabled:opacity-50"
+                key={c.id}
+                onClick={() => setSelectedCenter(c.id)}
+                className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all
+                  ${active
+                    ? `${cl.border} ${cl.bg}`
+                    : 'border-gray-100 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                  }`}
               >
-                {status === 'generating' ? 'Generando narrativa...' : '✨ Generar Carrusel'}
+                <span className="text-2xl leading-none mt-0.5 shrink-0">{c.icon}</span>
+                <div className="min-w-0">
+                  <p className={`text-xs font-bold leading-tight mb-0.5 ${active ? cl.text : 'text-gray-800 dark:text-[#C4C4D4]'}`}>
+                    {c.label}
+                  </p>
+                  <p className="text-[10px] text-gray-400 leading-snug">{c.desc}</p>
+                </div>
               </button>
-            </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Preview de datos del centro */}
+      <div className={`rounded-2xl border-2 ${colors.border} ${colors.bg} p-4 space-y-3`}>
+        <p className={`text-[10px] font-bold uppercase tracking-widest ${colors.text}`}>
+          {center.icon} Vista previa de datos · {center.label}
+        </p>
+        <DataPreview center={selectedCenter} adminData={adminData} />
+      </div>
+
+      {/* Tema personalizado */}
+      {selectedCenter === 'custom' && (
+        <div>
+          <label className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2 block">
+            Tema del carrusel
+          </label>
+          <textarea
+            value={customTopic}
+            onChange={(e) => setCustomTopic(e.target.value)}
+            placeholder="Ej: Por qué el 80% de las startups B2B muere antes del año 1..."
+            rows={3}
+            className="w-full border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm bg-white dark:bg-white/5 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+          />
+        </div>
+      )}
+
+      {/* Configuración de formato */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div>
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2">Plataforma</p>
+          <div className="space-y-2">
+            {PLATFORMS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setPlatform(p.value)}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 text-left transition-all
+                  ${platform === p.value
+                    ? 'border-teal-400 bg-teal-50 dark:bg-teal-500/10'
+                    : 'border-gray-100 dark:border-white/10 hover:border-gray-300'
+                  }`}
+              >
+                <span className="text-xl">{p.icon}</span>
+                <div>
+                  <p className="text-xs font-bold text-gray-800 dark:text-[#F0EFF8]">{p.label}</p>
+                  <p className="text-[10px] text-gray-400">{p.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2">Marco narrativo</p>
+          <div className="space-y-2">
+            {FRAMES.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setFrame(f.value)}
+                className={`w-full px-3 py-2.5 rounded-xl border-2 text-left transition-all
+                  ${frame === f.value
+                    ? 'border-violet-400 bg-violet-50 dark:bg-violet-500/10'
+                    : 'border-gray-100 dark:border-white/10 hover:border-gray-300'
+                  }`}
+              >
+                <p className="text-xs font-bold text-gray-800 dark:text-[#F0EFF8]">{f.label}</p>
+                <p className="text-[10px] text-gray-400">{f.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide mb-2">Tema visual</p>
+          <div className="space-y-2">
+            {THEMES.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setTheme(t.value)}
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-left transition-all
+                  ${theme === t.value
+                    ? 'border-teal-400 bg-teal-50 dark:bg-teal-500/10'
+                    : 'border-gray-100 dark:border-white/10 hover:border-gray-300'
+                  }`}
+              >
+                <span className="text-base">{t.icon}</span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4]">{t.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ── 3. Editor de Carrusel ── */}
-      <div className="bg-white dark:bg-[#12121A] p-6 rounded-2xl border border-gray-100 dark:border-white/5">
-        <h2 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-4 uppercase tracking-wide">
-          3. Editor y Exportación
-        </h2>
-        {status === 'idle' ? (
-          <div className="py-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
-            <span className="text-4xl mb-2 block">🖌️</span>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-              Configura tus datos y haz clic en "Generar Carrusel" para empezar
-            </p>
-          </div>
-        ) : (
-          <CarouselEditor hideConfig />
-        )}
-      </div>
+      {/* Botón principal */}
+      <button
+        onClick={handleGenerate}
+        disabled={status === 'generating' || (selectedCenter === 'custom' && !customTopic.trim())}
+        className="w-full py-4 bg-teal-500 text-white font-bold rounded-xl hover:bg-teal-600
+          active:scale-[0.99] transition-all shadow-lg shadow-teal-500/20
+          disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+      >
+        {status === 'generating'
+          ? '⏳ Generando narrativa con IA...'
+          : `✨ Generar carrusel · ${center.label}`
+        }
+      </button>
     </div>
   );
 }

@@ -29,108 +29,75 @@ function extractJSON(text: string): string {
   return trimmed;
 }
 
-function buildSystemPrompt(platform: 'linkedin' | 'instagram'): string {
-  const format = platform === 'linkedin'
-    ? 'formato cuadrado 1:1 para LinkedIn; tono profesional B2B, lenguaje de autoridad y liderazgo de pensamiento'
-    : 'formato vertical 4:5 para Instagram; tono visual B2C, lenguaje directo y emocional orientado al consumidor';
+function buildSystemPrompt(platform: 'linkedin' | 'instagram', frame: 'pas' | 'aida'): string {
+  const formatDesc = platform === 'linkedin'
+    ? 'carrusel de LinkedIn (PDF, cuadrado 1:1, tono B2B profesional, autoridad de pensamiento)'
+    : 'carrusel de Instagram (PNG ZIP, vertical 4:5, tono B2C directo y visual)';
 
-  return `Eres un analista de datos, experto en marketing de contenidos y storytelling.
-Tu tarea es generar el contenido textual de un carrusel de 7 diapositivas optimizado para ${format}.
-Te proporcionaremos datos crudos, tendencias del mercado, patrones de startups, contexto personalizado o reportes de agencias (INE, BCCE, RAGs).
-Tu misión es estructurar una narrativa coherente extrayendo insights clave de estos datos.
+  const frameDesc = frame === 'pas'
+    ? 'Problema → Agitación → Solución (PAS): el hook expone el problema, los slides intermedios lo agitan y revelan la solución, el CTA invita a actuar.'
+    : 'Atención → Interés → Deseo → Acción (AIDA): el hook capta atención, slides generan interés y deseo, el CTA concreta la acción.';
+
+  return `Eres un experto en data storytelling y marketing de contenidos para startups y fundadores en LatAm.
+Tu misión: convertir datos reales de una plataforma de validación de startups en un ${formatDesc} de 7 diapositivas con narrativa estructurada.
+
+MARCO NARRATIVO: ${frameDesc}
 
 REGLAS ESTRICTAS:
-1. Slide 1 (cover): Hook potente. Máx 10 palabras en headline. Detiene el scroll con un dato sorprendente, punto de dolor o pregunta provocadora.
-2. Slides 2-6 (body): UNA sola idea o dato por slide. Presenta evidencia, desarrollo del problema y pasos de la solución. Headline máx 8 palabras, body máx 40 palabras.
-3. Slide 7 (cta): Llamado a la acción claro y específico. Headline máx 10 palabras, body máx 30 palabras.
-4. Todos los textos en español.
-5. Responde ÚNICAMENTE con JSON válido, sin texto adicional, sin markdown, sin explicaciones.
+1. Slide 1 (cover): Hook que detiene el scroll. Headline ≤ 10 palabras. Punto de dolor o dato impactante.
+2. Slides 2–6 (body): UNA sola idea por slide. Headline ≤ 8 palabras. Body ≤ 40 palabras. Datos concretos del contexto.
+3. Slide 7 (cta): Llamado a la acción específico. Headline ≤ 10 palabras. Body ≤ 30 palabras.
+4. Todos los textos en español latinoamericano.
+5. Usa los datos reales proporcionados — no inventes cifras que no estén en el contexto.
+6. Responde ÚNICAMENTE con JSON válido. Sin texto adicional. Sin markdown.
 
 SCHEMA JSON REQUERIDO (no cambies los nombres de campo):
 {
-  "campaign_title": "string (título interno de la campaña, máx 60 chars)",
+  "campaign_title": "string (título interno, máx 60 chars)",
   "slides": [
-    {
-      "id": "slide-1",
-      "type": "cover",
-      "headline": "string",
-      "body": "string",
-      "icon": "string (emoji opcional)"
-    },
-    {
-      "id": "slide-2",
-      "type": "body",
-      "headline": "string",
-      "body": "string",
-      "icon": "string (emoji opcional)"
-    },
-    {
-      "id": "slide-3",
-      "type": "body",
-      "headline": "string",
-      "body": "string",
-      "icon": "string (emoji opcional)"
-    },
-    {
-      "id": "slide-4",
-      "type": "body",
-      "headline": "string",
-      "body": "string",
-      "icon": "string (emoji opcional)"
-    },
-    {
-      "id": "slide-5",
-      "type": "body",
-      "headline": "string",
-      "body": "string",
-      "icon": "string (emoji opcional)"
-    },
-    {
-      "id": "slide-6",
-      "type": "body",
-      "headline": "string",
-      "body": "string",
-      "icon": "string (emoji opcional)"
-    },
-    {
-      "id": "slide-7",
-      "type": "cta",
-      "headline": "string",
-      "body": "string",
-      "icon": "string (emoji opcional)"
-    }
+    { "id": "slide-1", "type": "cover", "headline": "string", "body": "string", "icon": "string (emoji)" },
+    { "id": "slide-2", "type": "body",  "headline": "string", "body": "string", "icon": "string (emoji)" },
+    { "id": "slide-3", "type": "body",  "headline": "string", "body": "string", "icon": "string (emoji)" },
+    { "id": "slide-4", "type": "body",  "headline": "string", "body": "string", "icon": "string (emoji)" },
+    { "id": "slide-5", "type": "body",  "headline": "string", "body": "string", "icon": "string (emoji)" },
+    { "id": "slide-6", "type": "body",  "headline": "string", "body": "string", "icon": "string (emoji)" },
+    { "id": "slide-7", "type": "cta",   "headline": "string", "body": "string", "icon": "string (emoji)" }
   ]
 }`;
 }
 
-function buildUserPrompt(ctx: Record<string, unknown>): string {
-  const center = ctx.center as string ?? 'custom';
-  const frame = ctx.frame as string ?? 'PAS';
-  const adminData = ctx.adminData ? JSON.stringify(ctx.adminData, null, 2) : 'No especificado';
-  const customData = ctx.customData as string ?? '';
+function buildUserPrompt(center: string, customData: string, adminData: Record<string, unknown>): string {
+  const data = JSON.stringify(adminData, null, 2);
 
-  let prompt = \`Genera una narrativa de datos (Data Story) basada en la siguiente información y enfoque.
+  const centerPrompts: Record<string, string> = {
+    metrics: `Genera un carrusel sobre el ESTADO ACTUAL DE LA PLATAFORMA ValidateAI y el ecosistema de validación de startups en LatAm.
+Usa estas métricas reales:
+${data}
+Ángulo: los datos de la plataforma revelan tendencias sorprendentes sobre cómo los fundadores validan sus ideas hoy.`,
 
-ENFOQUE TEMÁTICO (Centro de Información): \${center}
-MARCO NARRATIVO A UTILIZAR: \${frame} (Aplica los principios de \${frame} a las slides intermedias)
+    market_trends: `Genera un carrusel sobre las TENDENCIAS DE MERCADO detectadas en las validaciones de startups de LatAm.
+Usa estos datos reales de industrias, países y etapas:
+${data}
+Ángulo: qué sectores e ideas están dominando el ecosistema emprendedor latinoamericano según datos reales.`,
 
-DATOS INTERNOS DISPONIBLES:
-\${adminData}
-\`;
+    validation_patterns: `Genera un carrusel sobre los PATRONES DE VALIDACIÓN: qué diferencia las ideas de alto score de las que fallan.
+Usa estos datos reales de scores, tasas de completación y embudos:
+${data}
+Ángulo: insights accionables que los founders pueden aplicar para mejorar sus probabilidades de éxito.`,
 
-  if (customData.trim()) {
-    prompt += \`
-DATOS PERSONALIZADOS (RAGs, reportes INE, BCCE, o contexto manual):
-\${customData}
+    ai_usage: `Genera un carrusel sobre cómo la INTELIGENCIA ARTIFICIAL está transformando la validación de startups.
+Usa estos datos reales de uso de modelos, prompts y análisis:
+${data}
+Ángulo: cómo la IA está democratizando el acceso a análisis de nivel inversión para cualquier founder.`,
 
-PRESTA ESPECIAL ATENCIÓN A LOS DATOS PERSONALIZADOS. Utilízalos como la principal fuente de tu narrativa y acompáñalos con los datos internos si son relevantes.
-\`;
-  }
+    custom: `Genera un carrusel sobre el siguiente tema:
+"${customData || 'Ecosistema emprendedor en LatAm 2026'}"
 
-  prompt += \`
-Asegúrate de que la narrativa fluya con coherencia: el hook del cover conecte con el tema principal, los slides intermedios desarrollen la historia mostrando datos concretos y revelaciones, y el CTA invite a la acción o a discutir los resultados en comentarios.\`;
+Datos de contexto de la plataforma (úsalos como evidencia de respaldo):
+${data}`,
+  };
 
-  return prompt;
+  return centerPrompts[center] ?? centerPrompts.custom;
 }
 
 serve(async (req) => {
@@ -142,9 +109,12 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { platform = 'linkedin', context = {} } = body as {
+    const {
+      platform = 'linkedin',
+      context: { center = 'metrics', frame = 'pas', customData = '', adminData = {} } = {},
+    } = body as {
       platform: 'linkedin' | 'instagram';
-      context: Record<string, unknown>;
+      context: { center: string; frame: 'pas' | 'aida'; customData: string; adminData: Record<string, unknown> };
     };
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -157,14 +127,14 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 2048,
-        system: buildSystemPrompt(platform),
-        messages: [{ role: 'user', content: buildUserPrompt(context) }],
+        system: buildSystemPrompt(platform, frame),
+        messages: [{ role: 'user', content: buildUserPrompt(center, customData, adminData) }],
       }),
     });
 
     if (!response.ok) {
       const err = await response.text();
-      throw new Error(\`Anthropic error \${response.status}: \${err}\`);
+      throw new Error(`Anthropic error ${response.status}: ${err}`);
     }
 
     const anthropicData = await response.json();
@@ -173,7 +143,7 @@ serve(async (req) => {
     const parsed = JSON.parse(jsonStr);
 
     if (!Array.isArray(parsed.slides) || parsed.slides.length < 7) {
-      throw new Error('Respuesta de IA con estructura inválida');
+      throw new Error('Estructura de respuesta inválida');
     }
 
     return new Response(JSON.stringify(parsed), {

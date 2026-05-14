@@ -268,8 +268,8 @@ serve(async (req: Request) => {
     .eq('id', user.id)
     .single();
 
-  if (!profile || profile.tier !== 'premium') {
-    return json({ error: 'Premium tier required' }, 403, req);
+  if (!profile || !['pro', 'premium'].includes(profile.tier)) {
+    return json({ error: 'Pro tier required' }, 403, req);
   }
 
   // Body

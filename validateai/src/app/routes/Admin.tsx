@@ -1176,10 +1176,19 @@ export function Admin() {
                   usersTotal: profiles.length,
                   validationsTotal: validations.length,
                   completedValidations: completed.length,
+                  completionRate,
+                  avgScore,
+                  totalTokens,
+                  projected30,
+                  abandonStep,
                   aiInteractionsTotal: aiInteractions.length,
                   topIndustries: industries,
+                  topCountries: countries,
+                  topStages: stages,
                   topModels: modelDist,
-                  topPrompts: topPrompts,
+                  topPrompts,
+                  tierDist,
+                  scoreDist,
                 }}
               />
             </Suspense>
