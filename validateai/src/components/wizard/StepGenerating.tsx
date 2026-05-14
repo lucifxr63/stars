@@ -102,7 +102,7 @@ export function StepGenerating() {
       if (!session) throw new Error('No session');
 
       // ── Rama Premium ────────────────────────────────────────────────────────
-      if (isPremium || validationMode === 'quick') {
+      if (isPremium) {
         if (!stepIdea.idea_name || !stepIdea.idea_industry) {
           toast.error('Completa el nombre e industria de tu idea antes de continuar.');
           return;
@@ -286,7 +286,7 @@ export function StepGenerating() {
     founder_fit:          'Evaluando fit fundador-mercado y Unfair Advantage',
   };
 
-  if (isPremium || validationMode === 'quick') {
+  if (isPremium) {
     return <PremiumTerminal />;
   }
 
