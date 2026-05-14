@@ -9,7 +9,7 @@ import { MarketFunnel } from '@/components/shared/MarketFunnel';
 import { CompetitiveAnalysis } from '@/components/shared/CompetitiveAnalysis';
 import { ScoreBreakdown } from '@/components/shared/ScoreBreakdown';
 import { RiskAnalysisCard } from '@/components/shared/RiskAnalysisCard';
-import { UnitEconomicsCard } from '@/components/shared/UnitEconomicsCard';
+import { UnitEconomicsKpis, UnitEconomicsChart } from '@/components/shared/UnitEconomicsCard';
 import { FounderFitCard } from '@/components/shared/FounderFitCard';
 import { MarketSignalsCard } from '@/components/shared/MarketSignalsCard';
 import { LockedSection } from '@/components/shared/LockedSection';
@@ -651,11 +651,11 @@ export function ValidationDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
         <Header />
         <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 space-y-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-6 animate-pulse">
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-white/5 p-6 animate-pulse">
               <div className="h-4 bg-gray-100 dark:bg-white/5 rounded w-1/3 mb-3" />
               <div className="h-3 bg-gray-100 dark:bg-white/5 rounded w-2/3" />
             </div>
@@ -679,7 +679,7 @@ export function ValidationDetail() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
       <Header />
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
@@ -801,7 +801,7 @@ export function ValidationDetail() {
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1A1A24] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 dark:border-white/10 p-2 flex flex-col gap-1 z-50">
                   
                   {/* Tema del PDF */}
-                  <div className="px-3 py-2.5 border-b border-gray-100 dark:border-white/5 mb-1 bg-gray-50/50 dark:bg-[#0A0A0F]/50 rounded-lg">
+                  <div className="px-3 py-2.5 border-b border-gray-100 dark:border-white/5 mb-1 bg-gray-50/50 dark:bg-slate-900/50 rounded-lg">
                     <p className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-[#8B8AA0] mb-2">Tema del PDF</p>
                     <div className="flex gap-1.5">
                       {PDF_THEMES.map((t) => {
@@ -867,9 +867,9 @@ export function ValidationDetail() {
           </div>
         </div>
 
-        {/* GRID NAVIGATION */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
-          {DASHBOARD_TABS.map((t, i) => {
+        {/* SWIPEABLE TABS NAVIGATION */}
+        <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide snap-x">
+          {DASHBOARD_TABS.map((t) => {
             const isActive = activeTab === t;
             let icon = '';
             let hasData = false;
@@ -884,22 +884,18 @@ export function ValidationDetail() {
               case 'Due Diligence': icon = '🔍'; hasData = data.due_diligence_score != null; break;
             }
 
-            const isLastOdd = DASHBOARD_TABS.length % 2 !== 0 && i === DASHBOARD_TABS.length - 1;
-
             return (
               <button
                 key={t}
                 onClick={() => { setActiveTab(t); trackTabView(t); }}
-                className={`relative flex items-center justify-center gap-2 px-3 py-3 text-sm font-bold rounded-xl transition-all duration-200 border ${
-                  isLastOdd ? 'col-span-2' : 'col-span-1'
-                } ${
+                className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-200 border shrink-0 snap-start ${
                   isActive
                     ? 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-500/10 dark:text-teal-300 dark:border-teal-500/30 shadow-sm shadow-teal-500/10'
-                    : 'bg-white dark:bg-[#12121A] text-gray-600 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 hover:border-teal-300/50'
+                    : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 hover:border-teal-300/50'
                 }`}
               >
                 <span>{icon}</span>
-                <span className="truncate">{t}</span>
+                <span className="whitespace-nowrap">{t}</span>
                 {hasData && (
                   <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-teal-500' : 'bg-teal-400 opacity-60'}`} title="Datos disponibles"></span>
                 )}
@@ -912,9 +908,9 @@ export function ValidationDetail() {
 
           {/* ── VEREDICTO ──────────────────────────────────────────────────── */}
           {activeTab === 'Veredicto' && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {generatingVerdict && (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
+                <div className="md:col-span-12 rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
                   <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
                   <div>
                     <p className="font-bold text-white mb-1">Analizando tu idea con el Playbook VC…</p>
@@ -925,43 +921,55 @@ export function ValidationDetail() {
 
               {!generatingVerdict && data.playbook_analysis && (
                 <>
-                  <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 flex items-center gap-3">
+                  <div className="md:col-span-12 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 flex items-center gap-3">
                     <span className="text-violet-400 text-lg shrink-0">⚡</span>
                     <p className="text-xs text-violet-300 leading-relaxed">
                       <strong className="text-violet-200">Veredicto VC</strong> — Análisis generado con los Playbooks de Validación, Economics, Legal Chile y Tech Stack. Sin filtros de cortesía.
                     </p>
                   </div>
 
-                  {/* Score */}
-                  {summary && data.validation_score != null && (
-                    <div className={`rounded-3xl border-2 p-6 ${scoreBg}`}>
-                      <div className="flex flex-col sm:flex-row items-center gap-6">
-                        <ScoreGauge score={data.playbook_analysis.viability_score ?? data.validation_score} />
-                        <div className="flex-1 text-center sm:text-left">
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
-                          <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
+                  {/* Left Column: Score & Breakdown */}
+                  <div className="md:col-span-8 flex flex-col gap-4">
+                    {/* Score */}
+                    {summary && data.validation_score != null && (
+                      <div className={`rounded-3xl border-2 p-6 h-full flex items-center ${scoreBg}`}>
+                        <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
+                          <ScoreGauge score={data.playbook_analysis.viability_score ?? data.validation_score} />
+                          <div className="flex-1 text-center sm:text-left">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
+                            <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
+                          </div>
                         </div>
                       </div>
+                    )}
+                    
+                    {data.score_breakdown && (
+                      <div className="h-full">
+                        <ScoreBreakdown data={data.score_breakdown} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Playbook Analysis / Alertas */}
+                  <div className="md:col-span-4 flex flex-col gap-4">
+                    <div className="h-full">
+                      <PlaybookAnalysisCard data={data.playbook_analysis} />
                     </div>
-                  )}
 
-                  {data.score_breakdown && <ScoreBreakdown data={data.score_breakdown} />}
-
-                  <PlaybookAnalysisCard data={data.playbook_analysis} />
-
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => {
-                        setData((prev) => prev ? { ...prev, playbook_analysis: null } : prev);
-                        setVerdictGenerated(false);
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 transition"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Regenerar veredicto
-                    </button>
+                    <div className="flex justify-end mt-auto">
+                      <button
+                        onClick={() => {
+                          setData((prev) => prev ? { ...prev, playbook_analysis: null } : prev);
+                          setVerdictGenerated(false);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 transition"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Regenerar veredicto
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -985,7 +993,7 @@ export function ValidationDetail() {
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* JTBD Analysis */}
               {data.playbook_analysis?.jtbd_analysis && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">🎯</span>
                     <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Jobs-to-be-Done</p>
@@ -996,7 +1004,7 @@ export function ValidationDetail() {
 
               {/* Mom Test Playbook */}
               {(data.playbook_analysis?.validation_playbook?.length ?? 0) > 0 && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-lg">📋</span>
                     <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Mom Test — Pasos de Validación</p>
@@ -1028,7 +1036,7 @@ export function ValidationDetail() {
                       <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{agentLog.executive_summary}</p>
                     </div>
                   )}
-                  <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
+                  <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Evidencia de Mercado</p>
                     <EvidenceWall agentLog={agentLog as any} />
                   </div>
@@ -1036,7 +1044,7 @@ export function ValidationDetail() {
               )}
 
               {!data.playbook_analysis && !generatingVerdict && (
-                <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F] p-8 text-center">
+                <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-slate-900 p-8 text-center">
                   <p className="text-sm text-gray-400 mb-2">El análisis de validación se genera en la pestaña <strong>Veredicto</strong>.</p>
                 </div>
               )}
@@ -1045,10 +1053,10 @@ export function ValidationDetail() {
 
           {/* ── ESTRATEGIA ─────────────────────────────────────────────────── */}
           {activeTab === 'Estrategia' && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* GTM & Growth Plan */}
               {data.playbook_analysis?.gtm_and_growth_plan && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="md:col-span-6 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm h-full">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">🚀</span>
                     <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
@@ -1059,7 +1067,7 @@ export function ValidationDetail() {
 
               {/* Product & AI Strategy */}
               {data.playbook_analysis?.product_ai_strategy && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="md:col-span-6 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm h-full">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">🤖</span>
                     <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
@@ -1069,39 +1077,51 @@ export function ValidationDetail() {
               )}
 
               {/* Market Sizing */}
-              {data.market_sizing && <MarketFunnel data={data.market_sizing} />}
-
-              {/* Señales de Mercado */}
-              {data.market_signals ? (
-                <MarketSignalsCard data={data.market_signals} />
-              ) : !sections.includes('marketSizing') ? (
-                <LockedSection
-                  title="Señales de Mercado"
-                  description="Tendencias, rondas de inversión recientes y análisis de timing."
-                  requiredTier="premium"
-                  hint="¿Es el momento correcto para lanzar?"
-                />
-              ) : null}
-
-              {/* SWOT */}
-              {(summary?.strengths?.length || summary?.weaknesses?.length) && (
-                <SwotMatrix
-                  strengths={summary?.strengths || []}
-                  weaknesses={summary?.weaknesses || []}
-                />
+              {data.market_sizing && (
+                <div className="md:col-span-6 h-full">
+                  <MarketFunnel data={data.market_sizing} />
+                </div>
               )}
 
+              {/* SWOT */}
+              {(summary?.strengths?.length || summary?.weaknesses?.length) ? (
+                <div className="md:col-span-6 h-full">
+                  <SwotMatrix
+                    strengths={summary?.strengths || []}
+                    weaknesses={summary?.weaknesses || []}
+                  />
+                </div>
+              ) : null}
+
               {/* Competitive Analysis */}
-              {data.competitive_analysis && <CompetitiveAnalysis data={data.competitive_analysis} />}
+              {data.competitive_analysis && (
+                <div className="md:col-span-12 h-full">
+                  <CompetitiveAnalysis data={data.competitive_analysis} />
+                </div>
+              )}
+
+              {/* Señales de Mercado */}
+              <div className="md:col-span-12">
+                {data.market_signals ? (
+                  <MarketSignalsCard data={data.market_signals} />
+                ) : !sections.includes('marketSizing') ? (
+                  <LockedSection
+                    title="Señales de Mercado"
+                    description="Tendencias, rondas de inversión recientes y análisis de timing."
+                    requiredTier="premium"
+                    hint="¿Es el momento correcto para lanzar?"
+                  />
+                ) : null}
+              </div>
             </div>
           )}
 
           {/* ── FINANZAS ───────────────────────────────────────────────────── */}
           {activeTab === 'Finanzas' && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Unit Economics Check (RAG) */}
               {data.playbook_analysis?.unit_economics_check && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-amber-100 dark:border-amber-500/20 rounded-2xl p-5 shadow-sm">
+                <div className="md:col-span-12 bg-white dark:bg-slate-800 border-2 border-amber-100 dark:border-amber-500/20 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">💰</span>
                     <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Diagnóstico de Unit Economics</p>
@@ -1110,38 +1130,51 @@ export function ValidationDetail() {
                 </div>
               )}
 
-              {/* Unit Economics detallado */}
+              {/* KPIs Finanzas (Grid 2x2 on mobile, 4 cols on desktop) */}
               {data.unit_economics ? (
-                <UnitEconomicsCard data={data.unit_economics} />
+                <div className="md:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <UnitEconomicsKpis data={data.unit_economics} />
+                </div>
               ) : !sections.includes('unitEconomics') ? (
-                <LockedSection
-                  title="Unit Economics"
-                  description="CAC, LTV, ratio LTV/CAC, break-even y churn estimado."
-                  requiredTier="pro"
-                  hint="Estimaciones financieras basadas en tu modelo de negocio"
-                />
+                <div className="md:col-span-12">
+                  <LockedSection
+                    title="Unit Economics"
+                    description="CAC, LTV, ratio LTV/CAC, break-even y churn estimado."
+                    requiredTier="pro"
+                    hint="Estimaciones financieras basadas en tu modelo de negocio"
+                  />
+                </div>
               ) : null}
 
-              {/* Análisis de Riesgos */}
-              {data.risk_analysis ? (
-                <RiskAnalysisCard data={data.risk_analysis} />
-              ) : !sections.includes('risks') ? (
-                <LockedSection
-                  title="Análisis de Riesgos"
-                  description="Score compuesto de riesgo en 4 dimensiones con mitigaciones concretas."
-                  requiredTier="basic"
-                  hint="Riesgo de mercado, técnico, regulatorio y timing"
-                />
-              ) : null}
+              {/* Chart & Risks */}
+              {data.unit_economics && (
+                <div className="md:col-span-6 h-full">
+                  <UnitEconomicsChart data={data.unit_economics} />
+                </div>
+              )}
+              
+              <div className={data.unit_economics ? "md:col-span-6 h-full" : "md:col-span-12"}>
+                {data.risk_analysis ? (
+                  <div className="h-full">
+                    <RiskAnalysisCard data={data.risk_analysis} />
+                  </div>
+                ) : !sections.includes('risks') ? (
+                  <LockedSection
+                    title="Análisis de Riesgos"
+                    description="Score compuesto de riesgo en 4 dimensiones con mitigaciones concretas."
+                    requiredTier="basic"
+                    hint="Riesgo de mercado, técnico, regulatorio y timing"
+                  />
+                ) : null}
+              </div>
             </div>
           )}
-
           {/* ── HOJA DE RUTA ───────────────────────────────────────────────── */}
           {activeTab === 'Hoja de Ruta' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Tech & Legal Stack (RAG) */}
               {data.playbook_analysis?.tech_and_legal_stack && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">⚙️</span>
                     <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
@@ -1151,7 +1184,7 @@ export function ValidationDetail() {
               )}
 
               {/* MVP Kanban */}
-              <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Plan de MVP</h3>
                 <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 dark:bg-teal-500/10 dark:border-teal-500/20 rounded-xl p-3 mb-4">
                   <span className="text-xl">🚀</span>
@@ -1172,7 +1205,7 @@ export function ValidationDetail() {
 
               {/* Regulatory Roadmap */}
               {data.target_country === 'Chile' && data.idea_industry && (
-                <div className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
                   <RegulatoryRoadmap industry={data.idea_industry} />
                 </div>
               )}
@@ -1211,7 +1244,7 @@ export function ValidationDetail() {
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Funding Verdict (RAG) */}
               {data.playbook_analysis?.funding_verdict && (
-                <div className="bg-white dark:bg-[#12121A] border-2 border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 border-2 border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">🏦</span>
                     <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Veredicto de Inversión</p>
@@ -1234,7 +1267,7 @@ export function ValidationDetail() {
 
               {/* CORFO */}
               {data.target_country === 'Chile' && data.business_stage && data.idea_industry && (
-                <div className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
                   <CorfoFunds
                     stage={data.business_stage}
                     industry={data.idea_industry}
@@ -1254,7 +1287,7 @@ export function ValidationDetail() {
                   hint="Necesario para ser investible: SpA, vesting 4 años, cumplimiento Ley 21.719"
                 />
               ) : (
-                <div className="bg-gray-50 dark:bg-[#0A0A0F] border-2 border-dashed border-gray-200 dark:border-white/10 rounded-2xl p-8 text-center">
+                <div className="bg-gray-50 dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-2xl p-8 text-center">
                   <p className="text-sm text-gray-400 mb-3">Análisis de gobernanza no generado aún</p>
                   <button
                     onClick={handleGenerateAdvanced}
@@ -1277,7 +1310,7 @@ export function ValidationDetail() {
                   hint="SAFE, Notas Convertibles o Ronda Valorizada según tu etapa"
                 />
               ) : (
-                <div className="bg-gray-50 dark:bg-[#0A0A0F] border-2 border-dashed border-gray-200 dark:border-white/10 rounded-2xl p-8 text-center">
+                <div className="bg-gray-50 dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-2xl p-8 text-center">
                   <p className="text-sm text-gray-400 mb-3">Hoja de ruta de fundraising no generada aún</p>
                   <button
                     onClick={handleGenerateAdvanced}
@@ -1290,7 +1323,7 @@ export function ValidationDetail() {
               )}
 
               {/* Pitch Deck Export */}
-              <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -1424,7 +1457,7 @@ export function ValidationDetail() {
       {/* Overlay análisis base */}
       {reanalyzing && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#12121A] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center">
             <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
             <div>
               <p className="font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Analizando mercado y competencia</p>
@@ -1437,7 +1470,7 @@ export function ValidationDetail() {
       {/* Overlay análisis avanzados */}
       {generatingAdvanced && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#12121A] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
             <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
             <div>
               <p className="font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Generando análisis avanzados</p>

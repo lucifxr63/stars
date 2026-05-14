@@ -23,9 +23,7 @@ const fmtNum = (n: number, currency: 'CLP' | 'USD') =>
 const fmtRange = (min: number, max: number, currency: 'CLP' | 'USD') =>
   `${fmtNum(min, currency)} – ${fmtNum(max, currency)}`;
 
-export function UnitEconomicsCard({ data }: Props) {
-  const [showAssumptions, setShowAssumptions] = useState(false);
-
+export function UnitEconomicsKpis({ data }: Props) {
   const ratioVal = data.ltvCacRatio.value;
   const ratioColor =
     ratioVal >= 5 ? { text: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', bar: '#22c55e' }
@@ -71,6 +69,27 @@ export function UnitEconomicsCard({ data }: Props) {
     },
   ];
 
+  return (
+    <>
+      {metrics.map((m) => (
+        <div key={m.label} className={`bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border-2 ${
+          m.badge ? `border-[1px] ${ratioColor.border}` : 'border-gray-100 dark:border-white/5'
+        }`}>
+          <div className={`h-1.5 ${m.badge ? '' : m.topColor}`} style={m.badge ? { backgroundColor: ratioColor.bar } : undefined} />
+          <div className={`p-4 ${m.bg.includes('50') ? 'bg-white dark:bg-slate-800' : m.bg} h-full flex flex-col justify-center`}>
+            <p className="text-[10px] text-gray-500 dark:text-[#8B8AA0] mb-0.5">{m.sublabel}</p>
+            <p className="text-xs font-bold text-gray-600 dark:text-[#8B8AA0] mb-1">{m.label}</p>
+            <p className={`text-base sm:text-lg font-black ${m.color} leading-tight`}>{m.value}</p>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+export function UnitEconomicsChart({ data }: Props) {
+  const [showAssumptions, setShowAssumptions] = useState(false);
+
   const avgCac = (data.cac.min + data.cac.max) / 2;
   const avgLtv = (data.ltv.min + data.ltv.max) / 2;
 
@@ -80,39 +99,22 @@ export function UnitEconomicsCard({ data }: Props) {
   ];
 
   return (
-    <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl overflow-hidden">
-      <div className="px-5 py-4 bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/5">
+    <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl overflow-hidden h-full flex flex-col">
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
             <span className="text-lg">📊</span>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Unit Economics</h3>
-            <p className="text-xs text-gray-400">Estimaciones según el mercado</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Gráfico de Economics</h3>
+            <p className="text-xs text-gray-400">CAC vs LTV Promedio</p>
           </div>
         </div>
       </div>
 
-      <div className="p-5">
-        {/* Metric cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {metrics.map((m) => (
-            <div key={m.label} className={`rounded-xl overflow-hidden border-2 ${
-              m.badge ? `border-[1px] ${ratioColor.border}` : 'border-gray-100'
-            }`}>
-              <div className={`h-1.5 ${m.badge ? '' : m.topColor}`} style={m.badge ? { backgroundColor: ratioColor.bar } : undefined} />
-              <div className={`p-3 ${m.bg} h-full`}>
-                <p className="text-[10px] text-gray-500 dark:text-[#8B8AA0] mb-0.5">{m.sublabel}</p>
-                <p className="text-[10px] font-bold text-gray-600 dark:text-[#8B8AA0] mb-1">{m.label}</p>
-                <p className={`text-xs font-black ${m.color} leading-tight`}>{m.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
+      <div className="p-5 flex flex-col flex-1">
         {/* Chart representation */}
-        <div className="bg-gray-50 dark:bg-[#0A0A0F] rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-6">
-          <h4 className="text-xs font-bold text-gray-600 dark:text-[#8B8AA0] mb-4 text-center">Comparativa CAC vs LTV (Promedio)</h4>
+        <div className="bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-6">
           <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }} layout="vertical">
@@ -135,7 +137,7 @@ export function UnitEconomicsCard({ data }: Props) {
         </div>
 
         {/* Payback + Churn */}
-        <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-[#8B8AA0] mb-4 bg-amber-50 rounded-xl px-4 py-3 border border-amber-100">
+        <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-[#8B8AA0] mb-4 bg-amber-50 dark:bg-amber-500/10 rounded-xl px-4 py-3 border border-amber-100 dark:border-amber-500/20">
           <span>
             <span className="font-bold text-gray-700 dark:text-[#C4C4D4]">Recuperación (Payback): </span>
             {data.paybackMonths.min}–{data.paybackMonths.max} meses
@@ -151,7 +153,7 @@ export function UnitEconomicsCard({ data }: Props) {
 
         {/* Supuestos colapsables */}
         {data.assumptions?.length > 0 && (
-          <div>
+          <div className="mt-auto">
             <button
               type="button"
               onClick={() => setShowAssumptions((v) => !v)}
@@ -167,7 +169,7 @@ export function UnitEconomicsCard({ data }: Props) {
             </button>
 
             {showAssumptions && (
-              <ul className="space-y-1.5 bg-gray-50 dark:bg-[#0A0A0F] rounded-xl p-3 border border-gray-100 dark:border-white/5">
+              <ul className="space-y-1.5 bg-gray-50 dark:bg-slate-900 rounded-xl p-3 border border-gray-100 dark:border-white/5">
                 {data.assumptions.map((a, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-gray-500 dark:text-[#8B8AA0]">
                     <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 shrink-0" />
@@ -179,6 +181,18 @@ export function UnitEconomicsCard({ data }: Props) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Keep the default export backward compatible if needed, but not necessary since we use it in one place.
+export function UnitEconomicsCard({ data }: Props) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <UnitEconomicsKpis data={data} />
+      </div>
+      <UnitEconomicsChart data={data} />
     </div>
   );
 }
