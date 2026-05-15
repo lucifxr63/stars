@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ValidateAI Redesign - Executive Summary</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0F172A', // slate-900
+                            card: '#1E293B', // slate-800
+                            accent: '#10B981', // green-500
+                            alert: '#EF4444', // red-500
+                            border: '#334155' // slate-700
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #F8FAFC;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .bento-card {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 1rem; /* 16px */
+            padding: 1.5rem; /* 24px */
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .bento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            border-color: #475569;
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #10B981, #3B82F6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(15, 23, 42, 0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar for side panel feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0F172A; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="relative min-h-screen p-4 md:p-8 lg:p-12">
+    <div class="hero-glow"></div>
+
+    <header class="max-w-6xl mx-auto mb-12 text-center mt-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-full bg-brand-card border border-brand-border text-brand-accent mb-6">
+            <i class="fa-solid fa-rocket"></i> Proyecto de Rediseño
+        </div>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight mb-4">
+            ValidateAI: <span class="gradient-text">Bento Dashboard</span>
+        </h1>
+        <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+            Transformando reportes estáticos en una experiencia SaaS modular, interactiva y de baja carga cognitiva para fundadores e inversores.
+        </p>
+    </header>
+
+    <!-- BENTO GRID -->
+    <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-min">
+
+        <!-- 1. RESUMEN EJECUTIVO (Large Card) -->
+        <article class="bento-card lg:col-span-2 row-span-2 flex flex-col justify-between group overflow-hidden relative">
+            <div class="z-10 relative">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <i class="fa-solid fa-eye text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-display font-semibold">Visión del Producto</h2>
+                </div>
+                <p class="text-slate-300 mb-6 leading-relaxed">
+                    El rediseño busca resolver la sobrecarga cognitiva del usuario transformando un reporte estático de texto en un <strong>Dashboard SaaS modular e interactivo</strong>.
+                </p>
+                <ul class="space-y-3 text-sm text-slate-400">
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-accent"></i> Diseño "Dark Mode" premium.</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-accent"></i> Priorización de visualización de datos (Data-Viz).</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-accent"></i> Divulgación progresiva mediante paneles laterales.</li>
+                </ul>
+            </div>
+            <!-- Mockup Image container -->
+            <div class="mt-8 rounded-xl overflow-hidden border border-brand-border bg-brand-dark/50 z-10 relative">
+                <img src="mockup.png" alt="ValidateAI Bento Dashboard Mockup" class="w-full h-auto object-cover opacity-90 group-hover:opacity-100 transition-opacity" onerror="this.src='https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop'; this.alt='Placeholder Dashboard';">
+            </div>
+            <!-- Subtle gradient background -->
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent z-0"></div>
+        </article>
+
+        <!-- 2. PRODUCT OWNER (Square Card) -->
+        <article class="bento-card flex flex-col">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400">
+                    <i class="fa-solid fa-crown text-xl"></i>
+                </div>
+                <h2 class="text-xl font-display font-semibold">Objetivos de Negocio</h2>
+            </div>
+            <p class="text-slate-300 text-sm mb-4">Aumentar el engagement facilitando la lectura de análisis complejos.</p>
+            <div class="mt-auto space-y-4">
+                <div class="bg-brand-dark rounded-lg p-3 border border-brand-border">
+                    <span class="block text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Target</span>
+                    <span class="text-sm font-medium">Emprendedores, VC, Inversores</span>
+                </div>
+                <div class="bg-brand-dark rounded-lg p-3 border border-brand-border">
+                    <span class="block text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">MVP Historial Crítico</span>
+                    <span class="text-sm font-medium text-brand-accent"><i class="fa-solid fa-bullseye"></i> Layout Bento Box responsivo</span><br>
+                    <span class="text-sm font-medium text-brand-accent"><i class="fa-solid fa-bullseye"></i> Side panels para datos crudos</span>
+                </div>
+            </div>
+        </article>
+
+        <!-- 3. UX / UI (Square Card) -->
+        <article class="bento-card flex flex-col">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-400">
+                    <i class="fa-solid fa-palette text-xl"></i>
+                </div>
+                <h2 class="text-xl font-display font-semibold">UX / UI System</h2>
+            </div>
+            <p class="text-slate-300 text-sm mb-4">Escaneable visualmente. "Score Global" y semántica de alertas al instante.</p>
+            
+            <div class="grid grid-cols-2 gap-2 mt-auto">
+                <div class="bg-brand-dark rounded-lg p-3 border border-brand-border flex flex-col items-center justify-center text-center">
+                    <div class="w-6 h-6 rounded-full bg-brand-card border-2 border-brand-border mb-2"></div>
+                    <span class="text-xs text-slate-400">#0F172A<br>Fondo</span>
+                </div>
+                <div class="bg-brand-dark rounded-lg p-3 border border-brand-border flex flex-col items-center justify-center text-center">
+                    <div class="w-6 h-6 rounded-full bg-[#1E293B] border-2 border-brand-border mb-2"></div>
+                    <span class="text-xs text-slate-400">#1E293B<br>Tarjetas</span>
+                </div>
+            </div>
+            <div class="mt-3 text-xs text-slate-400 bg-brand-dark p-2 rounded-lg border border-brand-border">
+                <i class="fa-solid fa-mobile-screen mr-1"></i> Mobile First: Swipeable Tabs & Bottom Sheets.
+            </div>
+        </article>
+
+        <!-- 4. TECH LEAD (Horizontal Rectangle) -->
+        <article class="bento-card lg:col-span-2">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                    <i class="fa-solid fa-laptop-code text-xl"></i>
+                </div>
+                <h2 class="text-xl font-display font-semibold">Arquitectura Técnica</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-300 mb-3 border-b border-brand-border pb-2">Tech Stack Sugerido</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-3 text-sm">
+                            <i class="fa-brands fa-react text-blue-400 w-4"></i>
+                            <span><strong class="text-white">React 18 / Next.js</strong> (SSR/SEO) + TypeScript</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i class="fa-solid fa-wind text-teal-400 w-4"></i>
+                            <span><strong class="text-white">Tailwind CSS</strong> + Shadcn/ui (Primitivas)</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i class="fa-solid fa-chart-pie text-orange-400 w-4"></i>
+                            <span><strong class="text-white">Recharts / Tremor</strong> para Data-Viz</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-brand-dark p-4 rounded-lg border border-brand-border text-xs font-mono text-slate-300 overflow-x-auto relative">
+                    <div class="absolute top-2 right-2 text-slate-500"><i class="fa-solid fa-diagram-project"></i> Flujo</div>
+                    JSON Report (Backend)<br>
+                    &nbsp;└── Zustand / Context (Estado)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Bento Grid Layout<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── Tarjetas (Veredicto/Finanzas)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Click -> <strong>Side Panel / Sheet</strong>
+                </div>
+            </div>
+        </article>
+
+        <!-- 5. PROJECT MANAGER & QA (Square Card) -->
+        <article class="bento-card">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+                    <i class="fa-solid fa-calendar-check text-xl"></i>
+                </div>
+                <h2 class="text-xl font-display font-semibold">Ejecución & QA</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-slate-300">Sprint MVP (2 Semanas)</span>
+                        <span class="text-xs text-brand-accent">100% Roadmap</span>
+                    </div>
+                    <div class="w-full bg-brand-dark rounded-full h-2 border border-brand-border">
+                        <div class="bg-gradient-to-r from-purple-500 to-brand-accent h-full rounded-full w-full"></div>
+                    </div>
+                </div>
+                
+                <ul class="text-sm text-slate-400 space-y-2">
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-flag text-slate-500 mt-1 text-xs"></i>
+                        <span><strong>S1:</strong> UI Kit, Tailwind config, Veredicto & Finanzas base.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-flag text-slate-500 mt-1 text-xs"></i>
+                        <span><strong>S2:</strong> Paneles laterales, Data-Viz, QA y ajustes responsivos.</span>
+                    </li>
+                </ul>
+
+                <div class="pt-3 border-t border-brand-border">
+                    <p class="text-xs text-slate-400"><strong>DoD Crítico:</strong> En &lt;768px las tarjetas pasan a 100% de ancho; KPIs 2x2. Testeado con Cypress/Playwright.</p>
+                </div>
+            </div>
+        </article>
+
+    </main>
+
+    <footer class="mt-16 text-center text-slate-500 text-sm pb-8">
+        <p>Documento Estratégico interno - ValidateAI &copy; 2026</p>
+    </footer>
+
+</body>
+</html>
