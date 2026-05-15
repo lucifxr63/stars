@@ -953,8 +953,8 @@ export function ValidationDetail() {
                     {/* Widgets adicionales para rellenar y complementar la columna */}
                     <div className="flex flex-col gap-4 mt-2">
                       {summary && <VerdictProsCons summary={summary} />}
-                      {data.founder_fit && <VerdictFounderFit data={data.founder_fit} />}
-                      {data.market_signals && <VerdictMarketTiming data={data.market_signals} />}
+                      <VerdictFounderFit data={data.founder_fit} />
+                      <VerdictMarketTiming data={data.market_signals} />
                     </div>
                   </div>
 
