@@ -12,6 +12,7 @@ import { RiskAnalysisCard } from '@/components/shared/RiskAnalysisCard';
 import { UnitEconomicsKpis, UnitEconomicsChart } from '@/components/shared/UnitEconomicsCard';
 import { FounderFitCard } from '@/components/shared/FounderFitCard';
 import { MarketSignalsCard } from '@/components/shared/MarketSignalsCard';
+import { VerdictProsCons, VerdictFounderFit, VerdictMarketTiming } from '@/components/shared/VerdictWidgets';
 import { LockedSection } from '@/components/shared/LockedSection';
 import { PivotModal } from '@/components/shared/PivotModal';
 import { MentorRecommendations } from '@/components/shared/MentorRecommendations';
@@ -948,6 +949,13 @@ export function ValidationDetail() {
                         <ScoreBreakdown data={data.score_breakdown} />
                       </div>
                     )}
+
+                    {/* Widgets adicionales para rellenar y complementar la columna */}
+                    <div className="flex flex-col gap-4 mt-2">
+                      {summary && <VerdictProsCons summary={summary} />}
+                      {data.founder_fit && <VerdictFounderFit data={data.founder_fit} />}
+                      {data.market_signals && <VerdictMarketTiming data={data.market_signals} />}
+                    </div>
                   </div>
 
                   {/* Right Column: Playbook Analysis / Alertas */}
