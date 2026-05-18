@@ -24,36 +24,27 @@ ValidateAI es una plataforma SaaS moderna, orientada al rendimiento y fuertement
 
 ---
 
-## 2. Flujos de Usuario y UI (El Wizard en detalle)
+## 2. Flujos de Usuario y UI (El Wizard en Código de Producción)
 
-El núcleo del sistema de ValidateAI es un "Wizard" de validación (`/validate`) compuesto por varios pasos (Steps) que recolectan información estructurada para alimentar a la IA.
+Tras la revisión técnica del componente `Validate.tsx` y sus subcomponentes, se identifican 3 flujos de validación estrictamente lineales (no conversacionales):
 
-### Detalle de Pasos del Wizard e Información Adquirida
+### Flujo Detailed (Análisis Completo)
+Es el flujo estándar para usuarios *Free* y *Basic*.
+- **Paso 1: `StepIdea`:** El usuario rellena un formulario clásico con el Nombre de la idea, Descripción de la solución, y selecciona la Industria mediante etiquetas.
+- **Paso 2: `StepMarket`:** Define el segmento de mercado, el país objetivo (obligatorio), el modelo de negocio (ej. B2B, B2C) y el canal de adquisición inicial.
+- **Paso 3: `StepFounder`:** Ingresa sus años de experiencia en la industria, su nivel técnico, y si ha vivido personalmente el problema.
+- **Paso 4: `StepGenerating`:** Pantalla de carga asíncrona. Aquí, la UI envía el contexto completo a las funciones *edge*, y se lanzan en paralelo múltiples tareas de análisis de mercado, competencia y viabilidad (mostrando una barra de progreso).
 
-**Paso 1: `StepIdea` (Tu Idea)**
-- **Campos Recolectados:** 
-  - `idea_name`: Nombre del proyecto.
-  - `idea_description`: Problema y solución en texto libre.
-  - `current_solution` (Opcional): Cómo resuelven hoy el problema los usuarios.
-  - `idea_industry`: Sector de la industria mediante botones de selección (chips).
-- **Propósito:** Definir la base semántica que se utilizará para extraer a los competidores, generar embeddings para el caché en `pgvector` y ubicar el nicho de mercado inicial.
+### Flujo Premium (Due Diligence)
+Activado cuando el usuario tiene la suscripción *Pro* o *Premium*. 
+- **Paso 1: `StepUpload`:** El usuario arrastra un documento PDF (Pitch Deck) o JSON. Una función en segundo plano (`parse-project`) extrae silenciosamente la estructura del negocio.
+- **Paso 2: `StepIdea`:** La UI redirige al usuario para confirmar el Nombre y la Industria (datos mínimos obligatorios para el LLM).
+- **Paso 3: `StepGenerating` (Premium Terminal):** Se despliega una interfaz estilo "terminal hacker" detallando cómo la IA se conecta a fuentes de datos y escanea señales de mercado (ej. Reddit, web) en tiempo real, para luego redirigir a los resultados.
 
-**Paso 2: `StepMarket` (Tu Mercado)**
-- **Campos Recolectados:** 
-  - `customer_segment` (textarea): A quién le vendes.
-  - `target_country` y `target_region`: País (Obligatorio) y ciudad (Opcional) para enfocar el análisis macroeconómico.
-  - `business_model`: Selector B2B, B2C, B2B2C o Marketplace.
-  - `pricing_range`: Rango de precios estimados del producto.
-  - `acquisition_channel` (Opcional): Canal de adquisición inicial (e.g. Outbound LinkedIn, Ads Meta, etc.).
-- **Propósito:** Estructurar los inputs financieros que la IA utilizará para calcular el TAM (Total Addressable Market), SAM (Serviceable Available Market), proyectar el *Unit Economics* (LTV:CAC) y generar un *Lean Roadmap* y *Go-To-Market strategy*.
-
-**Paso 3: `StepFounder` (Tú como Founder)**
-- **Campos Recolectados:** 
-  - `yearsInIndustry` (número): Años de experiencia en el rubro.
-  - `hasTechnicalCofounder` (checkbox): Determina si hay músculo técnico interno.
-  - `tech_level` (radio): Nivel de madurez (Nada técnico, Algo de código, Somos devs).
-  - `personallyFacedProblem` (checkbox): Si el fundador ha vivido el problema que intenta resolver.
-- **Propósito:** Evaluar el "Founder Fit". La IA pondera estos factores para dar un diagnóstico de las capacidades de ejecución del equipo (Technical Risk vs Market Risk), y definir si el MVP sugerido debe ser *No-code* o *Custom Code*.
+### Flujo Quick (Análisis Rápido)
+Un flujo veloz que omite pasos manuales asumiendo datos.
+- **Paso 1: `StepIdea`:** Se rellena solo la idea básica e industria.
+- **Paso 2: `StepGenerating`:** La IA primero *infiere* el mercado, cliente objetivo y modelo de negocio (llamando a la función `ai-validate` con el prompt `customer_analysis`) y luego procede a generar el reporte completo basándose en esos supuestos, sin hacer preguntas al usuario.
 
 ---
 
