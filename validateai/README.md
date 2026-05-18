@@ -1,252 +1,178 @@
-# ValidateAI
+<div align="center">
+  <img src="https://via.placeholder.com/150/0F172A/10B981?text=ValidateAI" alt="ValidateAI Logo" width="120" style="border-radius: 20px;" />
 
-Plataforma SaaS que guía a emprendedores a través de un wizard de 4 pasos para validar ideas de negocio usando IA. Genera un score (0–100), feedback cualitativo y hasta 18 entregables avanzados incluyendo análisis competitivo con web search, unit economics, founder-market fit y un mapa 3D del mercado chileno.
+  # ValidateAI
+  
+  **La plataforma SaaS definitiva para validar ideas de negocio con Inteligencia Artificial.**
 
-**Producción:** https://validateai-mu.vercel.app
+  [![React](https://img.shields.io/badge/React-19-blue?logo=react&logoColor=white)](https://react.dev)
+  [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+  [![Supabase](https://img.shields.io/badge/Supabase-Edge_Functions-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+  [![Claude 3.5 Sonnet](https://img.shields.io/badge/AI-Claude_3.5_Sonnet-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/)
+  [![Vercel](https://img.shields.io/badge/Hosted_on-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com)
 
----
-
-## Stack
-
-| Capa | Tecnología |
-|------|-----------|
-| Frontend | React 19 + Vite + TypeScript 6 |
-| Estilos | Tailwind CSS v4 + shadcn/ui |
-| Estado | Zustand v5 (persist) |
-| Routing | React Router v7 |
-| Forms | React Hook Form + Zod |
-| Animaciones | Framer Motion v12 |
-| 3D / Mapas | Three.js + React Three Fiber + d3-geo |
-| Gráficos | Recharts |
-| PDF | jsPDF |
-| Backend / Auth / DB | Supabase (Edge Functions Deno + PostgreSQL + pgvector) |
-| AI primario | Anthropic Claude Sonnet 4 (con prompt caching) |
-| AI fallback | OpenAI GPT-4o Mini |
-| Hosting | Vercel |
+  [🌍 Ver en Producción](https://validateai-mu.vercel.app) •
+  [📚 Documentación](#arquitectura-y-flujo-de-datos) •
+  [🐛 Reportar Bug](#contribuir)
+</div>
 
 ---
 
-## Inicio rápido
+## 📖 Sobre el Proyecto
 
-```bash
-# Instalar dependencias
-npm install
-
-# Variables de entorno
-cp .env.example .env.local
-# Completar VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY
-
-# Desarrollo
-npm run dev
-
-# Build de producción
-npm run build
-
-# Preview local
-npm run preview
-```
-
-### Variables de entorno
-
-**Frontend** (`.env.local`):
-```
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=...
-```
-
-**Supabase Edge Functions** (secrets del proyecto):
-```
-ANTHROPIC_API_KEY=...
-OPENAI_API_KEY=...
-AI_PROVIDER=anthropic       # 'anthropic' | 'openai'
-BDE_USER=...                # Banco Central de Chile API
-BDE_PASS=...
-```
+ValidateAI guía a emprendedores e inversores a través de un **wizard interactivo de 4 pasos**, generando una validación exhaustiva de ideas de negocio en minutos. Al finalizar, el sistema entrega un **Score (0-100)**, feedback cualitativo y hasta **18 entregables avanzados**, incluyendo:
+- 📊 Análisis competitivo impulsado por *Web Search*.
+- 💰 Proyecciones financieras (*Unit Economics*).
+- 🧑‍🤝‍🧑 Análisis de *Founder-Market Fit*.
+- 🗺️ Visualización interactiva 3D del mercado regional chileno.
 
 ---
 
-## Estructura del proyecto
+## ⚡ Características Principales
 
-```
-validateai/
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx              # ProtectedLayout (auth guard)
-│   │   └── routes/
-│   │       ├── Landing.tsx         # Página de inicio
-│   │       ├── Login.tsx           # Auth: email + Google OAuth
-│   │       ├── AuthCallback.tsx    # PKCE callback
-│   │       ├── Validate.tsx        # Wizard (4 pasos)
-│   │       ├── Results.tsx         # Lista de validaciones
-│   │       ├── ValidationDetail.tsx# Dashboard completo
-│   │       ├── IdeaHistory.tsx     # Árbol de pivotes
-│   │       ├── MarketStudy.tsx     # Mapa 3D + análisis de mercado
-│   │       ├── Admin.tsx           # Panel admin
-│   │       ├── SharedValidation.tsx# Validación pública
-│   │       └── Pricing.tsx         # Planes y precios
-│   ├── components/
-│   │   ├── ui/                     # shadcn/ui
-│   │   ├── wizard/                 # StepIdea, StepMarket, StepFounder, StepGenerating, FlowSelector
-│   │   ├── market/                 # ChileMarketMap, RegionMesh, MarketMapLegend
-│   │   ├── layout/                 # Header, Footer
-│   │   └── shared/                 # ExportPDF, ScoreBreakdown, DeliverableTabs, ...
-│   ├── hooks/
-│   │   ├── useAI.ts                # Llamadas a ai-validate (abort-safe)
-│   │   ├── useValidation.ts        # CRUD del wizard
-│   │   ├── useUserTier.ts          # Tier del usuario desde profiles
-│   │   ├── useMarketAnalysis.ts    # market-analyze edge function
-│   │   ├── useMentors.ts           # Matching de mentores
-│   │   ├── useTrainingData.ts      # Consentimiento + anonimización
-│   │   └── useValidationHistory.ts # Árbol de versiones/pivotes
-│   ├── stores/
-│   │   └── validationStore.ts      # Zustand (persisted)
-│   ├── types/
-│   │   ├── validation.ts           # Zod schemas + interfaces
-│   │   └── market.ts
-│   └── lib/
-│       ├── supabase.ts             # createClient con PKCE
-│       ├── pdf.ts                  # Generación de PDF
-│       └── utils.ts
-├── supabase/
-│   ├── functions/
-│   │   ├── ai-validate/            # Core AI (18 prompt types, dual provider, RAG, caché)
-│   │   ├── market-analyze/         # BCCh + INE + AI insights
-│   │   └── anonymize-idea/         # Anonimización con Haiku
-│   └── migrations/                 # 19 migraciones SQL
-└── public/
-    └── geo/
-        └── chile-regiones.json     # GeoJSON 16 regiones
-```
+- **🤖 Motor Multi-IA:** Optimizado con **Anthropic Claude Sonnet 4** (Prompt Caching) y fallback a **OpenAI GPT-4o Mini**.
+- **🧠 Caché Semántico Inteligente:** Uso de `pgvector` para buscar y reutilizar análisis similares (Threshold: 0.92), reduciendo costos de API.
+- **📈 Datos Macroeconómicos reales:** Integración con el **Banco Central de Chile** e **INE** para clasificaciones industriales y series económicas.
+- **🎨 UX/UI Premium:** Diseño enfocado en la usabilidad ("Bento Box" Layout) con **Tailwind CSS v4** y animaciones fluidas con **Framer Motion**.
+- **📑 Generación de Entregables:** Exportación de reportes a PDF on-demand con `jsPDF`.
 
 ---
 
-## Flujo principal
+## 🛠️ Stack Tecnológico
 
-```
-Usuario llena wizard (4 pasos)
-  → React Hook Form + Zod valida cada paso
-  → Zustand store persiste el estado
-  → Step 4: POST /functions/v1/ai-validate (3 calls en paralelo)
-      → JWT verify
-      → Rate limit check (por tier, desde profiles)
-      → Haiku pre-pass (estructura la descripción)
-      → RAG (competitive_analysis: busca competidores similares)
-      → Cache semántico (similarity ≥ 0.92)
-      → Anthropic Claude Sonnet 4 / GPT-4o Mini
-      → UPDATE validations + status='completed'
-  → navigate('/results/:id')
-  → Dashboard con entregables on-demand
-```
+<details>
+<summary>Haga clic para expandir la lista completa del Stack</summary>
 
----
+### Frontend
+- **Framework:** React 19 + Vite
+- **Lenguaje:** TypeScript 6
+- **Estilos:** Tailwind CSS v4 + shadcn/ui
+- **Estado:** Zustand v5 (con persistencia local)
+- **Enrutamiento:** React Router v7
+- **Formularios:** React Hook Form + Zod
+- **Visualización 3D:** Three.js + React Three Fiber + d3-geo
+- **Gráficos:** Recharts
 
-## Edge Functions
+### Backend & Cloud (Supabase)
+- **Base de Datos:** PostgreSQL + `pgvector`
+- **Autenticación:** Supabase Auth (Email + Google OAuth con PKCE)
+- **Serverless:** Edge Functions (Deno) para orquestación de IA y APIs externas.
+- **Hosting:** Vercel
 
-### `ai-validate`
-Función central. 18 tipos de prompt organizados en dos categorías:
-
-**Wizard (generados automáticamente en Step 4):**
-`summary` · `market_sizing` · `competitive_analysis`
-
-**On-demand desde el Dashboard:**
-`risk_analysis` · `unit_economics` · `founder_fit` · `market_signals` · `validation_kit` · `landing_generator` · `interview_script` · `tech_viability` · `first_100_customers` · `revenue_models` · `risk_checklist` · `pitch_letter`
-
-**Rate limits por tier:**
-
-| Tier | Calls/día | Expensive/día* |
-|------|-----------|----------------|
-| free | 5 | 0 |
-| basic | 20 | 2 |
-| pro | 50 | 5 |
-| premium | 200 | 20 |
-
-*Expensive = prompts con web_search (`competitive_analysis`, `market_sizing`, `market_signals`)
-
-### `market-analyze`
-Obtiene series macro del Banco Central de Chile (BCCh), clasifica la industria según INE CAENES, y genera insights con AI. Rate limit: 10 calls/día.
-
-### `anonymize-idea`
-Anonimiza ideas de negocio con Claude Haiku para el dataset de entrenamiento. Requiere consentimiento explícito del usuario. Rate limit: 5 calls/día.
+</details>
 
 ---
 
-## Sistema de tiers
+## 🚀 Inicio Rápido
 
-```
-free    → score, breakdown, preguntas, próximos pasos
-basic   → + segmento cliente, propuesta de valor, análisis de riesgos
-pro     → + MVP, SWOT, unit economics, founder-market fit
-premium → todo (incluyendo señales de mercado, competitive analysis, deliverables)
-```
+### Requisitos Previos
+- Node.js (v18+)
+- Cuenta en [Supabase](https://supabase.com)
+- Claves de API de [Anthropic](https://anthropic.com) y/o [OpenAI](https://openai.com)
 
-El tier se lee de `profiles.tier` tanto en la UI (`useUserTier`) como en la Edge Function (rate limiting).
+### Instalación
+
+1. **Clonar el repositorio e instalar dependencias:**
+   ```bash
+   git clone <repo-url>
+   cd validateai
+   npm install
+   ```
+
+2. **Configurar Variables de Entorno (Frontend):**
+   ```bash
+   cp .env.example .env.local
+   ```
+   Edita `.env.local` con tus credenciales de Supabase:
+   ```env
+   VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+   VITE_SUPABASE_ANON_KEY=tu-anon-key
+   ```
+
+3. **Configurar Supabase Secrets (Backend):**
+   ```bash
+   supabase secrets set ANTHROPIC_API_KEY=tu-clave
+   supabase secrets set OPENAI_API_KEY=tu-clave
+   supabase secrets set AI_PROVIDER=anthropic # o 'openai'
+   supabase secrets set BDE_USER=tu-usuario-bcch
+   supabase secrets set BDE_PASS=tu-password-bcch
+   ```
+
+4. **Ejecutar en Desarrollo:**
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-## Base de datos
+## 🏗️ Arquitectura y Flujo de Datos
 
-**Tablas principales:**
-
-| Tabla | Descripción |
-|-------|-------------|
-| `profiles` | Extiende `auth.users`. Contiene `tier` y `training_consent` |
-| `validations` | Flujo central. 19+ columnas. Soporta pivotes via `parent_id` / `version` |
-| `ai_interactions` | Log de cada llamada AI con `user_id`, tokens y modelo |
-| `cached_analyses` | Caché semántico con pgvector (threshold 0.92, sin TTL) |
-| `competitors` | Base RAG para `competitive_analysis` |
-| `mentors` | Sistema de mentores con matching por expertise |
-| `training_data` | Ideas anonimizadas para fine-tuning |
-| `market_ai_insights` | Caché de `market-analyze` por validación |
-
-**Migraciones:** 19 archivos en `supabase/migrations/`. Aplicar con:
-```bash
-supabase db push
-```
-
----
-
-## Comandos útiles
-
-```bash
-npm run dev        # Servidor de desarrollo con HMR
-npm run build      # Type-check + build de producción
-npm run lint       # ESLint
-npm run preview    # Preview del build
-
-# Supabase
-supabase login
-supabase db push   # Aplicar migraciones pendientes
-supabase functions deploy ai-validate
-supabase functions deploy market-analyze
-supabase functions deploy anonymize-idea
+```mermaid
+graph TD
+    A[Usuario Wizard] -->|Zod + RHF| B(Zustand Store)
+    B -->|Generar Validación| C{Edge Function: ai-validate}
+    C -->|JWT & Rate Limit| D[Supabase Profiles]
+    C -->|Búsqueda Semántica| E[(pgvector: cached_analyses)]
+    E -->|Cache Miss| F[Claude Sonnet 4 / GPT-4o Mini]
+    E -->|Cache Hit| G[Respuesta Rápida]
+    F --> H[(PostgreSQL: validations)]
+    G --> H
+    H --> I[Dashboard 'Bento Box']
+    I -->|On-Demand| J[Generación PDF / Entregables extra]
 ```
 
----
+### 🧠 Edge Functions Core
 
-## Roadmap
+| Función | Descripción | Límites (Rate Limit) |
+|---------|-------------|----------------------|
+| `ai-validate` | Motor central de IA. Maneja 18 tipos de prompts, RAG y caché. | Según el **Tier** del usuario. |
+| `market-analyze`| Ingiere datos macro del BCCh e INE para insights. | 10 llamadas / día. |
+| `anonymize-idea`| Ofusca PII usando Claude Haiku para entrenar modelos. | 5 llamadas / día. |
 
-Ver [SPRINTS.md](SPRINTS.md) para el roadmap completo de 6 sprints (60 casos).
+### 💳 Sistema de Tiers (Niveles de Acceso)
 
-**Próximos pasos inmediatos:**
-1. Stripe Checkout + webhook para actualizar `profiles.tier`
-2. PostHog analytics (5 eventos clave del wizard)
-3. Emails transaccionales con Resend (requiere dominio propio)
+El sistema de roles y rate limits está controlado desde la tabla `profiles`.
 
----
-
-## Deuda técnica conocida
-
-| Issue | Impacto | Sprint |
-|-------|---------|--------|
-| `ai-validate` monolito 900+ líneas | Mantenibilidad | Sprint 3 |
-| Generación síncrona (sin queue) | Riesgo de timeout en prompts lentos | Sprint 3 |
-| Admin: gráficos sin límite de filas | Performance con >1000 rows | Sprint 3 |
-| `cached_analyses` sin TTL | Resultados desactualizados | Sprint 3 |
-| Mentores: matching básico sin pgvector | Relevancia baja | Sprint 3 |
-| Sin tests automatizados | Riesgo en deploys | Sprint 3 |
+- **Free:** Score, desglose, preguntas clave y próximos pasos. (5 llamadas/día)
+- **Basic:** + Segmento de cliente, propuesta de valor, análisis de riesgos. (20 llamadas/día)
+- **Pro:** + MVP specs, Análisis FODA, Unit Economics, Founder-Market Fit. (50 llamadas/día)
+- **Premium:** Acceso total (Señales de mercado, Competitive Analysis avanzado, kit de documentos). (200 llamadas/día)
 
 ---
 
-## Contribuir
+## 🗄️ Esquema de Base de Datos
 
-Este es un proyecto privado en etapa early-stage. Para reportar un bug o sugerir una mejora, abrir un issue en el repositorio o contactar al equipo directamente.
+Las migraciones se gestionan a través del CLI de Supabase (`supabase/migrations/`).
+*Para sincronizar el esquema local:* `supabase db push`
+
+| Tabla Principal | Propósito |
+|-----------------|-----------|
+| `profiles` | Extensión de usuarios autenticados. Controla los `tiers` y consentimientos. |
+| `validations` | Almacena los resultados del Wizard. Soporta versiones (pivotes). |
+| `ai_interactions` | Logs de telemetría, tokens consumidos y modelos usados. |
+| `cached_analyses` | Repositorio para el Caché Semántico (`pgvector`). |
+| `competitors` | Base documental para el sistema RAG de análisis competitivo. |
+| `market_ai_insights`| Resultados cacheados de series macroeconómicas. |
+
+---
+
+## 🛣️ Roadmap & Deuda Técnica
+
+Para una vista detallada de los próximos sprints, revisa el documento [SPRINTS.md](SPRINTS.md).
+
+**Prioridades Inmediatas:**
+1. Integración de **Stripe Checkout** y webhooks para actualización automática de Tiers.
+2. Implementación de analíticas de producto con **PostHog**.
+3. Refactorización de la Edge Function `ai-validate` para desacoplar los 18 prompts y mejorar la mantenibilidad.
+
+---
+
+## 🤝 Contribuir
+
+Este es un proyecto cerrado en etapa temprana. Para reportar bugs, solicitar nuevas características o proponer un *pull request*, por favor contacta al líder técnico o crea un Issue documentado en el repositorio.
+
+<div align="center">
+  <p>Creado con ❤️ por el equipo de ValidateAI.</p>
+</div>
