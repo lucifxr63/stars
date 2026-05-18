@@ -269,6 +269,40 @@ export function ValidationDetail() {
   };
   const hasNewModulesToGenerate = Object.values(missingNewModules).some(Boolean);
   const [generatingNewModules, setGeneratingNewModules] = useState(false);
+  const [generatingDueDiligence, setGeneratingDueDiligence] = useState(false);
+
+  const handleGenerateDueDiligence = async () => {
+    if (!data) return;
+    setGeneratingDueDiligence(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('No estás autenticado.');
+
+      const response = await fetch('https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/assemble-mega-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ validation_id: data.id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar Due Diligence');
+      }
+
+      const { due_diligence_score } = await response.json();
+      
+      setData((prev) => prev ? { ...prev, due_diligence_score } : prev);
+      toast.success('Análisis de Due Diligence completado');
+    } catch (err) {
+      console.error(err);
+      toast.error('Ocurrió un error al generar tu Due Diligence Score.');
+    } finally {
+      setGeneratingDueDiligence(false);
+    }
+  };
 
   const handleGenerateNewModules = async () => {
     if (!data) return;
@@ -1382,7 +1416,27 @@ export function ValidationDetail() {
           {/* ── DUE DILIGENCE ──────────────────────────────────────────────── */}
           {activeTab === 'Due Diligence' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {data.due_diligence_score ? (
+              {generatingDueDiligence ? (
+                <div className="flex flex-col items-center gap-4 py-14 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center animate-pulse">
+                    <div className="w-7 h-7 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-gray-800 dark:text-[#F0EFF8] mb-1">
+                      Ensamblando Mega-Prompt y Evaluando Due Diligence
+                    </h3>
+                    <p className="text-sm text-gray-400 dark:text-[#8B8AA0] max-w-sm leading-relaxed">
+                      Consultando antecedentes en PJUD, Inapi y Fintoc, y analizando con el modelo RAG de Paul Graham. Esto tomará unos segundos...
+                    </p>
+                  </div>
+                  {/* Skeletons de espera activa */}
+                  <div className="w-full max-w-2xl mt-6 space-y-3">
+                    <div className="h-16 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                    <div className="h-24 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                    <div className="h-16 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                  </div>
+                </div>
+              ) : data.due_diligence_score ? (
                 <DueDiligenceScoreCard
                   score={data.due_diligence_score}
                   extractedData={data.due_diligence_extracted}
@@ -1398,16 +1452,16 @@ export function ValidationDetail() {
                     <h3 className="text-base font-bold text-gray-800 dark:text-[#F0EFF8] mb-1">
                       Due Diligence Score no generado
                     </h3>
-                    <p className="text-sm text-gray-400 dark:text-[#8B8AA0] max-w-sm leading-relaxed">
-                      Sube tu Pitch Deck o Business Plan en el flujo de validación para obtener tu score automatizado de preparación para ronda.
+                    <p className="text-sm text-gray-400 dark:text-[#8B8AA0] max-w-sm leading-relaxed mb-4">
+                      Obtén tu evaluación completa como si pasaras por el filtro riguroso de Paul Graham y fondos de Venture Capital.
                     </p>
+                    <button
+                      onClick={handleGenerateDueDiligence}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#7C6FF7]/25"
+                    >
+                      Generar Due Diligence (AI RAG)
+                    </button>
                   </div>
-                  <a
-                    href="/validate"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#7C6FF7]/25"
-                  >
-                    Subir documento →
-                  </a>
                 </div>
               )}
             </div>

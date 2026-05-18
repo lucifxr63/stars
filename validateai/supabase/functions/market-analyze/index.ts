@@ -80,6 +80,25 @@ serve(async (req) => {
       })
     }
 
+    // ── Middleware Ley 21.719 (Consentimiento) ──────────────────────────────────
+    const { data: consent } = await supabase
+      .from('consent_logs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('flagged', true)
+      .limit(1)
+      .maybeSingle()
+
+    if (!consent) {
+      return new Response(JSON.stringify({ 
+        error: 'consent_required', 
+        message: 'Debe aceptar los términos de la Ley 21.719 para continuar.' 
+      }), {
+        status: 403, headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // ── Rate limit: 10 calls/día por usuario ─────────────────────────────────
     const todayStart = new Date()
     todayStart.setUTCHours(0, 0, 0, 0)
@@ -149,75 +168,121 @@ serve(async (req) => {
     const allSeries = [...sectorSeries, ...MACRO_SERIES]
     const { today, fiveYearsAgo } = getDateRange()
 
-    const [bdeResults, validationData, competitiveData] = await Promise.all([
-      // Series BCCh
-      Promise.all(
-        allSeries.map(async ({ id, label }) => {
-          const { data: cached } = await supabase
-            .from('market_bde_data')
-            .select('obs_date, value')
-            .eq('series_id', id)
-            .gte('obs_date', fiveYearsAgo)
-            .order('obs_date', { ascending: false })
-            .limit(10)
+    const [bdeResults, validationData, competitiveData, chileAbiertoContext, mercadoPublicoContext, dataWarnings] = await (async () => {
+      const bdePromises = allSeries.map(async ({ id, label }) => {
+        const { data: cached } = await supabase
+          .from('market_bde_data')
+          .select('obs_date, value')
+          .eq('series_id', id)
+          .gte('obs_date', fiveYearsAgo)
+          .order('obs_date', { ascending: false })
+          .limit(10)
 
-          if (cached && cached.length >= 3) {
-            return { id, label, obs: cached, fromCache: true }
-          }
+        if (cached && cached.length >= 3) {
+          return { id, label, obs: cached, fromCache: true }
+        }
 
-          try {
-            const url = new URL(BDE_BASE)
-            url.searchParams.set('user', BDE_USER)
-            url.searchParams.set('pass', BDE_PASS)
-            url.searchParams.set('function', 'GetSeries')
-            url.searchParams.set('timeseries', id)
-            url.searchParams.set('firstdate', fiveYearsAgo)
-            url.searchParams.set('lastdate', today)
+        const url = new URL(BDE_BASE)
+        url.searchParams.set('user', BDE_USER)
+        url.searchParams.set('pass', BDE_PASS)
+        url.searchParams.set('function', 'GetSeries')
+        url.searchParams.set('timeseries', id)
+        url.searchParams.set('firstdate', fiveYearsAgo)
+        url.searchParams.set('lastdate', today)
 
-            const res = await fetch(url.toString())
-            const json = await res.json()
+        const res = await fetch(url.toString())
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const json = await res.json()
 
-            if (json.Codigo !== 0 || !json.Series?.Obs) {
-              console.warn(`Serie ${id} no disponible:`, json.Descripcion)
-              return { id, label, obs: [] }
-            }
+        if (json.Codigo !== 0 || !json.Series?.Obs) {
+          throw new Error(`BCCh Code ${json.Codigo}: ${json.Descripcion}`)
+        }
 
-            const obs = json.Series.Obs
-              .filter((o: any) => o.statusCode === 'OK' && o.value !== 'NaN')
-              .map((o: any) => ({
-                obs_date: bdeToIso(o.indexDateString),
-                value: parseFloat(o.value),
-              }))
+        const obs = json.Series.Obs
+          .filter((o: any) => o.statusCode === 'OK' && o.value !== 'NaN')
+          .map((o: any) => ({
+            obs_date: bdeToIso(o.indexDateString),
+            value: parseFloat(o.value),
+          }))
 
-            if (obs.length > 0) {
-              await supabase.from('market_bde_data').upsert(
-                obs.map((o: any) => ({ series_id: id, series_desc: label, ...o })),
-                { onConflict: 'series_id,obs_date' }
-              )
-            }
-            return { id, label, obs: obs.slice(-8) }
-          } catch (err) {
-            console.error(`Error fetching serie ${id}:`, err)
-            return { id, label, obs: [] }
-          }
-        })
-      ),
-      // Datos del wizard (customer, value prop, pain points)
-      supabase
+        if (obs.length > 0) {
+          await supabase.from('market_bde_data').upsert(
+            obs.map((o: any) => ({ series_id: id, series_desc: label, ...o })),
+            { onConflict: 'series_id,obs_date' }
+          )
+        }
+        return { id, label, obs: obs.slice(-8) }
+      })
+
+      const validationPromise = supabase
         .from('validations')
         .select('customer_segment, customer_pain_points, customer_context, value_proposition, differentiator, mvp_type')
         .eq('id', validation_id)
         .maybeSingle()
-        .then(({ data }) => data),
-      // Análisis competitivo previo de ai-validate
-      supabase
+        .then(({ data, error }) => { if (error) throw error; return data })
+
+      const competitivePromise = supabase
         .from('ai_interactions')
         .select('output_data')
         .eq('validation_id', validation_id)
         .eq('prompt_type', 'competitive_analysis')
         .maybeSingle()
-        .then(({ data }) => data?.output_data ?? null),
-    ])
+        .then(({ data, error }) => { if (error) throw error; return data?.output_data ?? null })
+
+      const chileAbiertoPromise = fetch('https://chileabierto.cl/api/v1/comunas/13101')
+        .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json() })
+
+      const mercadoPublicoPromise = fetch('https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json?estado=activas')
+        .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json() })
+
+      const settled = await Promise.allSettled([
+        Promise.allSettled(bdePromises),
+        validationPromise,
+        competitivePromise,
+        chileAbiertoPromise,
+        mercadoPublicoPromise
+      ])
+
+      const warnings: string[] = []
+
+      const bdeSettledResult = settled[0]
+      let bdeRes: any[] = []
+      if (bdeSettledResult.status === 'fulfilled') {
+        bdeRes = bdeSettledResult.value.map((res, i) => {
+          if (res.status === 'fulfilled') return res.value
+          warnings.push(`Serie BCCh ${allSeries[i].id} falló: ${res.reason?.message ?? res.reason}`)
+          return { id: allSeries[i].id, label: allSeries[i].label, obs: [] }
+        })
+      } else {
+        warnings.push('Fallo catastrófico obteniendo series BCCh')
+      }
+
+      const valData = settled[1].status === 'fulfilled' ? settled[1].value : null
+      if (settled[1].status === 'rejected') warnings.push('Validations DB falló: ' + settled[1].reason)
+
+      const compData = settled[2].status === 'fulfilled' ? settled[2].value : null
+      if (settled[2].status === 'rejected') warnings.push('Competitive AI Data DB falló: ' + settled[2].reason)
+
+      let caCtx = ''
+      if (settled[3].status === 'fulfilled') {
+        const caData = settled[3].value
+        caCtx = `\nDATOS COMUNALES RELEVANTES (Chile Abierto - ${caData.comuna?.name ?? 'Santiago'}):\n`
+        if (caData.indicators) {
+          caCtx += caData.indicators.slice(0, 5).map((i: any) => `- ${i.name_es}: ${i.value} ${i.unit}`).join('\n')
+        }
+      } else {
+        warnings.push('API Chile Abierto falló: ' + (settled[3].reason?.message || settled[3].reason))
+      }
+
+      let mpCtx = ''
+      if (settled[4].status === 'fulfilled') {
+        mpCtx = `\nMERCADO PÚBLICO (Licitaciones activas):\nSe detectó conectividad B2G exitosa.`
+      } else {
+        warnings.push('API Mercado Público falló: ' + (settled[4].reason?.message || settled[4].reason))
+      }
+
+      return [bdeRes, valData, compData, caCtx, mpCtx, warnings] as const
+    })()
 
     // ── PASO 4: Construir contexto y prompt ──────────────────────────
     const seriesSummary = bdeResults
@@ -251,6 +316,8 @@ DATOS BCCh REALES (${seriesWithData}/${totalSeries} series con datos — confian
 ${seriesSummary || 'Sin datos disponibles del BCCh — usar conocimiento general del sector en Chile'}
 ${wizardContext}
 ${competitiveContext}
+${chileAbiertoContext}
+${mercadoPublicoContext}
 
 Responde SOLO con este JSON (sin texto adicional, sin markdown):
 {
@@ -327,7 +394,7 @@ Responde SOLO con este JSON (sin texto adicional, sin markdown):
     }, { onConflict: 'validation_id' })
 
     return new Response(
-      JSON.stringify({ caenes, insights, raw_series: rawSeriesPayload }),
+      JSON.stringify({ caenes, insights, raw_series: rawSeriesPayload, dataWarnings }),
       { headers: { ...cors, 'Content-Type': 'application/json' } }
     )
 

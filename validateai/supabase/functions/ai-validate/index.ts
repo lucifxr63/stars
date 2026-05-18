@@ -1134,6 +1134,26 @@ serve(async (req) => {
       });
     }
 
+    // ── Middleware Ley 21.719 (Consentimiento) ──────────────────────────────────
+    const { data: consent } = await supabase
+      .from('consent_logs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('flagged', true)
+      .limit(1)
+      .maybeSingle();
+
+    if (!consent) {
+      return new Response(JSON.stringify({ 
+        error: 'consent_required', 
+        message: 'Debe aceptar los términos de la Ley 21.719 para continuar.' 
+      }), {
+        status: 403, headers: { ...cors, 'Content-Type': 'application/json' },
+      });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+
     // ── Tier + Rate limiting ──────────────────────────────────────────────────
     const { data: profile } = await supabase
       .from('profiles')
