@@ -14,6 +14,7 @@ const AuthCallback = lazy(() => import('@/app/routes/AuthCallback').then((m) => 
 const Admin = lazy(() => import('@/app/routes/Admin').then((m) => ({ default: m.Admin })));
 const SharedValidation = lazy(() => import('@/app/routes/SharedValidation').then((m) => ({ default: m.SharedValidation })));
 const IdeaHistory = lazy(() => import('@/app/routes/IdeaHistory').then((m) => ({ default: m.IdeaHistory })))
+const Developers = lazy(() => import('@/app/routes/Developers').then((m) => ({ default: m.Developers })));
 const MarketStudy = lazy(() => import('@/app/routes/MarketStudy').then((m) => ({ default: m.MarketStudy })));
 const Pricing = lazy(() => import('@/app/routes/Pricing').then((m) => ({ default: m.Pricing })));
 const Demo = lazy(() => import('@/app/routes/Demo').then((m) => ({ default: m.Demo })));
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/results/:id" element={<ValidationDetail />} />
             <Route path="/results/:id/history" element={<IdeaHistory />} />
             <Route path="/market/:validationId" element={<MarketStudy />} />
+            <Route path="/developers" element={<Developers />} />
             <Route path="/admin" element={<Admin />} />
           </Route>
           <Route path="/shared/:token" element={<SharedValidation />} />

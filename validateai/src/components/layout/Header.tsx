@@ -56,6 +56,9 @@ export function Header() {
           <Link to="/results" className={linkCls(isActive('/results'))}>
             Mis validaciones
           </Link>
+          <Link to="/developers" className={linkCls(isActive('/developers'))}>
+            API & Devs
+          </Link>
           {isAdmin && (
             <Link to="/admin" className={linkCls(isActive('/admin'))}>
               Admin
@@ -97,6 +100,9 @@ export function Header() {
         <div className="sm:hidden border-t border-white/[0.06] bg-white dark:bg-[#12121A] px-4 py-3 space-y-1">
           <Link to="/results" className={linkCls(isActive('/results'))}>
             Mis validaciones
+          </Link>
+          <Link to="/developers" className={linkCls(isActive('/developers'))}>
+            API & Devs
           </Link>
           {isAdmin && (
             <Link to="/admin" className={linkCls(isActive('/admin'))}>
