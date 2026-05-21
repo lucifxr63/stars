@@ -18,7 +18,7 @@ Deno.serve(async (req: Request) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey',
   };
 
   if (req.method === 'OPTIONS') {
