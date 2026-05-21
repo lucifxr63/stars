@@ -61,6 +61,11 @@ const PLAYBOOKS = [
     sourceFile: 'rag_08_psychology.md',
     tags: ['PSYCHOLOGY', 'BIASES', 'FOUNDER_RISK', 'POST_MORTEM'],
   },
+  {
+    title: 'Financiamiento Estatal CORFO y Clasificación Tributaria SII Chile',
+    sourceFile: 'rag_09_corfo_sii.md',
+    tags: ['CORFO', 'SII', 'FUNDING', 'CHILE', 'TAX', 'SEMILLA_INICIA', 'SEMILLA_EXPANDE', 'NON_DILUTIVE'],
+  },
 ];
 
 // Markdown files live one level above the validateai/ package

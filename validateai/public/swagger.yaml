@@ -1,0 +1,391 @@
+openapi: 3.0.3
+info:
+  title: ValidateAI RaaS API
+  version: "1.0.0"
+  description: |
+    API de Validación de Ideas de Negocio como Servicio (RAG-as-a-Service).
+
+    Orquesta datos gubernamentales chilenos en tiempo real (SII, CMF, INAPI) con búsqueda
+    vectorial semántica (pgvector) e inteligencia artificial (Claude Sonnet) para emitir
+    diagnósticos de viabilidad de grado institucional.
+
+    ## Autenticación
+    Todas las rutas bajo `/api/v1` requieren una API Key válida:
+    ```
+    Authorization: Bearer val_live_XXXX...
+    ```
+    Genera y gestiona tus llaves en el [Portal de Desarrolladores](https://validateai-mu.vercel.app/developers).
+
+    ## Rate Limiting
+    - 100 requests/minuto por API Key
+    - Headers de control: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+  contact:
+    name: ValidateAI
+    url: https://validateai-mu.vercel.app
+  license:
+    name: Propietario
+servers:
+  - url: https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1
+    description: Producción
+
+tags:
+  - name: Validación
+    description: Motor principal de análisis de viabilidad
+  - name: RAG
+    description: Motor de búsqueda semántica y base de conocimiento
+  - name: Datos Económicos
+    description: Indicadores financieros en tiempo real (CMF, SII)
+  - name: Webhooks
+    description: Notificaciones asíncronas (PJUD, Fintoc)
+  - name: Ingestión
+    description: Poblar la base de conocimiento propietaria
+
+paths:
+  /api/v1/validate:
+    post:
+      tags: [Validación]
+      summary: Ejecuta un análisis de viabilidad algorítmica
+      description: |
+        Endpoint principal del RaaS. Orquesta en paralelo:
+        - Validación de RUT en SII (si se provee `rut_empresa`)
+        - Valor UF vigente desde CMF
+        - Disponibilidad de marca en INAPI
+        - Búsqueda semántica de competidores y playbooks (pgvector)
+
+        Luego inyecta todo el contexto en Claude Sonnet para generar el diagnóstico.
+
+        **Tiempo de respuesta estimado:** 5-15 segundos (primera consulta) / <1s (caché semántico).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRequest'
+            examples:
+              idea_fintech:
+                summary: Startup fintech con RUT
+                value:
+                  idea_description: "Plataforma de pagos fraccionados para PyMEs chilenas con integración bancaria vía Open Finance."
+                  industry: "fintech"
+                  rut_empresa: "76.123.456-7"
+              idea_agtech:
+                summary: Idea en etapa temprana sin empresa
+                value:
+                  idea_description: "Marketplace de insumos agrícolas con logística last-mile para pequeños agricultores del sur de Chile."
+                  industry: "agtech"
+      responses:
+        '200':
+          description: Análisis completado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          description: El modelo de IA devolvió una respuesta inválida (reintenta).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/rag/query:
+    post:
+      tags: [RAG]
+      summary: Consulta semántica a la base de conocimiento
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  description: Texto libre para buscar contexto relevante.
+                  example: "estrategias de go-to-market para fintech en Chile"
+                filters:
+                  type: object
+                  description: Filtros opcionales (ej. industria, tipo de documento).
+      responses:
+        '200':
+          description: Fragmentos de conocimiento relevantes.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    type: string
+                  sources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        id:
+                          type: string
+
+  /api/v1/data/economy:
+    get:
+      tags: [Datos Económicos]
+      summary: Retorna indicadores económicos en caché
+      description: UF, IPC y Dólar cacheados desde CMF y SII.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Indicadores vigentes.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uf:
+                    type: number
+                    example: 38521.45
+                  uf_date:
+                    type: string
+                    example: "2026-05-20"
+                  ipc_anual:
+                    type: number
+                    example: 4.2
+
+  /api/v1/webhooks:
+    post:
+      tags: [Webhooks]
+      summary: Registra un webhook de notificación
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, event]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  example: "https://tu-sistema.cl/webhook/validateai"
+                event:
+                  type: string
+                  enum: [pjud.resolved, fintoc.connected, validation.complete]
+      responses:
+        '201':
+          description: Webhook registrado.
+    get:
+      tags: [Webhooks]
+      summary: Lista webhooks registrados
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de webhooks activos.
+
+  /api/v1/rag/ingest/text:
+    post:
+      tags: [Ingestión]
+      summary: Ingesta texto plano a la base vectorial
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text, metadata]
+              properties:
+                text:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '201':
+          description: Documento ingestado y vectorizado.
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: "API Key generada en el portal de desarrolladores. Formato: `val_live_XXXXXXXXXXXX`"
+
+  responses:
+    BadRequest:
+      description: Parámetros inválidos.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: API Key faltante, inválida o revocada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    ValidateRequest:
+      type: object
+      required:
+        - idea_description
+        - industry
+      properties:
+        idea_description:
+          type: string
+          minLength: 20
+          maxLength: 2000
+          description: Descripción detallada del modelo de negocio.
+          example: "Plataforma B2B de gestión de turnos para clínicas dentales con IA predictiva para reducir no-shows."
+        industry:
+          type: string
+          example: "healthtech"
+          description: Industria o vertical del negocio.
+        rut_empresa:
+          type: string
+          pattern: '^\d{7,8}-[0-9Kk]$'
+          description: RUT chileno de la empresa para validación SII y PJUD.
+          example: "76.123.456-7"
+
+    ValidationResponse:
+      type: object
+      required:
+        - viability_score
+        - regulatory_risk
+        - market_analysis
+        - unit_economics
+        - swot
+        - next_steps
+        - executive_summary
+        - metadata
+      properties:
+        viability_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 78
+          description: Score de viabilidad global (0 = no viable, 100 = altamente viable).
+        regulatory_risk:
+          type: object
+          properties:
+            level:
+              type: string
+              enum: [Bajo, Medio, Alto]
+              example: "Bajo"
+            reason:
+              type: string
+              example: "Empresa con actividades vigentes en SII. Sin anotaciones detectadas."
+            sii_warnings:
+              type: array
+              items:
+                type: string
+        market_analysis:
+          type: object
+          properties:
+            tam_clp:
+              type: number
+              example: 150000000000
+              description: Total Addressable Market en CLP.
+            sam_clp:
+              type: number
+              example: 15000000000
+              description: Serviceable Addressable Market en CLP.
+            competitors_detected:
+              type: array
+              items:
+                type: string
+              example: ["Agenda Pro", "DentalSoft", "Meditoc"]
+        unit_economics:
+          type: object
+          properties:
+            estimated_cac_uf:
+              type: number
+              example: 3.5
+              description: Costo de Adquisición de Cliente estimado en UF.
+            estimated_ltv_uf:
+              type: number
+              example: 42.0
+              description: Lifetime Value estimado en UF.
+            runway_months_estimate:
+              type: number
+              example: 18
+        swot:
+          type: object
+          properties:
+            strengths:
+              type: array
+              items:
+                type: string
+            weaknesses:
+              type: array
+              items:
+                type: string
+            opportunities:
+              type: array
+              items:
+                type: string
+            threats:
+              type: array
+              items:
+                type: string
+        next_steps:
+          type: array
+          items:
+            type: string
+          example:
+            - "Validar con 10 clínicas dentales en Santiago si el pain de no-shows supera el 15%."
+            - "Registrar marca en INAPI clase 42 (servicios tecnológicos) antes de lanzar."
+        executive_summary:
+          type: string
+          example: "La idea aborda un problema real con alta recurrencia en el segmento salud privado chileno. La competencia existe pero es fragmentada y sin IA. El riesgo regulatorio es bajo dado el estado tributario vigente de la empresa."
+        metadata:
+          type: object
+          properties:
+            model:
+              type: string
+              example: "claude-sonnet-4-6"
+            uf_value_clp:
+              type: number
+              example: 38521.45
+            uf_date:
+              type: string
+              example: "2026-05-20"
+            sii_status:
+              type: string
+              example: "Vigente"
+            inapi_risk:
+              type: string
+              example: "low"
+            pjud_status:
+              type: string
+              enum: [clear, active_cases, pending_async_resolution]
+            rag_competitors_used:
+              type: integer
+              example: 3
+            cached:
+              type: boolean
+              example: false
+            processed_at:
+              type: string
+              format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: object
+        code:
+          type: string

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { Key, Plus, Trash2, Copy, Check, BarChart2, AlertCircle } from 'lucide-react';
+import { Key, Plus, Trash2, Copy, Check, BarChart2, AlertCircle, Code2, BookOpen, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateApiKey, hashApiKey } from '@/utils/crypto';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -32,6 +32,16 @@ export function Developers() {
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
+
+  // Playground state
+  const [playgroundBody, setPlaygroundBody] = useState(JSON.stringify({
+    idea_description: "Plataforma B2B de gestión de turnos para clínicas dentales con IA predictiva para reducir no-shows.",
+    industry: "healthtech",
+    rut_empresa: "76.123.456-7"
+  }, null, 2));
+  const [playgroundApiKey, setPlaygroundApiKey] = useState('');
+  const [playgroundResult, setPlaygroundResult] = useState<string | null>(null);
+  const [playgroundLoading, setPlaygroundLoading] = useState(false);
   const [keyName, setKeyName] = useState('');
   const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -109,6 +119,34 @@ export function Developers() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
+  const runPlayground = async () => {
+    if (!playgroundApiKey.trim()) {
+      toast.error('Ingresa una API Key para probar');
+      return;
+    }
+    setPlaygroundLoading(true);
+    setPlaygroundResult(null);
+    try {
+      const body = JSON.parse(playgroundBody);
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${playgroundApiKey.trim()}`,
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setPlaygroundResult(JSON.stringify(data, null, 2));
+    } catch (err) {
+      setPlaygroundResult(JSON.stringify({ error: String(err) }, null, 2));
+    } finally {
+      setPlaygroundLoading(false);
+    }
   };
 
   const closeModal = () => {
@@ -193,6 +231,95 @@ export function Developers() {
               </ResponsiveContainer>
             </div>
           )}
+        </div>
+
+        {/* Quick Links */}
+        <div className="flex gap-3 mb-8">
+          <a
+            href="/swagger.yaml"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-teal-400 transition shadow-sm"
+          >
+            <BookOpen className="w-4 h-4 text-teal-500" />
+            Documentación OpenAPI
+          </a>
+          <a
+            href="https://editor.swagger.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-teal-400 transition shadow-sm"
+          >
+            <Code2 className="w-4 h-4 text-violet-500" />
+            Swagger Editor
+          </a>
+        </div>
+
+        {/* Playground */}
+        <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 mb-8 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Play className="w-5 h-5 text-violet-500" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Playground — POST /api/v1/validate</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">API Key</label>
+                <input
+                  type="password"
+                  value={playgroundApiKey}
+                  onChange={e => setPlaygroundApiKey(e.target.value)}
+                  placeholder="val_live_XXXX..."
+                  className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Request Body (JSON)</label>
+                <textarea
+                  value={playgroundBody}
+                  onChange={e => setPlaygroundBody(e.target.value)}
+                  rows={10}
+                  className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+                />
+              </div>
+              <button
+                onClick={runPlayground}
+                disabled={playgroundLoading}
+                className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold rounded-xl transition text-sm"
+              >
+                <Play className="w-4 h-4" />
+                {playgroundLoading ? 'Analizando...' : 'Ejecutar'}
+              </button>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Response</label>
+              <pre className="h-full min-h-64 bg-gray-950 text-green-400 text-xs rounded-xl p-4 overflow-auto font-mono whitespace-pre-wrap">
+                {playgroundLoading
+                  ? '⏳ Consultando SII, CMF, INAPI y vectores...'
+                  : playgroundResult ?? '// El resultado aparecerá aquí'}
+              </pre>
+            </div>
+          </div>
+
+          {/* Code snippets */}
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Snippets copiables</p>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { label: 'cURL', code: `curl -X POST "${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate" \\\n  -H "Authorization: Bearer <TU_API_KEY>" \\\n  -H "Content-Type: application/json" \\\n  -d '{"idea_description":"Tu idea aquí","industry":"fintech"}'` },
+                { label: 'Node.js', code: `const res = await fetch("${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate", {\n  method: "POST",\n  headers: { "Authorization": "Bearer <TU_API_KEY>", "Content-Type": "application/json" },\n  body: JSON.stringify({ idea_description: "Tu idea", industry: "fintech" })\n});\nconst data = await res.json();` },
+                { label: 'Python', code: `import requests\nres = requests.post(\n  "${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate",\n  headers={"Authorization": "Bearer <TU_API_KEY>"},\n  json={"idea_description": "Tu idea", "industry": "fintech"}\n)\nprint(res.json())` },
+              ].map(({ label, code }) => (
+                <button
+                  key={label}
+                  onClick={() => { navigator.clipboard.writeText(code); toast.success(`Snippet ${label} copiado`); }}
+                  className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300 transition"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Keys List */}

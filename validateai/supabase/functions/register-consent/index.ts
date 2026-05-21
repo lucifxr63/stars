@@ -6,6 +6,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const ALLOWED_ORIGINS = [
+  'https://validateai-mu.vercel.app',
   'https://validateai.cl',
   'https://www.validateai.cl',
   'http://localhost:5173',

@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { trackUpgradeClick } from '@/hooks/useAnalytics';
+import posthog from 'posthog-js';
 
 interface Props {
   title: string;
@@ -16,9 +18,19 @@ const TIER_LABELS: Record<string, { label: string; color: string; bg: string; bo
 
 export function LockedSection({ title, description, requiredTier, hint }: Props) {
   const tc = TIER_LABELS[requiredTier] ?? TIER_LABELS.pro;
+  const hoverTracked = useRef(false);
+
+  const handleMouseEnter = () => {
+    if (hoverTracked.current) return;
+    hoverTracked.current = true;
+    posthog.capture('paywall_section_hovered', { section: title, required_tier: requiredTier });
+  };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F]">
+    <div
+      className="relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F]"
+      onMouseEnter={handleMouseEnter}
+    >
       {/* Contenido difuminado */}
       <div className="filter blur-[3px] pointer-events-none select-none p-5 opacity-50" aria-hidden="true">
         <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />

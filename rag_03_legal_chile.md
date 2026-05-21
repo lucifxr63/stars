@@ -44,5 +44,36 @@ Pacto de Socios (SHA - Shareholders Agreement) Para proteger el cap table y tu c
 .
 3. Tag-Along (Derecho de acompañamiento): Protege a los minoritarios. Si el fundador o mayoritario recibe una oferta por sus acciones, los socios minoritarios tienen el derecho a unirse a esa venta y salir de la sociedad bajo las mismas condiciones y precio
 .
-4. ROFR (Right of First Refusal / Derecho de Primera Opción): Protege la estructura del cap table prohibiendo que un socio venda sus acciones a un tercero desconocido sin antes ofrecerlas, en las mismas condiciones y precio, a los accionistas actuales de la startup
-.
+4. ROFR (Right of First Refusal / Derecho de Primera Opción): Protege la estructura del cap table prohibiendo que un socio venda sus acciones a un tercero desconocido sin antes ofrecerlas, en las mismas condiciones y precio, a los accionistas actuales de la startup.
+
+---
+
+## Ley 40 Horas (Ley 21.561) — Impacto en Nómina y Unit Economics
+
+La reducción progresiva de la jornada laboral máxima impacta directamente los costos de personal (OpEx) de cualquier startup que contrate en Chile.
+
+**Hitos clave de implementación:**
+- Abril 2024: Reducción de 45h a 44h semanales.
+- Abril 2026: Reducción de 44h a 42h semanales (hito vigente). Aplica incluso para regímenes de turnos excepcionales (art. 22 bis CT).
+- Abril 2028: Reducción a 40h semanales (jornada final).
+
+**Impacto en proyecciones financieras:**
+Al calcular el costo por hora de un colaborador, la startup debe recalibrar la capacidad productiva esperada. Una reducción de 2h semanales (de 44h a 42h) equivale a ~4.5% menos de horas disponibles anuales por persona. Para equipos de 5+ personas, esto puede incrementar el costo de nómina mensual entre un 3-6% si se mantiene la misma producción mediante horas extra (recargadas al 50% según el Código del Trabajo).
+
+**Recomendación para startups:** Modelar el headcount con la jornada de 40h como base de planificación para no subestimar costos en proyecciones a 24+ meses.
+
+---
+
+## Ley Karin (Ley 21.643) — Protocolo de Prevención del Acoso Laboral
+
+Vigente desde agosto de 2024 para **toda empresa en Chile, independientemente del tamaño** (incluyendo startups con 1 trabajador).
+
+**Obligaciones concretas para startups:**
+1. **Protocolo formal obligatorio:** Toda empresa debe tener un protocolo escrito y publicado de prevención, investigación y sanción del acoso laboral, sexual y la violencia en el trabajo. No es opcional ni postergable por ser una startup.
+2. **Canal de denuncia interno:** Habilitar un canal de denuncia confidencial (puede ser un correo dedicado o formulario anónimo) antes de que ocurra cualquier incidente.
+3. **Investigación en plazo legal:** Ante una denuncia, la empresa tiene 5 días para iniciar la investigación y 30 días hábiles para resolverla, informando a la Inspección del Trabajo.
+4. **Capacitación anual:** Obligación de capacitar a todos los trabajadores en los conceptos y procedimientos de la ley, al menos una vez al año.
+
+**Riesgo para startups incumplidoras:** Multas de hasta 60 UTM (~$4.5 millones CLP) por infracción detectada por la Dirección del Trabajo, además de daño reputacional severo en etapas de due diligence de inversión.
+
+**Evaluación en el reporte:** Si la startup tiene o proyecta contratar equipo, el motor de IA clasificará el riesgo de cumplimiento de Ley Karin como "Bajo" (si el fundador declara tener protocolo activo) o "Medio" (si está en proceso) en el módulo de Riesgos Operativos.

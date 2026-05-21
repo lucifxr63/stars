@@ -3,10 +3,12 @@ import { Hono } from 'https://deno.land/x/hono@v3.12.11/mod.ts' // using stable 
 import { cors } from 'https://deno.land/x/hono@v3.12.11/middleware.ts'
 import { authMiddleware } from './middleware/auth.ts'
 import { usageMiddleware } from './middleware/usage.ts'
+import { rateLimitMiddleware } from './middleware/ratelimit.ts'
 import { ragQueryHandler } from './routes/rag.ts'
 import { economicDataHandler } from './routes/data.ts'
 import { ingestTextHandler, ingestFileHandler } from './routes/ingest.ts'
 import { createWebhookHandler, listWebhooksHandler, deleteWebhookHandler } from './routes/webhooks.ts'
+import { validateHandler } from './routes/validate.ts'
 
 const app = new Hono()
 
@@ -22,11 +24,13 @@ app.get('/', (c) => c.json({ status: 'ok', service: 'RaaS API Gateway v1' }))
 // Protected routes group
 const v1 = app.group('/api/v1')
 
-// Apply Auth and Usage middlewares to all routes in /api/v1
+// Apply middlewares in order: Auth → Rate Limit → Usage logging
 v1.use('*', authMiddleware)
+v1.use('*', rateLimitMiddleware)
 v1.use('*', usageMiddleware)
 
 // Endpoints
+v1.post('/validate', validateHandler)
 v1.post('/rag/query', ragQueryHandler)
 v1.get('/data/economy', economicDataHandler)
 v1.post('/rag/ingest/text', ingestTextHandler)
