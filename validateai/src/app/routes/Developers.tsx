@@ -2,10 +2,16 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { Key, Plus, Trash2, Copy, Check, BarChart2, AlertCircle, Code2, BookOpen, Play } from 'lucide-react';
+import {
+  Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
+  Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { generateApiKey, hashApiKey } from '@/utils/crypto';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
+} from 'recharts';
 
 interface ApiKey {
   id: string;
@@ -25,121 +31,157 @@ interface ApiUsageLog {
   created_at: string;
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const BASE = `${SUPABASE_URL}/functions/v1/api-v1`;
+
+const ENDPOINTS = [
+  {
+    method: 'POST',
+    path: '/api/v1/rag/query',
+    label: 'RAG — Consulta semántica',
+    color: '#7C6FF7',
+    defaultBody: JSON.stringify({ query: 'estrategias go-to-market fintech Chile', filters: {} }, null, 2),
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/data/economy',
+    label: 'Datos Económicos — UF / IPC',
+    color: '#2DD4BF',
+    defaultBody: '',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/webhooks',
+    label: 'Webhooks — Registrar',
+    color: '#F59E0B',
+    defaultBody: JSON.stringify({ url: 'https://mi-sistema.cl/webhook', event: 'validation.complete' }, null, 2),
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/webhooks',
+    label: 'Webhooks — Listar',
+    color: '#F59E0B',
+    defaultBody: '',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/rag/ingest/text',
+    label: 'Ingestión — Texto',
+    color: '#EC4899',
+    defaultBody: JSON.stringify({ text: 'Contenido a vectorizar...', metadata: { source: 'manual', industry: 'fintech' } }, null, 2),
+  },
+] as const;
+
+const METHOD_COLORS: Record<string, string> = {
+  POST: '#7C6FF7',
+  GET: '#2DD4BF',
+  DELETE: '#EF4444',
+};
+
+const CHART_COLORS = ['#7C6FF7', '#2DD4BF', '#F59E0B', '#EC4899', '#94A3B8'];
+
+const tooltipStyle = {
+  backgroundColor: '#12121A',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '10px',
+  color: '#F0EFF8',
+  fontSize: '12px',
+};
+
 export function Developers() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [logs, setLogs] = useState<ApiUsageLog[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modal State
   const [showModal, setShowModal] = useState(false);
 
-  // Playground state
-  const [playgroundBody, setPlaygroundBody] = useState(JSON.stringify({
-    idea_description: "Plataforma B2B de gestión de turnos para clínicas dentales con IA predictiva para reducir no-shows.",
-    industry: "healthtech",
-    rut_empresa: "76.123.456-7"
-  }, null, 2));
+  // Playground
+  const [selectedEndpointIdx, setSelectedEndpointIdx] = useState(0);
+  const [playgroundBody, setPlaygroundBody] = useState(ENDPOINTS[0].defaultBody);
   const [playgroundApiKey, setPlaygroundApiKey] = useState('');
   const [playgroundResult, setPlaygroundResult] = useState<string | null>(null);
+  const [playgroundStatus, setPlaygroundStatus] = useState<number | null>(null);
   const [playgroundLoading, setPlaygroundLoading] = useState(false);
+  const [showEndpointDropdown, setShowEndpointDropdown] = useState(false);
+  const [snippetLang, setSnippetLang] = useState<'curl' | 'node' | 'python'>('curl');
+
+  // Modal
   const [keyName, setKeyName] = useState('');
   const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const [keysRes, logsRes] = await Promise.all([
       supabase.from('api_keys').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }),
-      // To get usage logs, we join via api_keys (handled by RLS automatically if we select from logs)
-      supabase.from('api_usage_logs').select('id, endpoint, requests_count, tokens_used, created_at, api_key_id').order('created_at', { ascending: true })
+      supabase.from('api_usage_logs').select('id, endpoint, requests_count, tokens_used, created_at').order('created_at', { ascending: true }),
     ]);
-
     if (keysRes.data) setKeys(keysRes.data as ApiKey[]);
     if (logsRes.data) setLogs(logsRes.data as ApiUsageLog[]);
     setLoading(false);
   };
 
   const handleCreateKey = async () => {
-    if (!keyName.trim()) {
-      toast.error('El nombre es requerido');
-      return;
-    }
+    if (!keyName.trim()) { toast.error('El nombre es requerido'); return; }
     setCreating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user");
-
+      if (!user) throw new Error('No user');
       const plainKey = generateApiKey();
       const hashedKey = await hashApiKey(plainKey);
-      const prefix = plainKey.substring(0, 14) + '...'; // val_live_XXXX...
-
+      const prefix = plainKey.substring(0, 14) + '...';
       const { data, error } = await supabase.from('api_keys').insert({
-        profile_id: user.id,
-        name: keyName.trim(),
-        key_prefix: prefix,
-        key_hash: hashedKey
+        profile_id: user.id, name: keyName.trim(), key_prefix: prefix, key_hash: hashedKey,
       }).select().single();
-
       if (error) throw error;
-
       setKeys([data as ApiKey, ...keys]);
       setNewKeySecret(plainKey);
-      toast.success('Llave creada exitosamente');
-    } catch (err) {
-      console.error(err);
-      toast.error('Error al crear la llave');
-    } finally {
-      setCreating(false);
-    }
+      toast.success('Llave creada');
+    } catch { toast.error('Error al crear la llave'); }
+    finally { setCreating(false); }
   };
 
   const handleRevoke = async (id: string) => {
-    if (!confirm('¿Estás seguro de revocar esta llave? Cualquier aplicación que la use dejará de funcionar inmediatamente.')) return;
-    
+    if (!confirm('¿Revocar esta llave? Las apps que la usen dejarán de funcionar.')) return;
     try {
       const { error } = await supabase.from('api_keys').update({ revoked_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
-      
       setKeys(keys.map(k => k.id === id ? { ...k, is_active: false, revoked_at: new Date().toISOString() } : k));
       toast.success('Llave revocada');
-    } catch (err) {
-      toast.error('Error al revocar la llave');
-    }
+    } catch { toast.error('Error al revocar'); }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const closeModal = () => { setShowModal(false); setKeyName(''); setNewKeySecret(null); };
 
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const selectEndpoint = (idx: number) => {
+    setSelectedEndpointIdx(idx);
+    setPlaygroundBody(ENDPOINTS[idx].defaultBody);
+    setPlaygroundResult(null);
+    setPlaygroundStatus(null);
+    setShowEndpointDropdown(false);
+  };
 
   const runPlayground = async () => {
-    if (!playgroundApiKey.trim()) {
-      toast.error('Ingresa una API Key para probar');
-      return;
+    if (!playgroundApiKey.trim()) { toast.error('Ingresa una API Key'); return; }
+    const ep = ENDPOINTS[selectedEndpointIdx];
+    if (ep.method !== 'GET') {
+      try { JSON.parse(playgroundBody); } catch { toast.error('JSON inválido en el body'); return; }
     }
     setPlaygroundLoading(true);
     setPlaygroundResult(null);
+    setPlaygroundStatus(null);
     try {
-      const body = JSON.parse(playgroundBody);
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${playgroundApiKey.trim()}`,
-        },
-        body: JSON.stringify(body),
-      });
+      const opts: RequestInit = {
+        method: ep.method,
+        headers: { 'Authorization': `Bearer ${playgroundApiKey.trim()}`, 'Content-Type': 'application/json' },
+      };
+      if (ep.method !== 'GET' && playgroundBody) opts.body = playgroundBody;
+      const res = await fetch(`${BASE}${ep.path}`, opts);
+      setPlaygroundStatus(res.status);
       const data = await res.json();
       setPlaygroundResult(JSON.stringify(data, null, 2));
     } catch (err) {
@@ -149,191 +191,351 @@ export function Developers() {
     }
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setKeyName('');
-    setNewKeySecret(null);
+  // ── Stats ─────────────────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const totalReqs = logs.reduce((s, l) => s + (l.requests_count || 1), 0);
+    const totalTokens = logs.reduce((s, l) => s + (l.tokens_used || 0), 0);
+    const today = new Date().toISOString().split('T')[0];
+    const todayReqs = logs.filter(l => l.created_at.startsWith(today)).reduce((s, l) => s + (l.requests_count || 1), 0);
+    const activeKeys = keys.filter(k => k.is_active).length;
+    return { totalReqs, totalTokens, todayReqs, activeKeys };
+  }, [logs, keys]);
+
+  // ── Area chart (last 14 days) ─────────────────────────────────────────
+  const areaData = useMemo(() => {
+    const days = [...Array(14)].map((_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (13 - i));
+      return d.toISOString().split('T')[0];
+    });
+    const map: Record<string, { date: string; requests: number; tokens: number }> = {};
+    days.forEach(date => { map[date] = { date, requests: 0, tokens: 0 }; });
+    logs.forEach(l => {
+      const d = l.created_at.split('T')[0];
+      if (map[d]) { map[d].requests += l.requests_count || 1; map[d].tokens += l.tokens_used || 0; }
+    });
+    return Object.values(map);
+  }, [logs]);
+
+  // ── Pie chart (by endpoint) ───────────────────────────────────────────
+  const pieData = useMemo(() => {
+    const map: Record<string, number> = {};
+    logs.forEach(l => {
+      const key = l.endpoint?.split('/').slice(-2).join('/') || 'other';
+      map[key] = (map[key] || 0) + (l.requests_count || 1);
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [logs]);
+
+  // ── Code snippets ─────────────────────────────────────────────────────
+  const ep = ENDPOINTS[selectedEndpointIdx];
+  const snippets = {
+    curl: ep.method === 'GET'
+      ? `curl "${BASE}${ep.path}" \\\n  -H "Authorization: Bearer <TU_API_KEY>"`
+      : `curl -X POST "${BASE}${ep.path}" \\\n  -H "Authorization: Bearer <TU_API_KEY>" \\\n  -H "Content-Type: application/json" \\\n  -d '${ep.defaultBody.replace(/\n/g, ' ')}'`,
+    node: ep.method === 'GET'
+      ? `const res = await fetch("${BASE}${ep.path}", {\n  headers: { Authorization: "Bearer <TU_API_KEY>" }\n});\nconst data = await res.json();`
+      : `const res = await fetch("${BASE}${ep.path}", {\n  method: "POST",\n  headers: { Authorization: "Bearer <TU_API_KEY>", "Content-Type": "application/json" },\n  body: JSON.stringify(${ep.defaultBody})\n});\nconst data = await res.json();`,
+    python: ep.method === 'GET'
+      ? `import requests\ndata = requests.get(\n  "${BASE}${ep.path}",\n  headers={"Authorization": "Bearer <TU_API_KEY>"}\n).json()`
+      : `import requests\ndata = requests.post(\n  "${BASE}${ep.path}",\n  headers={"Authorization": "Bearer <TU_API_KEY>"},\n  json=${ep.defaultBody}\n).json()`,
   };
 
-  // Chart Data Processing
-  const chartData = useMemo(() => {
-    const last30Days = [...Array(30)].map((_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (29 - i));
-      return d.toISOString().split('T')[0]; // YYYY-MM-DD
-    });
-
-    const dataMap: Record<string, any> = {};
-    last30Days.forEach(date => {
-      dataMap[date] = { date, '/rag/query': 0, '/data/economy': 0, other: 0, total_tokens: 0 };
-    });
-
-    logs.forEach(log => {
-      const date = log.created_at.split('T')[0];
-      if (dataMap[date]) {
-        const ep = log.endpoint;
-        const key = (ep.includes('/rag/query') || ep.includes('/data/economy')) ? ep : 'other';
-        dataMap[date][key] += log.requests_count || 1;
-        dataMap[date].total_tokens += log.tokens_used || 0;
-      }
-    });
-
-    return Object.values(dataMap);
-  }, [logs]);
+  const hasData = logs.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
       <Header />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
-        <div className="flex items-start justify-between mb-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-8">
+
+        {/* ── Header ── */}
+        <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">API & Developers</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Gestiona tus llaves y monitorea el consumo de RAG-as-a-Service.
-            </p>
+            <p className="text-sm text-gray-400 mt-1">Gestiona llaves y monitorea el consumo de tu RaaS.</p>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-500 text-white font-semibold rounded-xl hover:bg-teal-600 transition shadow-sm text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Llave
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="/api-docs.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-violet-400 transition shadow-sm"
+            >
+              <BookOpen className="w-4 h-4 text-violet-500" />
+              Docs
+            </a>
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-500 text-white font-semibold rounded-xl hover:bg-teal-600 transition shadow-sm text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Llave
+            </button>
+          </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 mb-8 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <BarChart2 className="w-5 h-5 text-teal-500" />
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Consumo (Últimos 30 días)</h2>
-          </div>
-          
-          {logs.length === 0 && !loading ? (
-            <div className="h-64 flex flex-col items-center justify-center text-gray-400">
-              <p>Aún no hay consumo registrado.</p>
+        {/* ── Stat cards ── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Requests totales', value: stats.totalReqs.toLocaleString(), icon: Activity, color: 'text-violet-500', bg: 'bg-violet-500/10' },
+            { label: 'Hoy', value: stats.todayReqs.toLocaleString(), icon: Zap, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+            { label: 'Tokens usados', value: stats.totalTokens > 1000 ? `${(stats.totalTokens/1000).toFixed(1)}k` : stats.totalTokens.toString(), icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+            { label: 'Llaves activas', value: stats.activeKeys.toString(), icon: Key, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <div key={label} className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+              <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
+                <Icon className={`w-4 h-4 ${color}`} />
+              </div>
+              <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">{loading ? '—' : value}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{label}</p>
             </div>
-          ) : (
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 12, fill: '#8B8AA0' }} axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#12121A', borderColor: '#333', color: '#fff', borderRadius: '8px' }}
-                    itemStyle={{ color: '#fff' }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  <Bar dataKey="/rag/query" name="Motor RAG" stackId="a" fill="#7C6FF7" radius={[0, 0, 4, 4]} />
-                  <Bar dataKey="/data/economy" name="Datos Económicos" stackId="a" fill="#2DD4BF" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="other" name="Otros" stackId="a" fill="#94A3B8" radius={[4, 4, 0, 0]} />
+          ))}
+        </div>
+
+        {/* ── Charts ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Area — requests over time */}
+          <div className="md:col-span-2 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-violet-500" />
+                <span className="text-sm font-bold text-gray-900 dark:text-white">Requests (14 días)</span>
+              </div>
+              <span className="text-xs text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-lg">
+                <Clock className="w-3 h-3 inline mr-1" />Tiempo real
+              </span>
+            </div>
+            {!hasData && !loading ? (
+              <div className="h-48 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <AreaChart data={areaData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradReq" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#7C6FF7" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#7C6FF7" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={v => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} labelStyle={{ color: '#8B8AA0', marginBottom: 4 }} />
+                  <Area type="monotone" dataKey="requests" name="Requests" stroke="#7C6FF7" strokeWidth={2} fill="url(#gradReq)" dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Pie — by endpoint */}
+          <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-4 h-4 text-teal-500" />
+              <span className="text-sm font-bold text-gray-900 dark:text-white">Por endpoint</span>
+            </div>
+            {!hasData && !loading ? (
+              <div className="h-48 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="45%" innerRadius={42} outerRadius={66} paddingAngle={3} dataKey="value">
+                    {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#8B8AA0' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Bar — tokens */}
+          <div className="md:col-span-3 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-bold text-gray-900 dark:text-white">Tokens consumidos (14 días)</span>
+            </div>
+            {!hasData && !loading ? (
+              <div className="h-36 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={130}>
+                <BarChart data={areaData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={v => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} labelStyle={{ color: '#8B8AA0' }} />
+                  <Bar dataKey="tokens" name="Tokens" fill="#F59E0B" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Links */}
-        <div className="flex gap-3 mb-8">
-          <a
-            href="/api-docs.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-teal-400 transition shadow-sm"
-          >
-            <BookOpen className="w-4 h-4 text-teal-500" />
-            Documentación OpenAPI
-          </a>
-          <a
-            href="https://editor.swagger.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-teal-400 transition shadow-sm"
-          >
-            <Code2 className="w-4 h-4 text-violet-500" />
-            Swagger Editor
-          </a>
-        </div>
-
-        {/* Playground */}
-        <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 mb-8 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <Play className="w-5 h-5 text-violet-500" />
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Playground — POST /api/v1/validate</h2>
+            )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">API Key</label>
-                <input
-                  type="password"
-                  value={playgroundApiKey}
-                  onChange={e => setPlaygroundApiKey(e.target.value)}
-                  placeholder="val_live_XXXX..."
-                  className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Request Body (JSON)</label>
-                <textarea
-                  value={playgroundBody}
-                  onChange={e => setPlaygroundBody(e.target.value)}
-                  rows={10}
-                  className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
-                />
-              </div>
-              <button
-                onClick={runPlayground}
-                disabled={playgroundLoading}
-                className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold rounded-xl transition text-sm"
-              >
-                <Play className="w-4 h-4" />
-                {playgroundLoading ? 'Analizando...' : 'Ejecutar'}
-              </button>
+        </div>
+
+        {/* ── Playground ── */}
+        <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
+
+          {/* Playground header */}
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Play className="w-4 h-4 text-violet-500" />
+              <span className="font-bold text-gray-900 dark:text-white text-sm">Playground</span>
             </div>
+            <a href="/api-docs.html" target="_blank" rel="noopener noreferrer"
+              className="text-xs text-violet-400 hover:text-violet-300 transition">
+              Ver documentación completa →
+            </a>
+          </div>
+
+          <div className="p-5 space-y-4">
+            {/* API Key */}
             <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Response</label>
-              <pre className="h-full min-h-64 bg-gray-950 text-green-400 text-xs rounded-xl p-4 overflow-auto font-mono whitespace-pre-wrap">
-                {playgroundLoading
-                  ? '⏳ Consultando SII, CMF, INAPI y vectores...'
-                  : playgroundResult ?? '// El resultado aparecerá aquí'}
-              </pre>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 block">API Key</label>
+              <input
+                type="password"
+                value={playgroundApiKey}
+                onChange={e => setPlaygroundApiKey(e.target.value)}
+                placeholder="val_live_XXXX..."
+                className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition"
+              />
             </div>
-          </div>
 
-          {/* Code snippets */}
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Snippets copiables</p>
-            <div className="flex gap-2 flex-wrap">
-              {[
-                { label: 'cURL', code: `curl -X POST "${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate" \\\n  -H "Authorization: Bearer <TU_API_KEY>" \\\n  -H "Content-Type: application/json" \\\n  -d '{"idea_description":"Tu idea aquí","industry":"fintech"}'` },
-                { label: 'Node.js', code: `const res = await fetch("${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate", {\n  method: "POST",\n  headers: { "Authorization": "Bearer <TU_API_KEY>", "Content-Type": "application/json" },\n  body: JSON.stringify({ idea_description: "Tu idea", industry: "fintech" })\n});\nconst data = await res.json();` },
-                { label: 'Python', code: `import requests\nres = requests.post(\n  "${SUPABASE_URL}/functions/v1/api-v1/api/v1/validate",\n  headers={"Authorization": "Bearer <TU_API_KEY>"},\n  json={"idea_description": "Tu idea", "industry": "fintech"}\n)\nprint(res.json())` },
-              ].map(({ label, code }) => (
+            {/* Endpoint selector */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 block">Endpoint</label>
+              <div className="relative">
                 <button
-                  key={label}
-                  onClick={() => { navigator.clipboard.writeText(code); toast.success(`Snippet ${label} copiado`); }}
-                  className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300 transition"
+                  onClick={() => setShowEndpointDropdown(v => !v)}
+                  className="w-full flex items-center justify-between bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm text-left hover:border-violet-400 dark:hover:border-violet-500/50 transition"
                 >
-                  {label}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                      style={{ backgroundColor: `${METHOD_COLORS[ep.method]}22`, color: METHOD_COLORS[ep.method] }}
+                    >
+                      {ep.method}
+                    </span>
+                    <span className="font-mono text-gray-700 dark:text-gray-300 text-xs">{ep.path}</span>
+                    <span className="text-gray-400 text-xs hidden sm:inline">— {ep.label.split('—')[1]?.trim()}</span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showEndpointDropdown ? 'rotate-180' : ''}`} />
                 </button>
-              ))}
+                {showEndpointDropdown && (
+                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-[#1A1A26] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
+                    {ENDPOINTS.map((e, i) => (
+                      <button
+                        key={i}
+                        onClick={() => selectEndpoint(i)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/5 transition ${i === selectedEndpointIdx ? 'bg-violet-50 dark:bg-violet-500/10' : ''}`}
+                      >
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0"
+                          style={{ backgroundColor: `${METHOD_COLORS[e.method]}22`, color: METHOD_COLORS[e.method] }}
+                        >
+                          {e.method}
+                        </span>
+                        <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{e.path}</span>
+                        <span className="text-xs text-gray-400 ml-auto hidden sm:block">{e.label.split('—')[1]?.trim()}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Body + Response */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  {ep.method === 'GET' ? 'Sin body (GET)' : 'Request Body (JSON)'}
+                </label>
+                {ep.method !== 'GET' ? (
+                  <textarea
+                    value={playgroundBody}
+                    onChange={e => setPlaygroundBody(e.target.value)}
+                    rows={9}
+                    className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 resize-none transition"
+                  />
+                ) : (
+                  <div className="h-[198px] flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-400">
+                    Este endpoint no requiere body
+                  </div>
+                )}
+                <button
+                  onClick={runPlayground}
+                  disabled={playgroundLoading}
+                  className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold rounded-xl transition text-sm"
+                >
+                  {playgroundLoading
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Ejecutando...</>
+                    : <><Play className="w-4 h-4" /> Ejecutar</>
+                  }
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">Response</label>
+                  {playgroundStatus && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${playgroundStatus < 300 ? 'bg-teal-500/15 text-teal-400' : 'bg-red-500/15 text-red-400'}`}>
+                      {playgroundStatus}
+                    </span>
+                  )}
+                </div>
+                <pre className="flex-1 min-h-[230px] bg-gray-950 dark:bg-black/40 text-green-400 text-xs rounded-xl p-4 overflow-auto font-mono whitespace-pre-wrap leading-relaxed">
+                  {playgroundLoading
+                    ? <span className="text-gray-500 animate-pulse">Esperando respuesta...</span>
+                    : playgroundResult
+                      ? <span>{playgroundResult}</span>
+                      : <span className="text-gray-600">// La respuesta aparecerá aquí</span>
+                  }
+                </pre>
+              </div>
+            </div>
+
+            {/* Snippets */}
+            <div className="pt-3 border-t border-gray-100 dark:border-white/5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Snippet de código</p>
+                <div className="flex gap-1">
+                  {(['curl', 'node', 'python'] as const).map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => setSnippetLang(lang)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${snippetLang === lang ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+                    >
+                      {lang === 'node' ? 'Node.js' : lang.charAt(0).toUpperCase() + lang.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="relative group">
+                <pre className="bg-gray-950 dark:bg-black/40 text-gray-300 text-xs rounded-xl p-4 overflow-x-auto font-mono leading-relaxed">
+                  {snippets[snippetLang]}
+                </pre>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(snippets[snippetLang]); toast.success('Copiado'); }}
+                  className="absolute top-2.5 right-2.5 p-1.5 bg-white/10 hover:bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 transition text-gray-400"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Keys List */}
+        {/* ── API Keys ── */}
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Mis API Keys</h2>
-          
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Mis API Keys</h2>
           {loading ? (
             <div className="space-y-3">
-              {[1,2].map(i => <div key={i} className="h-20 bg-white dark:bg-[#12121A] rounded-xl animate-pulse" />)}
+              {[1, 2].map(i => <div key={i} className="h-20 bg-white dark:bg-[#12121A] rounded-xl animate-pulse" />)}
             </div>
           ) : keys.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5">
               <Key className="w-10 h-10 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 text-sm">No tienes llaves generadas.</p>
+              <button onClick={() => setShowModal(true)} className="mt-4 text-sm font-semibold text-violet-500 hover:text-violet-400 transition">
+                Crear primera llave →
+              </button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -341,26 +543,24 @@ export function Developers() {
                 <div key={key.id} className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-4 flex items-center justify-between shadow-sm">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="font-semibold text-gray-900 dark:text-[#F0EFF8]">{key.name}</span>
-                      {key.is_active ? (
-                        <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full font-bold">ACTIVA</span>
-                      ) : (
-                        <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full font-bold">REVOCADA</span>
-                      )}
+                      <span className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm">{key.name}</span>
+                      {key.is_active
+                        ? <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full font-bold">ACTIVA</span>
+                        : <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full font-bold">REVOCADA</span>
+                      }
                     </div>
                     <code className="text-xs text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded font-mono">
                       {key.key_prefix}
                     </code>
                     <p className="text-xs text-gray-400 mt-2">
-                      Creada: {new Date(key.created_at).toLocaleDateString()} · Último uso: {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Nunca'}
+                      Creada {new Date(key.created_at).toLocaleDateString()} · Último uso: {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Nunca'}
                     </p>
                   </div>
-                  
                   {key.is_active && (
                     <button
                       onClick={() => handleRevoke(key.id)}
                       className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition"
-                      title="Revocar llave"
+                      title="Revocar"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -374,28 +574,25 @@ export function Developers() {
 
       <Footer />
 
-      {/* Modal Crear Llave */}
+      {/* ── Modal Crear Llave ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#12121A] rounded-3xl shadow-2xl w-full max-w-md p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#12121A] rounded-3xl shadow-2xl w-full max-w-md p-6">
             {!newKeySecret ? (
               <>
                 <h3 className="font-black text-gray-900 dark:text-white text-xl mb-2">Nueva API Key</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                  Esta llave te dará acceso a los endpoints de IA y datos económicos.
-                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Dale un nombre para identificarla (ej: Producción, Staging).</p>
                 <input
                   type="text"
                   value={keyName}
-                  onChange={(e) => setKeyName(e.target.value)}
+                  onChange={e => setKeyName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCreateKey()}
                   placeholder="Ej: Producción - Backend"
                   className="w-full border border-gray-200 dark:border-white/10 bg-transparent rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 mb-6 text-gray-900 dark:text-white"
                   autoFocus
                 />
                 <div className="flex gap-3">
-                  <button onClick={closeModal} className="flex-1 py-2.5 font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition">
-                    Cancelar
-                  </button>
+                  <button onClick={closeModal} className="flex-1 py-2.5 font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition">Cancelar</button>
                   <button onClick={handleCreateKey} disabled={creating || !keyName.trim()} className="flex-1 py-2.5 font-semibold bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition disabled:opacity-50">
                     {creating ? 'Generando...' : 'Generar Llave'}
                   </button>
@@ -407,25 +604,19 @@ export function Developers() {
                   <Check className="w-6 h-6" />
                 </div>
                 <h3 className="font-black text-center text-gray-900 dark:text-white text-xl mb-2">¡Llave Generada!</h3>
-                <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex gap-2 items-start mb-5">
-                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-800">
-                    Por tu seguridad, <strong>esta es la única vez</strong> que verás tu API Key completa. Cópiala y guárdala en un lugar seguro (.env).
+                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-3 rounded-xl flex gap-2 items-start mb-5">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800 dark:text-amber-300">
+                    <strong>Solo se muestra una vez.</strong> Cópiala y guárdala en tu <code>.env</code>.
                   </p>
                 </div>
-                
                 <div className="flex items-center gap-2 bg-gray-100 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 p-2 rounded-xl mb-6">
-                  <code className="text-sm flex-1 overflow-x-auto text-gray-800 dark:text-gray-300 px-2 font-mono whitespace-nowrap">
-                    {newKeySecret}
-                  </code>
-                  <button 
-                    onClick={() => copyToClipboard(newKeySecret)}
-                    className="shrink-0 p-2 bg-white dark:bg-[#12121A] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 transition shadow-sm text-gray-700 dark:text-gray-300"
-                  >
+                  <code className="text-sm flex-1 overflow-x-auto text-gray-800 dark:text-gray-300 px-2 font-mono whitespace-nowrap">{newKeySecret}</code>
+                  <button onClick={() => { navigator.clipboard.writeText(newKeySecret!); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                    className="shrink-0 p-2 bg-white dark:bg-[#12121A] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 transition shadow-sm text-gray-700 dark:text-gray-300">
                     {copied ? <Check className="w-4 h-4 text-teal-500" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-
                 <button onClick={closeModal} className="w-full py-2.5 font-semibold bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100 rounded-xl transition">
                   He guardado mi llave
                 </button>
