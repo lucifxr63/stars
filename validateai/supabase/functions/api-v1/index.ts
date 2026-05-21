@@ -1,6 +1,5 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { Hono } from 'https://deno.land/x/hono@v3.12.11/mod.ts' // using stable v3 for standard Deno edge functions or v4 if preferred. v3.12.11 is very stable.
-import { cors } from 'https://deno.land/x/hono@v3.12.11/middleware.ts'
+import { Hono } from 'npm:hono'
+import { cors } from 'npm:hono/cors'
 import { authMiddleware } from './middleware/auth.ts'
 import { usageMiddleware } from './middleware/usage.ts'
 import { rateLimitMiddleware } from './middleware/ratelimit.ts'
@@ -58,7 +57,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS',
 }
 
-serve((req) => {
+Deno.serve((req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
   }
