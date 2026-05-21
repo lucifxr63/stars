@@ -23,26 +23,28 @@ app.use('*', cors({
   allowMethods: ['POST', 'GET', 'DELETE', 'OPTIONS'],
 }))
 
+// Health check
 app.get('/', (c) => c.json({ status: 'ok', service: 'RaaS API Gateway v1' }))
 
-// Protected sub-app — Hono v4 API
-const v1 = new Hono()
-v1.use('*', authMiddleware)
-v1.use('*', rateLimitMiddleware)
-v1.use('*', usageMiddleware)
+// Debug: echo the path the worker actually receives
+app.get('/debug', (c) => c.json({ pathname: new URL(c.req.url).pathname }))
 
-v1.post('/validate', validateHandler)
-v1.post('/rag/query', ragQueryHandler)
-v1.get('/data/economy', economicDataHandler)
-v1.post('/rag/ingest/text', ingestTextHandler)
-v1.post('/rag/ingest/file', ingestFileHandler)
-v1.post('/webhooks', createWebhookHandler)
-v1.get('/webhooks', listWebhooksHandler)
-v1.delete('/webhooks/:id', deleteWebhookHandler)
+// Auth + rate limit + usage on all /api/v1/* routes
+app.use('/api/v1/*', authMiddleware)
+app.use('/api/v1/*', rateLimitMiddleware)
+app.use('/api/v1/*', usageMiddleware)
 
-app.route('/api/v1', v1)
+// Endpoints
+app.post('/api/v1/validate', validateHandler)
+app.post('/api/v1/rag/query', ragQueryHandler)
+app.get('/api/v1/data/economy', economicDataHandler)
+app.post('/api/v1/rag/ingest/text', ingestTextHandler)
+app.post('/api/v1/rag/ingest/file', ingestFileHandler)
+app.post('/api/v1/webhooks', createWebhookHandler)
+app.get('/api/v1/webhooks', listWebhooksHandler)
+app.delete('/api/v1/webhooks/:id', deleteWebhookHandler)
 
-app.notFound((c) => c.json({ error: 'Endpoint not found' }, 404))
+app.notFound((c) => c.json({ error: 'Endpoint not found', path: new URL(c.req.url).pathname }, 404))
 app.onError((err, c) => {
   console.error('Unhandled error:', err)
   return c.json({ error: 'Internal Server Error' }, 500)
@@ -52,8 +54,7 @@ Deno.serve((req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
   }
-  // Supabase passes the full URL: /functions/v1/api-v1/api/v1/...
-  // Strip the Supabase function prefix so Hono sees /api/v1/...
+  // Strip Supabase function prefix: /functions/v1/api-v1/api/v1/... → /api/v1/...
   const url = new URL(req.url)
   const stripped = url.pathname.replace(/^\/functions\/v1\/[^/]+/, '') || '/'
   const rewritten = new Request(new URL(stripped + url.search, url.origin), req)
