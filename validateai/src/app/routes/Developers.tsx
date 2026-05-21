@@ -4,7 +4,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
-  Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2,
+  Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateApiKey, hashApiKey } from '@/utils/crypto';
@@ -21,6 +21,33 @@ interface ApiKey {
   last_used_at: string | null;
   revoked_at: string | null;
   is_active: boolean;
+}
+
+interface AuditLog {
+  id: string;
+  run_id: string;
+  query: string;
+  category: string;
+  expected_keyword: string | null;
+  has_sources: boolean;
+  keyword_found: boolean;
+  precision_score: number;
+  latency_ms: number;
+  chunks_retrieved: number;
+  error: string | null;
+  created_at: string;
+}
+
+interface AuditSummary {
+  run_id: string;
+  started_at: string;
+  total_queries: number;
+  avg_precision: number;
+  avg_latency_ms: number;
+  keyword_hits: number;
+  queries_with_sources: number;
+  errors: number;
+  hit_rate_pct: number;
 }
 
 interface ApiUsageLog {
@@ -91,6 +118,9 @@ const tooltipStyle = {
 export function Developers() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [logs, setLogs] = useState<ApiUsageLog[]>([]);
+  const [auditSummaries, setAuditSummaries] = useState<AuditSummary[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [_selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
@@ -122,6 +152,21 @@ export function Developers() {
     ]);
     if (keysRes.data) setKeys(keysRes.data as ApiKey[]);
     if (logsRes.data) setLogs(logsRes.data as ApiUsageLog[]);
+
+    const [auditSummaryRes] = await Promise.all([
+      supabase.from('rag_audit_summary').select('*').order('started_at', { ascending: false }).limit(10),
+    ]);
+    if (auditSummaryRes.data && auditSummaryRes.data.length > 0) {
+      setAuditSummaries(auditSummaryRes.data as AuditSummary[]);
+      const latestRunId = auditSummaryRes.data[0].run_id;
+      setSelectedRunId(latestRunId);
+      const logsRes2 = await supabase
+        .from('rag_audit_logs')
+        .select('id, run_id, query, category, expected_keyword, has_sources, keyword_found, precision_score, latency_ms, chunks_retrieved, error, created_at')
+        .eq('run_id', latestRunId)
+        .order('created_at', { ascending: true });
+      if (logsRes2.data) setAuditLogs(logsRes2.data as AuditLog[]);
+    }
     setLoading(false);
   };
 
@@ -521,6 +566,132 @@ export function Developers() {
             </div>
           </div>
         </div>
+
+        {/* ── RAG Audit Dashboard ── */}
+        {auditSummaries.length > 0 && (() => {
+          const summary = auditSummaries[0];
+          const precisionPct = Math.round((summary.avg_precision ?? 0) * 100);
+          const hitRate = summary.hit_rate_pct ?? 0;
+          const categoryColors: Record<string, string> = {
+            legal: '#7C6FF7', gtm: '#2DD4BF', methodology: '#F59E0B', market: '#34D399', edge: '#94A3B8',
+          };
+          const catMap: Record<string, { pass: number; fail: number; total: number }> = {};
+          auditLogs.forEach(l => {
+            if (!catMap[l.category]) catMap[l.category] = { pass: 0, fail: 0, total: 0 };
+            catMap[l.category].total++;
+            if (l.precision_score >= 0.6) catMap[l.category].pass++;
+            else catMap[l.category].fail++;
+          });
+          const catBarData = Object.entries(catMap).map(([cat, v]) => ({
+            cat: cat.charAt(0).toUpperCase() + cat.slice(1),
+            pass: v.pass,
+            fail: v.fail,
+            fill: categoryColors[cat] ?? '#7C6FF7',
+          }));
+          const latencyData = auditLogs.map((l, i) => ({ i: i + 1, ms: Math.round(l.latency_ms), cat: l.category }));
+
+          return (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck className="w-5 h-5 text-violet-500" />
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">RAG Audit Dashboard</h2>
+                <span className="ml-2 text-xs bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded-full font-mono">
+                  run: {summary.run_id.slice(0, 8)}…
+                </span>
+                <span className="text-xs text-gray-400">{new Date(summary.started_at).toLocaleString()}</span>
+              </div>
+
+              {/* KPI row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                {[
+                  { label: 'Precision score', value: `${precisionPct}%`, color: precisionPct >= 80 ? 'text-green-400' : precisionPct >= 60 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'Keyword hit rate', value: `${hitRate}%`, color: 'text-teal-400' },
+                  { label: 'Avg latency', value: `${Math.round(summary.avg_latency_ms)}ms`, color: 'text-violet-400' },
+                  { label: 'Errores', value: String(summary.errors), color: summary.errors === 0 ? 'text-green-400' : 'text-red-400' },
+                ].map(kpi => (
+                  <div key={kpi.label} className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                    <p className="text-xs text-gray-400 mb-1">{kpi.label}</p>
+                    <p className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Charts row */}
+              <div className="grid sm:grid-cols-2 gap-4 mb-5">
+                {/* Pass/Fail por categoría */}
+                <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Pass / Fail por categoría</p>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={catBarData} barSize={18}>
+                      <XAxis dataKey="cat" tick={{ fill: '#9CA3AF', fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ background: '#12121A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} />
+                      <Bar dataKey="pass" name="Pass" stackId="a" fill="#34D399" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="fail" name="Fail" stackId="a" fill="#F87171" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Latency scatter */}
+                <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Latencia por query (ms)</p>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <AreaChart data={latencyData}>
+                      <defs>
+                        <linearGradient id="auditGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#7C6FF7" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#7C6FF7" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="i" tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ background: '#12121A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} formatter={(v) => [`${v}ms`, 'Latencia']} />
+                      <Area type="monotone" dataKey="ms" stroke="#7C6FF7" strokeWidth={2} fill="url(#auditGrad)" dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Query table */}
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-white/5">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Detalle de queries ({auditLogs.length})</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-white/5">
+                        {['Estado', 'Categoría', 'Query', 'Precision', 'Latencia', 'Chunks'].map(h => (
+                          <th key={h} className="px-4 py-2.5 text-left font-semibold text-gray-400">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {auditLogs.map(l => (
+                        <tr key={l.id} className="border-b border-gray-50 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition">
+                          <td className="px-4 py-2.5">
+                            {l.error ? '❌' : l.precision_score >= 0.6 ? '✅' : '⚠️'}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: `${categoryColors[l.category]}20`, color: categoryColors[l.category] }}>
+                              {l.category}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={l.query}>{l.query}</td>
+                          <td className="px-4 py-2.5 font-mono font-bold" style={{ color: l.precision_score >= 0.8 ? '#34D399' : l.precision_score >= 0.5 ? '#F59E0B' : '#F87171' }}>
+                            {(l.precision_score * 100).toFixed(0)}%
+                          </td>
+                          <td className="px-4 py-2.5 font-mono text-gray-400">{Math.round(l.latency_ms)}ms</td>
+                          <td className="px-4 py-2.5 font-mono text-gray-400">{l.chunks_retrieved}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── API Keys ── */}
         <div>
