@@ -54,9 +54,10 @@ Deno.serve((req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
   }
-  // Strip Supabase function prefix: /functions/v1/api-v1/api/v1/... → /api/v1/...
+  // Supabase strips /functions/v1 but keeps the function name segment: /api-v1/api/v1/...
+  // Remove that first segment so Hono sees /api/v1/...
   const url = new URL(req.url)
-  const stripped = url.pathname.replace(/^\/functions\/v1\/[^/]+/, '') || '/'
+  const stripped = url.pathname.replace(/^\/[^/]+/, '') || '/'
   const rewritten = new Request(new URL(stripped + url.search, url.origin), req)
   return app.fetch(rewritten)
 })
