@@ -4,8 +4,8 @@ const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const LLAMAPARSE_API_KEY = Deno.env.get('LLAMAPARSE_API_KEY')
 
 const EMBEDDING_MODEL = 'text-embedding-3-small'
-const EMBEDDING_DIMENSIONS = 512
-const EMBEDDING_VERSION = 'oai-v3-small-512'
+const EMBEDDING_DIMENSIONS = 1536
+const EMBEDDING_VERSION = 'oai-v3-small-1536'
 
 /**
  * Helper to generate embeddings using OpenAI API directly
@@ -22,7 +22,7 @@ async function getEmbeddings(texts: string[]): Promise<number[][]> {
     body: JSON.stringify({
       input: texts,
       model: EMBEDDING_MODEL,
-      dimensions: EMBEDDING_DIMENSIONS
+      // 1536 is the native dimension of text-embedding-3-small — no truncation needed
     })
   })
 
