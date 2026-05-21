@@ -52,5 +52,10 @@ Deno.serve((req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
   }
-  return app.fetch(req)
+  // Supabase passes the full URL: /functions/v1/api-v1/api/v1/...
+  // Strip the Supabase function prefix so Hono sees /api/v1/...
+  const url = new URL(req.url)
+  const stripped = url.pathname.replace(/^\/functions\/v1\/[^/]+/, '') || '/'
+  const rewritten = new Request(new URL(stripped + url.search, url.origin), req)
+  return app.fetch(rewritten)
 })
