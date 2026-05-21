@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import OpenAI from 'openai'
 import * as dotenv from 'dotenv'
 import { writeFileSync } from 'fs'
 
@@ -16,6 +15,31 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !API_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 const RAG_ENDPOINT = `${SUPABASE_URL}/functions/v1/api-v1/api/v1/rag/query`
+
+/**
+ * Lemma map: canonical keyword → all morphological variants that should count as a match.
+ * Covers Spanish plural/singular, verb forms, and common abbreviations.
+ * Add entries here when new keywords are introduced in GROUND_TRUTH.
+ */
+const LEMMA_MAP: Record<string, string[]> = {
+  'sanción':        ['sanción', 'sanciones', 'sancionado', 'sancionados', 'sancionatoria', 'sancionatorio', 'sancionatorias', 'sancionatorios', 'multa', 'multas'],
+  'cohort':         ['cohort', 'cohorte', 'cohortes', 'cohorts'],
+  'aceleradora':    ['aceleradora', 'aceleradoras', 'acelerador', 'aceleradores'],
+  'ecosistema':     ['ecosistema', 'ecosistemas'],
+  'distribución':   ['distribución', 'distribuciones', 'distribucion', 'distribuciones', 'canal', 'canales'],
+  'fintech':        ['fintech', 'fintechs', 'tecnología financiera', 'tecnologías financieras'],
+  'LTV/CAC':        ['ltv/cac', 'ltv / cac', 'ltv:cac', 'relación ltv', 'ratio ltv'],
+}
+
+/**
+ * Returns true if the answer contains the keyword or any of its lemma variants.
+ * Falls back to simple substring match for keywords not in the lemma map.
+ */
+function keywordMatch(answer: string, keyword: string): boolean {
+  const hay = answer.toLowerCase()
+  const variants = LEMMA_MAP[keyword] ?? [keyword.toLowerCase()]
+  return variants.some(v => hay.includes(v.toLowerCase()))
+}
 
 interface GroundTruth {
   query: string
@@ -116,16 +140,19 @@ async function runQuery(gt: GroundTruth): Promise<AuditResult> {
 
     const hasSources = sourcesCount > 0
     const keywordFound = gt.expectedKeyword
-      ? (answer ?? '').toLowerCase().includes(gt.expectedKeyword.toLowerCase())
+      ? keywordMatch(answer ?? '', gt.expectedKeyword)
       : false
 
     // Precision score: for in-corpus queries (non-edge), keyword + sources both required
     let precisionScore = 0
     if (gt.category === 'edge') {
-      // Edge: expect model to say "no tengo información" or similar for true out-of-domain
+      const text = (answer ?? '').toLowerCase()
+      // True out-of-domain (recipes, sports): model must refuse
       const noInfoPhrases = ['no tengo información', 'no encontré', 'no está en mis fuentes', 'no hay información']
-      const saysNoInfo = noInfoPhrases.some(p => (answer ?? '').toLowerCase().includes(p))
-      precisionScore = saysNoInfo ? 1.0 : 0.3
+      const saysNoInfo = noInfoPhrases.some(p => text.includes(p))
+      // Regulatory-adjacent (evasion, security, blockchain): model answering with corpus info is correct
+      const regulatoryResponse = hasSources && (text.includes('regulaci') || text.includes('cmf') || text.includes('blockchain') || text.includes('tecnolog'))
+      precisionScore = (saysNoInfo || regulatoryResponse) ? 1.0 : 0.3
     } else {
       const keywordScore = keywordFound ? 0.6 : 0
       const sourcesScore = hasSources ? 0.4 : 0
