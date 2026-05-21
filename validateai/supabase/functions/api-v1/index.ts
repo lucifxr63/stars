@@ -18,6 +18,9 @@ app.use('*', cors({
   allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type'],
 }))
 
+// Respond to all CORS preflight requests before any auth middleware runs
+app.options('*', (c) => c.text('', 204))
+
 // Health check (no auth required)
 app.get('/', (c) => c.json({ status: 'ok', service: 'RaaS API Gateway v1' }))
 
