@@ -236,7 +236,7 @@ export function Developers() {
         {/* Quick Links */}
         <div className="flex gap-3 mb-8">
           <a
-            href="/swagger.yaml"
+            href="/api-docs.html"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-teal-400 transition shadow-sm"
