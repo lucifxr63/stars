@@ -8,7 +8,8 @@ let initialized = false;
 export function initAnalytics() {
   if (initialized || !PH_KEY) return;
   posthog.init(PH_KEY, {
-    api_host: PH_HOST,
+    api_host: PH_HOST,                          // reverse proxy (first-party)
+    ui_host: 'https://app.posthog.com',         // PostHog dashboard links stay correct
     capture_pageview: true,
     capture_pageleave: true,
     autocapture: false,
