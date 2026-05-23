@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -13,6 +13,7 @@ import { StepFounder } from '@/components/wizard/StepFounder';
 import { StepGenerating } from '@/components/wizard/StepGenerating';
 import { StepUpload } from '@/components/wizard/StepUpload';
 import { trackWizardStep, trackWizardAbandoned } from '@/hooks/useAnalytics';
+import { trackTelemetryEvent, trackTelemetryBeacon } from '@/lib/telemetry';
 import { OnboardingOverlay, useOnboarding } from '@/components/shared/OnboardingOverlay';
 
 // Flujo detallado (free/basic): Idea → Mercado → Fundador → Generando
@@ -57,8 +58,10 @@ const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
 export function Validate() {
   const navigate = useNavigate();
   const { currentStep, validationId, reset, setValidationMode, validationMode } = useValidationStore();
-  const { isPro: isPremium, loading: tierLoading } = useUserTier();
+  const { isPro: isPremium, loading: tierLoading, tier } = useUserTier();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const exitShownRef = useRef(false);
 
   const isPremiumMode = validationMode === 'premium';
   const isQuickMode = validationMode === 'quick';
@@ -122,6 +125,132 @@ export function Validate() {
         }
       });
   }, [validationId]);
+  // Exit-intent: mouseleave viewport → show 1-click dialog (once per wizard session)
+  useEffect(() => {
+    const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY > 0) return;
+      if (currentStep >= lastStep) return;
+      if (exitShownRef.current) return;
+      exitShownRef.current = true;
+      setShowExitDialog(true);
+    };
+    document.addEventListener('mouseleave', handleMouseLeave);
+    return () => document.removeEventListener('mouseleave', handleMouseLeave);
+  }, [currentStep, isPremiumMode, isQuickMode]);
+
+  // Rem 1: visibilitychange + pagehide replace beforeunload (BFCache-compatible, mobile-safe).
+  // Shared closure flag prevents duplicate events when both fire in the same unload sequence.
+  useEffect(() => {
+    const beaconSent = { value: false };
+
+    const sendAbandonBeacon = () => {
+      if (beaconSent.value) return;
+      const { currentStep: step } = useValidationStore.getState();
+      const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+      if (step >= lastStep) return;
+      beaconSent.value = true;
+      trackTelemetryBeacon('wizard_abandoned', {
+        tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+        action_taken: 'session_ended',
+        step_reached: step,
+      });
+    };
+
+    const onVisibility = () => { if (document.visibilityState === 'hidden') sendAbandonBeacon(); };
+    const onPageHide = () => sendAbandonBeacon();
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremiumMode, isQuickMode, tier]);
+
+  // Rem 3a: mobile exit-intent — scroll reversal velocity heuristic.
+  // Triggers when user scrolled ≥ 80 px down then inverts fast (≥ 1.5 px/ms upward).
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let lastT = Date.now();
+    let maxDepth = 0;
+    const MIN_DEPTH = 80;
+    const MIN_VELOCITY = 1.5; // px/ms
+
+    const onScroll = () => {
+      const now = Date.now();
+      const y = window.scrollY;
+      const dt = now - lastT;
+      maxDepth = Math.max(maxDepth, y);
+
+      if (dt > 0) {
+        const velocity = (y - lastY) / dt;   // negative = scrolling up
+        const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+        const { currentStep: step } = useValidationStore.getState();
+        if (
+          velocity < -MIN_VELOCITY &&
+          maxDepth > MIN_DEPTH &&
+          step < lastStep &&
+          !exitShownRef.current
+        ) {
+          exitShownRef.current = true;
+          setShowExitDialog(true);
+        }
+      }
+
+      lastY = y;
+      lastT = now;
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isPremiumMode, isQuickMode]);
+
+  // Rem 3b: mobile exit-intent — back-button intercept via history.pushState + popstate.
+  // Injects a silent guard entry; popstate fires when the user navigates back through it.
+  useEffect(() => {
+    window.history.pushState({ validateai_guard: true }, '');
+
+    const onPopState = () => {
+      const { currentStep: step } = useValidationStore.getState();
+      const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+      if (step >= lastStep) return;
+
+      // Re-inject guard so repeated back-button presses are caught
+      window.history.pushState({ validateai_guard: true }, '');
+
+      if (!exitShownRef.current) {
+        exitShownRef.current = true;
+        setShowExitDialog(true);
+      }
+      trackTelemetryEvent({
+        event_name: 'wizard_abandoned',
+        context: {
+          tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+          action_taken: 'back_button_intercepted',
+          step_reached: step,
+        },
+      });
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremiumMode, isQuickMode, tier]);
+
+  const handleExitChoice = (reason: string) => {
+    setShowExitDialog(false);
+    trackTelemetryEvent({
+      event_name: 'wizard_abandoned',
+      context: {
+        tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+        action_taken: reason,
+        step_reached: currentStep,
+      },
+    });
+  };
+
   const meta = titleMap[currentStep];
 
   return (
@@ -162,6 +291,31 @@ export function Validate() {
       </div>
 
       <Footer />
+
+      {/* Exit-intent dialog */}
+      {showExitDialog && (
+        <div className="fixed inset-x-0 top-3 z-50 flex justify-center px-4 pointer-events-none">
+          <div className="bg-white dark:bg-[#12121A] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 p-4 max-w-sm w-full pointer-events-auto">
+            <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
+              Guardamos tu progreso. ¿Te faltó información para continuar?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleExitChoice('Faltó información para continuar')}
+                className="flex-1 px-3 py-2 text-xs font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors"
+              >
+                Sí, me faltan datos
+              </button>
+              <button
+                onClick={() => handleExitChoice('Solo estaba explorando')}
+                className="flex-1 px-3 py-2 text-xs font-bold bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+              >
+                Solo estaba explorando
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

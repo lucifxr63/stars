@@ -1,5 +1,7 @@
 import { useRef } from 'react';
 import { trackUpgradeClick } from '@/hooks/useAnalytics';
+import { trackTelemetryEvent } from '@/lib/telemetry';
+import { useUserTier } from '@/hooks/useUserTier';
 import posthog from 'posthog-js';
 
 interface Props {
@@ -19,6 +21,7 @@ const TIER_LABELS: Record<string, { label: string; color: string; bg: string; bo
 export function LockedSection({ title, description, requiredTier, hint }: Props) {
   const tc = TIER_LABELS[requiredTier] ?? TIER_LABELS.pro;
   const hoverTracked = useRef(false);
+  const { tier } = useUserTier();
 
   const handleMouseEnter = () => {
     if (hoverTracked.current) return;
@@ -61,7 +64,17 @@ export function LockedSection({ title, description, requiredTier, hint }: Props)
 
         <a
           href="/pricing"
-          onClick={() => trackUpgradeClick(title, requiredTier)}
+          onClick={() => {
+            trackUpgradeClick(title, requiredTier);
+            trackTelemetryEvent({
+              event_name: 'paywall_hit',
+              context: {
+                tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+                action_taken: `Clicked unlock ${requiredTier}`,
+                feature_name: title,
+              },
+            });
+          }}
           className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all
             ${tc.bg} ${tc.color} ${tc.border} border-2 hover:opacity-80 active:scale-[0.98]`}
         >

@@ -29,6 +29,7 @@ import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted } from '@/hooks/useAnalytics';
+import { trackTelemetryEvent } from '@/lib/telemetry';
 import { useMentors } from '@/hooks/useMentors';
 import { EvidenceWall } from '@/components/shared/EvidenceWall';
 import { GovernanceCard } from '@/components/shared/GovernanceCard';
@@ -145,6 +146,7 @@ export function ValidationDetail() {
   } | null>(null);
   const { callAI } = useAI();
   const { tier, isPro: isPremium } = useUserTier();
+  const [reportFeedback, setReportFeedback] = useState<string | null>(null);
   const sections = getUserSections(tier);
   const { mentors } = useMentors(data?.idea_description);
 
@@ -171,6 +173,13 @@ export function ValidationDetail() {
       if (row.validation_score != null) {
         trackValidationCompleted(row.id, row.validation_score, row.idea_industry ?? '', tier);
       }
+      trackTelemetryEvent({
+        event_name: 'deliverable_viewed',
+        context: {
+          tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+          action_taken: 'viewed_validation_report',
+        },
+      });
 
       // Cargar agent log si existe (flujo Premium)
       const { data: log } = await supabase
@@ -1469,6 +1478,47 @@ export function ValidationDetail() {
 
         </div>
       </div>
+
+      {/* Inline report feedback — Mom Test */}
+      {data && (
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pb-6">
+          {!reportFeedback ? (
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 shadow-sm">
+              <p className="text-xs text-gray-500 dark:text-[#8B8AA0] flex-1 leading-snug">
+                Para refinar nuestro RAG: ¿Tuviste que corregir algún dato de este reporte?
+              </p>
+              <div className="flex gap-2 flex-wrap shrink-0">
+                {([
+                  { label: 'Sí, la TAM', value: 'corrigió TAM' },
+                  { label: 'Sí, los competidores', value: 'corrigió competidores' },
+                  { label: 'Estaba listo para usar', value: 'listo para usar' },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setReportFeedback(opt.value);
+                      trackTelemetryEvent({
+                        event_name: 'micro_feedback',
+                        context: {
+                          tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+                          action_taken: opt.value,
+                        },
+                      });
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-[#C4C4D4] rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-center text-gray-400 dark:text-[#4A495E]">
+              ¡Gracias! Tu feedback mejora nuestros datos.
+            </p>
+          )}
+        </div>
+      )}
 
       <Footer />
 

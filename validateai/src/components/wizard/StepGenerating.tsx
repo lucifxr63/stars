@@ -5,6 +5,7 @@ import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
 import { toast } from 'sonner';
 import { trackWizardStep, trackValidationCompleted } from '@/hooks/useAnalytics';
+import { trackTelemetryEvent } from '@/lib/telemetry';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type GenerationStatus = 'pending' | 'loading' | 'success' | 'error';
@@ -72,13 +73,76 @@ function PremiumTerminal() {
   );
 }
 
+// ── Micro-feedback (The Mom Test) ─────────────────────────────────────────────
+
+const MF_KEY = 'validateai_mf_generating_v1';
+
+const MICRO_OPTIONS = [
+  { label: 'Con Excel / Sheets', value: 'Con Excel o Sheets' },
+  { label: 'Hablando con clientes', value: 'Hablando con potenciales clientes' },
+  { label: 'No las validaba', value: 'No validaba ideas antes' },
+  { label: 'Otras herramientas', value: 'Con otras herramientas digitales' },
+] as const;
+
+function MicroFeedbackPanel({ tier }: { tier: string }) {
+  const [visible, setVisible] = useState(false);
+  const [answered, setAnswered] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem(MF_KEY)) return;
+    const t = setTimeout(() => setVisible(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleAnswer = (value: string) => {
+    setAnswered(true);
+    localStorage.setItem(MF_KEY, '1');
+    trackTelemetryEvent({
+      event_name: 'micro_feedback',
+      context: {
+        tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+        action_taken: value,
+      },
+    });
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl space-y-3">
+      {!answered ? (
+        <>
+          <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+            Mientras esperamos — ¿cómo validabas ideas antes de usar esta herramienta?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {MICRO_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleAnswer(opt.value)}
+                className="px-3 py-1.5 text-xs font-semibold bg-white dark:bg-[#12121A] border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium">
+          ¡Gracias! Tu respuesta mejora ValidateAI.
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function StepGenerating() {
   const navigate = useNavigate();
   const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, validationMode,
           setPremiumResult, setAgentLogId } = useValidationStore();
-  const { isPro: isPremium } = useUserTier();
+  const { isPro: isPremium, tier } = useUserTier();
   const [tasks, setTasks] = useState<GenerationTask[]>([
     { id: 'summary', label: 'Evaluando viabilidad e idea...', status: 'pending', type: 'summary' },
     { id: 'market', label: 'Calculando tamaño de mercado...', status: 'pending', type: 'market_sizing' },
@@ -391,6 +455,9 @@ export function StepGenerating() {
           </div>
         ))}
       </div>
+
+      {/* Micro-feedback The Mom Test */}
+      <MicroFeedbackPanel tier={tier ?? 'free'} />
 
       {/* Preview skeleton del reporte final */}
       {progressPct < 100 && (
