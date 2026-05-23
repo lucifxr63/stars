@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AlertTriangle, Target, ClipboardList, TrendingUp, Shield, Gauge, Brain, Rocket, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import { EmptyStateAI } from '@/components/shared/EmptyStateAI';
 
 interface PlaybookAnalysis {
   harsh_truth: string;
@@ -12,6 +13,7 @@ interface PlaybookAnalysis {
   product_ai_strategy?: string;
   founder_bias_warning?: string;
   viability_score: number;
+  _fallo_elegante?: boolean;
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -64,6 +66,14 @@ function AccordionSection({
 
 export function PlaybookAnalysisCard({ data }: { data: PlaybookAnalysis }) {
   if (!data) return null;
+  if (data._fallo_elegante) {
+    return (
+      <EmptyStateAI
+        title="Validación Pionera"
+        description="Tu idea opera en un espacio tan emergente que nuestras fuentes verificadas aún no lo cubren. Procede con entrevistas cualitativas directas (Mom Test) para construir tu propio corpus de validación."
+      />
+    );
+  }
   return (
     <div className="space-y-4">
       {/* Header score */}

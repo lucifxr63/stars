@@ -269,6 +269,7 @@ export interface PlaybookAnalysis {
   product_ai_strategy: string;
   founder_bias_warning: string;
   viability_score: number;
+  _fallo_elegante?: boolean;
 }
 
 // ─── DUE DILIGENCE ───────────────────────────────────────────────────────────
