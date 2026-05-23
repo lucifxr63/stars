@@ -1,47 +1,94 @@
-# Estado Actual del Sistema: ValidateAI V3 (Mayo 2026)
+# Estado Actual: ValidateAI V3 — Mayo 2026
 
-Este documento resume el estado arquitectónico, funcional y de cumplimiento (compliance) de la plataforma ValidateAI tras la finalización del sprint de actualización (Fases 1 a 5).
-
----
-
-## 1. Compliance y Seguridad Legal (Fase 1)
-Se blindó la plataforma para cumplir estrictamente con la **Ley 21.719** (Protección de Datos Personales en Chile).
-* **Frontend:** Se integró un `ConsentModal.tsx` de carácter bloqueante. Si el usuario no ha aceptado los términos en la sesión actual o en la base de datos, no puede interactuar con los análisis de la IA.
-* **Base de Datos:** Se creó la tabla inmutable `consent_logs` con políticas RLS de solo inserción.
-* **Backend:** Todas las Edge Functions principales (`ai-validate`, `market-analyze`) cuentan con un middleware (Guard) que consulta `consent_logs`. Si el usuario no tiene registro de consentimiento explícito, la API corta la ejecución devolviendo un error HTTP `403 Forbidden`.
-
-## 2. Resiliencia B2G y Paralelismo (Fase 2)
-Se refactorizó el pipeline de análisis de mercado para garantizar alta disponibilidad incluso si las fuentes del gobierno fallan.
-* **Arquitectura:** El fetch síncrono antiguo fue reemplazado por `Promise.allSettled()`.
-* **Fuentes Integradas:** 
-  * Banco Central de Chile (BDE)
-  * Instituto Nacional de Estadísticas (INE)
-  * Mercado Público (Licitaciones)
-  * API Chile Abierto (Datos comunales y poblacionales)
-* **Manejo de Errores:** Si una API externa se cae o excede el timeout, el sistema no colapsa. En su lugar, el error se captura en un array `dataWarnings[]`, el cual es inyectado al Mega-Prompt para que Claude 3.5 Sonnet adapte su veredicto (RAG adaptativo).
-
-## 3. Arquitectura Asíncrona (Event-Driven) para Webhooks (Fase 3)
-La extracción de antecedentes legales, marcas y cuentas bancarias es lenta por naturaleza, por lo que se migró de un modelo bloqueante a uno asíncrono.
-* **Supabase `temp_context`:** Se creó una tabla dedicada como almacén temporal de datos JSON provenientes de Webhooks. Es accesible solo por el `service_role`.
-* **Fintoc (Open Banking):** Edge Functions `fintoc-link` (creación de sesión) y `fintoc-webhook` (recepción de transacciones).
-* **PJUD e INAPI:** Edge Function `webhook-pjud` asegurada mediante firmas HMAC-SHA256 para ingestar causas judiciales y registros de marcas comerciales.
-
-## 4. Motor Analítico RAG estilo Paul Graham (Fase 4)
-Se consolidó la inteligencia de evaluación (Due Diligence Score) emulando el rigor de un fondo de Venture Capital.
-* **Edge Function `assemble-mega-prompt`:** Función que compila la idea base + datos financieros (Fintoc) + antecedentes (PJUD/INAPI) desde `temp_context`.
-* **Determinismo (Temperature = 0):** El Mega-Prompt es enviado a GPT-4o con una temperatura de `0`, asegurando que las decisiones de inversión (Scores, Red Flags) sean 100% basadas en datos (compliance) sin alucinaciones.
-* **UI/UX (Bento Box):** Se actualizó `ValidationDetail.tsx` con un estado de *"Espera Activa"* (Skeleton loaders animados y spinners) mientras se ensamblan los contextos, culminando en la tarjeta `DueDiligenceScoreCard`.
-
-## 5. KYC Biométrico / Validación de Identidad (Fase 5)
-Se introdujo una barrera de fricción controlada para evitar bots y asegurar cumplimiento AML (Anti-Money Laundering).
-* **Bloqueo Global (`ProtectedLayout.tsx`):** Un guardia de estado intercepta todas las rutas protegidas de la aplicación.
-* **KycModal:** Un modal que solicita el RUT del usuario en caso de que su cuenta no esté verificada (`kyc_status != 'verified'`).
-* **Algoritmo Módulo 11 (`validate-rut`):** Edge Function que procesa el ingreso, verifica el dígito verificador matemáticamente, y si es válido, usa privilegios elevados para actualizar la tabla `profiles`. (Posible futura integración a Full Biometric con Didit vía SDK usando la misma lógica de estados).
+> Fuente de verdad del estado de implementación. Actualizar al cerrar cada sprint.
+> Plan completo: `docs/VALIDATEAI_V3_NEW.MD` | Guía técnica: `validateai/CLAUDE.md`
 
 ---
 
-## Tareas Pendientes o "Próximos Pasos"
-El sistema actualmente se encuentra estable y todas sus funciones nativas desplegadas, pero requiere de las siguientes validaciones manuales por parte de DevOps / Admin:
-1. Asegurar que las variables de entorno de Supabase incluyan las claves productivas actualizadas (`FINTOC_SECRET_KEY`, `PJUD_WEBHOOK_SECRET`, `OPENAI_API_KEY`, etc.).
-2. Confirmar que la última migración de base de datos SQL (`kyc_status` y `rut`) haya sido ejecutada correctamente en el dashboard web de Supabase de producción, debido a problemas de sincronización en el historial CLI.
-3. Asegurar que la configuración CORS de las Edge Functions (`ALLOWED_ORIGINS`) incluya los dominios finales de producción.
+## Estado general
+
+| Dimensión | Estado |
+|-----------|--------|
+| Producción | ✅ Live — https://validateai-mu.vercel.app |
+| Usuarios de pago | ❌ 0 — pagos no activados aún |
+| Rate limiting | ✅ Sprint 1 implementado (anonymize-idea gate) |
+| Tier premium | ✅ Restaurado (4 tiers activos) |
+| Pagos | ⚠️ LemonSqueezy configurado, webhook pendiente |
+| Compliance Ley 21.719 | ✅ ConsentModal + consent_logs + anonymize-idea |
+| KYC / RUT | ✅ validate-rut + KycModal activos |
+
+---
+
+## Sprint 1 — COMPLETADO (22 mayo 2026)
+
+**Fixes críticos:**
+
+| # | Fix | Archivo(s) |
+|---|-----|-----------|
+| 1 | `training_data` sin `user_id` — rate limit nunca bloqueaba | `migrations/20260522_training_data_user_id.sql` |
+| 2 | `anonymize-idea` no insertaba `user_id` en el row | `functions/anonymize-idea/index.ts` |
+| 3 | Tier `premium` eliminado por migración anterior | `migrations/20260522_restore_premium_tier.sql` |
+| 4 | `useUserTier.ts` no conocía el tier `premium` | `src/hooks/useUserTier.ts` |
+
+**Features entregadas:**
+
+| # | Feature | Detalle |
+|---|---------|---------|
+| 5 | Toast en `useTrainingData.ts` | Muestra `toast.warning` cuando `anonymize-idea` devuelve 429 o `rate_limit` |
+| 6 | `MONTHLY_LIMITS` para premium en `ai-validate` | `premium: { total: 999, expensive: 999 }` |
+
+---
+
+## Sprint 2 — PENDIENTE
+
+| Tarea | Prioridad | Notas |
+|-------|-----------|-------|
+| LemonSqueezy webhook → actualiza `profiles.tier` | 🔴 Bloqueante | Ver `SETUP_LEMONSQUEEZY.md`. Function `lemonsqueezy-webhook` existe, falta activar |
+| `LockedSection` usar `isPremium` para secciones exclusivas premium | 🟡 Alta | `isPremium` ya disponible en `useUserTier.ts` |
+| `Pricing.tsx` mostrar 4to tier (premium $29.990 CLP) | 🟡 Alta | Tier restaurado en BD, falta UI |
+| Rate limiting enforcement en `ai-validate` (guard al inicio) | 🔴 Bloqueante | Sin esto usuarios free queman presupuesto en `competitive_analysis` + `market_sizing` |
+
+---
+
+## Sprint 3 — PLANIFICADO
+
+| Tarea | Notas |
+|-------|-------|
+| Gobernanza / Cap Table (`governance_assessment`) | Nuevo prompt type + componente `GovernanceCard` |
+| Fundraising Roadmap (`fundraising_roadmap`) | SAFE/convertible, fondos LatAm |
+| Tab "Inversión" en `ValidationDetail.tsx` | Agrupa los 2 análisis anteriores |
+| `TractionTracker` | Tabla `traction_events`, ya existe en BD |
+
+---
+
+## Integraciones planificadas (stubs listos, no activadas)
+
+Estas edge functions existen como stubs. Se activan en Sprint 3+:
+
+| Función | Propósito | Bloqueador |
+|---------|-----------|-----------|
+| `fintoc-link` / `fintoc-webhook` | Open Banking — contexto financiero del fundador | Requiere cuenta Fintoc + secrets |
+| `webhook-pjud` | Antecedentes judiciales y marcas (INAPI) | Requiere acuerdo PJUD + HMAC secret |
+| `inapi-fetch` | Marcas comerciales activas | Requiere API key INAPI |
+| `sync-economic-data` | Sincronización periódica CMF/SII | Mover API keys hardcodeadas a `Deno.env` primero |
+| `sii-proxy` | Verificación empresa en SII | Requiere SII_API_KEY en secrets |
+| `assemble-mega-prompt` | Ensambla contexto Fintoc+PJUD+INAPI para due diligence | Depende de los 3 anteriores |
+
+---
+
+## Arquitectura de datos — tablas activas
+
+| Tabla | Uso | Estado |
+|-------|-----|--------|
+| `profiles` | Auth + tier del usuario | ✅ |
+| `validations` | Sesiones del wizard | ✅ |
+| `training_data` | Corpus anonimizado (fine-tune futuro) | ✅ con `user_id` |
+| `consent_logs` | Inmutable — registro consentimiento Ley 21.719 | ✅ |
+| `ai_interactions` | Log de llamadas a Anthropic/OpenAI | ✅ |
+| `cached_analyses` | Caché semántico de prompts pesados | ✅ |
+| `competitors` | Vectores RAG competidores | ✅ |
+| `mentors` | Matching de mentores | ✅ |
+| `market_ai_insights` | Caché análisis de mercado | ✅ |
+| `temp_context` | Almacén temporal webhooks (Fintoc/PJUD) | ✅ listo para Sprint 3+ |
+| `traction_events` | Hitos del emprendedor | ✅ tabla lista, UI pendiente |
+| `email_logs` | Retención por email | ⚠️ tabla lista, cron sin activar |

@@ -1161,15 +1161,16 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    const userTier = (['free', 'basic', 'pro'].includes(profile?.tier ?? ''))
-      ? (profile!.tier as 'free' | 'basic' | 'pro')
+    const userTier = (['free', 'basic', 'pro', 'premium'].includes(profile?.tier ?? ''))
+      ? (profile!.tier as 'free' | 'basic' | 'pro' | 'premium')
       : 'free';
 
     const EXPENSIVE_TYPES = new Set(['competitive_analysis', 'market_sizing', 'market_signals']);
     const MONTHLY_LIMITS = {
-      free:  { total: 3,  expensive: 0  },
-      basic: { total: 15, expensive: 5  },
-      pro:   { total: 50, expensive: 50 },
+      free:    { total: 3,   expensive: 0   },
+      basic:   { total: 15,  expensive: 5   },
+      pro:     { total: 50,  expensive: 50  },
+      premium: { total: 999, expensive: 999 },
     };
     const limits = MONTHLY_LIMITS[userTier];
 
@@ -1304,7 +1305,8 @@ serve(async (req) => {
     }
 
     // Llamada AI con routing dual
-    const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride, userTier);
+    const tierForAI = (userTier === 'premium' ? 'pro' : userTier) as 'free' | 'basic' | 'pro';
+    const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride, tierForAI);
 
     // Guardar en caché (no bloqueante)
     if (ideaCacheKey && cacheableTypes.includes(prompt_type)) {

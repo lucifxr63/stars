@@ -121,6 +121,7 @@ Tu tarea es leer la descripción de una startup y reescribirla en 2-3 frases de 
     const { error: insertError } = await supabaseAdmin
       .from('training_data')
       .insert({
+        user_id: user.id,
         industry: validation.idea_industry,
         geography: validation.target_country,
         idea_summary: anonymizedSummary,

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -26,11 +27,18 @@ export function useTrainingData() {
       if (!profile?.training_consent) return;
 
       // Llamar a la edge function de anonimización
-      await supabase.functions.invoke('anonymize-idea', {
+      const { error: fnError, data: fnData } = await supabase.functions.invoke('anonymize-idea', {
         body: { validation_id: validationId },
       });
+
+      if (fnError || fnData?.error === 'rate_limit') {
+        toast.warning('Límite diario alcanzado', {
+          description: 'Has alcanzado el límite de 5 análisis diarios. Vuelve mañana o mejora tu plan.',
+          duration: 6000,
+        });
+      }
     } catch {
-      // silencioso — no interrumpir el flujo si falla
+      // silencioso — no interrumpir el flujo principal si falla la anonimización
     } finally {
       setSaving(false);
     }
