@@ -755,6 +755,65 @@ async function retrieveRagPlaybooks(
     .join('\n\n---\n\n');
 }
 
+// ── GraphRAG: entity extraction + hybrid retrieval ───────────────────────────
+
+// Maps keyword patterns to known document_titles in knowledge_nodes
+const ENTITY_MAP: [RegExp, string][] = [
+  [/fintech|cme?f|21\.521|ley de datos|21\.719|datos personales|pagos digit|wallet|credito digital|banca/i,
+    'Ley Fintech 21.521, Ley de Datos 21.719 y Estructura Societaria'],
+  [/corfo|fondef|sii|tributari|regimen tributario|financiamiento estatal|subsidio|incentivo/i,
+    'Financiamiento Estatal y Clasificación Tributaria SII'],
+  [/playbook|validaci[oó]n|lean|mom test|jtbd|jobs.to.be.done|prototipo|hipot[eé]sis/i,
+    'Playbook de Validacion de Ideas'],
+  [/unit economics|ltv|cac|churn|mrr|arr|saas metrics|benchmark|margen|payback/i,
+    'Unit Economics y Benchmarks B2B SaaS'],
+  [/no.?code|low.?code|bubble|webflow|flutterflow|softr|stack tecnol|plataforma sin c[oó]digo/i,
+    'Tech Stack No-Code y Low-Code'],
+  [/gtm|go.to.market|ventas|growth|crecimiento|plg|product.led|spin selling|design partner/i,
+    'Growth GTM y Ventas'],
+  [/blue ocean|ia|inteligencia artificial|errc|producto.ia|ai product|diferenciaci[oó]n/i,
+    'Producto IA y Blue Ocean Strategy'],
+  [/sesgo|psicolog|fundador|confirmation bias|dunning.kruger|ilusión de control|autopsia/i,
+    'Psicologia y Sesgos del Founder'],
+  [/fundraising|inversi[oó]n|vc|venture capital|angel|pre.seed|seed|serie a|pitch deck|valuaci[oó]n|ecosistema chileno/i,
+    'Fundraising'],
+];
+
+function extractVaultEntities(queryText: string): string[] {
+  return ENTITY_MAP
+    .filter(([pattern]) => pattern.test(queryText))
+    .map(([, title]) => title);
+}
+
+async function retrieveHybridGraphRAG(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  queryText: string,
+  matchCount = 6,
+): Promise<string> {
+  const embedding = await generateEmbedding(queryText);
+  if (!embedding) return '';
+
+  const entities = extractVaultEntities(queryText);
+
+  const { data, error } = await supabase.rpc('search_hybrid_graphrag', {
+    query_embedding: embedding,
+    extracted_entities: entities,
+    match_threshold: 0.75,
+    match_count: matchCount,
+  });
+
+  if (error) {
+    console.error('[graphrag] RPC error:', error.message);
+    return '';
+  }
+  if (!data || data.length === 0) return '';
+
+  return (data as Array<{ source_type: string; document_title: string; content: string }>)
+    .map((chunk) => `## [${chunk.source_type}] ${chunk.document_title}\n${chunk.content}`)
+    .join('\n\n---\n\n');
+}
+
 const PLAYBOOK_MASTER_PROMPT = (ragChunks: string) => `# SYSTEM ROLE
 Actúa como un Venture Builder experto, un Inversor de Capital de Riesgo (VC) implacable y un especialista legal/financiero en el ecosistema de Startups de LatAm (enfocado en Chile). Tu objetivo NO es complacer al emprendedor, sino evitar que construya algo que nadie quiere (riesgo del 42% según CB Insights).
 
@@ -1244,13 +1303,16 @@ serve(async (req) => {
       : '';
 
     if (ragQueryText && RAG_TAGS_BY_PROMPT[prompt_type]) {
-      const ragChunks = await retrieveRagPlaybooks(supabase, ragQueryText, prompt_type);
+      // playbook_analysis usa el motor híbrido GraphRAG (grafo + vector)
+      // El resto de prompts sigue usando search_rag_playbooks (tenant_vectors)
+      const ragChunks = prompt_type === 'playbook_analysis'
+        ? await retrieveHybridGraphRAG(supabase, ragQueryText)
+        : await retrieveRagPlaybooks(supabase, ragQueryText, prompt_type);
+
       if (ragChunks) {
         if (prompt_type === 'playbook_analysis') {
-          // Para playbook_analysis el prompt completo es el Maestro con RAG incrustado
           ragSystemOverride = PLAYBOOK_MASTER_PROMPT(ragChunks);
         } else {
-          // Para otros tipos, inyectar el contexto al final del prompt actual
           const basePrompt = SYSTEM_PROMPTS[prompt_type];
           ragSystemOverride = `${basePrompt}\n\n# CONTEXTO METODOLÓGICO ADICIONAL (RAG)\n${ragChunks}`;
         }

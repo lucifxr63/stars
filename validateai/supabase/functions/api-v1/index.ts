@@ -5,9 +5,10 @@ import { usageMiddleware } from './middleware/usage.ts'
 import { rateLimitMiddleware } from './middleware/ratelimit.ts'
 import { ragQueryHandler } from './routes/rag.ts'
 import { economicDataHandler } from './routes/data.ts'
-import { ingestTextHandler, ingestFileHandler } from './routes/ingest.ts'
+import { ingestTextHandler, ingestFileHandler, ingestVaultHandler } from './routes/ingest.ts'
 import { createWebhookHandler, listWebhooksHandler, deleteWebhookHandler } from './routes/webhooks.ts'
 import { validateHandler } from './routes/validate.ts'
+import { servicesHealthHandler } from './routes/health.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +26,7 @@ app.use('*', cors({
 
 // Health check
 app.get('/', (c) => c.json({ status: 'ok', service: 'RaaS API Gateway v1' }))
+app.get('/health/services', servicesHealthHandler)
 
 // Debug: echo the path the worker actually receives
 app.get('/debug', (c) => c.json({ pathname: new URL(c.req.url).pathname }))
@@ -40,6 +42,8 @@ app.post('/api/v1/rag/query', ragQueryHandler)
 app.get('/api/v1/data/economy', economicDataHandler)
 app.post('/api/v1/rag/ingest/text', ingestTextHandler)
 app.post('/api/v1/rag/ingest/file', ingestFileHandler)
+// Vault ingest: called by GitHub Actions — bypasses RaaS auth, uses service role key
+app.post('/vault/ingest', ingestVaultHandler)
 app.post('/api/v1/webhooks', createWebhookHandler)
 app.get('/api/v1/webhooks', listWebhooksHandler)
 app.delete('/api/v1/webhooks/:id', deleteWebhookHandler)

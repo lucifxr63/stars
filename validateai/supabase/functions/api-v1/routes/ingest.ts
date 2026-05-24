@@ -1,7 +1,11 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getSupabase } from '../middleware/auth.ts'
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const LLAMAPARSE_API_KEY = Deno.env.get('LLAMAPARSE_API_KEY')
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const VAULT_INGEST_SECRET = Deno.env.get('VAULT_INGEST_SECRET')
 
 const EMBEDDING_MODEL = 'text-embedding-3-small'
 const EMBEDDING_DIMENSIONS = 1536
@@ -253,5 +257,153 @@ export const ingestFileHandler = async (c: any) => {
     // Map specific errors to status codes
     const status = err.message.includes('Timeout') ? 504 : 503
     return c.json({ error: 'Failed to process file ingestion', details: err.message }, status)
+  }
+}
+
+// ── Types for Obsidian Vault payload ──────────────────────────────────────────
+interface VaultNode {
+  document_title: string
+  header_path: string
+  content: string
+  category: 'normativa' | 'metodologia' | 'mercado'
+  tags: string[]
+  source_file: string
+}
+
+interface VaultEdge {
+  source_title: string
+  target_title: string
+  relation_type: string
+}
+
+interface VaultPayload {
+  nodes: VaultNode[]
+  edges: VaultEdge[]
+}
+
+/**
+ * Endpoint: POST /vault/ingest
+ * Called by GitHub Actions from validateai-knowledge-vault on every push to main.
+ * Auth: Supabase service role key as Bearer token (no RaaS API key needed).
+ */
+export const ingestVaultHandler = async (c: any) => {
+  const authHeader = c.req.header('Authorization') ?? ''
+  const expectedBearer = VAULT_INGEST_SECRET
+    ? `Bearer ${VAULT_INGEST_SECRET}`
+    : `Bearer ${SUPABASE_SERVICE_KEY}`
+  if (authHeader !== expectedBearer) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+
+  if (!OPENAI_API_KEY) {
+    return c.json({ error: 'OPENAI_API_KEY not configured' }, 503)
+  }
+
+  let payload: VaultPayload
+  try {
+    payload = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON payload' }, 400)
+  }
+
+  const { nodes, edges } = payload
+  if (!Array.isArray(nodes) || nodes.length === 0) {
+    return c.json({ error: 'Expected non-empty "nodes" array' }, 400)
+  }
+
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    // 1. Generate embeddings in batches of 20 (OpenAI limit awareness)
+    const BATCH = 20
+    const embeddings: number[][] = []
+    for (let i = 0; i < nodes.length; i += BATCH) {
+      const batch = nodes.slice(i, i + BATCH).map(n =>
+        `${n.document_title} — ${n.header_path}\n\n${n.content}`.slice(0, 8000)
+      )
+      const res = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
+        body: JSON.stringify({ input: batch, model: EMBEDDING_MODEL }),
+      })
+      if (!res.ok) throw new Error(`OpenAI error: ${await res.text()}`)
+      const data = await res.json()
+      embeddings.push(...data.data.map((d: any) => d.embedding))
+    }
+
+    // 2. Build rows for knowledge_base
+    // WikiLinks from edges stored as tags: "wikilink:TargetTitle"
+    const wikilinksByTitle = new Map<string, string[]>()
+    for (const edge of (edges ?? [])) {
+      const existing = wikilinksByTitle.get(edge.source_title) ?? []
+      existing.push(`wikilink:${edge.target_title}`)
+      wikilinksByTitle.set(edge.source_title, existing)
+    }
+
+    const rows = nodes.map((node, i) => ({
+      title: `${node.document_title} — ${node.header_path}`,
+      source: 'obsidian_vault',
+      category: node.category,
+      content: node.content,
+      tags: [...(node.tags ?? []), ...(wikilinksByTitle.get(node.document_title) ?? [])],
+      embedding: embeddings[i],
+    }))
+
+    // 3. Delete stale records for these document titles (idempotent upsert pattern)
+    const docTitles = [...new Set(nodes.map(n => n.document_title))]
+    for (const title of docTitles) {
+      await supabase
+        .from('knowledge_base')
+        .delete()
+        .eq('source', 'obsidian_vault')
+        .like('title', `${title}%`)
+      await supabase
+        .from('knowledge_nodes')
+        .delete()
+        .eq('document_title', title)
+      await supabase
+        .from('knowledge_edges')
+        .delete()
+        .eq('source_title', title)
+    }
+
+    // 4. Insert into knowledge_base (backward compat)
+    const { error: insertErr } = await supabase.from('knowledge_base').insert(rows)
+    if (insertErr) throw new Error(`DB insert error: ${insertErr.message}`)
+
+    // 5. Insert into knowledge_nodes + knowledge_edges (GraphRAG layer)
+    const nodeRows = nodes.map((node, i) => ({
+      document_title: node.document_title,
+      header_path: node.header_path || 'Introduccion',
+      content: node.content,
+      category: node.category,
+      tags: node.tags ?? [],
+      embedding: embeddings[i],
+    }))
+    const { error: nodeErr } = await supabase.from('knowledge_nodes').insert(nodeRows)
+    if (nodeErr) console.warn('[vault-ingest] knowledge_nodes insert warn:', nodeErr.message)
+
+    const edgeRows = (edges ?? []).map(e => ({
+      source_title: e.source_title,
+      target_title: e.target_title,
+      relation_type: e.relation_type || 'MENTIONS',
+    }))
+    if (edgeRows.length > 0) {
+      const { error: edgeErr } = await supabase.from('knowledge_edges').insert(edgeRows)
+      if (edgeErr) console.warn('[vault-ingest] knowledge_edges insert warn:', edgeErr.message)
+    }
+
+    console.log(`[vault-ingest] ${rows.length} nodes, ${edgeRows.length} edges from ${docTitles.length} documents`)
+
+    return c.json({
+      success: true,
+      nodes_upserted: rows.length,
+      edges_recorded: edgeRows.length,
+      documents: docTitles.length,
+    })
+
+  } catch (err: any) {
+    console.error('[vault-ingest] Error:', err.message)
+    return c.json({ error: 'Vault ingestion failed', details: err.message }, 500)
   }
 }
