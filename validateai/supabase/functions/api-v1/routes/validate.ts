@@ -8,8 +8,6 @@ import {
 
 const ANTHROPIC_API_KEY = () => Deno.env.get('ANTHROPIC_API_KEY')!;
 const OPENAI_API_KEY = () => Deno.env.get('OPENAI_API_KEY')!;
-const CMF_API_KEY = '2a1b3c4d5e6f7g8h'; // override with env in production
-
 function getSupabase() {
   return createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -31,18 +29,38 @@ async function generateEmbedding(text: string): Promise<number[]> {
   return data.data[0].embedding as number[];
 }
 
+// Lee UF desde caché (economic_knowledge). Fallback a CMF API si el cron no ha corrido aún
+// o si el dato tiene más de 2 días (degradación segura en caso de fallo del cron).
 async function fetchCurrentUf(): Promise<{ valor: number; fecha: string } | null> {
   try {
-    const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    const url = `https://api.cmfchile.cl/api-sbifv3/recursos_api/uf/${year}/${month}/dias?apikey=${CMF_API_KEY}&formato=json`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    const supabase = getSupabase();
+    const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data } = await supabase
+      .from('economic_knowledge')
+      .select('data_json, updated_at')
+      .eq('provider', 'CMF')
+      .eq('indicator', 'uf_diario')
+      .gt('updated_at', cutoff)
+      .maybeSingle();
+
+    if (data?.data_json) {
+      const d = data.data_json as { valor: number; fecha: string };
+      return { valor: d.valor, fecha: d.fecha };
+    }
+
+    // Fallback directo a CMF si la caché está vacía o vencida (endpoint público, sin apikey)
+    const res = await fetch('https://api.cmfchile.cl/api-sbifv3/recursos_api/uf?formato=json', {
+      signal: AbortSignal.timeout(6000),
+    });
     if (!res.ok) return null;
     const raw = await res.json();
     const uf = raw?.UFs?.[0];
     if (!uf) return null;
-    return { valor: parseFloat(uf.Valor.replace(',', '.')), fecha: uf.Fecha };
+    return {
+      valor: parseFloat(String(uf.Valor).replace('.', '').replace(',', '.')),
+      fecha: uf.Fecha,
+    };
   } catch {
     return null;
   }
@@ -64,26 +82,6 @@ async function fetchSiiEmpresa(rut: string): Promise<Record<string, unknown> | n
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchInapiRisk(brandName: string): Promise<{ risk_level: string; observation: string } | null> {
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const res = await fetch(`${supabaseUrl}/functions/v1/inapi-fetch`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-      },
-      body: JSON.stringify({ brand_name: brandName, validation_id: 'raas-internal' }),
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data ? { risk_level: json.data.risk_level, observation: json.data.observation } : null;
   } catch {
     return null;
   }
@@ -121,7 +119,7 @@ async function checkSemanticCache(
 ): Promise<RaasResponse | null> {
   const { data, error } = await supabase.rpc('search_cached_analyses', {
     query_embedding: embedding,
-    match_threshold: 0.92,
+    match_threshold: 0.88,
     match_count: 1,
   }).maybeSingle();
   if (error || !data) return null;
@@ -190,7 +188,7 @@ export const validateHandler = async (c: any) => {
     // 1. Generate embedding for semantic search + cache lookup
     const embedding = await generateEmbedding(`${idea_description} ${industry}`);
 
-    // 2. Check semantic cache (threshold 0.92 per plan)
+    // 2. Check semantic cache (threshold 0.88 — ajustado por resolución Mesa Directiva)
     const cached = await checkSemanticCache(supabase, embedding);
     if (cached) {
       c.set('tokens_used', 0);
@@ -198,17 +196,15 @@ export const validateHandler = async (c: any) => {
     }
 
     // 3. Parallel data fetching
-    const [ufData, siiData, inapiData, competitors, playbooks] = await Promise.allSettled([
+    const [ufData, siiData, competitors, playbooks] = await Promise.allSettled([
       fetchCurrentUf(),
       rut_empresa ? fetchSiiEmpresa(rut_empresa) : Promise.resolve(null),
-      fetchInapiRisk(idea_description.split(' ').slice(0, 3).join(' ')),
       searchCompetitors(supabase, embedding),
       searchPlaybooks(supabase, embedding),
     ]);
 
     const uf = ufData.status === 'fulfilled' ? ufData.value : null;
     const sii = siiData.status === 'fulfilled' ? siiData.value : null;
-    const inapi = inapiData.status === 'fulfilled' ? inapiData.value : null;
     const competitorList = competitors.status === 'fulfilled' ? competitors.value : [];
     const playbookFragments = playbooks.status === 'fulfilled' ? playbooks.value : [];
 
@@ -238,10 +234,6 @@ ${sii ? `### Estado SII (Empresa con RUT ${rut_empresa})
 ${uf ? `### CMF — Valor UF Actual
 - UF: $${uf.valor.toFixed(2)} CLP (al ${uf.fecha})
 - Usa este valor para calcular TAM/SAM en UF.` : '### CMF: No disponible. Usa UF ≈ 38.000 CLP como estimado conservador.'}
-
-${inapi ? `### INAPI — Disponibilidad de Marca
-- Riesgo: ${inapi.risk_level}
-- Observación: ${inapi.observation}` : '### INAPI: No consultado.'}
 
 ### PJUD: ${pjudStatus === 'pending_async_resolution' ? 'Consulta asíncrona en proceso.' : 'Sin causas activas.'}
 
@@ -315,7 +307,6 @@ ${playbookFragments.map((p: any) => `### ${p.title}\n${p.content.slice(0, 500)}.
         uf_value_clp: uf?.valor,
         uf_date: uf?.fecha,
         sii_status: (sii as any)?.estado_tributario ?? undefined,
-        inapi_risk: inapi?.risk_level ?? undefined,
         pjud_status: pjudStatus,
         rag_competitors_used: competitorList.length,
         cached: false,

@@ -856,7 +856,7 @@ async function checkAnalysisCache(
   if (!embedding) return null;
   const { data } = await supabase.rpc('search_cached_analyses', {
     query_embedding: embedding,
-    match_threshold: 0.92,
+    match_threshold: 0.88,
     match_count: 1,
     filter_type: promptType,
   });

@@ -4,8 +4,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-const CMF_API_KEY = 'e2010e01e27a9d44779a8dc9a1bd2c00887227c7';
-const SII_API_KEY = '6beb0b4a869028e8031f7862a039dede5f759bc8';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,8 +13,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
     // Get parameters from request to know what to sync
@@ -26,7 +23,7 @@ serve(async (req) => {
     let contextText = '';
 
     if (provider === 'CMF') {
-      const url = `https://api.cmfchile.cl/api-sbifv3/recursos_api/${indicator}?apikey=${CMF_API_KEY}&formato=json`;
+      const url = `https://api.cmfchile.cl/api-sbifv3/recursos_api/${indicator}?apikey=${Deno.env.get('CMF_KEY')}&formato=json`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`CMF Error: ${res.statusText}`);
       dataJson = await res.json();
@@ -46,7 +43,7 @@ serve(async (req) => {
       const url = `https://app.apigateway.cl${endpointPath}`;
       const res = await fetch(url, {
         headers: {
-          'Authorization': `Token ${SII_API_KEY}`,
+          'Authorization': `Token ${Deno.env.get('SII_APIGATEWAY_KEY')}`,
           'Accept': 'application/json'
         }
       });

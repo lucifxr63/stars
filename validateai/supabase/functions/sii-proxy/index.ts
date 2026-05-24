@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { SiiEmpresaSchema, RutSchema } from '../shared-schemas/mod.ts';
 
@@ -7,17 +8,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// SII API Gateway key (from sync-economic-data precedent)
-const SII_API_KEY = Deno.env.get('SII_API_KEY') ?? '6beb0b4a869028e8031f7862a039dede5f759bc8';
+const SII_API_KEY = Deno.env.get('SII_APIGATEWAY_KEY')!
+
+const CACHE_TTL_DAYS = 7;
 
 const RequestSchema = z.object({
   rut: RutSchema,
 });
 
-/**
- * Fetches empresa info from SII API Gateway.
- * Returns a normalized SiiEmpresa object with fallback on API failure.
- */
+function getSupabase() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+}
+
+async function getCachedEmpresa(rut: string) {
+  const supabase = getSupabase();
+  const cutoff = new Date(Date.now() - CACHE_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data } = await supabase
+    .from('sii_empresa_cache')
+    .select('data, cached_at')
+    .eq('rut', rut)
+    .gt('cached_at', cutoff)
+    .maybeSingle();
+
+  return data ? SiiEmpresaSchema.parse(data.data) : null;
+}
+
+async function setCachedEmpresa(rut: string, empresa: ReturnType<typeof SiiEmpresaSchema.parse>) {
+  const supabase = getSupabase();
+  await supabase
+    .from('sii_empresa_cache')
+    .upsert({ rut, data: empresa, cached_at: new Date().toISOString() }, { onConflict: 'rut' });
+}
+
 async function fetchSiiEmpresa(rut: string) {
   const rutClean = rut.replace(/\./g, '').replace('-', '');
 
@@ -33,12 +59,11 @@ async function fetchSiiEmpresa(rut: string) {
 
     if (!res.ok) {
       console.warn(`SII API returned ${res.status} for RUT ${rut}`);
-      return buildFallback(rut, 'unknown');
+      return buildFallback(rut);
     }
 
     const raw = await res.json();
 
-    // Normalize the API response to our schema
     const normalized = {
       rut,
       razon_social: raw.razon_social ?? raw.nombre ?? 'Desconocido',
@@ -55,7 +80,7 @@ async function fetchSiiEmpresa(rut: string) {
 
   } catch (err) {
     console.error('sii-proxy fetch error:', err);
-    return buildFallback(rut, 'unknown');
+    return buildFallback(rut);
   }
 }
 
@@ -68,13 +93,13 @@ function mapEstadoTributario(raw: string): 'Vigente' | 'Sin Inicio de Actividade
   return 'unknown';
 }
 
-function buildFallback(rut: string, estado: 'unknown') {
+function buildFallback(rut: string) {
   return SiiEmpresaSchema.parse({
     rut,
     razon_social: 'No disponible (API no respondió)',
     inicio_actividades: null,
     actividades_economicas: [],
-    estado_tributario: estado,
+    estado_tributario: 'unknown',
     anotaciones_vigentes: false,
   });
 }
@@ -95,9 +120,15 @@ serve(async (req) => {
       }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const empresa = await fetchSiiEmpresa(parsed.data.rut);
+    const rut = parsed.data.rut;
 
-    // Derive risk classification per US-01 acceptance criteria
+    // Intentar servir desde caché (TTL 7 días)
+    const cached = await getCachedEmpresa(rut);
+    const empresa = cached ?? await fetchSiiEmpresa(rut);
+
+    // Guardar en caché si vino de la API (fire and forget)
+    if (!cached) setCachedEmpresa(rut, empresa);
+
     const riesgoRegulatorio = empresa.estado_tributario === 'Sin Inicio de Actividades'
       ? 'Alto'
       : empresa.estado_tributario === 'Bloqueado'
@@ -111,6 +142,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       data: empresa,
+      cached: Boolean(cached),
       risk_classification: {
         nivel: riesgoRegulatorio,
         razon: riesgoRegulatorio === 'Alto'

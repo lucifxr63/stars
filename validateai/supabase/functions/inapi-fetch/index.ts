@@ -53,34 +53,14 @@ serve(async (req) => {
       });
     }
 
-    // Búsqueda en INAPI OpenData (Placeholder o llamada real si el endpoint es estable)
-    // En la realidad, INAPI Open Data ofrece un OData endpoint o descargas en bloque.
-    // Para la MVP, mockearemos la respuesta después de un delay simulando el scraper.
-    
-    // Simular un tiempo de respuesta de INAPI
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const mockInapiResponse = {
-      brand_searched: brand_name,
-      matches_found: Math.floor(Math.random() * 3),
-      similar_trademarks: [
-        { name: `${brand_name} Tech`, status: 'Registrada', class: 9 },
-        { name: `${brand_name} App`, status: 'En trámite', class: 42 }
-      ],
-      risk_level: 'medium',
-      observation: 'Existen marcas fonéticamente similares en la clase 9 y 42.'
-    };
-
-    // Almacenamos el resultado en temp_context para el motor RAG
-    await supabase.from('temp_context').insert({
-      user_id: user.id,
-      validation_id: validation_id,
-      source: 'inapi',
-      payload: mockInapiResponse,
-      status: 'processed'
-    });
-
-    return new Response(JSON.stringify({ success: true, data: mockInapiResponse }), {
+    // Integración INAPI deshabilitada temporalmente (mandato Mesa Directiva P0).
+    // Mostrar datos inventados a usuarios que toman decisiones de negocio es riesgo legal.
+    // Pendiente: implementar integración real vía OData en próximo sprint.
+    return new Response(JSON.stringify({
+      available: false,
+      reason: 'integration_pending',
+      message: 'La consulta de marcas INAPI estará disponible próximamente.',
+    }), {
       headers: { ...cors, 'Content-Type': 'application/json' }
     });
 

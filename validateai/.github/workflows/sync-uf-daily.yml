@@ -1,0 +1,26 @@
+name: Sync UF Daily
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 3 AM UTC = medianoche Chile (horario estándar)
+  workflow_dispatch:        # permite disparo manual desde GitHub Actions UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger cron-uf-daily edge function
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/cron-uf-daily" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          body=$(echo "$response" | head -n -1)
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Body: $body"
+          if [ "$status" != "200" ]; then
+            echo "Error: cron-uf-daily devolvió $status"
+            exit 1
+          fi
