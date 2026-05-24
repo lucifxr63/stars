@@ -716,7 +716,7 @@ async function retrieveRelevantCompetitors(
   if (!embedding) return [];
   const { data } = await supabase.rpc('search_competitors', {
     query_embedding: embedding,
-    match_threshold: 0.65,
+    match_threshold: 0.75,
     match_count: 6,
   });
   return data ?? [];
@@ -746,7 +746,7 @@ async function retrieveRagPlaybooks(
   const { data } = await supabase.rpc('search_rag_playbooks', {
     query_embedding: embedding,
     filter_tags: tags,
-    match_threshold: 0.45,
+    match_threshold: 0.75,
     match_count: matchCount,
   });
   if (!data || data.length === 0) return '';
@@ -1254,6 +1254,28 @@ serve(async (req) => {
           const basePrompt = SYSTEM_PROMPTS[prompt_type];
           ragSystemOverride = `${basePrompt}\n\n# CONTEXTO METODOLÓGICO ADICIONAL (RAG)\n${ragChunks}`;
         }
+      } else if (prompt_type === 'playbook_analysis') {
+        // Ningún chunk superó el umbral 0.75 — degradación elegante sin llamar al LLM
+        const fallback = { _fallo_elegante: true };
+        if (validation_id) {
+          await supabase.from('validations').update({ playbook_analysis: fallback }).eq('id', validation_id);
+        }
+        // Audit log: registrar el fallo para monitoreo del threshold
+        supabase.from('ai_interactions').insert({
+          user_id: user.id,
+          validation_id,
+          step,
+          prompt_type,
+          input_data: { idea_description: context.idea_description, idea_industry: context.idea_industry },
+          output_data: { _fallo_elegante: true, _reason: 'no_rag_chunks_above_threshold_0.75' },
+          tokens_used: 0,
+          model: 'graceful_degradation',
+        }).then(({ error: logErr }) => {
+          if (logErr) console.warn('[fallback-log] Insert error:', logErr.message);
+        });
+        return new Response(JSON.stringify(fallback), {
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        });
       }
     }
 
