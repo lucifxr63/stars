@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
   Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
+  RefreshCw, Database, Brain, BarChart2, FileText, Globe, Server,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateApiKey, hashApiKey } from '@/utils/crypto';
@@ -56,6 +57,17 @@ interface ApiUsageLog {
   requests_count: number;
   tokens_used: number;
   created_at: string;
+}
+
+type ServiceStatus = 'ok' | 'degraded' | 'error' | 'unused';
+
+interface ServiceInfo {
+  id: string;
+  name: string;
+  category: string;
+  status: ServiceStatus;
+  latency_ms?: number;
+  message: string;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -124,6 +136,11 @@ export function Developers() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
+  // Services health
+  const [services, setServices] = useState<ServiceInfo[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesCheckedAt, setServicesCheckedAt] = useState<string | null>(null);
+
   // Playground
   const [selectedEndpointIdx, setSelectedEndpointIdx] = useState(0);
   const [playgroundBody, setPlaygroundBody] = useState(ENDPOINTS[0].defaultBody);
@@ -140,7 +157,7 @@ export function Developers() {
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); fetchServices(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -168,6 +185,25 @@ export function Developers() {
       if (logsRes2.data) setAuditLogs(logsRes2.data as AuditLog[]);
     }
     setLoading(false);
+  };
+
+  const fetchServices = async () => {
+    setServicesLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/api-v1/health/services`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setServices(data.services ?? []);
+      setServicesCheckedAt(data.checked_at ?? null);
+    } catch (err) {
+      console.error('Health check failed:', err);
+    } finally {
+      setServicesLoading(false);
+    }
   };
 
   const handleCreateKey = async () => {
@@ -335,6 +371,79 @@ export function Developers() {
               <p className="text-xs text-gray-400 mt-0.5">{label}</p>
             </div>
           ))}
+        </div>
+
+        {/* ── Service Status ── */}
+        <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Server className="w-4 h-4 text-violet-500" />
+              <span className="font-bold text-gray-900 dark:text-white text-sm">Estado de Servicios</span>
+              {servicesCheckedAt && (
+                <span className="text-[11px] text-gray-400">
+                  · verificado {new Date(servicesCheckedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={fetchServices}
+              disabled={servicesLoading}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-violet-400 transition disabled:opacity-40"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${servicesLoading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </button>
+          </div>
+
+          <div className="p-5">
+            {servicesLoading && services.length === 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="h-20 bg-gray-100 dark:bg-white/5 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {services.map(svc => {
+                  const statusConfig = {
+                    ok:       { dot: 'bg-emerald-500', text: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Activo' },
+                    degraded: { dot: 'bg-amber-400',   text: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-400/20',   label: 'Degradado' },
+                    error:    { dot: 'bg-red-500',     text: 'text-red-500',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     label: 'Error' },
+                    unused:   { dot: 'bg-gray-400',    text: 'text-gray-400',    bg: 'bg-white/5',        border: 'border-gray-200 dark:border-white/5', label: 'Sin uso' },
+                  }[svc.status];
+
+                  const categoryIcon = {
+                    database:  Database,
+                    ai:        Brain,
+                    analytics: BarChart2,
+                    parsing:   FileText,
+                    data:      Globe,
+                  }[svc.category] ?? Server;
+                  const CategoryIcon = categoryIcon;
+
+                  return (
+                    <div
+                      key={svc.id}
+                      className={`relative rounded-xl border p-3.5 ${statusConfig.bg} ${statusConfig.border}`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <CategoryIcon className={`w-4 h-4 ${svc.status === 'unused' ? 'text-gray-400' : statusConfig.text}`} />
+                        <span className="flex items-center gap-1">
+                          <span className={`w-2 h-2 rounded-full ${statusConfig.dot} ${svc.status === 'ok' ? 'shadow-[0_0_6px_currentColor]' : ''}`} />
+                          <span className={`text-[10px] font-bold ${statusConfig.text}`}>{statusConfig.label}</span>
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight mb-1">{svc.name}</p>
+                      <p className="text-[11px] text-gray-400 leading-tight truncate" title={svc.message}>{svc.message}</p>
+                      {svc.latency_ms !== undefined && (
+                        <span className="absolute bottom-2.5 right-3 text-[10px] font-mono text-gray-400">{svc.latency_ms}ms</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Charts ── */}
