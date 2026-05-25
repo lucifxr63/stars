@@ -459,6 +459,48 @@ export interface ComplianceRoadmap {
   risk_rationale: string;
 }
 
+// ─── FOUNDER PROFILE (Sprint 1.5) ────────────────────────────────────────────
+
+export interface WorkEntry {
+  company: string;
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  description: string;
+  is_leadership: boolean;
+  industry: string;
+}
+
+export interface EduEntry {
+  institution: string;
+  degree: string;
+  field: string;
+  end_year: number | null;
+}
+
+export interface FounderCompetencyScores {
+  visionComercial: number;        // 0-100
+  capacidadTecnica: number;
+  liderazgo: number;
+  experienciaIndustria: number;
+  resilienciaOperativa: number;
+}
+
+export interface FounderProfileData {
+  id: string;
+  linkedin_url: string | null;
+  full_name: string | null;
+  headline: string | null;
+  summary_bio: string | null;
+  industry_expertise_years: number;
+  skills: string[];
+  work_experience: WorkEntry[];
+  education: EduEntry[];
+  competency_scores: FounderCompetencyScores | null;
+  extraction_status: 'idle' | 'processing' | 'done' | 'error';
+  updated_at: string;
+}
+
 // ─── PITCH DECK ──────────────────────────────────────────────────────────────
 
 export interface PitchDeckContent {

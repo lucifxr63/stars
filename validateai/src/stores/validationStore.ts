@@ -4,6 +4,7 @@ import type {
   StepIdea, StepMarket, StepFounder,
   RiskAnalysis, UnitEconomics, FounderFit, MarketSignals,
   ExtractedProjectData, PendingQuestion, DueDiligenceScore, UploadStatus,
+  FounderProfileData,
 } from '@/types/validation';
 
 interface ValidationState {
@@ -67,6 +68,11 @@ interface ValidationState {
   setDueDiligenceScore: (score: DueDiligenceScore) => void;
   setUploadStatus: (status: UploadStatus) => void;
   setActiveTaskCard: (card: string | null) => void;
+
+  // ── Founder Profile (Sprint 1.5) ───────────────────────────────────────────
+  founderProfile: FounderProfileData | null;
+  setFounderProfile: (data: FounderProfileData) => void;
+  updateFounderField: <K extends keyof FounderProfileData>(field: K, value: FounderProfileData[K]) => void;
 }
 
 const initialState = {
@@ -93,6 +99,7 @@ const initialState = {
   dueDiligenceScore: null,
   uploadStatus: 'idle' as UploadStatus,
   activeTaskCard: null,
+  founderProfile: null,
 };
 
 export const useValidationStore = create<ValidationState>()(
@@ -123,6 +130,13 @@ export const useValidationStore = create<ValidationState>()(
         setDueDiligenceScore: (score) => set({ dueDiligenceScore: score }),
         setUploadStatus: (status) => set({ uploadStatus: status }),
         setActiveTaskCard: (card) => set({ activeTaskCard: card }),
+        setFounderProfile: (data) => set({ founderProfile: data }),
+        updateFounderField: (field, value) =>
+          set((s) => ({
+            founderProfile: s.founderProfile
+              ? { ...s.founderProfile, [field]: value }
+              : null,
+          })),
       }),
       { name: 'validateai-session' }
     )

@@ -11,6 +11,7 @@ import { ScoreBreakdown } from '@/components/shared/ScoreBreakdown';
 import { RiskAnalysisCard } from '@/components/shared/RiskAnalysisCard';
 import { UnitEconomicsKpis, UnitEconomicsChart } from '@/components/shared/UnitEconomicsCard';
 import { FounderFitCard } from '@/components/shared/FounderFitCard';
+import { FounderProfileTab } from '@/components/shared/FounderProfileTab';
 import { MarketSignalsCard } from '@/components/shared/MarketSignalsCard';
 import { VerdictProsCons, VerdictFounderFit, VerdictMarketTiming } from '@/components/shared/VerdictWidgets';
 import { LockedSection } from '@/components/shared/LockedSection';
@@ -27,6 +28,7 @@ import { SwotMatrix } from '@/components/shared/SwotMatrix';
 import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
+import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, trackDueDiligenceCompleted } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent } from '@/lib/telemetry';
@@ -147,6 +149,7 @@ export function ValidationDetail() {
   } | null>(null);
   const { callAI } = useAI();
   const { tier, isPro: isPremium } = useUserTier();
+  const founderProfile = useValidationStore((s) => s.founderProfile);
   const [reportFeedback, setReportFeedback] = useState<string | null>(null);
   const sections = getUserSections(tier);
   const { mentors } = useMentors(data?.idea_description);
@@ -513,10 +516,23 @@ export function ValidationDetail() {
         questions_answers: data.questions_answers,
       };
 
+      // TS-106: enriquecer contexto founder_fit con datos editados de founder_profiles
+      const founderCtx: Record<string, unknown> = { ...ctx };
+      if (founderProfile) {
+        founderCtx.founder_linkedin_url        = founderProfile.linkedin_url;
+        founderCtx.founder_full_name           = founderProfile.full_name;
+        founderCtx.founder_headline            = founderProfile.headline;
+        founderCtx.founder_summary_bio         = founderProfile.summary_bio;
+        founderCtx.founder_industry_years      = founderProfile.industry_expertise_years;
+        founderCtx.founder_skills              = founderProfile.skills;
+        founderCtx.founder_work_experience     = founderProfile.work_experience;
+        founderCtx.founder_competency_scores   = founderProfile.competency_scores;
+      }
+
       const [riskResult, unitResult, founderResult, signalsResult, governanceResult, fundraisingResult] = await Promise.all([
         missingAdvanced.risk        ? callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx)              : Promise.resolve(null),
         missingAdvanced.unit        ? callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx)             : Promise.resolve(null),
-        missingAdvanced.founder     ? callAI<FounderFit>(data.id, 6, 'founder_fit', ctx)                   : Promise.resolve(null),
+        missingAdvanced.founder     ? callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx)            : Promise.resolve(null),
         missingAdvanced.signals     ? callAI<MarketSignals>(data.id, 6, 'market_signals', ctx)             : Promise.resolve(null),
         missingAdvanced.governance  ? callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) : Promise.resolve(null),
         missingAdvanced.fundraising ? callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx)   : Promise.resolve(null),
@@ -1344,6 +1360,16 @@ export function ValidationDetail() {
                     <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Veredicto de Inversión</p>
                   </div>
                   <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.funding_verdict}</p>
+                </div>
+              )}
+
+              {/* Perfil del Fundador (Sprint 1.5) */}
+              {sections.includes('founderFit') && (
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
+                    Perfil del Fundador
+                  </h3>
+                  <FounderProfileTab />
                 </div>
               )}
 
