@@ -221,12 +221,19 @@ export interface ValidationVersion {
   depth: number;
 }
 
-// ─── SPRINT B: Inversión ─────────────────────────────────────────────────────
+// ─── SPRINT 3: Gobernanza e Inversión ────────────────────────────────────────
 
 export interface GovernanceLegalItem {
   item: string;
   priority: 'critical' | 'important' | 'nice_to_have';
   description: string;
+  source?: string;
+}
+
+export interface INAPICheck {
+  type: 'marca' | 'patente' | 'modelo_utilidad';
+  recommendation: string;
+  risk: 'critical' | 'important' | 'nice_to_have';
 }
 
 export interface GovernanceAssessment {
@@ -234,9 +241,13 @@ export interface GovernanceAssessment {
   founding_team_split: string;
   vesting_recommendation: string;
   legal_checklist: GovernanceLegalItem[];
+  inapi_checklist: INAPICheck[];
+  ley_karin_required: boolean;
+  ley_karin_notes: string;
   regulatory_risk: 'low' | 'medium' | 'high';
   regulatory_notes: string;
   cap_table_warnings: string[];
+  omission_warnings: string[];
 }
 
 export interface FundraisingFund {
@@ -246,16 +257,44 @@ export interface FundraisingFund {
   url: string | null;
 }
 
+export interface CorfoEligibility {
+  program: 'semilla_inicia' | 'semilla_expande_fase1' | 'semilla_expande_fase2' | 'no_elegible';
+  eligible: boolean;
+  max_amount_clp: number;
+  cofinancing_rate: number;
+  rationale: string;
+  gender_bonus_applied: boolean;
+}
+
+export interface NonDilutiveOption {
+  type: 'corfo' | 'deuda_estructurada' | 'fidc' | 'linea_credito';
+  description: string;
+  estimated_amount: string;
+  requirement: string;
+}
+
+export interface LtvCacAssessment {
+  ratio_estimate: number;
+  payback_months_estimate: number;
+  meets_latam_benchmark: boolean;
+  notes: string;
+}
+
 export interface FundraisingRoadmap {
-  recommended_instrument: 'SAFE' | 'convertible_note' | 'priced_round' | 'grant' | 'bootstrapping';
+  recommended_instrument: 'SAFE' | 'convertible_note' | 'priced_round' | 'grant' | 'bootstrapping' | 'non_dilutive_debt';
   instrument_rationale: string;
   suggested_ticket_size: { min: number; max: number; currency: 'USD' };
   pre_money_valuation_range: { min: number; max: number; currency: 'USD' };
+  corfo_eligibility: CorfoEligibility;
+  non_dilutive_options: NonDilutiveOption[];
+  ltv_cac_assessment: LtvCacAssessment;
   recommended_funds: FundraisingFund[];
   pitch_narrative: string;
   readiness_score: number;
+  readiness_rationale: string;
   blockers: string[];
   next_milestones: string[];
+  omission_warnings: string[];
 }
 
 export interface PlaybookAnalysis {

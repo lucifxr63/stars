@@ -73,3 +73,18 @@ export function trackDemoViewed(source: string) {
   if (!PH_KEY) return;
   posthog.capture('view_demo_clicked', { source });
 }
+
+export function trackDueDiligenceCompleted(params: {
+  validationId: string;
+  total: number;
+  investorReadiness: string;
+  fromCache: boolean;
+  sourcesUsed: string[];
+  sourcesSkippedCount: number;
+  dataWarningsCount: number;
+  industry: string;
+  tier: string;
+}) {
+  if (!PH_KEY) return;
+  posthog.capture('due_diligence_completed', params);
+}

@@ -109,6 +109,13 @@ const ENDPOINTS = [
     color: '#EC4899',
     defaultBody: JSON.stringify({ text: 'Contenido a vectorizar...', metadata: { source: 'manual', industry: 'fintech' } }, null, 2),
   },
+  {
+    method: 'POST',
+    path: '/functions/v1/assemble-mega-prompt',
+    label: 'Due Diligence — Generar análisis IA',
+    color: '#7C6FF7',
+    defaultBody: JSON.stringify({ validation_id: '<uuid-de-validacion>' }, null, 2),
+  },
 ] as const;
 
 const METHOD_COLORS: Record<string, string> = {
@@ -418,6 +425,7 @@ export function Developers() {
                     analytics: BarChart2,
                     parsing:   FileText,
                     data:      Globe,
+                    gov:       ShieldCheck,
                   }[svc.category] ?? Server;
                   const CategoryIcon = categoryIcon;
 

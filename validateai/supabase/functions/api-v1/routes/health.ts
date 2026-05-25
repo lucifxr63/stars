@@ -5,6 +5,8 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const LLAMAPARSE_API_KEY = Deno.env.get('LLAMAPARSE_API_KEY')
+const CMF_BEST_KEY = Deno.env.get('CMF_BEST_KEY')
+const FINTOC_SECRET_KEY = Deno.env.get('FINTOC_SECRET_KEY')
 
 type ServiceStatus = 'ok' | 'degraded' | 'error' | 'unused'
 
@@ -141,13 +143,54 @@ export const servicesHealthHandler = async (c: any) => {
     message: cmfData && cmfData.length > 0 ? 'Indicadores CMF en caché' : 'Sin datos en caché',
   })
 
-  // INAPI — mocked (no live API yet)
+  // INAPI — OData live (Sprint 4)
+  const { data: inapiData } = await supabase
+    .from('temp_context')
+    .select('created_at')
+    .eq('source', 'inapi')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const inapiHasData = inapiData && inapiData.length > 0
   services.push({
     id: 'inapi',
-    name: 'INAPI (Marcas)',
+    name: 'INAPI (Marcas — OData)',
     category: 'gov',
-    status: 'degraded',
-    message: 'Datos simulados — integración OData pendiente',
+    status: 'ok',
+    message: inapiHasData
+      ? `Última consulta ${new Date(inapiData![0].created_at).toLocaleDateString('es-CL')}`
+      : 'OData activo — sin consultas recientes',
+  })
+
+  // CMF BEST — financial market indicators (Sprint 7)
+  const cmfBestKeyPresent = !!CMF_BEST_KEY
+  const { data: cmfBestData } = await supabase
+    .from('temp_context')
+    .select('created_at')
+    .eq('source', 'cmf_best')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const cmfBestHasData = cmfBestData && cmfBestData.length > 0
+  services.push({
+    id: 'cmf_best',
+    name: 'CMF BEST (Indicadores Financieros)',
+    category: 'gov',
+    status: cmfBestKeyPresent ? 'ok' : 'error',
+    message: !cmfBestKeyPresent
+      ? 'CMF_BEST_KEY no configurada'
+      : cmfBestHasData
+        ? `Última consulta ${new Date(cmfBestData![0].created_at).toLocaleDateString('es-CL')}`
+        : 'API key activa — sin consultas recientes',
+  })
+
+  // Fintoc — Open Banking (Sprint 4)
+  services.push({
+    id: 'fintoc',
+    name: 'Fintoc (Open Banking)',
+    category: 'gov',
+    status: FINTOC_SECRET_KEY ? 'ok' : 'degraded',
+    message: FINTOC_SECRET_KEY
+      ? 'Webhook activo — validación HMAC configurada'
+      : 'Pendiente configuración de secretos en producción',
   })
 
   // PJUD — webhook async (not a direct API call)
@@ -156,7 +199,7 @@ export const servicesHealthHandler = async (c: any) => {
     name: 'PJUD (Judicial)',
     category: 'gov',
     status: 'degraded',
-    message: 'Webhook async — sin polling directo',
+    message: 'Webhook async — pendiente contrato con proveedor de datos',
   })
 
   // ── Analytics / Growth ─────────────────────────────────────────────────────

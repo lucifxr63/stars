@@ -7,6 +7,54 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ]
 
+// ── OWASP LLM01: Input Sanitization ──────────────────────────────────────────
+// Bloquea patrones de prompt injection antes de que el texto del fundador
+// llegue al modelo. Un PDF o formulario malicioso podría contener instrucciones
+// ocultas que sobrescriban el system prompt o expongan secrets de entorno.
+//
+// Referencia: OWASP Top 10 for LLM Applications 2025 — LLM01 Prompt Injection
+const INJECTION_PATTERNS: { pattern: RegExp; label: string }[] = [
+  { pattern: /ignore\s+(all\s+)?(previous|prior|your)\s+instructions/i,  label: 'override_instructions' },
+  { pattern: /forget\s+(everything|all|your\s+system)/i,                  label: 'forget_context' },
+  { pattern: /you\s+are\s+now\s+(a|an)\s+/i,                            label: 'persona_override' },
+  { pattern: /new\s+(persona|identity|role)\s*:/i,                        label: 'role_injection' },
+  { pattern: /system\s+prompt\s*:/i,                                      label: 'system_prompt_leak' },
+  { pattern: /reveal\s+(your\s+)?(instructions|prompt|api\s+key)/i,       label: 'secret_extraction' },
+  { pattern: /Deno\.env\.get/i,                                           label: 'env_access_attempt' },
+  { pattern: /process\.env\./i,                                           label: 'node_env_attempt' },
+  { pattern: /ANTHROPIC_API_KEY|OPENAI_API_KEY|SUPABASE_SERVICE_ROLE/i,  label: 'secret_name_probing' },
+  { pattern: /<script[\s\S]*?>/i,                                         label: 'xss_attempt' },
+  { pattern: /\{\{.*?\}\}/,                                               label: 'template_injection' },
+  { pattern: /\$\{.*?\}/,                                                 label: 'js_template_injection' },
+]
+
+const MAX_INPUT_CHARS = 4_000  // Límite razonable para descripción de startup
+
+interface SanitizeResult {
+  safe: boolean
+  sanitized: string
+  flags: string[]
+}
+
+function sanitizeInput(text: string): SanitizeResult {
+  if (!text || typeof text !== 'string') return { safe: false, sanitized: '', flags: ['invalid_type'] }
+
+  // Límite de longitud — textos excesivamente largos pueden ser vectores de ataque
+  const truncated = text.slice(0, MAX_INPUT_CHARS)
+
+  const flags: string[] = []
+  let sanitized = truncated
+
+  for (const { pattern, label } of INJECTION_PATTERNS) {
+    if (pattern.test(sanitized)) {
+      flags.push(label)
+      sanitized = sanitized.replace(pattern, '[CONTENIDO_SANITIZADO]')
+    }
+  }
+
+  return { safe: flags.length === 0, sanitized, flags }
+}
+
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('Origin') ?? ''
   const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
@@ -73,14 +121,46 @@ serve(async (req) => {
 
     if (error || !validation) throw new Error('Validation not found')
 
-    // 2. Llamar a Claude Haiku para anonimizar (fetch directo, consistente con ai-validate)
+    // 2. Sanitizar inputs ANTES de enviar al modelo (OWASP LLM01)
+    const fieldsToSanitize = [
+      validation.idea_name ?? '',
+      validation.idea_description ?? '',
+      validation.customer_segment ?? '',
+      validation.value_proposition ?? '',
+    ].join(' ')
+
+    const sanitizeResult = sanitizeInput(fieldsToSanitize)
+
+    if (!sanitizeResult.safe) {
+      // Loguear el intento de inyección para auditoría — no exponer los flags al cliente
+      console.warn(`[anonymize-idea] Prompt injection bloqueado para user_id=${user.id}`, {
+        flags: sanitizeResult.flags,
+        validation_id,
+      })
+      // Continuar con el texto sanitizado (no bloqueamos al usuario legítimo que
+      // accidentalmente usó una frase que coincide con un patrón).
+      // Si el porcentaje de flags es alto (>3), sí bloqueamos.
+      if (sanitizeResult.flags.length > 3) {
+        return new Response(JSON.stringify({
+          error: 'input_rejected',
+          message: 'El texto contiene contenido no permitido. Revisa la descripción de tu idea.',
+        }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
+      }
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 
+    // Usar texto sanitizado — los campos individuales también pasan por sanitizeInput
+    const sanitizeName    = sanitizeInput(validation.idea_name ?? '').sanitized
+    const sanitizeDesc    = sanitizeInput(validation.idea_description ?? '').sanitized
+    const sanitizeSegment = sanitizeInput(validation.customer_segment ?? '').sanitized
+    const sanitizeProp    = sanitizeInput(validation.value_proposition ?? '').sanitized
+
     const rawText = `
-    Nombre: ${validation.idea_name}
-    Descripción: ${validation.idea_description}
-    Cliente: ${validation.customer_segment}
-    Propuesta: ${validation.value_proposition}
+    Nombre: ${sanitizeName}
+    Descripción: ${sanitizeDesc}
+    Cliente: ${sanitizeSegment}
+    Propuesta: ${sanitizeProp}
     `
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {

@@ -28,7 +28,7 @@ import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
-import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted } from '@/hooks/useAnalytics';
+import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, trackDueDiligenceCompleted } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent } from '@/lib/telemetry';
 import { useMentors } from '@/hooks/useMentors';
 import { EvidenceWall } from '@/components/shared/EvidenceWall';
@@ -280,6 +280,15 @@ export function ValidationDetail() {
   const [generatingNewModules, setGeneratingNewModules] = useState(false);
   const [generatingDueDiligence, setGeneratingDueDiligence] = useState(false);
 
+  // Sprint 6: audit trail del último análisis de Due Diligence
+  const [ddAuditTrail, setDdAuditTrail] = useState<{
+    dataWarnings: string[];
+    sourcesUsed: string[];
+    sourcesSkipped: { source: string; reason: string }[];
+    fromCache: boolean;
+    verdictSummary: string;
+  } | null>(null);
+
   const handleGenerateDueDiligence = async () => {
     if (!data) return;
     setGeneratingDueDiligence(true);
@@ -288,23 +297,56 @@ export function ValidationDetail() {
       const token = session?.access_token;
       if (!token) throw new Error('No estás autenticado.');
 
+      // Sprint 6: pasar rut_empresa, brand_name y current_step para filtrado adaptativo
       const response = await fetch('https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/assemble-mega-prompt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ validation_id: data.id })
+        body: JSON.stringify({
+          validation_id: data.id,
+          rut_empresa: data.rut ?? null,
+          brand_name: data.idea_name ?? null,
+          current_step: data.business_stage === 'funding' ? 'stepFunding'
+            : data.business_stage === 'growth' ? 'stepGrowth'
+            : 'stepIdea',
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error('Error al generar Due Diligence');
-      }
+      if (!response.ok) throw new Error('Error al generar Due Diligence');
 
-      const { due_diligence_score } = await response.json();
-      
+      const result = await response.json();
+      const { due_diligence_score, data_warnings, sources_used, sources_skipped, from_cache } = result;
+
       setData((prev) => prev ? { ...prev, due_diligence_score } : prev);
-      toast.success('Análisis de Due Diligence completado');
+
+      // Guardar audit trail para renderizado
+      setDdAuditTrail({
+        dataWarnings: data_warnings ?? [],
+        sourcesUsed: sources_used ?? [],
+        sourcesSkipped: sources_skipped ?? [],
+        fromCache: from_cache ?? false,
+        verdictSummary: (due_diligence_score as Record<string, unknown>)?.verdict_summary as string ?? '',
+      });
+
+      trackDueDiligenceCompleted({
+        validationId:        data.id,
+        total:               (due_diligence_score as Record<string, unknown>)?.total as number ?? 0,
+        investorReadiness:   (due_diligence_score as Record<string, unknown>)?.investorReadiness as string ?? 'not_ready',
+        fromCache:           from_cache ?? false,
+        sourcesUsed:         sources_used ?? [],
+        sourcesSkippedCount: (sources_skipped ?? []).length,
+        dataWarningsCount:   (data_warnings ?? []).length,
+        industry:            data.idea_industry ?? '',
+        tier:                tier ?? 'free',
+      });
+
+      if (from_cache) {
+        toast.success('Due Diligence cargado desde caché (0 tokens consumidos)');
+      } else {
+        toast.success('Análisis de Due Diligence completado');
+      }
     } catch (err) {
       console.error(err);
       toast.error('Ocurrió un error al generar tu Due Diligence Score.');
@@ -1449,6 +1491,11 @@ export function ValidationDetail() {
                 <DueDiligenceScoreCard
                   score={data.due_diligence_score}
                   extractedData={data.due_diligence_extracted}
+                  dataWarnings={ddAuditTrail?.dataWarnings}
+                  sourcesUsed={ddAuditTrail?.sourcesUsed}
+                  sourcesSkipped={ddAuditTrail?.sourcesSkipped}
+                  fromCache={ddAuditTrail?.fromCache}
+                  verdictSummary={ddAuditTrail?.verdictSummary}
                 />
               ) : (
                 <div className="flex flex-col items-center gap-4 py-14 text-center">

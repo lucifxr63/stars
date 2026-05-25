@@ -117,11 +117,109 @@ function ExtractedSummary({ data }: { data: ExtractedProjectData }) {
   );
 }
 
+// ── Data Quality Banner (Sprint 6) ────────────────────────────────────────────
+// Muestra el trail de auditoría del análisis: qué fuentes se usaron, cuáles fallaron
+// y si el resultado viene de caché. Transparencia total para el inversor.
+
+interface SourceSkipped { source: string; reason: string }
+
+function DataQualityBanner({
+  dataWarnings,
+  sourcesUsed,
+  sourcesSkipped,
+  fromCache,
+}: {
+  dataWarnings: string[];
+  sourcesUsed: string[];
+  sourcesSkipped: SourceSkipped[];
+  fromCache: boolean;
+}) {
+  const sourceLabels: Record<string, string> = {
+    sii: 'SII', inapi: 'INAPI', fintoc: 'Fintoc', pjud: 'PJUD',
+  };
+
+  if (!dataWarnings.length && !sourcesSkipped.length && !fromCache) return null;
+
+  return (
+    <div className="rounded-2xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-[#0A0A0F] p-4 space-y-3">
+      <p className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest">
+        Auditoría del análisis
+      </p>
+
+      {/* Fuentes utilizadas */}
+      {sourcesUsed.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {sourcesUsed.map(s => (
+            <span key={s} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/30 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {sourceLabels[s] ?? s} verificado
+            </span>
+          ))}
+          {fromCache && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/30 text-[10px] font-bold text-blue-700 dark:text-blue-400">
+              ⚡ Desde caché
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Fuentes con advertencia */}
+      {dataWarnings.length > 0 && (
+        <div className="space-y-1">
+          {dataWarnings.map((w, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className="text-amber-500 text-xs shrink-0">⚠</span>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">{w}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Fuentes omitidas por filtro adaptativo */}
+      {sourcesSkipped.length > 0 && (
+        <details className="group">
+          <summary className="text-[10px] text-gray-400 dark:text-[#4A495E] cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 list-none flex items-center gap-1">
+            <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+            {sourcesSkipped.length} fuente{sourcesSkipped.length > 1 ? 's' : ''} no requerida{sourcesSkipped.length > 1 ? 's' : ''} para esta etapa
+          </summary>
+          <div className="mt-2 space-y-1 pl-4">
+            {sourcesSkipped.map(({ source, reason }, i) => (
+              <p key={i} className="text-[10px] text-gray-400 dark:text-[#4A495E]">
+                <span className="font-semibold">{sourceLabels[source] ?? source}:</span> {reason}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+// ── Verdict Summary (Sprint 6) ────────────────────────────────────────────────
+function VerdictSummary({ text }: { text: string }) {
+  return (
+    <div className="bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/5 rounded-2xl p-5">
+      <p className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest mb-2">
+        Veredicto del analista IA
+      </p>
+      <p className="text-sm text-gray-600 dark:text-[#C4C4D4] leading-relaxed">{text}</p>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface Props {
   score: DueDiligenceScore;
   extractedData?: ExtractedProjectData | null;
+  // Sprint 6: audit trail
+  dataWarnings?: string[];
+  sourcesUsed?: string[];
+  sourcesSkipped?: SourceSkipped[];
+  fromCache?: boolean;
+  verdictSummary?: string;
 }
 
 const DIMENSION_META: { key: keyof DueDiligenceScore['dimensions']; icon: string }[] = [
@@ -132,13 +230,29 @@ const DIMENSION_META: { key: keyof DueDiligenceScore['dimensions']; icon: string
   { key: 'traccion',   icon: '📈' },
 ];
 
-export function DueDiligenceScoreCard({ score, extractedData }: Props) {
+export function DueDiligenceScoreCard({
+  score,
+  extractedData,
+  dataWarnings = [],
+  sourcesUsed = [],
+  sourcesSkipped = [],
+  fromCache = false,
+  verdictSummary,
+}: Props) {
   const rc = readinessConfig(score.investorReadiness);
   const totalColor = score.total >= 70 ? 'text-emerald-600 dark:text-emerald-400' : score.total >= 45 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
   const totalBg    = score.total >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-700/30' : score.total >= 45 ? 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-700/30' : 'bg-red-50 dark:bg-red-900/15 border-red-200 dark:border-red-700/30';
 
   return (
     <div className="space-y-5">
+
+      {/* ── Audit trail (Sprint 6) ──────────────────────────────────────────── */}
+      <DataQualityBanner
+        dataWarnings={dataWarnings}
+        sourcesUsed={sourcesUsed}
+        sourcesSkipped={sourcesSkipped}
+        fromCache={fromCache}
+      />
 
       {/* ── Hero Score ─────────────────────────────────────────────────────── */}
       <div className={`rounded-3xl border-2 p-6 ${totalBg}`}>
@@ -210,6 +324,9 @@ export function DueDiligenceScoreCard({ score, extractedData }: Props) {
 
       {/* ── Extracted Data Summary ─────────────────────────────────────────── */}
       {extractedData && <ExtractedSummary data={extractedData} />}
+
+      {/* ── Verdict Summary (Sprint 6) ─────────────────────────────────────── */}
+      {verdictSummary && <VerdictSummary text={verdictSummary} />}
 
       {/* ── Top Gaps + Recommendations ─────────────────────────────────────── */}
       {score.topGaps.length > 0 && (
