@@ -107,6 +107,7 @@ interface ValidationFull {
   lean_roadmap: LeanRoadmap | null;
   financial_projection: FinancialProjection | null;
   compliance_roadmap: ComplianceRoadmap | null;
+  rut: string | null;
 }
 
 

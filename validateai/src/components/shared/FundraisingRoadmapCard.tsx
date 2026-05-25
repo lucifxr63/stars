@@ -10,6 +10,7 @@ const INSTRUMENT_LABELS: Record<FundraisingRoadmap['recommended_instrument'], { 
   priced_round:     { label: 'Ronda Valorizada',  color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-400' },
   grant:            { label: 'Subsidio / Grant',  color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400' },
   bootstrapping:    { label: 'Bootstrapping',     color: 'bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-[#8B8AA0]' },
+  non_dilutive_debt: { label: 'Deuda No Dilutiva', color: 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400' },
 };
 
 function formatUSD(n: number) {
