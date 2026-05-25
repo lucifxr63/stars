@@ -84,7 +84,7 @@ function CompetencyRadar({ scores }: { scores: FounderProfileData['competency_sc
             strokeWidth={2}
           />
           <Tooltip
-            formatter={(v: number) => [`${v}/100`]}
+            formatter={(v) => [`${v ?? 0}/100`]}
             contentStyle={{ fontSize: 12, borderRadius: 8 }}
           />
         </RadarChart>
