@@ -56,6 +56,9 @@ export function Header() {
           <Link to="/results" className={linkCls(isActive('/results'))}>
             Mis validaciones
           </Link>
+          <Link to="/profile" className={linkCls(isActive('/profile'))}>
+            Perfil
+          </Link>
           <Link to="/developers" className={linkCls(isActive('/developers'))}>
             API & Devs
           </Link>
@@ -100,6 +103,9 @@ export function Header() {
         <div className="sm:hidden border-t border-white/[0.06] bg-white dark:bg-[#12121A] px-4 py-3 space-y-1">
           <Link to="/results" className={linkCls(isActive('/results'))}>
             Mis validaciones
+          </Link>
+          <Link to="/profile" className={linkCls(isActive('/profile'))}>
+            Perfil
           </Link>
           <Link to="/developers" className={linkCls(isActive('/developers'))}>
             API & Devs
