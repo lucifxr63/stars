@@ -1416,6 +1416,7 @@ export function ValidationDetail() {
                     stage={data.business_stage}
                     industry={data.idea_industry}
                     businessModel={data.business_model ?? 'b2c'}
+                    corfoProgram={data.fundraising_roadmap?.corfo_eligibility?.program}
                   />
                 </div>
               )}

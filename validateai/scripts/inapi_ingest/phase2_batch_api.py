@@ -43,8 +43,15 @@ SB_HEADERS = {
 # ── PASO A: EXPORT ────────────────────────────────────────────────────────────
 
 def export_and_submit():
-    print('Exportando brand_name/title desde la DB...')
-    page, total = 0, 0
+    """
+    Exporta usando paginación por cursor (id > last_id) en vez de OFFSET.
+    OFFSET se vuelve O(n) en PostgreSQL — a 170K registros ya se congela.
+    Con cursor cada página es O(1) gracias al índice del PK.
+    """
+    print('Exportando brand_name/title desde la DB (cursor pagination)...')
+    total      = 0
+    last_id    = '00000000-0000-0000-0000-000000000000'  # UUID mínimo como punto de partida
+    PAGE       = 1000
 
     with open(JSONL_FILE, 'w', encoding='utf-8') as out:
         while True:
@@ -52,13 +59,18 @@ def export_and_submit():
                 f'{SUPABASE_URL}/rest/v1/{TABLE}',
                 headers={'apikey': SERVICE_KEY, 'Authorization': f'Bearer {SERVICE_KEY}'},
                 params={
-                    'select': 'id,application_number,brand_name,title',
-                    'brand_name_embedding': 'is.null',
-                    'limit':  '1000',
-                    'offset': str(page * 1000),
+                    'select':                 'id,application_number,brand_name,title',
+                    'brand_name_embedding':   'is.null',
+                    'id':                     f'gt.{last_id}',   # cursor
+                    'order':                  'id.asc',
+                    'limit':                  str(PAGE),
                 },
                 timeout=30,
             )
+            if not resp.ok:
+                print(f'\n[ERROR] {resp.status_code}: {resp.text[:200]}')
+                break
+
             records = resp.json()
             if not records:
                 break
@@ -66,21 +78,17 @@ def export_and_submit():
             for r in records:
                 text = ' '.join(filter(None, [r.get('brand_name') or '', r.get('title') or ''])).strip()
                 if not text:
-                    text = 'sin_nombre'   # placeholder para no perder el id
+                    text = 'sin_nombre'
 
-                line = {
+                out.write(json.dumps({
                     'custom_id': f"{r['id']}|{r['application_number']}",
                     'method':    'POST',
                     'url':       '/v1/embeddings',
-                    'body': {
-                        'model': MODEL,
-                        'input': text,
-                    }
-                }
-                out.write(json.dumps(line) + '\n')
+                    'body':      {'model': MODEL, 'input': text},
+                }) + '\n')
                 total += 1
 
-            page += 1
+            last_id = records[-1]['id']   # avanzar cursor al último id de la página
             print(f'  {total:,} registros exportados...', end='\r', flush=True)
 
     print(f'\n  Total exportados: {total:,}  →  {JSONL_FILE}')

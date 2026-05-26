@@ -123,23 +123,48 @@ export const CORFO_INSTRUMENTS: CorfoInstrument[] = [
   },
 ];
 
+export type CorfoProgram =
+  | 'semilla_inicia'
+  | 'semilla_expande_fase1'
+  | 'semilla_expande_fase2'
+  | 'no_elegible';
+
 export interface CorfoMatch {
   instrument: CorfoInstrument;
   matchScore: number;
   matchReasons: string[];
+  // Populated when the AI-determined CORFO program contradicts the declared stage.
+  // Semilla Inicia requires zero formal sales; if the AI flags sales > CLP 100k the
+  // seed instruments are ineligible and SIE / Semilla Expande should take priority.
+  conflictWarning?: string;
 }
+
+// Seeds that require zero prior formal revenue (Semilla Inicia criteria).
+const ZERO_SALES_REQUIRED = new Set(['capital-semilla-emprendedor', 'startup-ciencia']);
+
+// Stages that Semilla Inicia targets.
+const EARLY_STAGES = new Set<string>(['idea', 'pre-product']);
 
 export function matchCorfoInstruments(params: {
   stage: string;
   industry: string;
   businessModel: string;
+  /** AI-determined CORFO program; used to detect stage vs. revenue conflicts (QA-04). */
+  corfoProgram?: CorfoProgram;
 }): CorfoMatch[] {
-  const { stage, industry, businessModel } = params;
+  const { stage, industry, businessModel, corfoProgram } = params;
+
+  // QA-04: user declared an early stage but the AI detected active formal sales
+  // (corfoProgram = 'semilla_expande_fase1' requires ventas netas > CLP 100.000).
+  const hasRevenueConflict =
+    (corfoProgram === 'semilla_expande_fase1' || corfoProgram === 'semilla_expande_fase2') &&
+    EARLY_STAGES.has(stage);
 
   return CORFO_INSTRUMENTS
     .map((inst): CorfoMatch => {
       let score = 0;
       const reasons: string[] = [];
+      let conflictWarning: string | undefined;
 
       const stageMatch = inst.stages.includes(stage as CorfoInstrument['stages'][number]);
       if (stageMatch) { score += 40; reasons.push(`Disponible para etapa "${stage}"`); }
@@ -152,7 +177,18 @@ export function matchCorfoInstruments(params: {
         inst.businessModels === 'all' || inst.businessModels.includes(businessModel as never);
       if (modelMatch) { score += 30; reasons.push('Compatible con tu modelo de negocio'); }
 
-      return { instrument: inst, matchScore: score, matchReasons: reasons };
+      // Conflict resolution: downgrade zero-sales seed instruments and warn the user.
+      // Semilla Inicia bases explícitamente prohíben ventas previas — mostrar este
+      // instrumento sin advertencia inducirá a una postulación inválida.
+      if (hasRevenueConflict && ZERO_SALES_REQUIRED.has(inst.id)) {
+        score = Math.max(0, score - 40);
+        conflictWarning =
+          'Tu análisis detectó ventas formales activas (>CLP 100.000). ' +
+          'Semilla Inicia exige cero ventas previas — este fondo no aplica. ' +
+          'Postula a Semilla Expande (SIE) o INNOVA CORFO según tu volumen.';
+      }
+
+      return { instrument: inst, matchScore: score, matchReasons: reasons, conflictWarning };
     })
     .filter((m) => m.matchScore >= 40)
     .sort((a, b) => b.matchScore - a.matchScore);

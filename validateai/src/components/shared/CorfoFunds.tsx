@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
-import { matchCorfoInstruments } from '@/data/corfoInstruments';
+import { matchCorfoInstruments, type CorfoProgram } from '@/data/corfoInstruments';
 
 interface Props {
   stage: string;
   industry: string;
   businessModel: string;
+  /** AI-determined CORFO eligibility program; enables conflict detection (QA-04). */
+  corfoProgram?: CorfoProgram;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -28,10 +30,10 @@ function fmtClp(n: number | null): string {
   return n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(0)}M CLP` : `$${(n / 1_000).toFixed(0)}K CLP`;
 }
 
-export function CorfoFunds({ stage, industry, businessModel }: Props) {
+export function CorfoFunds({ stage, industry, businessModel, corfoProgram }: Props) {
   const matches = useMemo(
-    () => matchCorfoInstruments({ stage, industry, businessModel }),
-    [stage, industry, businessModel],
+    () => matchCorfoInstruments({ stage, industry, businessModel, corfoProgram }),
+    [stage, industry, businessModel, corfoProgram],
   );
 
   if (matches.length === 0) {
@@ -54,7 +56,7 @@ export function CorfoFunds({ stage, industry, businessModel }: Props) {
         </div>
       </div>
 
-      {matches.map(({ instrument: inst, matchScore, matchReasons }) => (
+      {matches.map(({ instrument: inst, matchScore, matchReasons, conflictWarning }) => (
         <div key={inst.id} className="border border-gray-100 rounded-2xl p-4 hover:border-gray-200 dark:border-white/10 transition-colors">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -68,6 +70,14 @@ export function CorfoFunds({ stage, industry, businessModel }: Props) {
               <p className="text-[10px] text-gray-400">match</p>
             </div>
           </div>
+
+          {/* QA-04: conflict warning when declared stage contradicts detected revenue */}
+          {conflictWarning && (
+            <div className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 dark:bg-amber-900/20 dark:border-amber-700/40">
+              <span className="text-amber-500 text-sm shrink-0">⚠</span>
+              <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">{conflictWarning}</p>
+            </div>
+          )}
 
           <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-3 leading-relaxed">{inst.description}</p>
 
