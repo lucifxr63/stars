@@ -23,7 +23,7 @@ load_dotenv(Path(__file__).parent / '.env')
 sys.path.insert(0, str(Path(__file__).parent))
 from supabase_client import SUPABASE_URL, SERVICE_KEY
 
-OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
+OPENAI_KEY    = os.environ.get('OPENAI_API_KEY', '')
 client  = OpenAI(api_key=OPENAI_KEY)
 MODEL   = 'text-embedding-3-small'
 TABLE   = 'inapi_records'
@@ -32,12 +32,85 @@ JSONL_FILE    = Path(r'C:\INAPI\embeddings_input.jsonl')
 RESULT_FILE   = Path(r'C:\INAPI\embeddings_output.jsonl')
 DB_BATCH      = 25   # filas por upsert (sin ivfflat el timeout no debería ocurrir)
 
+# Alertas de degradación de latencia (opcionales; dejar vacíos para deshabilitar)
+# Soporta Slack (https://hooks.slack.com/...) y Discord (https://discord.com/api/webhooks/...)
+WEBHOOK_URL          = os.environ.get('SLACK_WEBHOOK_URL', '') or os.environ.get('DISCORD_WEBHOOK_URL', '')
+SUPABASE_ACCESS_TOKEN = os.environ.get('SUPABASE_ACCESS_TOKEN', '')
+SUPABASE_PROJECT_REF  = os.environ.get('SUPABASE_PROJECT_REF', '')
+
 SB_HEADERS = {
     'apikey':        SERVICE_KEY,
     'Authorization': f'Bearer {SERVICE_KEY}',
     'Content-Type':  'application/json',
     'Prefer':        'resolution=merge-duplicates,return=minimal',
 }
+
+
+# ── Helpers de diagnóstico ────────────────────────────────────────────────────
+
+def run_explain_analyze(cursor_id: str) -> str:
+    """
+    Ejecuta EXPLAIN (ANALYZE, BUFFERS) de la query de cursor contra la página
+    más lenta, usando la Supabase Management API.
+    Devuelve el plan como texto plano, o un mensaje de error si no está configurado.
+    """
+    if not SUPABASE_ACCESS_TOKEN or not SUPABASE_PROJECT_REF:
+        return '(SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF no configurados — EXPLAIN omitido)'
+
+    sql = f"""
+EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT id, application_number, brand_name, title
+FROM {TABLE}
+WHERE brand_name_embedding IS NULL
+  AND id > '{cursor_id}'
+ORDER BY id ASC
+LIMIT 1000;
+""".strip()
+
+    try:
+        r = req.post(
+            f'https://api.supabase.com/v1/projects/{SUPABASE_PROJECT_REF}/database/query',
+            headers={
+                'Authorization': f'Bearer {SUPABASE_ACCESS_TOKEN}',
+                'Content-Type':  'application/json',
+            },
+            json={'query': sql},
+            timeout=60,
+        )
+        if r.ok:
+            rows = r.json()
+            # La API devuelve [{"QUERY PLAN": "..."}, ...] en formato texto
+            lines = [row.get('QUERY PLAN', '') for row in rows if 'QUERY PLAN' in row]
+            return '\n'.join(lines) if lines else r.text[:2000]
+        return f'[HTTP {r.status_code}] {r.text[:500]}'
+    except Exception as exc:
+        return f'[Exception] {exc}'
+
+
+def send_webhook_alert(summary: str, explain_plan: str) -> None:
+    """
+    Envía una alerta de degradación de latencia a Slack o Discord.
+    Detecta el destino por el prefijo de la URL.
+    No lanza excepciones — fallo silencioso para no interrumpir la ingesta.
+    """
+    if not WEBHOOK_URL:
+        return
+
+    body_text = (
+        f'*[INAPI LATENCY ALERT]* p95 de cursor pagination superó 5 000 ms\n\n'
+        f'{summary}\n\n'
+        f'```\n{explain_plan[:1900]}\n```'
+    )
+
+    is_discord = 'discord.com' in WEBHOOK_URL
+    payload = {'content': body_text} if is_discord else {'text': body_text}
+
+    try:
+        r = req.post(WEBHOOK_URL, json=payload, timeout=10)
+        if not r.ok:
+            print(f'\n  [WARN] Webhook alert falló: {r.status_code}')
+    except Exception as exc:
+        print(f'\n  [WARN] Webhook alert excepción: {exc}')
 
 
 # ── PASO A: EXPORT ────────────────────────────────────────────────────────────
@@ -58,10 +131,13 @@ def export_and_submit():
     last_id    = '00000000-0000-0000-0000-000000000000'  # UUID mínimo como punto de partida
     PAGE       = 1000
     page_num   = 0
-    latencies: list[float] = []
+    # Cada entry: (elapsed_ms, cursor_id_usado_en_esa_página)
+    # El cursor_id permite reproducir el EXPLAIN ANALYZE exacto de la página lenta.
+    latencies: list[tuple[float, str]] = []
 
     with open(JSONL_FILE, 'w', encoding='utf-8') as out:
         while True:
+            cursor_before = last_id   # capturar antes del request para el EXPLAIN
             t0 = time.perf_counter()
             resp = req.get(
                 f'{SUPABASE_URL}/rest/v1/{TABLE}',
@@ -85,7 +161,7 @@ def export_and_submit():
             if not records:
                 break
 
-            latencies.append(elapsed_ms)
+            latencies.append((elapsed_ms, cursor_before))
             page_num += 1
 
             for r in records:
@@ -105,8 +181,8 @@ def export_and_submit():
 
             # Imprimir latencia cada 10 páginas para detectar regresión O(n) residual
             if page_num % 10 == 0:
-                window = latencies[-10:]
-                avg_w  = sum(window) / len(window)
+                window_ms = [ms for ms, _ in latencies[-10:]]
+                avg_w     = sum(window_ms) / len(window_ms)
                 print(
                     f'  {total:,} registros | pág {page_num} | '
                     f'p10-avg={avg_w:.0f}ms  última={elapsed_ms:.0f}ms',
@@ -115,16 +191,31 @@ def export_and_submit():
             else:
                 print(f'  {total:,} registros exportados...', end='\r', flush=True)
 
-    # Resumen de latencia final
+    # ── Resumen de latencia y diagnóstico automático ──────────────────────────
     if latencies:
-        s = sorted(latencies)
-        avg_ms = sum(latencies) / len(latencies)
-        p50_ms = s[len(s) // 2]
-        p95_ms = s[min(int(len(s) * 0.95), len(s) - 1)]
+        ms_values = [ms for ms, _ in latencies]
+        s          = sorted(ms_values)
+        avg_ms     = sum(ms_values) / len(ms_values)
+        p50_ms     = s[len(s) // 2]
+        p95_ms     = s[min(int(len(s) * 0.95), len(s) - 1)]
+
         print(f'\n  Total exportados: {total:,} en {page_num} páginas  →  {JSONL_FILE}')
         print(f'  Latencia cursor:  avg={avg_ms:.0f}ms  p50={p50_ms:.0f}ms  p95={p95_ms:.0f}ms')
+
         if p95_ms > 5_000:
-            print('  [WARN] p95 > 5 000 ms — revisar índice PK o latencia de red al DB')
+            # Identificar la página más lenta para reproducir el EXPLAIN exacto
+            slowest_ms, slowest_cursor = max(latencies, key=lambda t: t[0])
+            summary = (
+                f'• Ingesta: {total:,} registros en {page_num} páginas\n'
+                f'• avg={avg_ms:.0f}ms  p50={p50_ms:.0f}ms  p95={p95_ms:.0f}ms\n'
+                f'• Página más lenta: {slowest_ms:.0f}ms  (cursor id > {slowest_cursor})'
+            )
+            print(f'\n  [WARN] p95 > 5 000 ms — ejecutando EXPLAIN ANALYZE de la página más lenta...')
+            explain = run_explain_analyze(slowest_cursor)
+            print(f'\n--- EXPLAIN ANALYZE (cursor={slowest_cursor[:8]}...) ---')
+            print(explain[:2000])
+            print('---')
+            send_webhook_alert(summary, explain)
     else:
         print(f'\n  Total exportados: {total:,}  ->  {JSONL_FILE}')
 
