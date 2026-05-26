@@ -20,6 +20,10 @@ const Pricing = lazy(() => import('@/app/routes/Pricing').then((m) => ({ default
 const Demo = lazy(() => import('@/app/routes/Demo').then((m) => ({ default: m.Demo })));
 const FigmaCallback = lazy(() => import('@/app/routes/FigmaCallback').then((m) => ({ default: m.FigmaCallback })));
 const Profile = lazy(() => import('@/app/routes/Profile').then((m) => ({ default: m.Profile })));
+const SurveyList = lazy(() => import('@/app/routes/SurveyList').then((m) => ({ default: m.SurveyList })));
+const SurveyBuilder = lazy(() => import('@/app/routes/SurveyBuilder').then((m) => ({ default: m.SurveyBuilder })));
+const SurveyResults = lazy(() => import('@/app/routes/SurveyResults').then((m) => ({ default: m.SurveyResults })));
+const SurveyRespond = lazy(() => import('@/app/routes/SurveyRespond').then((m) => ({ default: m.SurveyRespond })));
 
 function PageLoader() {
   return (
@@ -48,8 +52,13 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/developers" element={<Developers />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/surveys" element={<SurveyList />} />
+            <Route path="/surveys/new" element={<SurveyBuilder />} />
+            <Route path="/surveys/:id/edit" element={<SurveyBuilder />} />
+            <Route path="/surveys/:id/results" element={<SurveyResults />} />
           </Route>
           <Route path="/shared/:token" element={<SharedValidation />} />
+          <Route path="/s/:slug" element={<SurveyRespond />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/demo" element={<Demo />} />
           <Route path="/figma/callback" element={<FigmaCallback />} />
