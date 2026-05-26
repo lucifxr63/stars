@@ -62,6 +62,30 @@ serve(async (req) => {
   const userId    = event.meta.custom_data?.user_id;
   const attrs     = event.data.attributes;
 
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  /** Lee el tier actual del usuario para alimentar from_tier en tier_events. */
+  async function currentTier(uid: string): Promise<string> {
+    const { data } = await supabase.from('profiles').select('tier').eq('id', uid).single();
+    return data?.tier ?? 'free';
+  }
+
+  /** Registra un cambio de tier en tier_events para el monitoreo semanal. */
+  async function logTierEvent(
+    uid: string,
+    eventType: 'upgrade' | 'downgrade_expired' | 'downgrade_manual' | 'cancel_scheduled',
+    fromTier: string,
+    toTier: string,
+  ) {
+    await supabase.from('tier_events').insert({
+      user_id:    uid,
+      event_type: eventType,
+      from_tier:  fromTier,
+      to_tier:    toTier,
+      ls_event:   eventName,
+    });
+  }
+
   try {
     switch (eventName) {
 
@@ -72,6 +96,7 @@ serve(async (req) => {
         const variantId = String(attrs.variant_id);
         const tier = event.meta.custom_data?.tier ?? VARIANT_TO_TIER[variantId] ?? 'basic';
         const expiresAt = attrs.renews_at ?? attrs.ends_at;
+        const prevTier = await currentTier(userId);
 
         await supabase
           .from('profiles')
@@ -81,6 +106,8 @@ serve(async (req) => {
             tier_expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
           })
           .eq('id', userId);
+
+        await logTierEvent(userId, 'upgrade', prevTier, tier);
         break;
       }
 
@@ -92,14 +119,21 @@ serve(async (req) => {
         const tier = VARIANT_TO_TIER[variantId] ?? 'free';
         const isActive = attrs.status === 'active' || attrs.status === 'on_trial';
         const expiresAt = attrs.renews_at ?? attrs.ends_at;
+        const prevTier = await currentTier(userId);
+        const newTier = isActive ? tier : 'free';
 
         await supabase
           .from('profiles')
           .update({
-            tier: isActive ? tier : 'free',
+            tier: newTier,
             tier_expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
           })
           .eq('id', userId);
+
+        if (newTier !== prevTier) {
+          const eventType = newTier === 'free' ? 'downgrade_manual' : 'upgrade';
+          await logTierEvent(userId, eventType, prevTier, newTier);
+        }
         break;
       }
 
@@ -107,6 +141,7 @@ serve(async (req) => {
       case 'subscription_cancelled': {
         if (!userId) break;
         const expiresAt = attrs.ends_at;
+        const prevTier = await currentTier(userId);
 
         await supabase
           .from('profiles')
@@ -114,17 +149,23 @@ serve(async (req) => {
             tier_expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
           })
           .eq('id', userId);
+
+        // No es un downgrade aún — se registra como cancel_scheduled para visibilidad
+        await logTierEvent(userId, 'cancel_scheduled', prevTier, prevTier);
         break;
       }
 
       // Período finalizado → degradar a free
       case 'subscription_expired': {
         if (!userId) break;
+        const prevTier = await currentTier(userId);
 
         await supabase
           .from('profiles')
           .update({ tier: 'free', ls_subscription_id: null, tier_expires_at: null })
           .eq('id', userId);
+
+        await logTierEvent(userId, 'downgrade_expired', prevTier, 'free');
         break;
       }
 

@@ -47,14 +47,22 @@ def export_and_submit():
     Exporta usando paginación por cursor (id > last_id) en vez de OFFSET.
     OFFSET se vuelve O(n) en PostgreSQL — a 170K registros ya se congela.
     Con cursor cada página es O(1) gracias al índice del PK.
+
+    Instrumentación de latencia: registra el tiempo de cada página para validar
+    que el cursor mantiene latencia estable independiente del volumen acumulado.
+    Una degradación creciente indicaría un índice caído o un plan de ejecución
+    que volvió a escanear secuencialmente.
     """
     print('Exportando brand_name/title desde la DB (cursor pagination)...')
     total      = 0
     last_id    = '00000000-0000-0000-0000-000000000000'  # UUID mínimo como punto de partida
     PAGE       = 1000
+    page_num   = 0
+    latencies: list[float] = []
 
     with open(JSONL_FILE, 'w', encoding='utf-8') as out:
         while True:
+            t0 = time.perf_counter()
             resp = req.get(
                 f'{SUPABASE_URL}/rest/v1/{TABLE}',
                 headers={'apikey': SERVICE_KEY, 'Authorization': f'Bearer {SERVICE_KEY}'},
@@ -67,6 +75,8 @@ def export_and_submit():
                 },
                 timeout=30,
             )
+            elapsed_ms = (time.perf_counter() - t0) * 1000
+
             if not resp.ok:
                 print(f'\n[ERROR] {resp.status_code}: {resp.text[:200]}')
                 break
@@ -74,6 +84,9 @@ def export_and_submit():
             records = resp.json()
             if not records:
                 break
+
+            latencies.append(elapsed_ms)
+            page_num += 1
 
             for r in records:
                 text = ' '.join(filter(None, [r.get('brand_name') or '', r.get('title') or ''])).strip()
@@ -89,16 +102,42 @@ def export_and_submit():
                 total += 1
 
             last_id = records[-1]['id']   # avanzar cursor al último id de la página
-            print(f'  {total:,} registros exportados...', end='\r', flush=True)
 
-    print(f'\n  Total exportados: {total:,}  →  {JSONL_FILE}')
+            # Imprimir latencia cada 10 páginas para detectar regresión O(n) residual
+            if page_num % 10 == 0:
+                window = latencies[-10:]
+                avg_w  = sum(window) / len(window)
+                print(
+                    f'  {total:,} registros | pág {page_num} | '
+                    f'p10-avg={avg_w:.0f}ms  última={elapsed_ms:.0f}ms',
+                    end='\r', flush=True,
+                )
+            else:
+                print(f'  {total:,} registros exportados...', end='\r', flush=True)
+
+    # Resumen de latencia final
+    if latencies:
+        s = sorted(latencies)
+        avg_ms = sum(latencies) / len(latencies)
+        p50_ms = s[len(s) // 2]
+        p95_ms = s[min(int(len(s) * 0.95), len(s) - 1)]
+        print(f'\n  Total exportados: {total:,} en {page_num} páginas  →  {JSONL_FILE}')
+        print(f'  Latencia cursor:  avg={avg_ms:.0f}ms  p50={p50_ms:.0f}ms  p95={p95_ms:.0f}ms')
+        if p95_ms > 5_000:
+            print('  [WARN] p95 > 5 000 ms — revisar índice PK o latencia de red al DB')
+    else:
+        print(f'\n  Total exportados: {total:,}  ->  {JSONL_FILE}')
 
     if total == 0:
-        print('  Nada que procesar — todos los registros ya tienen embedding.')
+        print('  Nada que procesar -- todos los registros ya tienen embedding.')
         return
 
+    _submit_jsonl()
+
+
+def _submit_jsonl():
     # Subir el JSONL a OpenAI
-    print('\nSubiendo archivo a OpenAI...')
+    print('\nSubiendo archivo a OpenAI ({:.0f} MB)...'.format(JSONL_FILE.stat().st_size / 1_048_576))
     with open(JSONL_FILE, 'rb') as f:
         uploaded = client.files.create(file=f, purpose='batch')
     print(f'  File ID: {uploaded.id}')
@@ -112,9 +151,9 @@ def export_and_submit():
     BATCH_ID_FILE.write_text(batch.id)
     print(f'\nBatch creado: {batch.id}')
     print(f'Estado:       {batch.status}')
-    print(f'\nEjecuta cuando termine:')
-    print(f'  py phase2_batch_api.py status   ← revisar estado')
-    print(f'  py phase2_batch_api.py import   ← importar resultados')
+    print('\nEjecuta cuando termine:')
+    print('  py phase2_batch_api.py status   <- revisar estado')
+    print('  py phase2_batch_api.py import   <- importar resultados')
 
 
 # ── PASO B: STATUS ────────────────────────────────────────────────────────────
@@ -248,6 +287,8 @@ if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'help'
     if cmd == 'export':
         export_and_submit()
+    elif cmd == 'submit':
+        _submit_jsonl()   # sube el JSONL ya existente sin re-exportar
     elif cmd == 'status':
         check_status()
     elif cmd == 'import':
