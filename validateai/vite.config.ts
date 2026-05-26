@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -28,7 +28,6 @@ export default defineConfig({
         branches: 80,
       },
     },
-    // Tests estadísticos necesitan más tiempo por Monte Carlo
     testTimeout: 30_000,
     reporters: ['verbose'],
   },

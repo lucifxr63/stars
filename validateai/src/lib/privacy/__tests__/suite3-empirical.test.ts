@@ -18,11 +18,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { empiricalPrivacyRatio, laplaceSample, laplaceStats } from '../laplace';
+import { empiricalPrivacyRatio, laplaceSample } from '../laplace';
 import { applyKAnonymity, auditKAnonymity } from '../kAnonymity';
 import { applyLDiversity, auditLDiversity } from '../lDiversity';
 import {
-  makeEquivalenceClass, makeRecord, createDeterministicRng, resetSeq,
+  makeEquivalenceClass, createDeterministicRng, resetSeq,
 } from './fixtures';
 import type { PrivacyRecord } from '../types';
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import type { SurveyForm, SurveySubmission, AnalysisResult, Severity, SurveyAggregates } from '@/types/survey';
+import type { SurveyForm, SurveySubmission, Severity, SurveyAggregates } from '@/types/survey';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 

@@ -14,9 +14,9 @@ import { applyKAnonymity, auditKAnonymity, qiKey } from '../kAnonymity';
 import { applyLDiversity, auditLDiversity } from '../lDiversity';
 import { calculate1D_EMD, applyTCloseness, auditTCloseness } from '../tCloseness';
 import {
-  makeRecord, makeEquivalenceClass, makeOutlier, resetSeq,
+  makeEquivalenceClass, makeOutlier, resetSeq,
 } from './fixtures';
-import type { PrivacyRecord, Severity } from '../types';
+import type { PrivacyRecord } from '../types';
 
 const K = 5;
 const L = 2;
