@@ -71,15 +71,19 @@ function AccountSection({ user, profile }: { user: User; profile: ProfileRow | n
 
   const handleSave = async () => {
     setSaving(true);
-    const updates: Record<string, unknown> = { full_name: fullName.trim() || null };
-    // Si el usuario ingresó un RUT, escribirlo — el trigger DB lo hashea y nullifica el plaintext
-    if (rutInput.trim()) updates.rut = rutInput.trim();
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update({ full_name: fullName.trim() || null })
       .eq('id', user.id);
+    if (error) { setSaving(false); toast.error('Error al guardar'); return; }
+
+    if (rutInput.trim()) {
+      const { error: rutError } = await supabase
+        .rpc('update_my_rut_hash', { plain_rut: rutInput.trim() });
+      if (rutError) { setSaving(false); toast.error('Error al guardar RUT'); return; }
+    }
+
     setSaving(false);
-    if (error) { toast.error('Error al guardar'); return; }
     toast.success('Perfil actualizado');
     setRutInput('');
     setEditing(false);

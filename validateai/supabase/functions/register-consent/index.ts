@@ -83,13 +83,21 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Insertar el consentimiento
+    // Hashear el RUT server-side antes de persistir (nunca almacenar plaintext)
+    let rutHash: string | null = null;
+    if (rut) {
+      const { data: hashRow } = await supabaseAdmin
+        .rpc('fn_hash_rut_value', { plain_rut: rut });
+      rutHash = hashRow ?? null;
+    }
+
+    // Insertar el consentimiento con hash, no con plaintext
     const { error: insertError } = await supabaseAdmin
       .from('consent_logs')
       .insert({
         user_id: user.id,
         ip_address: ip_address ?? null,
-        rut: rut ?? null,
+        rut_hash: rutHash,
         consent_type,
         flagged: true,
         consented_at: new Date().toISOString(),
@@ -103,7 +111,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    console.log(`[register-consent] Consentimiento registrado: user=${user.id} ip=${ip_address} rut=${rut ? '***' : 'none'}`);
+    console.log(`[register-consent] Consentimiento registrado: user=${user.id} ip=${ip_address} rut_hash=${rutHash ? 'set' : 'none'}`);
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
