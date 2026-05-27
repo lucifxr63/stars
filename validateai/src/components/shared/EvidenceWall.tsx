@@ -60,18 +60,21 @@ function TrajectoryIcon({ trajectory }: { trajectory: string }) {
   return <span className="text-gray-400 font-bold">→ Estable</span>;
 }
 
-function AgentErrorCard({ label }: { label: string }) {
+function ComingSoonCard({ label, description }: { label: string; description: string }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-xl border border-dashed border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/[0.02]">
-      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center shrink-0">
-        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <div className="flex items-center gap-4 p-5 rounded-xl border border-dashed border-gray-200 dark:border-white/8 bg-gradient-to-br from-gray-50 to-white dark:from-white/[0.02] dark:to-transparent">
+      <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+        <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
         </svg>
       </div>
       <div>
-        <p className="text-sm font-semibold text-gray-500 dark:text-[#8B8AA0]">{label}</p>
-        <p className="text-xs text-gray-400 dark:text-[#4A495E] mt-0.5">Datos no disponibles en este análisis.</p>
+        <p className="text-sm font-semibold text-gray-700 dark:text-[#C4C4D4]">{label}</p>
+        <p className="text-xs text-gray-400 dark:text-[#8B8AA0] mt-0.5">{description}</p>
       </div>
+      <span className="ml-auto shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 uppercase tracking-wide">
+        Próximamente
+      </span>
     </div>
   );
 }
@@ -94,7 +97,10 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
         </div>
 
         {reddit_status !== 'success' || !reddit_data ? (
-          <AgentErrorCard label="Datos de Reddit" />
+          <ComingSoonCard
+            label="Señal Social — Reddit"
+            description="Conectaremos discusiones reales de Reddit relacionadas con tu mercado. En desarrollo."
+          />
         ) : (
           <div className="space-y-3">
             {reddit_data.top_discussions.map((post, i) => (
@@ -147,7 +153,10 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
         </div>
 
         {trends_status !== 'success' || !trends_data ? (
-          <AgentErrorCard label="Google Trends" />
+          <ComingSoonCard
+            label="Tendencias de Búsqueda — Google Trends"
+            description="Volumen e interés histórico de búsquedas para tu keyword de mercado. En desarrollo."
+          />
         ) : (
           <div className="p-4 rounded-xl border border-gray-100 dark:border-white/6 bg-white dark:bg-[#12121A] space-y-4">
             <div className="flex items-center justify-between">

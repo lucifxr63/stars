@@ -14,7 +14,7 @@ interface ProfileRow {
   tier:                 string;
   tier_expires_at:      string | null;
   kyc_status:           string | null;
-  rut:                  string | null;
+  rut_hash:             string | null;
   training_consent:     boolean | null;
   created_at:           string;
 }
@@ -61,7 +61,7 @@ function ScoreChip({ score }: { score: number | null }) {
 function AccountSection({ user, profile }: { user: User; profile: ProfileRow | null }) {
   const [editing, setEditing]     = useState(false);
   const [fullName, setFullName]   = useState(profile?.full_name ?? '');
-  const [rut, setRut]             = useState(profile?.rut ?? '');
+  const [rutInput, setRutInput]   = useState('');
   const [saving, setSaving]       = useState(false);
 
   const initials = (fullName || user.email || '?')
@@ -71,13 +71,17 @@ function AccountSection({ user, profile }: { user: User; profile: ProfileRow | n
 
   const handleSave = async () => {
     setSaving(true);
+    const updates: Record<string, unknown> = { full_name: fullName.trim() || null };
+    // Si el usuario ingresó un RUT, escribirlo — el trigger DB lo hashea y nullifica el plaintext
+    if (rutInput.trim()) updates.rut = rutInput.trim();
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName.trim() || null, rut: rut.trim() || null })
+      .update(updates)
       .eq('id', user.id);
     setSaving(false);
     if (error) { toast.error('Error al guardar'); return; }
     toast.success('Perfil actualizado');
+    setRutInput('');
     setEditing(false);
   };
 
@@ -137,14 +141,16 @@ function AccountSection({ user, profile }: { user: User; profile: ProfileRow | n
           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">RUT</p>
           {editing ? (
             <input
-              value={rut}
-              onChange={(e) => setRut(e.target.value)}
-              placeholder="12.345.678-9"
+              value={rutInput}
+              onChange={(e) => setRutInput(e.target.value)}
+              placeholder={profile?.rut_hash ? 'Ingresar nuevo RUT' : '12.345.678-9'}
               className="text-sm font-medium text-gray-900 dark:text-[#F0EFF8] bg-transparent border-b border-indigo-300 outline-none w-full pb-0.5"
             />
           ) : (
             <p className="text-sm font-medium text-gray-900 dark:text-[#F0EFF8]">
-              {profile?.rut || <span className="text-gray-400 italic">No registrado</span>}
+              {profile?.rut_hash
+                ? <span className="text-emerald-600 dark:text-emerald-400">✓ Registrado</span>
+                : <span className="text-gray-400 italic">No registrado</span>}
             </p>
           )}
         </div>
@@ -193,6 +199,66 @@ function AccountSection({ user, profile }: { user: User; profile: ProfileRow | n
             </div>
             <Link to="/pricing" className="shrink-0 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors">
               Ver planes
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ── Sección: Suscripción ──────────────────────────────────────────────────────
+function SubscriptionSection({ profile }: { profile: ProfileRow | null }) {
+  const tier = profile?.tier ?? 'free';
+  const tierInfo = TIER_LABEL[tier] ?? TIER_LABEL.free;
+  const isPaid = tier !== 'free';
+
+  return (
+    <section className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+      <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8] mb-5">Suscripción</h2>
+
+      <div className="space-y-3">
+        {/* Plan actual */}
+        <div className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 dark:border-white/8">
+          <div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Plan actual</p>
+            <span className={`inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${tierInfo.color}`}>
+              {tierInfo.label}
+            </span>
+          </div>
+          {profile?.tier_expires_at && (
+            <div className="text-right">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Vence</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-[#F0EFF8]">
+                {fmtDate(profile.tier_expires_at)}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {isPaid ? (
+          <div className="p-4 rounded-2xl border border-gray-100 dark:border-white/8">
+            <p className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4] mb-1">Gestionar suscripción</p>
+            <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
+              Para cambios de plan, cancelación o facturación contacta a{' '}
+              <a href="mailto:soporte@validateai.cl" className="text-indigo-500 hover:underline">
+                soporte@validateai.cl
+              </a>
+            </p>
+          </div>
+        ) : (
+          <div className="p-4 rounded-2xl border border-dashed border-indigo-300 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-500/5">
+            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1">
+              Desbloquea el análisis completo
+            </p>
+            <p className="text-[11px] text-indigo-500 mb-3 leading-relaxed">
+              Gobernanza, Fundraising, Unit Economics, Founder Fit y exportación PDF investor-ready.
+            </p>
+            <Link
+              to="/pricing"
+              className="inline-block px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+            >
+              Ver planes →
             </Link>
           </div>
         )}
@@ -406,7 +472,7 @@ export function Profile() {
       setUser(u);
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url, tier, tier_expires_at, kyc_status, rut, training_consent, created_at')
+        .select('full_name, avatar_url, tier, tier_expires_at, kyc_status, rut_hash, training_consent, created_at')
         .eq('id', u.id)
         .single();
       setProfile(data as ProfileRow | null);
@@ -436,6 +502,8 @@ export function Profile() {
         ) : user ? (
           <>
             <AccountSection user={user} profile={profile} />
+
+            <SubscriptionSection profile={profile} />
 
             <ActivitySection userId={user.id} />
 

@@ -24,6 +24,7 @@ const SurveyList = lazy(() => import('@/app/routes/SurveyList').then((m) => ({ d
 const SurveyBuilder = lazy(() => import('@/app/routes/SurveyBuilder').then((m) => ({ default: m.SurveyBuilder })));
 const SurveyResults = lazy(() => import('@/app/routes/SurveyResults').then((m) => ({ default: m.SurveyResults })));
 const SurveyRespond = lazy(() => import('@/app/routes/SurveyRespond').then((m) => ({ default: m.SurveyRespond })));
+const CheckoutSuccess = lazy(() => import('@/app/routes/CheckoutSuccess').then((m) => ({ default: m.CheckoutSuccess })));
 
 function PageLoader() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/surveys/new" element={<SurveyBuilder />} />
             <Route path="/surveys/:id/edit" element={<SurveyBuilder />} />
             <Route path="/surveys/:id/results" element={<SurveyResults />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
           </Route>
           <Route path="/shared/:token" element={<SharedValidation />} />
           <Route path="/s/:slug" element={<SurveyRespond />} />
