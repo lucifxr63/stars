@@ -62,6 +62,29 @@ Criterios:
 - friction_score: 1=mínima fricción, 10=fricción máxima paralizante
 - mom_test_signals: indicadores de que la respuesta sigue el método "The Mom Test" (habla de hechos pasados, no hipótesis)`;
 
+// ── PII Shield: mascara PII en key_quotes antes de persistir ─────────────
+// Solo cubre patrones de alta precisión (bajo false-positive rate):
+// email, teléfono chileno, RUT formato XX.XXX.XXX-X.
+// Textos libres de nombres propios quedan para la generalización semántica del pipeline K/L/T.
+function maskPII(text: string): { masked: string; hasPII: boolean } {
+  const rules: [RegExp, string][] = [
+    [/[\w.+\-]+@[\w\-]+\.[\w.]+/g,             '[email]'],
+    [/(\+?56)?[\s\-]?(9\d{8}|[2-9]\d{7})/g,   '[teléfono]'],
+    [/\b\d{1,2}\.?\d{3}\.?\d{3}[-]\d[\dkK]\b/g, '[RUT]'],
+  ];
+
+  let masked  = text;
+  let hasPII  = false;
+
+  for (const [pattern, replacement] of rules) {
+    const result = masked.replace(pattern, replacement);
+    if (result !== masked) hasPII = true;
+    masked = result;
+  }
+
+  return { masked, hasPII };
+}
+
 // ── Análisis de una submission individual ────────────────
 async function analyzeSingleSubmission(
   responseData: Record<string, unknown>,
@@ -182,6 +205,20 @@ Deno.serve(async (req: Request) => {
         );
 
         if (analysis) {
+          // PII Shield: maskear quotes antes de persistir
+          let piiDetected = false;
+          if (Array.isArray(analysis.key_quotes)) {
+            analysis.key_quotes = (analysis.key_quotes as string[]).map((quote: string) => {
+              const { masked, hasPII } = maskPII(quote);
+              if (hasPII) piiDetected = true;
+              return masked;
+            });
+          }
+          if (piiDetected) {
+            (analysis as Record<string, unknown>).pii_masked = true;
+            console.warn(`[survey-analyze] PII detectada y enmascarada en submission=${sub.id}`);
+          }
+
           const { error: updateError } = await supabaseAdmin
             .from('survey_submissions')
             .update({

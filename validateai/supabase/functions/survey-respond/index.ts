@@ -2,7 +2,11 @@
 // Endpoint PÚBLICO para recibir respuestas de encuestas.
 // Valida el payload contra el schema_json del formulario en tiempo de ejecución.
 // Requiere consentimiento explícito del encuestado (Ley 21.719).
-// POST /survey-respond  body: { slug, response_data, consent_given, metadata? }
+// POST /survey-respond  body: { slug, response_data, consent_given, _hp?, metadata? }
+//
+// Anti-bot:
+//   _hp (honeypot): campo oculto CSS. Si llega no-vacío → silently reject.
+//   Rate limit: 5 submissions/IP/hora por formulario (IP prefix /24 en metadata).
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -45,6 +49,24 @@ interface FormField {
 interface FormSchema {
   version: string;
   fields: FormField[];
+}
+
+// ── Helpers anti-bot ─────────────────────────────────────
+function getClientIP(req: Request): string | null {
+  return req.headers.get('cf-connecting-ip')
+      ?? req.headers.get('x-real-ip')
+      ?? req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+      ?? null;
+}
+
+function anonymizeIPPrefix(ip: string): string | null {
+  const ipv4 = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\d{1,3}$/);
+  if (ipv4) return `${ipv4[1]}.${ipv4[2]}.${ipv4[3]}.0`;
+  if (ip.includes(':')) {
+    const groups = ip.split(':');
+    return `${groups[0] ?? '0'}:${groups[1] ?? '0'}:${groups[2] ?? '0'}::/48`;
+  }
+  return null;
 }
 
 // ── Validador dinámico ────────────────────────────────────
@@ -116,10 +138,17 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { slug, response_data, consent_given, metadata = {} } = body;
+    const { slug, response_data, consent_given, _hp, metadata = {} } = body;
 
     if (!slug) return json({ error: 'slug is required' }, 400, req);
     if (!response_data || typeof response_data !== 'object') return json({ error: 'response_data must be an object' }, 400, req);
+
+    // Honeypot: campo oculto CSS — bots rellenan todo, humanos no lo ven
+    // Silently return 201 para no revelar la defensa al bot
+    if (typeof _hp === 'string' && _hp.length > 0) {
+      console.warn('[survey-respond] Honeypot triggered — bot detected, silent reject');
+      return json({ ok: true, submission_id: 'honeypot' }, 201, req);
+    }
 
     // Consentimiento explícito obligatorio — Ley 21.719
     if (!consent_given) {
@@ -148,11 +177,30 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Datos inválidos.', validation_errors: errors }, 422, req);
     }
 
-    // Sanitizar metadata: solo campos seguros
+    // Rate limit por IP: máx 5 submissions por formulario por hora
+    const clientIP   = getClientIP(req);
+    const ipPrefix   = clientIP ? anonymizeIPPrefix(clientIP) : null;
+
+    if (ipPrefix) {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: recentCount } = await supabaseAdmin
+        .from('survey_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('form_id', form.id)
+        .filter('metadata->>ip_prefix', 'eq', ipPrefix)
+        .gte('created_at', oneHourAgo);
+
+      if ((recentCount ?? 0) >= 5) {
+        return json({ error: 'Demasiadas respuestas. Intenta de nuevo más tarde.', code: 'RATE_LIMITED' }, 429, req);
+      }
+    }
+
+    // Sanitizar metadata: solo campos seguros + IP prefix anonimizado para rate-limit
     const safeMetadata = {
       user_agent: String(metadata.user_agent ?? '').slice(0, 512),
       completed_at: new Date().toISOString(),
       referrer: String(metadata.referrer ?? '').slice(0, 512),
+      ip_prefix: ipPrefix,  // /24 o /48 — nunca IP completa
     };
 
     // Insertar respuesta

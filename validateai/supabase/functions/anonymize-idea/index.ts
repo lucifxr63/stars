@@ -98,13 +98,14 @@ serve(async (req) => {
     }
 
     // ── Rate limit: 5 anonimizaciones/día por usuario ────────────────────────
+    // Consulta training_data_audit (privada) — training_data ya no tiene user_id
     const todayStart = new Date()
     todayStart.setUTCHours(0, 0, 0, 0)
     const { count: callsToday } = await supabaseAdmin
-      .from('training_data')
+      .from('training_data_audit')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .gte('created_at', todayStart.toISOString())
+      .gte('contributed_at', todayStart.toISOString())
     if ((callsToday ?? 0) >= 5) {
       return new Response(JSON.stringify({ error: 'rate_limit', message: 'Límite diario de anonimizaciones alcanzado.' }), {
         status: 429, headers: { ...cors, 'Content-Type': 'application/json' },
@@ -191,25 +192,31 @@ Tu tarea es leer la descripción de una startup y reescribirla en 2-3 frases de 
       .map((b) => b.text ?? '')
       .join('')
 
-    // 3. Guardar en training_data
+    // 3. Guardar en training_data (sin user_id — anónimo) + audit trail separado
     const scoresJSON = {
       score: validation.validation_score,
       breakdown: validation.score_breakdown,
       risk_score: validation.risk_analysis?.overallRiskScore ?? null
     }
 
-    const { error: insertError } = await supabaseAdmin
+    const { data: inserted, error: insertError } = await supabaseAdmin
       .from('training_data')
       .insert({
-        user_id: user.id,
         industry: validation.idea_industry,
         geography: validation.target_country,
         idea_summary: anonymizedSummary,
         scores: scoresJSON,
         outcome: 'unknown'
       })
+      .select('id')
+      .single()
 
     if (insertError) throw insertError
+
+    // Audit trail privado (rate-limit + trazabilidad interna, sin PII en training_data)
+    await supabaseAdmin
+      .from('training_data_audit')
+      .insert({ training_data_id: inserted.id, user_id: user.id })
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...cors, 'Content-Type': 'application/json' },

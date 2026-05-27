@@ -57,6 +57,23 @@ Deno.serve(async () => {
   const now      = new Date();
   const weekAgo  = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+  // ── TTL: nullificar raw_scraped_data en founder_profiles > 90 días ────────
+  // raw_scraped_data contiene HTML crudo de LinkedIn — dato de tercero sin consentimiento explícito.
+  // Conservar más de 90 días es responsabilidad innecesaria (procesamos, no almacenamos).
+  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  const { error: ttlError } = await supabase
+    .from('founder_profiles')
+    .update({ raw_scraped_data: null })
+    .lt('updated_at', ninetyDaysAgo)
+    .not('raw_scraped_data', 'is', null);
+
+  if (ttlError) {
+    console.warn('[cron-tier-health] TTL cleanup error:', ttlError.message);
+  } else {
+    console.log('[cron-tier-health] TTL: raw_scraped_data limpiado para perfiles con updated_at < 90d');
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const periodEnd   = now.toISOString();
   const periodStart = weekAgo.toISOString();
 
