@@ -1,13 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Config ────────────────────────────────────────────────────────────────────
-// INAPI expone su registro de marcas mediante un endpoint OData público.
-// No requiere API key para consultas de solo-lectura (búsqueda de marcas).
-// Endpoint: https://tmapi.inapi.cl/odata/v1/Solicitudes
-const INAPI_ODATA_BASE = 'https://tmapi.inapi.cl/odata/v1/Solicitudes';
-
-// Clases Niza relevantes para SaaS B2B (tecnología y servicios profesionales)
 const DEFAULT_CLASES_NIZA = ['35', '38', '42'];
 
 const ALLOWED_ORIGINS = [
@@ -33,7 +26,7 @@ function getSupabase() {
   );
 }
 
-// ── INAPI OData query ─────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface INAPIRecord {
   denominacion: string;
   estado: string;
@@ -42,8 +35,9 @@ interface INAPIRecord {
   numero_solicitud?: string;
 }
 
-// Normaliza la denominación para comparación fuzzy:
-// elimina tildes, espacios múltiples y convierte a uppercase.
+// Statuses that represent active, enforceable trademarks in inapi_records
+const ACTIVE_STATUSES = ['Registrada', 'En Trámite', 'En trámite', 'Esperando renovación'];
+
 function normalizeText(text: string): string {
   return text
     .normalize('NFD')
@@ -53,50 +47,26 @@ function normalizeText(text: string): string {
     .toUpperCase();
 }
 
-async function searchINAPI(brandName: string): Promise<INAPIRecord[]> {
-  const normalized = normalizeText(brandName);
-
-  // OData $filter: busca marcas cuya denominación contenga el término (case-insensitive)
-  // $select: solo campos relevantes para el análisis — reduce payload
-  // $top: máximo 20 resultados para análisis de colisión
-  const params = new URLSearchParams({
-    '$filter': `contains(toupper(Denominacion), '${normalized.replace(/'/g, "''")}')`,
-    '$select': 'Denominacion,EstadoSolicitud,TitularNombreEmpresa,ClasesNiza,NumeroSolicitud',
-    '$top': '20',
-    '$format': 'json',
+// ── DB search via inapi_records (trigram index on brand_name) ─────────────────
+async function searchINAPILocal(supabase: ReturnType<typeof createClient>, brandName: string): Promise<INAPIRecord[]> {
+  // Use pg similarity search — the gin_trgm_ops index makes this fast
+  const { data, error } = await supabase.rpc('search_inapi_brands', {
+    p_brand_name: brandName,
+    p_limit: 25,
   });
 
-  const url = `${INAPI_ODATA_BASE}?${params.toString()}`;
+  if (error) throw new Error(`DB search error: ${error.message}`);
 
-  const res = await fetch(url, {
-    headers: {
-      'Accept': 'application/json',
-      'User-Agent': 'ValidateAI/1.0 (due-diligence; lucianoalonso2000@gmail.com)',
-    },
-    signal: AbortSignal.timeout(12_000),
-  });
-
-  if (!res.ok) {
-    throw new Error(`INAPI OData HTTP ${res.status} — endpoint puede requerir verificación`);
-  }
-
-  const data = await res.json();
-  // La API OData devuelve { value: [...] }
-  const records = (data.value ?? []) as Array<Record<string, string>>;
-
-  return records.map(r => ({
-    denominacion: r.Denominacion ?? r.denominacion ?? '',
-    estado: r.EstadoSolicitud ?? r.estado ?? 'Desconocido',
-    titular: r.TitularNombreEmpresa ?? r.titular ?? 'N/D',
-    clases: r.ClasesNiza ?? r.clases ?? '',
-    numero_solicitud: r.NumeroSolicitud ?? r.numero_solicitud,
+  return (data ?? []).map((r: Record<string, string>) => ({
+    denominacion: r.brand_name ?? '',
+    estado: r.status ?? 'Desconocido',
+    titular: r.applicants ?? 'N/D',
+    clases: Array.isArray(r.niza_classes) ? r.niza_classes.join(', ') : (r.niza_classes ?? ''),
+    numero_solicitud: r.application_number,
   }));
 }
 
 // ── Collision risk classifier ─────────────────────────────────────────────────
-// Solo marcas en estado "vigente" o "concedida" representan riesgo real de colisión.
-const ACTIVE_STATES = ['vigente', 'concedida', 'registrada', 'activa', 'en tramitación'];
-
 function classifyCollisionRisk(records: INAPIRecord[], brandName: string): {
   colisiones: INAPIRecord[];
   risk_level: 'none' | 'low' | 'medium' | 'high';
@@ -104,15 +74,11 @@ function classifyCollisionRisk(records: INAPIRecord[], brandName: string): {
 } {
   const normalized = normalizeText(brandName);
 
-  // Filtrar solo marcas activas
   const activas = records.filter(r =>
-    ACTIVE_STATES.some(s => r.estado.toLowerCase().includes(s))
+    ACTIVE_STATUSES.some(s => r.estado === s)
   );
 
-  // Colisión exacta (misma denominación normalizada)
   const exactas = activas.filter(r => normalizeText(r.denominacion) === normalized);
-
-  // Colisión parcial (la denominación contiene o está contenida en la búsqueda)
   const parciales = activas.filter(r => {
     const dn = normalizeText(r.denominacion);
     return dn !== normalized && (dn.includes(normalized) || normalized.includes(dn));
@@ -170,27 +136,16 @@ serve(async (req) => {
       });
     }
 
-    // 1. Consultar INAPI OData
-    let records: INAPIRecord[] = [];
-    let apiAvailable = true;
-    let apiError: string | undefined;
-
-    try {
-      records = await searchINAPI(brand_name);
-    } catch (err) {
-      // Si INAPI no responde, continuamos con resultado vacío + advertencia
-      apiAvailable = false;
-      apiError = (err as Error).message;
-      console.warn('inapi-fetch: API INAPI no disponible:', err);
-    }
+    // 1. Consultar tabla local inapi_records
+    const records = await searchINAPILocal(supabase, brand_name);
 
     // 2. Clasificar riesgo de colisión
     const { colisiones, risk_level, risk_rationale } = classifyCollisionRisk(records, brand_name);
 
     const payload = {
       brand_name,
-      available: apiAvailable,
-      api_error: apiError,
+      available: true,
+      source: 'local_db',
       colisiones,
       risk_level,
       risk_rationale,
@@ -199,7 +154,7 @@ serve(async (req) => {
       fetched_at: new Date().toISOString(),
     };
 
-    // 3. Escribir en temp_context para que assemble-mega-prompt lo consuma
+    // 3. Escribir en temp_context para assemble-mega-prompt
     const { error: upsertError } = await supabase
       .from('temp_context')
       .upsert(
@@ -216,12 +171,9 @@ serve(async (req) => {
 
     if (upsertError) console.warn('inapi-fetch: temp_context upsert warning:', upsertError.message);
 
-    // 4. Responder con resultado completo
-    // assemble-mega-prompt también llama a esta función inline vía callEdgeFunction(),
-    // por eso retornamos el payload directamente además de escribirlo en temp_context.
     return new Response(JSON.stringify({
       success: true,
-      available: apiAvailable,
+      available: true,
       brand_name,
       colisiones,
       risk_level,
