@@ -30,7 +30,7 @@ import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
-import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, trackDueDiligenceCompleted } from '@/hooks/useAnalytics';
+import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, trackDueDiligenceCompleted, trackEncuestasCTAClicked } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent } from '@/lib/telemetry';
 import { useMentors } from '@/hooks/useMentors';
 import { EvidenceWall } from '@/components/shared/EvidenceWall';
@@ -198,10 +198,10 @@ export function ValidationDetail() {
     fetch();
   }, [id, navigate]);
 
-  // Auto-genera el veredicto la primera vez que el usuario ve la pestaña
+  // Auto-genera el playbook la primera vez que el usuario ve Veredicto o Validación
   useEffect(() => {
     if (
-      activeTab !== 'Veredicto' ||
+      (activeTab !== 'Veredicto' && activeTab !== 'Validación') ||
       !data ||
       data.playbook_analysis ||
       generatingVerdict ||
@@ -754,13 +754,13 @@ export function ValidationDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
+      <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
         <Header />
         <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-10 space-y-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-white/5 p-6 animate-pulse">
-              <div className="h-4 bg-gray-100 dark:bg-white/5 rounded w-1/3 mb-3" />
-              <div className="h-3 bg-gray-100 dark:bg-white/5 rounded w-2/3" />
+            <div key={i} className="bg-[#12121A] rounded-2xl border border-white/[0.06] p-6 animate-pulse">
+              <div className="h-4 bg-white/5 rounded w-1/3 mb-3" />
+              <div className="h-3 bg-white/5 rounded w-2/3" />
             </div>
           ))}
         </div>
@@ -775,48 +775,50 @@ export function ValidationDetail() {
   const isGood = (data.validation_score ?? 0) >= 70;
   const isMid = (data.validation_score ?? 0) >= 40;
   const scoreBg = isGood
-    ? 'bg-green-50 border-green-200 dark:bg-green-500/10 dark:border-green-500/20 shadow-sm shadow-green-500/10'
+    ? 'bg-[#34D399]/10 border-[#34D399]/30 shadow-sm shadow-[#34D399]/10'
     : isMid
-    ? 'bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 shadow-sm shadow-amber-500/10'
-    : 'bg-red-50 border-red-200 dark:bg-red-500/10 dark:border-red-500/20 shadow-sm shadow-red-500/10';
+    ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30 shadow-sm shadow-[#F7C56C]/10'
+    : 'bg-[#F87171]/10 border-[#F87171]/30 shadow-sm shadow-[#F87171]/10';
 
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
+    <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
       <Header />
 
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-          <Link to="/results" className="hover:text-teal-600 transition">Mis validaciones</Link>
+          <Link to="/results" className="hover:text-[#7C6FF7] transition">Mis validaciones</Link>
           <span>›</span>
           <span className="text-gray-700 dark:text-[#C4C4D4] font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
         </div>
 
         {/* Banner: Nuevos módulos disponibles */}
         {hasNewModulesToGenerate && !generatingNewModules && (
-          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/25">
+          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#7C6FF7]/10 border border-[#7C6FF7]/25">
             <div className="flex items-start gap-3">
-              <span className="text-xl mt-0.5">✦</span>
+              <svg className="w-4 h-4 text-[#A78BFA] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
               <div>
-                <p className="text-sm font-bold text-teal-800 dark:text-teal-300">Nuevos módulos disponibles</p>
-                <p className="text-xs text-teal-700/80 dark:text-teal-400/80 mt-0.5">
+                <p className="text-sm font-bold text-[#A78BFA]">Nuevos módulos disponibles</p>
+                <p className="text-xs text-[#8B8AA0] mt-0.5">
                   Haz clic en <strong>Re-analizar Idea</strong> para generar tu Roadmap Legal, Financiero y de MVP con la versión más reciente de la IA.
                 </p>
               </div>
             </div>
             <button
               onClick={handleGenerateNewModules}
-              className="shrink-0 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition"
+              className="shrink-0 px-4 py-2 bg-[#7C6FF7] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition"
             >
               Re-analizar Idea
             </button>
           </div>
         )}
         {generatingNewModules && (
-          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/25">
-            <span className="animate-spin text-teal-600">⏳</span>
-            <p className="text-sm font-bold text-teal-700 dark:text-teal-300">Generando nuevos módulos con la IA más reciente...</p>
+          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-[#7C6FF7]/10 border border-[#7C6FF7]/25">
+            <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+            <p className="text-sm font-bold text-[#A78BFA]">Generando nuevos módulos con la IA más reciente...</p>
           </div>
         )}
 
@@ -840,18 +842,28 @@ export function ValidationDetail() {
               
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 {data.target_country && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-xs font-bold text-blue-700 dark:text-blue-400">
-                    <span className="text-[10px]">🌍</span> {data.target_country}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-bold text-blue-400">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
+                    </svg>
+                    {data.target_country}
                   </span>
                 )}
                 {data.business_model && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-xs font-bold text-purple-700 dark:text-purple-400 capitalize">
-                    <span className="text-[10px]">💼</span> {data.business_model.replace(/_/g, ' ')}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 text-xs font-bold text-[#A78BFA] capitalize">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+                    </svg>
+                    {data.business_model.replace(/_/g, ' ')}
                   </span>
                 )}
                 {data.pricing_range && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                    <span className="text-[10px]">💰</span> {data.pricing_range}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#34D399]/10 border border-[#34D399]/20 text-xs font-bold text-[#34D399]">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {data.pricing_range}
                   </span>
                 )}
               </div>
@@ -875,10 +887,10 @@ export function ValidationDetail() {
               <button
                 onClick={handleShare}
                 disabled={sharing}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 border-2 border-teal-200 dark:border-teal-500/30 text-teal-600 dark:text-teal-400 bg-teal-50/50 dark:bg-teal-500/5 text-xs font-bold rounded-xl hover:bg-teal-50 dark:hover:bg-teal-500/10 active:scale-[0.98] transition disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#7C6FF7]/30 text-[#A78BFA] bg-[#7C6FF7]/5 text-xs font-bold rounded-xl hover:bg-[#7C6FF7]/10 active:scale-[0.98] transition disabled:opacity-50"
               >
                 {sharing ? (
-                  <div className="w-3.5 h-3.5 border-2 border-teal-400/40 border-t-teal-500 rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin" />
                 ) : (
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -897,22 +909,26 @@ export function ValidationDetail() {
                   }
                 }}
               >
-                <summary className="flex items-center justify-center gap-1.5 h-9 px-3 border-2 border-gray-200 dark:border-white/10 text-gray-700 dark:text-[#F0EFF8] bg-white dark:bg-[#1A1A24] rounded-xl text-xs font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer list-none [&::-webkit-details-marker]:hidden outline-none focus:ring-2 focus:ring-teal-500/50">
-                  ⚙️ Opciones <span className="group-open:rotate-180 transition-transform opacity-50">▾</span>
+                <summary className="flex items-center justify-center gap-1.5 h-9 px-3 border border-white/[0.06] text-[#8B8AA0] bg-[#12121A] rounded-xl text-xs font-bold hover:bg-white/5 hover:text-[#F0EFF8] transition cursor-pointer list-none [&::-webkit-details-marker]:hidden outline-none focus:ring-2 focus:ring-[#7C6FF7]/50">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Opciones <span className="group-open:rotate-180 transition-transform opacity-50">▾</span>
                 </summary>
                 
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1A1A24] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 dark:border-white/10 p-2 flex flex-col gap-1 z-50">
                   
                   {/* Tema del PDF */}
-                  <div className="px-3 py-2.5 border-b border-gray-100 dark:border-white/5 mb-1 bg-gray-50/50 dark:bg-slate-900/50 rounded-lg">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-[#8B8AA0] mb-2">Tema del PDF</p>
+                  <div className="px-3 py-2.5 border-b border-white/5 mb-1 bg-[#0A0A0F]/50 rounded-lg">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-[#8B8AA0] mb-2">Tema del PDF</p>
                     <div className="flex gap-1.5">
                       {PDF_THEMES.map((t) => {
                         const isActive = pdfTheme === t.id;
                         const swatches: Record<string, string> = {
-                          dark:     'bg-slate-900',
-                          clean:    'bg-white border border-gray-200',
-                          gradient: 'bg-gradient-to-r from-teal-400 to-blue-700',
+                          dark:     'bg-[#0A0A0F]',
+                          clean:    'bg-white border border-white/20',
+                          gradient: 'bg-gradient-to-r from-[#7C6FF7] to-[#34D399]',
                         };
                         return (
                           <button
@@ -921,8 +937,8 @@ export function ValidationDetail() {
                             title={t.label}
                             className={`flex-1 flex justify-center py-1.5 rounded-lg border transition-all ${
                               isActive
-                                ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
-                                : 'border-gray-200 dark:border-white/10 hover:border-teal-300'
+                                ? 'border-[#7C6FF7] bg-[#7C6FF7]/10'
+                                : 'border-white/10 hover:border-[#7C6FF7]/50'
                             }`}
                           >
                             <span className={`w-3.5 h-3.5 rounded-full ${swatches[t.id]}`} />
@@ -934,34 +950,56 @@ export function ValidationDetail() {
 
                   {/* Acciones de IA */}
                   {hasAnythingToUpdate && (
-                    <button onClick={handleReanalyzeClick} disabled={reanalyzing} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl text-xs font-bold text-gray-700 dark:text-[#F0EFF8] text-left transition disabled:opacity-50">
-                      <span className="w-4 h-4 text-center">{reanalyzing ? '⏳' : '🔄'}</span>
+                    <button onClick={handleReanalyzeClick} disabled={reanalyzing} className="flex items-center gap-2 px-3 py-2 hover:bg-white/5 rounded-xl text-xs font-bold text-[#F0EFF8] text-left transition disabled:opacity-50">
+                      {reanalyzing ? (
+                        <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+                      ) : (
+                        <svg className="w-4 h-4 shrink-0 text-[#8B8AA0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      )}
                       {reanalyzing ? 'Analizando...' : 'Actualizar Datos IA'}
                     </button>
                   )}
-                  
+
                   {hasAdvancedToGenerate && (
-                    <button onClick={handleGenerateAdvanced} disabled={generatingAdvanced} className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-400 text-left transition disabled:opacity-50">
-                      <span className="w-4 h-4 text-center">{generatingAdvanced ? '⏳' : '✦'}</span>
+                    <button onClick={handleGenerateAdvanced} disabled={generatingAdvanced} className="flex items-center gap-2 px-3 py-2 hover:bg-[#7C6FF7]/10 rounded-xl text-xs font-bold text-[#A78BFA] text-left transition disabled:opacity-50">
+                      {generatingAdvanced ? (
+                        <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+                      ) : (
+                        <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      )}
                       {generatingAdvanced ? 'Generando...' : 'Generar Análisis Pro'}
                     </button>
                   )}
 
-                  <button onClick={handleUpdateAndExportPDF} disabled={updatePdfLoading} className="flex items-center gap-2 px-3 py-2 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-xl text-xs font-bold text-teal-700 dark:text-teal-400 text-left transition disabled:opacity-50">
-                    <span className="w-4 h-4 text-center">{updatePdfLoading ? '⏳' : '📥'}</span>
+                  <button onClick={handleUpdateAndExportPDF} disabled={updatePdfLoading} className="flex items-center gap-2 px-3 py-2 hover:bg-[#7C6FF7]/10 rounded-xl text-xs font-bold text-[#A78BFA] text-left transition disabled:opacity-50">
+                    {updatePdfLoading ? (
+                      <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+                    ) : (
+                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                      </svg>
+                    )}
                     {updatePdfLoading ? 'Actualizando PDF...' : 'PDF Fresco (Act. + PDF)'}
                   </button>
 
-                  <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
+                  <div className="h-px bg-white/5 my-1" />
 
                   {/* Acciones de Versión */}
-                  <button onClick={() => { setShowPivotModal(true); document.querySelector('details[open]')?.removeAttribute('open'); }} className="flex items-center gap-2 px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 text-left transition">
-                    <span className="w-4 h-4 text-center">🔀</span>
+                  <button onClick={() => { setShowPivotModal(true); document.querySelector('details[open]')?.removeAttribute('open'); }} className="flex items-center gap-2 px-3 py-2 hover:bg-[#F7C56C]/10 rounded-xl text-xs font-bold text-[#F7C56C] text-left transition">
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
                     Pivotar Idea
                   </button>
-                  
-                  <Link to={`/results/${id}/history`} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl text-xs font-bold text-gray-600 dark:text-[#8B8AA0] transition">
-                    <span className="w-4 h-4 text-center">🕒</span>
+
+                  <Link to={`/results/${id}/history`} className="flex items-center gap-2 px-3 py-2 hover:bg-white/5 rounded-xl text-xs font-bold text-[#8B8AA0] transition">
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m-10.5-1A9 9 0 1012 21a9 9 0 00-9.5-3.5" />
+                    </svg>
                     Historial de Versiones
                   </Link>
                 </div>
@@ -970,37 +1008,151 @@ export function ValidationDetail() {
           </div>
         </div>
 
-        {/* SWIPEABLE TABS NAVIGATION */}
+        {/* ── SNAPSHOT HERO ── */}
+        {data.validation_score != null && (
+          <div className="mb-6 bg-[#12121A] rounded-2xl border border-white/[0.06] p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className={`shrink-0 w-16 h-16 rounded-2xl border-2 flex flex-col items-center justify-center font-heading
+              ${isGood ? 'bg-[#34D399]/10 border-[#34D399]/30' : isMid ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30' : 'bg-[#F87171]/10 border-[#F87171]/30'}`}>
+              <span className={`font-black text-2xl ${isGood ? 'text-[#34D399]' : isMid ? 'text-[#F7C56C]' : 'text-[#F87171]'}`}>
+                {data.validation_score}
+              </span>
+              <span className="text-[10px] font-bold text-[#8B8AA0]">/100</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-bold uppercase tracking-wide mb-1
+                ${isGood ? 'text-[#34D399]' : isMid ? 'text-[#F7C56C]' : 'text-[#F87171]'}`}>
+                {isGood ? 'Idea con buen potencial' : isMid ? 'Requiere ajustes clave' : 'Necesita revisión profunda'}
+              </p>
+              {data.ai_feedback && (
+                <p className="text-sm text-[#8B8AA0] leading-relaxed line-clamp-2">{data.ai_feedback}</p>
+              )}
+              {data.score_breakdown && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                  {(Object.entries(data.score_breakdown) as [string, number][]).slice(0, 5).map(([key, val]) => (
+                    <span key={key} className="text-xs text-[#8B8AA0] capitalize">
+                      <span className="font-semibold text-[#F0EFF8] tabular-nums">{val}</span> {key}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="shrink-0 w-full sm:w-auto">
+              {isGood ? (
+                <button
+                  onClick={handleExportPitchDeck}
+                  disabled={pitchDeckLoading}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-all shadow-lg shadow-[#7C6FF7]/25 cursor-pointer disabled:opacity-60"
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  </svg>
+                  {pitchDeckLoading ? 'Generando…' : 'Generar Pitch Deck'}
+                </button>
+              ) : isMid ? (
+                <button
+                  onClick={() => setActiveTab('Veredicto')}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F7C56C]/10 text-[#F7C56C] border border-[#F7C56C]/30 text-sm font-bold rounded-xl hover:bg-[#F7C56C]/20 transition-all cursor-pointer"
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Ver análisis completo
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowPivotModal(true)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F87171]/10 text-[#F87171] border border-[#F87171]/30 text-sm font-bold rounded-xl hover:bg-[#F87171]/20 transition-all cursor-pointer"
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                  </svg>
+                  Pivotar Idea
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── TABS ── */}
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide snap-x">
           {DASHBOARD_TABS.map((t) => {
             const isActive = activeTab === t;
-            let icon = '';
             let hasData = false;
-            
+            let tabIcon: React.ReactNode = null;
+
             switch (t) {
-              case 'Veredicto': icon = '⚡'; hasData = data.playbook_analysis != null; break;
-              case 'Validación': icon = '✅'; hasData = data.summary_json != null; break;
-              case 'Estrategia': icon = '🚀'; hasData = data.market_sizing != null; break;
-              case 'Finanzas': icon = '💰'; hasData = data.unit_economics != null; break;
-              case 'Hoja de Ruta': icon = '🗺️'; hasData = data.lean_roadmap != null; break;
-              case 'Inversión': icon = '📈'; hasData = data.fundraising_roadmap != null; break;
-              case 'Due Diligence': icon = '🔍'; hasData = data.due_diligence_score != null; break;
+              case 'Veredicto':
+                hasData = data.playbook_analysis != null;
+                tabIcon = (
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                );
+                break;
+              case 'Validación':
+                hasData = data.summary_json != null;
+                tabIcon = (
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                );
+                break;
+              case 'Estrategia':
+                hasData = data.market_sizing != null;
+                tabIcon = (
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                  </svg>
+                );
+                break;
+              case 'Finanzas':
+                hasData = data.unit_economics != null;
+                tabIcon = (
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                );
+                break;
+              case 'Hoja de Ruta':
+                hasData = data.lean_roadmap != null;
+                tabIcon = (
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+                  </svg>
+                );
+                break;
+              case 'Inversión':
+                hasData = data.fundraising_roadmap != null;
+                tabIcon = (
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                );
+                break;
+              case 'Due Diligence':
+                hasData = data.due_diligence_score != null;
+                tabIcon = (
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                );
+                break;
             }
 
             return (
               <button
                 key={t}
                 onClick={() => { setActiveTab(t); trackTabView(t); }}
-                className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-200 border shrink-0 snap-start ${
+                className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-150 border shrink-0 snap-start cursor-pointer ${
                   isActive
-                    ? 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-500/10 dark:text-teal-300 dark:border-teal-500/30 shadow-sm shadow-teal-500/10'
-                    : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 hover:border-teal-300/50'
+                    ? 'bg-[#7C6FF7]/10 text-[#A78BFA] border-[#7C6FF7]/30 shadow-sm shadow-[#7C6FF7]/10'
+                    : 'bg-[#12121A] text-[#8B8AA0] border-white/[0.06] hover:bg-white/5 hover:text-[#F0EFF8]'
                 }`}
               >
-                <span>{icon}</span>
+                <span className={isActive ? 'text-[#A78BFA]' : 'text-[#8B8AA0]'}>{tabIcon}</span>
                 <span className="whitespace-nowrap">{t}</span>
                 {hasData && (
-                  <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-teal-500' : 'bg-teal-400 opacity-60'}`} title="Datos disponibles"></span>
+                  <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#7C6FF7]' : 'bg-[#7C6FF7]/50'}`} title="Datos disponibles" />
                 )}
               </button>
             );
@@ -1014,20 +1166,22 @@ export function ValidationDetail() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {generatingVerdict && (
                 <div className="md:col-span-12 rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
-                  <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-10 h-10 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
                   <div>
-                    <p className="font-bold text-white mb-1">Analizando tu idea con el Playbook VC…</p>
-                    <p className="text-sm text-gray-400">Mom Test · JTBD · Unit Economics · Legal Chile</p>
+                    <p className="font-bold text-[#F0EFF8] mb-1">Analizando tu idea con el Playbook VC…</p>
+                    <p className="text-sm text-[#8B8AA0]">Mom Test · JTBD · Unit Economics · Legal Chile</p>
                   </div>
                 </div>
               )}
 
               {!generatingVerdict && data.playbook_analysis && (
                 <>
-                  <div className="md:col-span-12 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 flex items-center gap-3">
-                    <span className="text-violet-400 text-lg shrink-0">⚡</span>
-                    <p className="text-xs text-violet-300 leading-relaxed">
-                      <strong className="text-violet-200">Veredicto VC</strong> — Análisis generado con los Playbooks de Validación, Economics, Legal Chile y Tech Stack. Sin filtros de cortesía.
+                  <div className="md:col-span-12 rounded-xl border border-[#7C6FF7]/30 bg-[#7C6FF7]/10 px-4 py-3 flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <p className="text-xs text-[#A78BFA] leading-relaxed">
+                      <strong className="text-[#C4BCFC]">Veredicto VC</strong> — Análisis generado con los Playbooks de Validación, Economics, Legal Chile y Tech Stack. Sin filtros de cortesía.
                     </p>
                   </div>
 
@@ -1055,8 +1209,16 @@ export function ValidationDetail() {
                     {/* Widgets adicionales para rellenar y complementar la columna */}
                     <div className="flex flex-col gap-4 mt-2">
                       {summary && <VerdictProsCons summary={summary} />}
-                      <VerdictFounderFit data={data.founder_fit} />
-                      <VerdictMarketTiming data={data.market_signals} />
+                      <VerdictFounderFit
+                        data={data.founder_fit}
+                        onGenerate={handleGenerateAdvanced}
+                        generating={generatingAdvanced}
+                      />
+                      <VerdictMarketTiming
+                        data={data.market_signals}
+                        onGenerate={handleGenerateAdvanced}
+                        generating={generatingAdvanced}
+                      />
                     </div>
                   </div>
 
@@ -1089,7 +1251,7 @@ export function ValidationDetail() {
                   <p className="text-sm text-gray-400">No se pudo generar el veredicto.</p>
                   <button
                     onClick={() => setVerdictGenerated(false)}
-                    className="px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 transition"
+                    className="px-4 py-2 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition"
                   >
                     Reintentar
                   </button>
@@ -1101,86 +1263,182 @@ export function ValidationDetail() {
           {/* ── VALIDACIÓN ─────────────────────────────────────────────────── */}
           {activeTab === 'Validación' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* JTBD Analysis */}
-              {data.playbook_analysis?.jtbd_analysis && (
-                <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">🎯</span>
-                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Jobs-to-be-Done</p>
+
+              {/* Loading state */}
+              {generatingVerdict && (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
+                  <div className="w-10 h-10 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                  <div>
+                    <p className="font-bold text-[#F0EFF8] mb-1">Preparando tu guía de validación…</p>
+                    <p className="text-sm text-[#8B8AA0]">Mom Test · Jobs-to-be-Done · Stack Legal Chile</p>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.jtbd_analysis}</p>
                 </div>
               )}
 
-              {/* Mom Test Playbook */}
-              {(data.playbook_analysis?.validation_playbook?.length ?? 0) > 0 && (
-                <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg">📋</span>
-                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Mom Test — Pasos de Validación</p>
-                  </div>
-                  <ol className="space-y-3">
-                    {data.playbook_analysis!.validation_playbook.map((step, i) => (
-                      <li key={i} className="flex gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-teal-500 text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-                        <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{step}</p>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              {/* Encuestas Mom Test */}
-              <div className="bg-white dark:bg-slate-800 border-2 border-teal-500/30 dark:border-teal-400/20 rounded-2xl p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl mt-0.5">📊</span>
-                    <div>
-                      <p className="text-sm font-bold text-gray-800 dark:text-[#E8E8F0] mb-1">Encuestas de Validación de Mercado</p>
-                      <p className="text-xs text-gray-500 dark:text-[#8B8AA0] leading-relaxed">
-                        Crea encuestas basadas en Mom Test para recopilar evidencia real de clientes. Los datos se anonimizan automáticamente con K-anonimato, L-diversidad y T-closeness antes de ingresar al data lake.
-                      </p>
-                    </div>
-                  </div>
-                  <Link
-                    to="/surveys"
-                    className="flex-shrink-0 inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    Ver Encuestas
-                  </Link>
-                </div>
-              </div>
-
-              {/* Evidence Wall — Premium */}
-              {isPremium && agentLog && (
+              {!generatingVerdict && (
                 <>
-                  {agentLog.executive_summary && (
-                    <div className="rounded-2xl border-2 border-[#7C6FF7]/30 bg-[#7C6FF7]/5 p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-6 h-6 rounded-full bg-[#7C6FF7] flex items-center justify-center shrink-0">
-                          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </div>
-                        <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">Resumen Ejecutivo Premium</p>
+                  {/* 1 — Premisa de Validación: datos reales del Wizard */}
+                  {(data.customer_segment || (data.customer_pain_points?.length ?? 0) > 0 || data.value_proposition || data.differentiator) && (
+                    <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                      <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Tu Premisa de Validación
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {data.customer_segment && (
+                          <div>
+                            <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-1.5">Segmento Objetivo</p>
+                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.customer_segment}</p>
+                          </div>
+                        )}
+                        {data.value_proposition && (
+                          <div>
+                            <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-1.5">Propuesta de Valor</p>
+                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.value_proposition}</p>
+                          </div>
+                        )}
+                        {(data.customer_pain_points?.length ?? 0) > 0 && (
+                          <div className="sm:col-span-2">
+                            <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-2">Pain Points a Validar</p>
+                            <ul className="space-y-1.5">
+                              {data.customer_pain_points!.map((p, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-[#C4C4D4]">
+                                  <span className="text-[#F87171] shrink-0 mt-0.5">•</span>
+                                  {p}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {data.differentiator && (
+                          <div className="sm:col-span-2">
+                            <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-1.5">Diferenciador Clave</p>
+                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.differentiator}</p>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{agentLog.executive_summary}</p>
                     </div>
                   )}
-                  <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Evidencia de Mercado</p>
-                    <EvidenceWall agentLog={agentLog as any} />
+
+                  {/* 2 — JTBD Analysis */}
+                  {data.playbook_analysis?.jtbd_analysis && (
+                    <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Jobs-to-be-Done real</p>
+                      </div>
+                      <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.jtbd_analysis}</p>
+                    </div>
+                  )}
+
+                  {/* 3 — Mom Test Playbook */}
+                  {(data.playbook_analysis?.validation_playbook?.length ?? 0) > 0 && (
+                    <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                        <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Mom Test — 3 Pasos de Validación</p>
+                      </div>
+                      <ol className="space-y-3">
+                        {data.playbook_analysis!.validation_playbook.map((step, i) => (
+                          <li key={i} className="flex gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#7C6FF7] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{step}</p>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
+                  {/* 4 — Stack No-Code & Legal Chile */}
+                  {data.playbook_analysis?.tech_and_legal_stack && (
+                    <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Stack No-Code &amp; Legal Chile</p>
+                      </div>
+                      <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
+                    </div>
+                  )}
+
+                  {/* 5 — Encuestas Mom Test */}
+                  <div className="bg-[#12121A] border border-[#7C6FF7]/20 rounded-2xl p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-[#A78BFA] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-bold text-[#F0EFF8] mb-1">Encuestas de Validación de Mercado</p>
+                          <p className="text-xs text-[#8B8AA0] leading-relaxed">
+                            Crea encuestas basadas en Mom Test para recopilar evidencia real de clientes. Los datos se anonimizan automáticamente con K-anonimato, L-diversidad y T-closeness antes de ingresar al data lake.
+                          </p>
+                        </div>
+                      </div>
+                      <Link
+                        to="/surveys"
+                        onClick={() => trackEncuestasCTAClicked({
+                          tier: tier ?? 'free',
+                          hasMomTest: (data.playbook_analysis?.validation_playbook?.length ?? 0) > 0,
+                          hasJtbd: !!data.playbook_analysis?.jtbd_analysis,
+                          validationId: data.id,
+                        })}
+                        className="flex-shrink-0 inline-flex items-center gap-2 bg-[#7C6FF7] hover:bg-[#6B5EE6] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Ver Encuestas
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* 6 — Evidencia de Mercado Externa */}
+                  <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wide">Evidencia de Mercado</p>
+                      {isPremium ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7C6FF7]/10 text-[#A78BFA] border border-[#7C6FF7]/20">
+                          En Desarrollo — Beta
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-[#8B8AA0] border border-white/10">
+                          Premium
+                        </span>
+                      )}
+                    </div>
+                    {isPremium && agentLog ? (
+                      <EvidenceWall agentLog={agentLog as any} />
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {[
+                          { label: 'Señal Social — Reddit', desc: 'Discusiones reales de comunidades relacionadas con tu mercado.' },
+                          { label: 'Tendencias de Búsqueda — Google Trends', desc: 'Volumen e interés histórico de búsquedas para tu keyword.' },
+                        ].map((item) => (
+                          <div key={item.label} className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-white/8 bg-white/[0.02]">
+                            <div className="w-8 h-8 rounded-lg bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
+                              <svg className="w-4 h-4 text-[#A78BFA]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-[#C4C4D4]">{item.label}</p>
+                              <p className="text-xs text-[#8B8AA0] mt-0.5">{item.desc}</p>
+                            </div>
+                            <span className="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#7C6FF7]/10 text-[#A78BFA]">Premium</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
-              )}
-
-              {!data.playbook_analysis && !generatingVerdict && (
-                <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-slate-900 p-8 text-center">
-                  <p className="text-sm text-gray-400 mb-2">El análisis de validación se genera en la pestaña <strong>Veredicto</strong>.</p>
-                </div>
               )}
             </div>
           )}
@@ -1190,23 +1448,27 @@ export function ValidationDetail() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* GTM & Growth Plan */}
               {data.playbook_analysis?.gtm_and_growth_plan && (
-                <div className="md:col-span-6 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm h-full">
+                <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">🚀</span>
-                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
+                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+                    </svg>
+                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.gtm_and_growth_plan}</p>
+                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.gtm_and_growth_plan}</p>
                 </div>
               )}
 
               {/* Product & AI Strategy */}
               {data.playbook_analysis?.product_ai_strategy && (
-                <div className="md:col-span-6 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm h-full">
+                <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">🤖</span>
-                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
+                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.product_ai_strategy}</p>
+                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.product_ai_strategy}</p>
                 </div>
               )}
 
@@ -1255,12 +1517,14 @@ export function ValidationDetail() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Unit Economics Check (RAG) */}
               {data.playbook_analysis?.unit_economics_check && (
-                <div className="md:col-span-12 bg-white dark:bg-slate-800 border-2 border-amber-100 dark:border-amber-500/20 rounded-2xl p-5 shadow-sm">
+                <div className="md:col-span-12 bg-[#12121A] border border-[#F7C56C]/20 rounded-2xl p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">💰</span>
-                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Diagnóstico de Unit Economics</p>
+                    <svg className="w-4 h-4 text-[#F7C56C] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-xs font-bold text-[#F7C56C] uppercase tracking-wider">Diagnóstico de Unit Economics</p>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.unit_economics_check}</p>
+                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.unit_economics_check}</p>
                 </div>
               )}
 
@@ -1308,23 +1572,27 @@ export function ValidationDetail() {
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Tech & Legal Stack (RAG) */}
               {data.playbook_analysis?.tech_and_legal_stack && (
-                <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">⚙️</span>
-                    <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
+                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
+                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
                 </div>
               )}
 
               {/* MVP Kanban */}
-              <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Plan de MVP</h3>
-                <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 dark:bg-teal-500/10 dark:border-teal-500/20 rounded-xl p-3 mb-4">
-                  <span className="text-xl">🚀</span>
+              <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                <h3 className="text-sm font-bold text-[#C4C4D4] mb-4">Plan de MVP</h3>
+                <div className="flex items-center gap-3 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-xl p-3 mb-4">
+                  <svg className="w-5 h-5 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                   <div>
-                    <p className="text-xs text-teal-600 dark:text-teal-400 font-bold uppercase">Tipo</p>
-                    <p className={`font-bold text-gray-900 dark:text-[#F0EFF8] capitalize ${!data.mvp_type ? 'italic opacity-70' : ''}`}>
+                    <p className="text-xs text-[#A78BFA] font-bold uppercase">Tipo</p>
+                    <p className={`font-bold text-[#F0EFF8] capitalize ${!data.mvp_type ? 'italic opacity-70' : ''}`}>
                       {data.mvp_type ? data.mvp_type.replace(/_/g, ' ') : '(Ejemplo) Concierge MVP'}
                     </p>
                   </div>
@@ -1339,7 +1607,7 @@ export function ValidationDetail() {
 
               {/* Regulatory Roadmap */}
               {data.target_country === 'Chile' && data.idea_industry && (
-                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+                <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
                   <RegulatoryRoadmap industry={data.idea_industry} />
                 </div>
               )}
@@ -1378,19 +1646,21 @@ export function ValidationDetail() {
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Funding Verdict (RAG) */}
               {data.playbook_analysis?.funding_verdict && (
-                <div className="bg-white dark:bg-slate-800 border-2 border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-5 shadow-sm">
+                <div className="bg-[#12121A] border border-[#34D399]/20 rounded-2xl p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">🏦</span>
-                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Veredicto de Inversión</p>
+                    <svg className="w-4 h-4 text-[#34D399] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                    </svg>
+                    <p className="text-xs font-bold text-[#34D399] uppercase tracking-wider">Veredicto de Inversión</p>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.funding_verdict}</p>
+                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.funding_verdict}</p>
                 </div>
               )}
 
               {/* Perfil del Fundador (Sprint 1.5) */}
               {sections.includes('founderFit') && (
-                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
+                <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
+                  <h3 className="text-base font-bold text-[#F0EFF8] mb-4">
                     Perfil del Fundador
                   </h3>
                   <FounderProfileTab />
@@ -1411,7 +1681,7 @@ export function ValidationDetail() {
 
               {/* CORFO */}
               {data.target_country === 'Chile' && data.business_stage && data.idea_industry && (
-                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+                <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
                   <CorfoFunds
                     stage={data.business_stage}
                     industry={data.idea_industry}
@@ -1432,12 +1702,12 @@ export function ValidationDetail() {
                   hint="Necesario para ser investible: SpA, vesting 4 años, cumplimiento Ley 21.719"
                 />
               ) : (
-                <div className="bg-gray-50 dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-2xl p-8 text-center">
-                  <p className="text-sm text-gray-400 mb-3">Análisis de gobernanza no generado aún</p>
+                <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
+                  <p className="text-sm text-[#8B8AA0] mb-3">Análisis de gobernanza no generado aún</p>
                   <button
                     onClick={handleGenerateAdvanced}
                     disabled={generatingAdvanced}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition disabled:opacity-50"
+                    className="px-4 py-2 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition disabled:opacity-50"
                   >
                     {generatingAdvanced ? 'Generando...' : 'Generar Análisis Pro'}
                   </button>
@@ -1455,12 +1725,12 @@ export function ValidationDetail() {
                   hint="SAFE, Notas Convertibles o Ronda Valorizada según tu etapa"
                 />
               ) : (
-                <div className="bg-gray-50 dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-2xl p-8 text-center">
-                  <p className="text-sm text-gray-400 mb-3">Hoja de ruta de fundraising no generada aún</p>
+                <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
+                  <p className="text-sm text-[#8B8AA0] mb-3">Hoja de ruta de fundraising no generada aún</p>
                   <button
                     onClick={handleGenerateAdvanced}
                     disabled={generatingAdvanced}
-                    className="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition disabled:opacity-50"
+                    className="px-4 py-2 bg-[#34D399] text-[#0A0A0F] text-sm font-bold rounded-xl hover:bg-[#2BBD87] transition disabled:opacity-50"
                   >
                     {generatingAdvanced ? 'Generando...' : 'Generar Análisis Premium'}
                   </button>
@@ -1468,15 +1738,17 @@ export function ValidationDetail() {
               )}
 
               {/* Pitch Deck Export */}
-              <div className="bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+              <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">🎯</span>
-                      <p className="text-sm font-bold text-gray-800 dark:text-[#F0EFF8]">Investor Pitch Deck</p>
-                      <span className="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-[10px] font-bold">8 slides</span>
+                      <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                      </svg>
+                      <p className="text-sm font-bold text-[#F0EFF8]">Investor Pitch Deck</p>
+                      <span className="px-2 py-0.5 rounded-full bg-[#7C6FF7]/20 text-[#A78BFA] text-[10px] font-bold">8 slides</span>
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-[#8B8AA0]">
+                    <p className="text-xs text-[#8B8AA0]">
                       {data.pitch_deck_content ? 'Narrativa generada · listo para descargar' : 'Genera la narrativa de las 8 slides con IA y descarga el PDF'}
                     </p>
                   </div>
@@ -1534,9 +1806,9 @@ export function ValidationDetail() {
                   </div>
                   {/* Skeletons de espera activa */}
                   <div className="w-full max-w-2xl mt-6 space-y-3">
-                    <div className="h-16 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
-                    <div className="h-24 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
-                    <div className="h-16 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                    <div className="h-16 bg-[#12121A] rounded-2xl animate-pulse" />
+                    <div className="h-24 bg-[#12121A] rounded-2xl animate-pulse" />
+                    <div className="h-16 bg-[#12121A] rounded-2xl animate-pulse" />
                   </div>
                 </div>
               ) : data.due_diligence_score ? (
@@ -1667,12 +1939,12 @@ export function ValidationDetail() {
 
       {/* Overlay análisis base */}
       {reanalyzing && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center">
-            <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#12121A] border border-white/[0.06] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center">
+            <div className="w-12 h-12 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
             <div>
-              <p className="font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Analizando mercado y competencia</p>
-              <p className="text-sm text-gray-400">Esto puede tomar unos segundos...</p>
+              <p className="font-bold text-[#F0EFF8] mb-1">Analizando mercado y competencia</p>
+              <p className="text-sm text-[#8B8AA0]">Esto puede tomar unos segundos...</p>
             </div>
           </div>
         </div>
@@ -1680,13 +1952,13 @@ export function ValidationDetail() {
 
       {/* Overlay análisis avanzados */}
       {generatingAdvanced && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
-            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#12121A] border border-white/[0.06] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
+            <div className="w-12 h-12 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
             <div>
-              <p className="font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Generando análisis avanzados</p>
-              <p className="text-sm text-gray-400">Riesgos · Unit Economics · Founder Fit · Señales · Gobernanza · Fundraising</p>
-              <p className="text-xs text-gray-300 mt-1">Puede tomar 15–30 segundos...</p>
+              <p className="font-bold text-[#F0EFF8] mb-1">Generando análisis avanzados</p>
+              <p className="text-sm text-[#8B8AA0]">Riesgos · Unit Economics · Founder Fit · Señales · Gobernanza · Fundraising</p>
+              <p className="text-xs text-[#4A495E] mt-1">Puede tomar 15–30 segundos...</p>
             </div>
           </div>
         </div>

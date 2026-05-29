@@ -87,7 +87,7 @@ export function Pricing() {
           },
           body: JSON.stringify({
             tier,
-            success_url: `${window.location.origin}/dashboard?upgrade=success`,
+            success_url: `${window.location.origin}/checkout/success`,
             cancel_url:  `${window.location.origin}/pricing`,
           }),
         }

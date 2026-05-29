@@ -8,7 +8,7 @@ Uso:
   py phase2_batch_api.py status   # ver si terminó
   py phase2_batch_api.py import   # descargar e insertar embeddings
 
-El batch_id se guarda en C:\INAPI\batch_id.txt para retomar entre pasos.
+El batch_id se guarda en C:\\INAPI\\batch_id.txt para retomar entre pasos.
 """
 import os
 import sys
@@ -226,125 +226,220 @@ def export_and_submit():
     _submit_jsonl()
 
 
-def _submit_jsonl():
-    # Subir el JSONL a OpenAI
-    print('\nSubiendo archivo a OpenAI ({:.0f} MB)...'.format(JSONL_FILE.stat().st_size / 1_048_576))
-    with open(JSONL_FILE, 'rb') as f:
-        uploaded = client.files.create(file=f, purpose='batch')
-    print(f'  File ID: {uploaded.id}')
+BATCH_MAX = 50_000   # OpenAI hard limit: 50k requests per batch
 
-    # Crear el batch job
-    batch = client.batches.create(
-        input_file_id=uploaded.id,
-        endpoint='/v1/embeddings',
-        completion_window='24h',
-    )
-    BATCH_ID_FILE.write_text(batch.id)
-    print(f'\nBatch creado: {batch.id}')
-    print(f'Estado:       {batch.status}')
-    print('\nEjecuta cuando termine:')
-    print('  py phase2_batch_api.py status   <- revisar estado')
-    print('  py phase2_batch_api.py import   <- importar resultados')
+
+def _submit_jsonl():
+    """Divide el JSONL en chunks de BATCH_MAX y sube un batch por chunk."""
+    total_lines = sum(1 for _ in open(JSONL_FILE, encoding='utf-8'))
+    n_batches   = (total_lines + BATCH_MAX - 1) // BATCH_MAX
+    size_mb     = JSONL_FILE.stat().st_size / 1_048_576
+
+    print(f'\n{total_lines:,} registros ({size_mb:.0f} MB) -> {n_batches} batches de {BATCH_MAX:,} max')
+
+    # Borrar archivo de IDs anterior y empezar limpio
+    BATCH_ID_FILE.write_text('')
+
+    with open(JSONL_FILE, encoding='utf-8') as src:
+        for chunk_idx in range(n_batches):
+            lines = []
+            for _ in range(BATCH_MAX):
+                line = src.readline()
+                if not line:
+                    break
+                lines.append(line)
+
+            if not lines:
+                break
+
+            chunk_bytes = ''.join(lines).encode('utf-8')
+            chunk_name  = f'inapi_chunk_{chunk_idx + 1:02d}.jsonl'
+
+            print(f'  Subiendo chunk {chunk_idx + 1}/{n_batches} ({len(lines):,} filas)...', end=' ', flush=True)
+            uploaded = client.files.create(
+                file=(chunk_name, chunk_bytes, 'application/jsonl'),
+                purpose='batch',
+            )
+            batch = client.batches.create(
+                input_file_id=uploaded.id,
+                endpoint='/v1/embeddings',
+                completion_window='24h',
+            )
+            # Añadir ID al archivo (una línea por batch)
+            with open(BATCH_ID_FILE, 'a') as fid:
+                fid.write(batch.id + '\n')
+            print(f'{batch.id}  [{batch.status}]')
+
+    ids = [l.strip() for l in BATCH_ID_FILE.read_text().splitlines() if l.strip()]
+    print(f'\n{len(ids)} batches creados. Ejecuta cuando terminen:')
+    print('  py phase2_batch_api.py status')
+    print('  py phase2_batch_api.py import')
 
 
 # ── PASO B: STATUS ────────────────────────────────────────────────────────────
 
-def check_status():
+def _load_batch_ids() -> list[str]:
     if not BATCH_ID_FILE.exists():
+        return []
+    return [l.strip() for l in BATCH_ID_FILE.read_text().splitlines() if l.strip()]
+
+
+def check_status():
+    ids = _load_batch_ids()
+    if not ids:
         print('No hay batch_id.txt — ejecuta primero: py phase2_batch_api.py export')
         return
-    batch_id = BATCH_ID_FILE.read_text().strip()
-    batch = client.batches.retrieve(batch_id)
-    print(f'Batch ID:      {batch.id}')
-    print(f'Estado:        {batch.status}')
-    print(f'Total:         {batch.request_counts.total:,}')
-    print(f'Completados:   {batch.request_counts.completed:,}')
-    print(f'Fallidos:      {batch.request_counts.failed:,}')
-    if batch.status == 'completed':
-        print(f'\n✓ Listo. Ejecuta: py phase2_batch_api.py import')
-    elif batch.status in ('failed', 'expired', 'cancelled'):
-        print(f'\n✗ El batch falló. Vuelve a ejecutar export.')
+
+    done = failed = running = 0
+    total_req = total_ok = total_err = 0
+
+    for bid in ids:
+        b = client.batches.retrieve(bid)
+        rc = b.request_counts
+        total_req += rc.total
+        total_ok  += rc.completed
+        total_err += rc.failed
+        status_tag = b.status.upper()
+        print(f'  {bid}  [{status_tag}]  {rc.completed:,}/{rc.total:,}')
+        if b.status == 'completed':
+            done += 1
+        elif b.status in ('failed', 'expired', 'cancelled'):
+            failed += 1
+        else:
+            running += 1
+
+    print(f'\nTotal: {len(ids)} batches  |  completados={done}  en_progreso={running}  fallidos={failed}')
+    print(f'Embeddings: {total_ok:,} OK  /  {total_err:,} errores  /  {total_req:,} total')
+
+    if done == len(ids):
+        print('\n[OK] Todos los batches completos. Ejecuta: py phase2_batch_api.py import')
+    elif failed:
+        print(f'\n[WARN] {failed} batch(es) fallaron. Revisa los IDs y considera re-exportar solo esos rangos.')
 
 
 # ── PASO C: IMPORT ────────────────────────────────────────────────────────────
 
+def _import_from_batch(bid: str, buffer: list, total_ref: list, errors_ref: list) -> None:
+    """Descarga e importa un batch completado. Modifica buffer/total_ref/errors_ref in-place."""
+    b = client.batches.retrieve(bid)
+    if b.status != 'completed':
+        print(f'  [SKIP] {bid} no completado ({b.status})')
+        return
+
+    print(f'  Descargando {bid} ({b.request_counts.completed:,} embeddings)...')
+    content = None
+    for dl_attempt in range(5):
+        try:
+            content = client.files.content(b.output_file_id).read()
+            break
+        except Exception as exc:
+            print(f'\n  [WARN] descarga error intento {dl_attempt+1}: {type(exc).__name__}: {str(exc)[:80]}')
+            time.sleep(15 * (dl_attempt + 1))
+    if content is None:
+        print(f'  [ERROR] no se pudo descargar {bid} tras 5 intentos — saltando')
+        return
+
+    for line in content.decode('utf-8').splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        obj = json.loads(line)
+
+        if obj.get('error'):
+            errors_ref[0] += 1
+            continue
+
+        custom_id  = obj['custom_id']
+        record_id, app_num = custom_id.split('|', 1)
+        embedding  = obj['response']['body']['data'][0]['embedding']
+
+        buffer.append({
+            'id':                   record_id,
+            'application_number':   app_num,
+            'brand_name_embedding': embedding,
+        })
+
+        if len(buffer) >= DB_BATCH:
+            _upsert_batch(buffer)
+            total_ref[0] += len(buffer)
+            buffer.clear()
+            print(f'  {total_ref[0]:,} embeddings insertados...', end='\r', flush=True)
+
+
 def import_results():
-    if not BATCH_ID_FILE.exists():
+    ids = _load_batch_ids()
+    if not ids:
         print('No hay batch_id.txt')
         return
 
-    batch_id = BATCH_ID_FILE.read_text().strip()
-    batch = client.batches.retrieve(batch_id)
+    # Esperar a que los FINALIZING pasen a COMPLETED (max 10 min)
+    for attempt in range(20):
+        statuses = {bid: client.batches.retrieve(bid).status for bid in ids}
+        finalizing = [bid for bid, st in statuses.items() if st == 'finalizing']
+        not_ready  = [bid for bid, st in statuses.items()
+                      if st not in ('completed', 'finalizing', 'failed', 'expired', 'cancelled')]
+        if not finalizing and not not_ready:
+            break
+        if finalizing:
+            print(f'  Esperando {len(finalizing)} batch(es) en FINALIZING...', end='\r', flush=True)
+            time.sleep(30)
+        else:
+            break
 
-    if batch.status != 'completed':
-        print(f'El batch aún no terminó. Estado: {batch.status}')
-        return
+    failed_ids = [bid for bid in ids if client.batches.retrieve(bid).status
+                  in ('failed', 'expired', 'cancelled')]
+    skipped_ids = [bid for bid in ids if client.batches.retrieve(bid).status != 'completed']
+    if skipped_ids and skipped_ids != failed_ids:
+        print(f'\nEstos batches aun no terminaron (seran omitidos):')
+        for bid in skipped_ids:
+            b = client.batches.retrieve(bid)
+            print(f'  {bid}  [{b.status}]')
+    if failed_ids:
+        print(f'\n{len(failed_ids)} batch(es) fallados — sus registros no tendran embedding aun.')
 
-    print(f'Descargando resultados ({batch.request_counts.completed:,} embeddings)...')
-    content = client.files.content(batch.output_file_id)
-    RESULT_FILE.write_bytes(content.read())
-    print(f'  Guardado en {RESULT_FILE}')
+    print(f'Importando {len(ids)} batches a la DB...')
+    buffer   = []
+    total    = [0]
+    errors   = [0]
 
-    # Parsear y subir a DB
-    print('Importando embeddings a la DB...')
-    buffer = []
-    total  = 0
-    errors = 0
-
-    with open(RESULT_FILE, encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            obj = json.loads(line)
-
-            if obj.get('error'):
-                errors += 1
-                continue
-
-            custom_id  = obj['custom_id']           # "uuid|application_number"
-            record_id, app_num = custom_id.split('|', 1)
-            embedding  = obj['response']['body']['data'][0]['embedding']
-
-            buffer.append({
-                'id':                   record_id,
-                'application_number':   app_num,
-                'brand_name_embedding': embedding,
-            })
-
-            if len(buffer) >= DB_BATCH:
-                _upsert_batch(buffer)
-                total  += len(buffer)
-                buffer  = []
-                print(f'  {total:,} embeddings insertados...', end='\r', flush=True)
+    for i, bid in enumerate(ids, 1):
+        print(f'\n[{i}/{len(ids)}] {bid}')
+        _import_from_batch(bid, buffer, total, errors)
 
     if buffer:
         _upsert_batch(buffer)
-        total += len(buffer)
+        total[0] += len(buffer)
 
     print(f'\n\nFASE 2 COMPLETA')
-    print(f'  Embeddings insertados: {total:,}')
-    print(f'  Errores en batch:      {errors:,}')
+    print(f'  Embeddings insertados: {total[0]:,}')
+    print(f'  Errores en batch:      {errors[0]:,}')
 
-    if total > 0:
-        print('\nAhora crea el índice vectorial:')
+    if total[0] > 0:
+        print('\nAhora crea el indice vectorial:')
         print('  py phase2_batch_api.py index')
 
 
 def _upsert_batch(rows: list[dict]) -> None:
-    for attempt in range(3):
-        resp = req.post(
-            f'{SUPABASE_URL}/rest/v1/{TABLE}',
-            headers=SB_HEADERS,
-            params={'on_conflict': 'id'},
-            data=json.dumps(rows),
-            timeout=60,
-        )
-        if resp.ok:
-            return
-        if attempt < 2:
-            time.sleep(3)
-    print(f'\n  [WARN] upsert fallido: {resp.status_code} {resp.text[:100]}')
+    resp = None
+    for attempt in range(5):
+        try:
+            resp = req.post(
+                f'{SUPABASE_URL}/rest/v1/{TABLE}',
+                headers=SB_HEADERS,
+                params={'on_conflict': 'id'},
+                data=json.dumps(rows),
+                timeout=90,
+            )
+            if resp.ok:
+                return
+            print(f'\n  [WARN] upsert HTTP {resp.status_code} intento {attempt+1}')
+        except req.exceptions.RequestException as exc:
+            print(f'\n  [WARN] conexion error intento {attempt+1}: {type(exc).__name__}')
+        wait = 10 * (attempt + 1)   # 10s, 20s, 30s, 40s
+        time.sleep(wait)
+    status = resp.status_code if resp is not None else 'N/A'
+    body   = resp.text[:100] if resp is not None else '(sin respuesta)'
+    print(f'\n  [ERROR] upsert fallido tras 5 intentos: {status} {body}')
 
 
 # ── PASO D: INDEX ─────────────────────────────────────────────────────────────
@@ -367,7 +462,7 @@ def create_index():
         timeout=120,
     )
     if resp.ok:
-        print('✓ Índice creado. La tabla está lista para búsquedas semánticas.')
+        print('[OK] Indice creado. La tabla esta lista para busquedas semanticas.')
     else:
         print(f'Error: {resp.status_code} {resp.text[:200]}')
 

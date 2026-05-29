@@ -1,5 +1,6 @@
 import { CheckCircle2, XCircle, UserCheck, Clock, HelpCircle, AlertTriangle } from 'lucide-react';
 import type { FounderFit, MarketSignals } from '@/types/validation';
+import { EmptyStateAI } from '@/components/shared/EmptyStateAI';
 
 export function VerdictProsCons({ summary }: { summary: any }) {
   if (!summary?.strengths?.length && !summary?.weaknesses?.length) return null;
@@ -49,20 +50,31 @@ const scoreColor = (v: number) =>
 const textColor = (v: number) =>
   v >= 70 ? 'text-emerald-600 dark:text-emerald-400' : v >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
-export function VerdictFounderFit({ data }: { data?: FounderFit | null }) {
-  const fData = data || {
-    score: 85,
-    dimensions: { problemKnowledge: 90, industryExperience: 80, technicalCapability: 70, networkStrength: 85, trackRecord: 75 },
-    assessment: 'El equipo fundador muestra una fuerte alineación con el problema.',
-    gaps: [], recommendations: []
-  };
+export function VerdictFounderFit({
+  data,
+  onGenerate,
+  generating,
+}: {
+  data?: FounderFit | null;
+  onGenerate?: () => void;
+  generating?: boolean;
+}) {
+  if (!data) {
+    return (
+      <EmptyStateAI
+        title="Founder Fit no analizado"
+        description="Genera el análisis Pro para evaluar tu alineación como founder con el problema, industria, capacidad técnica y red de contactos."
+        action={onGenerate ? { label: 'Generar Análisis Pro', onClick: onGenerate, loading: generating } : undefined}
+      />
+    );
+  }
 
   const dims = [
-    { label: 'Problema', val: fData.dimensions.problemKnowledge },
-    { label: 'Industria', val: fData.dimensions.industryExperience },
-    { label: 'Técnica', val: fData.dimensions.technicalCapability },
-    { label: 'Contactos', val: fData.dimensions.networkStrength },
-    { label: 'Track Record', val: fData.dimensions.trackRecord },
+    { label: 'Problema', val: data.dimensions.problemKnowledge },
+    { label: 'Industria', val: data.dimensions.industryExperience },
+    { label: 'Técnica', val: data.dimensions.technicalCapability },
+    { label: 'Contactos', val: data.dimensions.networkStrength },
+    { label: 'Track Record', val: data.dimensions.trackRecord },
   ];
 
   return (
@@ -72,19 +84,19 @@ export function VerdictFounderFit({ data }: { data?: FounderFit | null }) {
           <UserCheck className="w-5 h-5 text-gray-400" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Founder Fit</h3>
         </div>
-        <div className={`text-xs font-black uppercase tracking-wider ${textColor(fData.score)} bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-100 dark:border-white/10`}>
-          {fitLabel(fData.score)} ({fData.score})
+        <div className={`text-xs font-black uppercase tracking-wider ${textColor(data.score)} bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-100 dark:border-white/10`}>
+          {fitLabel(data.score)} ({data.score})
         </div>
       </div>
-      
+
       <div className="space-y-2.5">
         {dims.map((d) => (
           <div key={d.label} className="flex items-center gap-3">
             <span className="text-[10px] text-gray-500 dark:text-[#8B8AA0] font-bold uppercase tracking-wider w-24 truncate">{d.label}</span>
             <div className="flex-1 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full ${scoreColor(d.val)}`} 
-                style={{ width: `${d.val}%` }} 
+              <div
+                className={`h-full rounded-full ${scoreColor(d.val)}`}
+                style={{ width: `${d.val}%` }}
               />
             </div>
             <span className="text-[10px] font-black text-gray-400 w-6 text-right">{d.val}</span>
@@ -102,17 +114,26 @@ const TIMING_CONFIG: Record<string, { label: string; bg: string; text: string; i
   uncertain: { label: 'Timing incierto',         bg: 'bg-gray-50 dark:bg-white/5',        text: 'text-gray-700 dark:text-gray-300',  icon: HelpCircle },
 };
 
-export function VerdictMarketTiming({ data }: { data?: MarketSignals | null }) {
-  const mData = data || {
-    timingAssessment: 'optimal',
-    timingRationale: 'El mercado muestra una adopción temprana con un crecimiento sostenido en la demanda, ideal para entrar ahora.',
-    trendDirection: 'growing',
-    trendDescription: '',
-    recentFunding: [],
-    relevantNews: []
-  };
+export function VerdictMarketTiming({
+  data,
+  onGenerate,
+  generating,
+}: {
+  data?: MarketSignals | null;
+  onGenerate?: () => void;
+  generating?: boolean;
+}) {
+  if (!data) {
+    return (
+      <EmptyStateAI
+        title="Señal de Mercado no analizada"
+        description="Genera el análisis Pro para evaluar el timing de tu entrada al mercado: tendencias, rondas recientes y momentum sectorial."
+        action={onGenerate ? { label: 'Generar Análisis Pro', onClick: onGenerate, loading: generating } : undefined}
+      />
+    );
+  }
 
-  const timing = TIMING_CONFIG[mData.timingAssessment] ?? TIMING_CONFIG.uncertain;
+  const timing = TIMING_CONFIG[data.timingAssessment] ?? TIMING_CONFIG.uncertain;
   const TimingIcon = timing.icon;
 
   return (
@@ -124,7 +145,7 @@ export function VerdictMarketTiming({ data }: { data?: MarketSignals | null }) {
             Señal de Mercado
           </h3>
           <p className="text-xs text-gray-600 dark:text-[#C4C4D4] leading-relaxed line-clamp-3">
-            {mData.timingRationale || mData.trendDescription}
+            {data.timingRationale || data.trendDescription}
           </p>
         </div>
         <div className={`shrink-0 text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg border ${timing.text} border-current opacity-80`}>

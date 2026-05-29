@@ -230,7 +230,7 @@ export function Admin() {
     const aFrom = aPage * PAGE_SIZE;
 
     const [{ data: profs }, { data: vals, count: vCount }, { data: ais, count: aCount }] = await Promise.all([
-      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(200),
       supabase.from('validations')
         .select('*, profile:profiles(full_name, avatar_url)', { count: 'exact' })
         .order('created_at', { ascending: false })

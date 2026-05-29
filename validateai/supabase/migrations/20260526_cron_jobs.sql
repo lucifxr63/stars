@@ -1,10 +1,17 @@
 -- ============================================================
--- Cron jobs para Edge Functions
--- Ejecutar UNA VEZ en producción vía Supabase SQL Editor
--- (no aplicar via supabase db push — contiene el service_role_key)
+-- Cron jobs para Edge Functions — DOCUMENTACIÓN (ya aplicado en prod)
+--
+-- ESTADO: Ambos crons ya fueron registrados en producción el 2026-05-26
+--         vía `npx supabase db query --linked --file <tmp>`.
+--         NO volver a ejecutar este archivo — duplicaría los cron jobs.
+--
+-- Para verificar que siguen activos:
+--   SELECT jobname, schedule, active FROM cron.job ORDER BY jobname;
+--
+-- Para recrearlos desde cero (solo si fueron eliminados):
+--   1. Reemplazar <SERVICE_ROLE_KEY> con el JWT de service_role
+--   2. Ejecutar cada SELECT cron.schedule(...) en el SQL Editor de Supabase
 -- ============================================================
-
--- Reemplazar <SERVICE_ROLE_KEY> con el JWT de service_role del proyecto
 
 -- ── 1. cron-tier-health — lunes 09:00 UTC ────────────────────────────────────
 SELECT cron.schedule(

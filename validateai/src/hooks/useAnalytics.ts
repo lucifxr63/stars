@@ -74,6 +74,16 @@ export function trackDemoViewed(source: string) {
   posthog.capture('view_demo_clicked', { source });
 }
 
+export function trackEncuestasCTAClicked(params: {
+  tier: string;
+  hasMomTest: boolean;
+  hasJtbd: boolean;
+  validationId: string;
+}) {
+  if (!PH_KEY) return;
+  posthog.capture('encuestas_cta_clicked', params);
+}
+
 export function trackDueDiligenceCompleted(params: {
   validationId: string;
   total: number;
