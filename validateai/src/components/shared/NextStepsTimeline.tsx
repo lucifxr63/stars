@@ -7,7 +7,10 @@ export function NextStepsTimeline({ steps }: NextStepsTimelineProps) {
 
   return (
     <div className="bg-white dark:bg-gradient-to-b dark:from-[#1A1A24] dark:to-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm">
-      <h3 className="text-sm font-black text-gray-900 dark:text-[#F0EFF8] mb-6 uppercase tracking-wide">Plan de Acción Sugerido</h3>
+      <div className="flex items-center gap-2 mb-6">
+        <h3 className="text-sm font-black text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wide">Plan de Acción Sugerido</h3>
+        <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+      </div>
       <div className="space-y-6 relative before:absolute before:inset-0 before:ml-3.5 before:-translate-x-px md:before:ml-[15px] before:h-full before:w-0.5 before:bg-gradient-to-b before:from-teal-500 before:to-blue-500">
         {steps.map((step, i) => (
           <div key={i} className="relative flex items-start gap-4 group">

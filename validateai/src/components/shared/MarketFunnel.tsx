@@ -68,6 +68,10 @@ function TierBar({
 
 export function MarketFunnel({ data }: { data: MarketSizing }) {
   const tamMax = data.tam.value_high;
+  const somFormula = data.som.assumptions?.find(
+    a => a.includes('×') || (a.includes('=') && a.includes(']'))
+  );
+  const somOtherAssumptions = (data.som.assumptions ?? []).filter(a => a !== somFormula);
 
   return (
     <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm relative">
@@ -104,17 +108,25 @@ export function MarketFunnel({ data }: { data: MarketSizing }) {
           {/* Asunciones SOM */}
           {data.som.assumptions && data.som.assumptions.length > 0 && (
             <div className="bg-white dark:bg-[#1A1A24] rounded-2xl p-4 border border-gray-100 dark:border-white/5 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 <Target className="w-4 h-4 text-teal-500" />
                 <p className="text-xs font-black text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Asunciones SOM</p>
               </div>
-              <ul className="space-y-1.5">
-                {data.som.assumptions.map((a, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-600 dark:text-[#C4C4D4] leading-relaxed">
-                    <span className="text-teal-500 shrink-0 mt-0.5">•</span>{a}
-                  </li>
-                ))}
-              </ul>
+              {somFormula && (
+                <div className="bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 rounded-xl px-3 py-2.5 mb-3">
+                  <p className="text-[10px] font-black text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-1.5">Fórmula de cálculo</p>
+                  <p className="text-xs font-mono text-teal-800 dark:text-teal-300 leading-relaxed break-words">{somFormula}</p>
+                </div>
+              )}
+              {somOtherAssumptions.length > 0 && (
+                <ul className="space-y-1.5">
+                  {somOtherAssumptions.map((a, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-gray-600 dark:text-[#C4C4D4] leading-relaxed">
+                      <span className="text-teal-500 shrink-0 mt-0.5">•</span>{a}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>

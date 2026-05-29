@@ -22,7 +22,7 @@ const CONFIDENCE_DOTS = {
 
 export function CompetitiveAnalysis({ data }: { data: CompetitiveAnalysisType }) {
   const [expanded, setExpanded] = useState(false);
-  const [activeCompetitor, setActiveCompetitor] = useState<number | null>(null);
+  const [activeCompetitor, setActiveCompetitor] = useState<string | null>(null);
 
   const AVATAR_GRADIENTS = [
     'from-violet-500 to-fuchsia-600',
@@ -31,6 +31,99 @@ export function CompetitiveAnalysis({ data }: { data: CompetitiveAnalysisType })
     'from-orange-500 to-red-500',
     'from-pink-500 to-rose-500'
   ];
+
+  const confirmedCompetitors = data.competitors.filter(c => c.source === 'user_provided');
+  const emergingCompetitors = data.competitors.filter(c => c.source !== 'user_provided');
+
+  const renderCompetitorCard = (c: typeof data.competitors[number], i: number) => {
+    const initials = c.name.substring(0, 2).toUpperCase();
+    const gradient = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
+    const isActive = activeCompetitor === c.name;
+
+    return (
+      <div key={c.name} className={`bg-white dark:bg-[#1A1A24] rounded-2xl border-2 transition-all duration-300 overflow-hidden ${isActive ? 'border-violet-300 dark:border-violet-500/40 shadow-md' : 'border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10 shadow-sm'}`}>
+        <button
+          type="button"
+          onClick={() => setActiveCompetitor(isActive ? null : c.name)}
+          className="w-full flex items-center justify-between px-5 py-4"
+        >
+          <div className="flex items-center gap-4 min-w-0">
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0`}>
+              {initials}
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] truncate">{c.name}</span>
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${
+                  c.source === 'user_provided'
+                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
+                    : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10'
+                }`}>
+                  {c.source === 'user_provided' ? 'Directo' : 'Detectado por IA'}
+                </span>
+              </div>
+              {c.pricing && (
+                <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-0.5 font-medium">{c.pricing}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {c.url && (
+              <a
+                href={c.url.startsWith('http') ? c.url : `https://${c.url}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] text-gray-400 hover:text-teal-500 hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-colors shrink-0"
+                title="Visitar sitio"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isActive ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+
+        {isActive && (
+          <div className="px-5 pb-5 pt-2 animate-in slide-in-from-top-2 duration-300">
+            <div className="bg-gray-50 dark:bg-[#0A0A0F]/50 rounded-xl p-4 mb-4 border border-gray-100 dark:border-white/5">
+              <p className="text-sm text-gray-600 dark:text-[#C4C4D4] leading-relaxed">{c.description}</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <p className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Fortalezas</p>
+                </div>
+                <ul className="space-y-2">
+                  {c.strengths.map((s, j) => (
+                    <li key={j} className="text-sm text-gray-700 dark:text-[#C4C4D4] flex items-start gap-2">
+                      <span className="text-emerald-500 shrink-0 mt-0.5">•</span>
+                      <span className="leading-snug">{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-red-50/50 dark:bg-red-500/5 border border-red-100 dark:border-red-500/10 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <XCircle className="w-4 h-4 text-red-500" />
+                  <p className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-wider">Debilidades (Gaps)</p>
+                </div>
+                <ul className="space-y-2">
+                  {c.weaknesses.map((w, j) => (
+                    <li key={j} className="text-sm text-gray-700 dark:text-[#C4C4D4] flex items-start gap-2">
+                      <span className="text-red-500 shrink-0 mt-0.5">•</span>
+                      <span className="leading-snug">{w}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="border-2 border-gray-100 dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-[#12121A] shadow-sm">
@@ -66,102 +159,33 @@ export function CompetitiveAnalysis({ data }: { data: CompetitiveAnalysisType })
             </div>
           </div>
 
-          <div className="px-6 py-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="w-4 h-4 text-gray-400" />
-              <p className="text-xs font-black text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Mapeo de Competidores</p>
-            </div>
-            <div className="grid gap-3">
-              {data.competitors.map((c, i) => {
-                const initials = c.name.substring(0, 2).toUpperCase();
-                const gradient = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
-                const isActive = activeCompetitor === i;
+          <div className="px-6 py-6 space-y-6">
+            {confirmedCompetitors.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <p className="text-xs font-black text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Competidores Confirmados</p>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-md px-1.5 py-0.5">{confirmedCompetitors.length}</span>
+                </div>
+                <div className="grid gap-3">
+                  {confirmedCompetitors.map((c, i) => renderCompetitorCard(c, i))}
+                </div>
+              </div>
+            )}
 
-                return (
-                  <div key={i} className={`bg-white dark:bg-[#1A1A24] rounded-2xl border-2 transition-all duration-300 overflow-hidden ${isActive ? 'border-violet-300 dark:border-violet-500/40 shadow-md' : 'border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10 shadow-sm'}`}>
-                    <button
-                      type="button"
-                      onClick={() => setActiveCompetitor(isActive ? null : i)}
-                      className="w-full flex items-center justify-between px-5 py-4"
-                    >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0`}>
-                          {initials}
-                        </div>
-                        <div className="text-left">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] truncate">{c.name}</span>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${
-                              c.source === 'user_provided'
-                                ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
-                                : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10'
-                            }`}>
-                              {c.source === 'user_provided' ? 'Directo' : 'Detectado por IA'}
-                            </span>
-                          </div>
-                          {c.pricing && (
-                            <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-0.5 font-medium">{c.pricing}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {c.url && (
-                          <a
-                            href={c.url.startsWith('http') ? c.url : `https://${c.url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] text-gray-400 hover:text-teal-500 hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-colors shrink-0"
-                            title="Visitar sitio"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isActive ? 'rotate-180' : ''}`} />
-                      </div>
-                    </button>
-
-                    {isActive && (
-                      <div className="px-5 pb-5 pt-2 animate-in slide-in-from-top-2 duration-300">
-                        <div className="bg-gray-50 dark:bg-[#0A0A0F]/50 rounded-xl p-4 mb-4 border border-gray-100 dark:border-white/5">
-                          <p className="text-sm text-gray-600 dark:text-[#C4C4D4] leading-relaxed">{c.description}</p>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                              <p className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Fortalezas</p>
-                            </div>
-                            <ul className="space-y-2">
-                              {c.strengths.map((s, j) => (
-                                <li key={j} className="text-sm text-gray-700 dark:text-[#C4C4D4] flex items-start gap-2">
-                                  <span className="text-emerald-500 shrink-0 mt-0.5">•</span>
-                                  <span className="leading-snug">{s}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="bg-red-50/50 dark:bg-red-500/5 border border-red-100 dark:border-red-500/10 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              <XCircle className="w-4 h-4 text-red-500" />
-                              <p className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-wider">Debilidades (Gaps)</p>
-                            </div>
-                            <ul className="space-y-2">
-                              {c.weaknesses.map((w, j) => (
-                                <li key={j} className="text-sm text-gray-700 dark:text-[#C4C4D4] flex items-start gap-2">
-                                  <span className="text-red-500 shrink-0 mt-0.5">•</span>
-                                  <span className="leading-snug">{w}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            {emergingCompetitors.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Target className="w-4 h-4 text-violet-400" />
+                  <p className="text-xs font-black text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wider">Radar de Competidores</p>
+                  <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-md px-1.5 py-0.5">Detectados por IA</span>
+                  <span className="text-[10px] font-semibold text-gray-500 dark:text-[#8B8AA0] bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-md px-1.5 py-0.5 ml-0.5">{emergingCompetitors.length}</span>
+                </div>
+                <div className="grid gap-3">
+                  {emergingCompetitors.map((c, i) => renderCompetitorCard(c, i))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="px-6 py-6">

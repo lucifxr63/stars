@@ -323,6 +323,12 @@ function LeanRoadmapView({ d, context }: { d: LeanRoadmap; context: Record<strin
   const color = approachColors[d.architecture_approach] ?? '#10B981';
   return (
     <div className="space-y-4">
+      <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3">
+        <span className="text-base shrink-0 mt-0.5">⚠️</span>
+        <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+          <strong>Simulación Teórica</strong> — El rango de costo (USD) y los tiempos estimados son proyecciones algorítmicas. Pueden variar significativamente según equipo, país y tecnologías elegidas. No uses estas cifras como presupuesto definitivo.
+        </p>
+      </div>
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex flex-wrap gap-2">
           <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: color + '22', color }}>
@@ -387,6 +393,12 @@ function FinancialProjectionView({ d, context, unitEconomics }: { d: FinancialPr
   const strategyLabel = d.growth_strategy === 'plg' ? 'Product-Led Growth' : d.growth_strategy === 'sales_led' ? 'Sales-Led Growth' : 'Modelo Híbrido';
   return (
     <div className="space-y-4">
+      <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3">
+        <span className="text-base shrink-0 mt-0.5">⚠️</span>
+        <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+          <strong>Simulación Teórica</strong> — Las cifras de MRR, revenue año 1 y break-even son estimaciones algorítmicas sin validación de CAC, churn ni demanda real. Úsalas como ejercicio de modelado financiero, no para levantamiento de capital.
+        </p>
+      </div>
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className={`px-3 py-1.5 rounded-xl border text-xs font-bold ${verdictBg} ${verdictColor}`}>
           {d.model_verdict === 'strong' ? 'Modelo Sólido' : d.model_verdict === 'moderate' ? 'Potencial Moderado' : 'Riesgo Alto'}

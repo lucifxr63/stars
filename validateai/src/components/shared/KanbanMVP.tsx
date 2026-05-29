@@ -16,22 +16,30 @@ const KANBAN_COLS = [
 ];
 
 export function KanbanMVP({ features, userFlow }: KanbanMVPProps) {
-  // Usar datos reales si existen, sino usar mocks para propósitos de visualización UI
-  const displayFeatures = features && features.length > 0 ? features : [
+  const isMock = !features || features.length === 0;
+
+  const displayFeatures = isMock ? [
     { name: '(Ejemplo) Autenticación', description: 'Registro con Google o Email', priority: 'must' },
     { name: '(Ejemplo) Dashboard Core', description: 'Vista principal de métricas de usuario', priority: 'must' },
     { name: '(Ejemplo) Exportación PDF', description: 'Descargar reportes en formato PDF', priority: 'should' },
     { name: '(Ejemplo) Integración Slack', description: 'Notificaciones automáticas', priority: 'could' }
-  ];
+  ] : features;
 
   const displayFlow = userFlow || "(Ejemplo) 1. El usuario entra a la landing -> 2. Se registra -> 3. Conecta su cuenta bancaria -> 4. Es dirigido al dashboard donde revisa sus finanzas.";
 
   return (
     <div className="space-y-6">
+      {isMock && (
+        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3">
+          <span className="text-base shrink-0">⚠️</span>
+          <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+            <strong>Datos de Ejemplo</strong> — No se definieron características del MVP durante el análisis. Este tablero es ilustrativo. Define las features en el wizard para ver tus datos reales.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {KANBAN_COLS.map((col) => {
           const colFeatures = displayFeatures.filter((f) => f.priority === col.id);
-          const isMock = !features || features.length === 0;
           
           return (
             <div key={col.id} className={`rounded-2xl border-2 p-4 flex flex-col ${col.className}`}>

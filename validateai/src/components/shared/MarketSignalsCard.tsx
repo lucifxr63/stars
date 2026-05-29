@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, Clock, AlertTriangle, HelpCircle, Newspaper, DollarSign, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Clock, AlertTriangle, HelpCircle, Newspaper, DollarSign, Activity, ExternalLink } from 'lucide-react';
 import type { MarketSignals } from '@/types/validation';
 
 interface Props {
@@ -29,6 +29,13 @@ export function MarketSignalsCard({ data }: Props) {
   const timing = TIMING_CONFIG[data.timingAssessment] ?? TIMING_CONFIG.uncertain;
   const TrendIcon = trend.icon;
   const TimingIcon = timing.icon;
+
+  const validFunding = (data.recentFunding ?? []).filter(
+    f => f.company && f.company !== 'N/A' && f.amount && f.amount !== 'N/A'
+  );
+  const validNews = (data.relevantNews ?? []).filter(
+    n => n.title && n.title !== 'N/A'
+  );
 
   return (
     <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-3xl p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
@@ -74,33 +81,47 @@ export function MarketSignalsCard({ data }: Props) {
 
       <div className="relative grid lg:grid-cols-2 gap-5 pt-2">
         {/* Rondas de inversión */}
-        {data.recentFunding?.length > 0 && (
-          <div className="bg-gray-50 dark:bg-[#0A0A0F]/40 rounded-2xl p-4 border border-gray-100 dark:border-white/5">
-            <h4 className="text-xs font-black text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-emerald-500" /> Rondas recientes
-            </h4>
+        <div className="bg-gray-50 dark:bg-[#0A0A0F]/40 rounded-2xl p-4 border border-gray-100 dark:border-white/5">
+          <h4 className="text-xs font-black text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wider mb-3 flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-emerald-500" /> Rondas recientes
+          </h4>
+          {validFunding.length > 0 ? (
             <div className="space-y-3">
-              {data.recentFunding.map((f, i) => (
+              {validFunding.map((f, i) => (
                 <div key={i} className="bg-white dark:bg-[#1A1A24] rounded-xl p-3 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-1">
                   <div className="flex justify-between items-center gap-2">
                     <span className="font-bold text-sm text-gray-900 dark:text-[#F0EFF8] truncate">{f.company}</span>
                     <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">{f.amount}</span>
                   </div>
-                  <span className="text-[10px] text-gray-400 dark:text-[#8B8AA0] uppercase tracking-wide font-semibold">{f.date}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-gray-400 dark:text-[#8B8AA0] uppercase tracking-wide font-semibold">{f.date}</span>
+                    {f.source_url && (
+                      <a
+                        href={f.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:underline shrink-0"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Fuente
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-gray-400 dark:text-[#8B8AA0] italic py-1">No se detectaron rondas de inversión públicas recientes.</p>
+          )}
+        </div>
 
         {/* Noticias relevantes */}
-        {data.relevantNews?.length > 0 && (
-          <div className="bg-gray-50 dark:bg-[#0A0A0F]/40 rounded-2xl p-4 border border-gray-100 dark:border-white/5">
-            <h4 className="text-xs font-black text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Newspaper className="w-4 h-4 text-blue-500" /> Noticias clave
-            </h4>
+        <div className="bg-gray-50 dark:bg-[#0A0A0F]/40 rounded-2xl p-4 border border-gray-100 dark:border-white/5">
+          <h4 className="text-xs font-black text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Newspaper className="w-4 h-4 text-blue-500" /> Noticias clave
+          </h4>
+          {validNews.length > 0 ? (
             <ul className="space-y-3">
-              {data.relevantNews.map((n, i) => {
+              {validNews.map((n, i) => {
                 const nc = NEWS_CONFIG[n.impact] ?? NEWS_CONFIG.neutral;
                 return (
                   <li key={i} className="flex items-start gap-3 bg-white dark:bg-[#1A1A24] rounded-xl p-3 shadow-sm border border-gray-100 dark:border-white/5">
@@ -110,8 +131,10 @@ export function MarketSignalsCard({ data }: Props) {
                 );
               })}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-gray-400 dark:text-[#8B8AA0] italic py-1">Sin actividad de prensa relevante detectada recientemente.</p>
+          )}
+        </div>
       </div>
     </div>
   );

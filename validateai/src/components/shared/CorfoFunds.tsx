@@ -53,6 +53,10 @@ export function CorfoFunds({ stage, industry, businessModel, corfoProgram }: Pro
         <div>
           <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Fondos CORFO aplicables</p>
           <p className="text-xs text-gray-400">{matches.length} instrumento{matches.length !== 1 ? 's' : ''} relevante{matches.length !== 1 ? 's' : ''} para tu etapa</p>
+          <p className="text-[11px] text-amber-600 dark:text-amber-500 mt-0.5">
+            Datos referenciales · verifica montos y aperturas en{' '}
+            <a href="https://corfo.cl" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">corfo.cl</a>
+          </p>
         </div>
       </div>
 

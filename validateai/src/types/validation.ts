@@ -25,13 +25,17 @@ export const TARGET_COUNTRIES = [
 
 export const StepIdeaSchema = z.object({
   idea_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
-  idea_description: z.string().min(20, 'Describe tu problema y solución de manera detallada').max(2000),
+  idea_description: z.string()
+    .min(100, 'Necesitamos al menos 100 caracteres para generar un análisis de calidad. Describe el problema, la solución y para quién es.')
+    .max(2000),
   idea_industry: IndustryEnum,
   current_solution: z.string().max(300).optional(),
 });
 
 export const StepMarketSchema = z.object({
-  customer_segment: z.string().min(5, 'Describe tu público objetivo detalladamente').max(500),
+  customer_segment: z.string()
+    .min(40, 'Define tu ICP con más detalle: industria, tamaño de empresa, cargo del decisor o perfil del usuario (mínimo 40 caracteres).')
+    .max(500),
   target_country: z.string().min(1, 'Selecciona un país'),
   target_region: z.string().optional(),
   business_model: z.enum(BUSINESS_MODELS),
@@ -127,7 +131,7 @@ export interface CompetitiveAnalysis {
 export interface MarketSignals {
   trendDirection: 'growing' | 'stable' | 'declining';
   trendDescription: string;
-  recentFunding: { company: string; amount: string; date: string }[];
+  recentFunding: { company: string; amount: string; date: string; source_url?: string }[];
   timingAssessment: 'too_early' | 'optimal' | 'late' | 'uncertain';
   timingRationale: string;
   relevantNews: { title: string; impact: 'positive' | 'negative' | 'neutral' }[];
@@ -372,6 +376,12 @@ export interface DueDiligenceScore {
   };
   investorReadiness: 'not_ready' | 'early' | 'developing' | 'ready';
   topGaps: string[]; // máx 5, ordenados por impacto
+  // Audit trail embebido — persistido en DB para sobrevivir recargas y share links
+  audit_level?: 1 | 2 | 3; // 1=auto-reportado, 2=verificación parcial, 3=verificación completa
+  sources_used?: string[];
+  sources_skipped?: { source: string; reason: string }[];
+  data_warnings?: string[];
+  verdict_summary?: string;
 }
 
 export type UploadStatus = 'idle' | 'uploading' | 'parsing' | 'gap-analysis' | 'done' | 'error';

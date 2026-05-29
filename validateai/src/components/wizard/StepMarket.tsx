@@ -30,7 +30,12 @@ export function StepMarket() {
     defaultValues: stepMarket as StepMarket,
   });
 
-  const selectedModel = watch('business_model');
+  const selectedModel   = watch('business_model');
+  const selectedPricing = watch('pricing_range');
+
+  // B2B + free: combinación que casi nunca es intencional y contamina el unit economics.
+  // Se muestra como warning no bloqueante — el usuario puede continuar, pero no lo ignorará.
+  const showB2bFreeWarning = selectedModel === 'b2b' && selectedPricing === 'free';
 
   const onSubmit = (data: StepMarket) => {
     updateStepMarket(data);
@@ -42,13 +47,16 @@ export function StepMarket() {
       <div className="space-y-5">
         
         <div>
-          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-2">
-            A quién le vendes (Público objetivo)
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
+            A quién le vendes — ICP (Ideal Customer Profile)
           </label>
+          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+            Incluye: industria, tamaño, cargo del decisor o perfil del usuario final.
+          </p>
           <textarea
             {...register('customer_segment')}
             rows={3}
-            placeholder="Ej: Clínicas medianas interesadas en agilizar su atención..."
+            placeholder="Ej: Gerentes de operaciones en clínicas medianas (20–80 camas) de Chile y Perú que usan sistemas HIS desactualizados y necesitan reducir tiempo de gestión de turnos."
             className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
                         focus:border-indigo-500 resize-none placeholder:text-gray-300
                         ${errors.customer_segment ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/8'}`}
@@ -128,6 +136,16 @@ export function StepMarket() {
             ))}
           </select>
           <ErrorMsg message={errors.pricing_range?.message} />
+          {showB2bFreeWarning && (
+            <div className="mt-2 flex items-start gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-700/30">
+              <svg className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                <strong>B2B + Gratis:</strong> los modelos B2B rara vez son sostenibles sin precio. Si es un freemium o un piloto gratuito, selecciona el precio que pagarán en la versión de pago — mejora la calidad del unit economics generado.
+              </p>
+            </div>
+          )}
         </div>
 
         <div>

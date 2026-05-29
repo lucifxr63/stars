@@ -177,6 +177,19 @@ export function ValidationDetail() {
       if (row.validation_score != null) {
         trackValidationCompleted(row.id, row.validation_score, row.idea_industry ?? '', tier);
       }
+
+      // Hidratar audit trail desde la DB — sobrevive recargas y share links.
+      // El audit trail se embebe dentro de due_diligence_score desde la Edge Function.
+      const dd = row.due_diligence_score as Record<string, unknown> | null;
+      if (dd?.sources_used) {
+        setDdAuditTrail({
+          dataWarnings:   (dd.data_warnings  as string[])                            ?? [],
+          sourcesUsed:    (dd.sources_used   as string[])                            ?? [],
+          sourcesSkipped: (dd.sources_skipped as { source: string; reason: string }[]) ?? [],
+          fromCache:      false,
+          verdictSummary: (dd.verdict_summary as string)                             ?? '',
+        });
+      }
       trackTelemetryEvent({
         event_name: 'deliverable_viewed',
         context: {
@@ -1454,6 +1467,7 @@ export function ValidationDetail() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
                     </svg>
                     <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
+                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
                   </div>
                   <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.gtm_and_growth_plan}</p>
                 </div>
@@ -1467,6 +1481,7 @@ export function ValidationDetail() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
+                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
                   </div>
                   <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.product_ai_strategy}</p>
                 </div>
@@ -1481,7 +1496,14 @@ export function ValidationDetail() {
 
               {/* SWOT */}
               {(summary?.strengths?.length || summary?.weaknesses?.length) ? (
-                <div className="md:col-span-6 h-full">
+                <div className="md:col-span-6 h-full flex flex-col gap-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h8m-8 6h16" />
+                    </svg>
+                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Análisis SWOT</p>
+                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+                  </div>
                   <SwotMatrix
                     strengths={summary?.strengths || []}
                     weaknesses={summary?.weaknesses || []}
@@ -1578,6 +1600,7 @@ export function ValidationDetail() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
+                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
                   </div>
                   <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
                 </div>
@@ -1647,11 +1670,14 @@ export function ValidationDetail() {
               {/* Funding Verdict (RAG) */}
               {data.playbook_analysis?.funding_verdict && (
                 <div className="bg-[#12121A] border border-[#34D399]/20 rounded-2xl p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#34D399] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                    </svg>
-                    <p className="text-xs font-bold text-[#34D399] uppercase tracking-wider">Veredicto de Inversión</p>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-[#34D399] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                      </svg>
+                      <p className="text-xs font-bold text-[#34D399] uppercase tracking-wider">Veredicto de Inversión</p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-violet-500/15 text-violet-400 rounded-full shrink-0">💡 Análisis IA</span>
                   </div>
                   <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.funding_verdict}</p>
                 </div>

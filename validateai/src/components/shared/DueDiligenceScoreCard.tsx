@@ -117,6 +117,62 @@ function ExtractedSummary({ data }: { data: ExtractedProjectData }) {
   );
 }
 
+// ── Audit Level Banner ────────────────────────────────────────────────────────
+// Banner permanente que indica el nivel de auditoría del análisis.
+// Nivel 1: solo datos auto-reportados (sin SII ni Fintoc).
+// Nivel 2: verificación parcial (INAPI/CMF activos, pero sin bancario/tributario).
+// Nivel 3: verificación completa (no se muestra banner).
+// Este componente es el escudo legal de la plataforma: garantiza que el inversor
+// que reciba el share link entienda exactamente qué fue verificado externamente.
+function AuditLevelBanner({ sourcesUsed, auditLevel }: { sourcesUsed: string[]; auditLevel: 1 | 2 | 3 }) {
+  if (auditLevel === 3) return null;
+
+  const hasFinancial = sourcesUsed.includes('sii') || sourcesUsed.includes('fintoc');
+  const sourceBadges = [
+    { key: 'sii',      label: 'SII',    active: sourcesUsed.includes('sii') },
+    { key: 'fintoc',   label: 'Fintoc', active: sourcesUsed.includes('fintoc') },
+    { key: 'pjud',     label: 'PJUD',   active: sourcesUsed.includes('pjud') },
+    { key: 'inapi',    label: 'INAPI',  active: sourcesUsed.includes('inapi') },
+    { key: 'cmf_best', label: 'CMF',    active: sourcesUsed.includes('cmf_best') },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/10 p-4">
+      <div className="flex items-start gap-3">
+        <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-amber-700 dark:text-amber-400">
+            Nivel de Auditoría {auditLevel} — {hasFinancial ? 'Verificación Parcial' : 'Datos Auto-Reportados'}
+          </p>
+          <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 leading-relaxed">
+            {!hasFinancial
+              ? 'Este score se basa exclusivamente en información declarada por el fundador. Las fuentes financieras (SII, Fintoc) no están conectadas. El total está limitado a 75/100 hasta conectar validación externa.'
+              : 'Verificación financiera parcial activa. Conectar PJUD completaría el análisis de equipo.'}
+          </p>
+          <div className="flex flex-wrap gap-1.5 mt-2.5">
+            {sourceBadges.map(({ key, label, active }) => (
+              <span
+                key={key}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                  active
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/30 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-400 dark:text-[#4A495E]'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-white/20'}`} />
+                {label}
+                {active ? ' ✓' : ' —'}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Data Quality Banner (Sprint 6) ────────────────────────────────────────────
 // Muestra el trail de auditoría del análisis: qué fuentes se usaron, cuáles fallaron
 // y si el resultado viene de caché. Transparencia total para el inversor.
@@ -214,7 +270,6 @@ function VerdictSummary({ text }: { text: string }) {
 interface Props {
   score: DueDiligenceScore;
   extractedData?: ExtractedProjectData | null;
-  // Sprint 6: audit trail
   dataWarnings?: string[];
   sourcesUsed?: string[];
   sourcesSkipped?: SourceSkipped[];
@@ -243,15 +298,21 @@ export function DueDiligenceScoreCard({
   const totalColor = score.total >= 70 ? 'text-emerald-600 dark:text-emerald-400' : score.total >= 45 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
   const totalBg    = score.total >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-700/30' : score.total >= 45 ? 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-700/30' : 'bg-red-50 dark:bg-red-900/15 border-red-200 dark:border-red-700/30';
 
+  const resolvedSourcesUsed = sourcesUsed ?? score.sources_used ?? [];
+  const resolvedAuditLevel  = (score.audit_level ?? (resolvedSourcesUsed.length > 0 ? 2 : 1)) as 1 | 2 | 3;
+
   return (
     <div className="space-y-5">
 
-      {/* ── Audit trail (Sprint 6) ──────────────────────────────────────────── */}
+      {/* ── Nivel de auditoría — permanente, sobrevive recargas ────────────── */}
+      <AuditLevelBanner sourcesUsed={resolvedSourcesUsed} auditLevel={resolvedAuditLevel} />
+
+      {/* ── Audit trail detallado (Sprint 6) ───────────────────────────────── */}
       <DataQualityBanner
-        dataWarnings={dataWarnings}
-        sourcesUsed={sourcesUsed}
-        sourcesSkipped={sourcesSkipped}
-        fromCache={fromCache}
+        dataWarnings={dataWarnings ?? score.data_warnings ?? []}
+        sourcesUsed={resolvedSourcesUsed}
+        sourcesSkipped={sourcesSkipped ?? score.sources_skipped ?? []}
+        fromCache={fromCache ?? false}
       />
 
       {/* ── Hero Score ─────────────────────────────────────────────────────── */}

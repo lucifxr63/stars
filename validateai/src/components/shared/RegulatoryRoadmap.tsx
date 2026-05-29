@@ -22,10 +22,11 @@ export function RegulatoryRoadmap({ industry }: Props) {
         <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
           <span className="text-base">⚖️</span>
         </div>
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Marco regulatorio Chile</p>
           <p className="text-xs text-gray-400">{items.length} regulacion{items.length !== 1 ? 'es' : ''} relevante{items.length !== 1 ? 's' : ''} para tu industria</p>
         </div>
+        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-md px-2 py-0.5 tracking-wide shrink-0">Datos Verificados</span>
       </div>
 
       {items.map((item) => {

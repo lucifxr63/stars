@@ -412,7 +412,31 @@ function buildMegaPrompt(
   knowledgeChunks: string,
   dataWarnings: string[],
   skipped: { source: string; reason: string }[],
+  hasVerifiedFinancialData: boolean,
 ): { system: string; user: string } {
+  // Techo de cristal: se aplica cuando ninguna fuente financiera verificada (SII o Fintoc)
+  // aportó datos reales. Sin esto, métricas auto-reportadas inflatadas producen scores
+  // de "Listo para Ronda" que no tienen ningún respaldo externo, exponiendo a ValidateAI
+  // a riesgo reputacional y legal si el reporte llega a un fondo de VC.
+  const glassCeilingBlock = !hasVerifiedFinancialData
+    ? `
+TECHO DE CRISTAL — REGLAS INAMOVIBLES DE PUNTUACIÓN (NIVEL 1: AUTO-REPORTADO):
+Los datos financieros y de tracción de este análisis son EXCLUSIVAMENTE auto-declarados por el fundador.
+Ninguna fuente financiera externa (SII, Fintoc) aportó datos verificados.
+Los siguientes límites son ABSOLUTOS e INAMOVIBLES, independientemente de cuán convincente sea el pitch:
+
+• financiero.score ≤ 60 — prohibido superar sin verificación tributaria (SII) o bancaria (Fintoc) real
+• traccion.score ≤ 60 — prohibido superar sin respaldo de ingresos verificado externamente
+• total ≤ 75 — este análisis es Nivel 1 (auto-reportado); el techo refleja la incertidumbre epistémica
+• investorReadiness: PROHIBIDO usar "ready". Máximo permitido: "developing".
+  Un fondo de VC no califica "listo para ronda" a un proyecto cuyas métricas financieras
+  no han sido contrastadas con fuentes oficiales (SII, Fintoc o estado de cuenta auditado).
+
+En verdict_summary, menciona explícitamente que el análisis es Nivel 1 (auto-reportado) y que
+conectar SII/Fintoc elevaría la confianza del score.
+`
+    : '';
+
   const system = `Eres un analista de due diligence de venture capital de grado institucional, especializado en startups de Chile y Latinoamérica (2025-2026).
 Tu análisis se basa EXCLUSIVAMENTE en los datos verificados provistos — nunca inventas métricas ni rellenas vacíos con optimismo.
 Cuando los datos son parciales, ajustas score y data_completeness a la baja y lo señalas en verdict_summary.
@@ -426,7 +450,7 @@ REGLAS CRÍTICAS PARA FUENTES NO DISPONIBLES:
    Mencionarlos en verdict_summary solo si están disponibles.
 3. Fuentes "excluidas por filtro adaptativo" (no requeridas por etapa/tier) no generan penalización.
 4. NUNCA uses datos de CMF BEST para hacer afirmaciones sobre la startup específica — son benchmarks del sistema financiero chileno, no métricas de la empresa.
-
+${glassCeilingBlock}
 Responde SOLO con JSON válido, sin texto adicional, sin markdown.`;
 
   const warningBlock = dataWarnings.length > 0
@@ -701,9 +725,15 @@ serve(async (req) => {
 
     const ragChunks = ragBreaker.ok ? (ragBreaker.data as string) : '';
 
+    // Techo de cristal: verdadero solo si SII o Fintoc aportaron datos reales.
+    // No basta con que la fuente haya sido solicitada — el circuit breaker debe haber OK'd.
+    const hasVerifiedFinancialData =
+      (sources.has('sii')    && siiBreaker.ok) ||
+      (sources.has('fintoc') && fintocBreaker.ok);
+
     // ── Llamar Claude ─────────────────────────────────────────────────────────
     const { system, user: userPrompt } = buildMegaPrompt(
-      validation, contextSections, ragChunks, dataWarnings, skipped,
+      validation, contextSections, ragChunks, dataWarnings, skipped, hasVerifiedFinancialData,
     );
     const dueDiligenceScore = await callClaude(system, userPrompt);
 
@@ -728,10 +758,21 @@ serve(async (req) => {
       validation.target_country as string,
     ).catch(e => console.warn('cache save warning:', e));
 
-    // ── Persistir resultado en validations ────────────────────────────────────
+    // ── Persistir resultado + audit trail en validations ─────────────────────
+    // El audit trail se embede dentro de due_diligence_score para no requerir
+    // una migración nueva. El frontend lo extrae en la carga inicial, garantizando
+    // que las advertencias sobrevivan recargas y vistas de inversores via share link.
     await supabase
       .from('validations')
-      .update({ due_diligence_score: { ...dueDiligenceScore, data_warnings: dataWarnings } })
+      .update({
+        due_diligence_score: {
+          ...dueDiligenceScore,
+          data_warnings: dataWarnings,
+          sources_used:    [...sources],
+          sources_skipped: skipped,
+          audit_level:     hasVerifiedFinancialData ? 2 : 1,
+        },
+      })
       .eq('id', validation_id);
 
     await supabase

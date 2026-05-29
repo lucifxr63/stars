@@ -32,7 +32,7 @@ export function GovernanceCard({ data }: Props) {
           </div>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Gobernanza y Estructura Legal</h3>
-            <p className="text-xs text-gray-400">Marco legal para ser investible</p>
+            <p className="text-xs text-gray-400">Marco legal para ser investible · <span className="text-violet-500 dark:text-violet-400">💡 Análisis IA</span></p>
           </div>
         </div>
         <div className={`flex items-center gap-1.5 text-xs font-bold ${risk.text}`}>

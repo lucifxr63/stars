@@ -127,7 +127,10 @@ export function TractionTracker({ validationId }: Props) {
           </div>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Traction Tracker</h3>
-            <p className="text-xs text-gray-400">{events.length} hito{events.length !== 1 ? 's' : ''} registrado{events.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-400">
+              {events.length} hito{events.length !== 1 ? 's' : ''} registrado{events.length !== 1 ? 's' : ''}{' '}
+              · <span className="text-gray-500 dark:text-[#6B6A7E]">✍️ Auto-reportado por el Founder</span>
+            </p>
           </div>
         </div>
         <button
