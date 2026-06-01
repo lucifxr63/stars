@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 338 426" role="img" aria-label="Logo vectorizado">
+  <rect width="338" height="426" fill="white"/>
+
+  <!-- Arcos superiores -->
+  <path d="M111 187 A78 78 0 0 1 168 123" fill="none" stroke="#001431" stroke-width="10" stroke-linecap="butt"/>
+  <path d="M213 123 A78 78 0 0 1 271 187" fill="none" stroke="#001431" stroke-width="10" stroke-linecap="butt"/>
+
+  <!-- V principal -->
+  <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" fill="#001431"/>
+
+  <!-- Corte interno blanco de la V -->
+  <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" fill="white"/>
+
+  <!-- Chevrón interno azul -->
+  <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" fill="#001431"/>
+
+  <!-- Flecha roja central -->
+  <path d="M169 68 L193 257 L169 237 L156 254 Z" fill="#ff2b23"/>
+</svg>
