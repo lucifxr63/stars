@@ -6,34 +6,43 @@ export function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase maneja el intercambio PKCE automáticamente vía onAuthStateChange.
-    // Solo esperamos la sesión y redirigimos.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const meta = session.user.user_metadata;
-        const name = meta?.full_name ?? meta?.name ?? null;
-        const avatar = meta?.avatar_url ?? null;
-        if (name || avatar) {
-          await supabase.from('profiles').upsert(
-            { id: session.user.id, full_name: name, avatar_url: avatar, updated_at: new Date().toISOString() },
-            { onConflict: 'id', ignoreDuplicates: false }
-          );
+    async function handleCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+
+      let session = null;
+
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        if (error) {
+          navigate('/login?error=auth_failed', { replace: true });
+          return;
         }
-        // Pequeño tick para que la sesión quede persistida antes de que ProtectedLayout la lea
-        await new Promise(r => setTimeout(r, 50));
-        navigate('/validate', { replace: true });
+        session = data.session;
+      } else {
+        const { data } = await supabase.auth.getSession();
+        session = data.session;
       }
-    });
 
-    // Fallback: si la sesión ya existe al llegar (ej: refresh)
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        await new Promise(r => setTimeout(r, 50));
-        navigate('/validate', { replace: true });
+      if (!session?.user) {
+        navigate('/login', { replace: true });
+        return;
       }
-    });
 
-    return () => subscription.unsubscribe();
+      const meta = session.user.user_metadata;
+      const name = meta?.full_name ?? meta?.name ?? null;
+      const avatar = meta?.avatar_url ?? null;
+      if (name || avatar) {
+        await supabase.from('profiles').upsert(
+          { id: session.user.id, full_name: name, avatar_url: avatar, updated_at: new Date().toISOString() },
+          { onConflict: 'id', ignoreDuplicates: false }
+        );
+      }
+
+      navigate('/validate', { replace: true });
+    }
+
+    handleCallback();
   }, [navigate]);
 
   return (
