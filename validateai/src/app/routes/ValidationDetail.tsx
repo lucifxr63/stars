@@ -1702,6 +1702,13 @@ export function ValidationDetail() {
                 <div className="md:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3">
                   <UnitEconomicsKpis data={data.unit_economics} />
                 </div>
+              ) : isQuickMode ? (
+                <div className="md:col-span-12">
+                  <QuickDimensionPaywall
+                    dimension="Unit Economics"
+                    description="CAC, LTV y break-even requieren datos de precio, segmento y canal de adquisición del análisis Detallado."
+                  />
+                </div>
               ) : !sections.includes('unitEconomics') ? (
                 <div className="md:col-span-12">
                   <LockedSection
@@ -1711,7 +1718,35 @@ export function ValidationDetail() {
                     hint="Estimaciones financieras basadas en tu modelo de negocio"
                   />
                 </div>
-              ) : null}
+              ) : (
+                <div className="md:col-span-12 flex flex-col items-center justify-center gap-4 py-10 bg-[#12121A] border border-white/[0.06] rounded-2xl text-center px-6">
+                  <div className="w-10 h-10 rounded-full bg-[#F7C56C]/10 border border-[#F7C56C]/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[#F7C56C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#F0EFF8] mb-1">Unit Economics no generados aún</p>
+                    <p className="text-xs text-[#8B8AA0] max-w-xs mx-auto leading-relaxed">
+                      CAC, LTV, break-even y proyección de crecimiento. Se genera con tus datos del análisis Detallado.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleGenerateAdvanced}
+                    disabled={generatingAdvanced}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-[#F7C56C] text-gray-900 text-xs font-bold rounded-xl hover:bg-[#F7C56C]/90 transition disabled:opacity-50"
+                  >
+                    {generatingAdvanced ? (
+                      <span className="w-3.5 h-3.5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    )}
+                    {generatingAdvanced ? 'Generando…' : 'Generar Análisis Pro'}
+                  </button>
+                </div>
+              )}
 
               {/* Chart & Risks */}
               {data.unit_economics && (
@@ -1719,12 +1754,17 @@ export function ValidationDetail() {
                   <UnitEconomicsChart data={data.unit_economics} />
                 </div>
               )}
-              
+
               <div className={data.unit_economics ? "md:col-span-6 h-full" : "md:col-span-12"}>
                 {data.risk_analysis ? (
                   <div className="h-full">
                     <RiskAnalysisCard data={data.risk_analysis} />
                   </div>
+                ) : isQuickMode ? (
+                  <QuickDimensionPaywall
+                    dimension="Análisis de Riesgos"
+                    description="El análisis en 4 dimensiones (mercado, técnico, regulatorio y timing) requiere los datos del análisis Detallado."
+                  />
                 ) : !sections.includes('risks') ? (
                   <LockedSection
                     title="Análisis de Riesgos"

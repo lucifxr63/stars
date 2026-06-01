@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepFounderSchema, type StepFounder } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 import { supabase } from '@/lib/supabase';
+import type { StepAutoSaveRef } from './StepMarket';
 
 const INDUSTRY_LABELS: Record<string, string> = {
   fintech: 'Fintech', edtech: 'Educación', healthtech: 'Salud',
@@ -97,10 +98,10 @@ function ErrorMsg({ message }: { message?: string }) {
   );
 }
 
-export function StepFounder() {
+export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, ref) {
   const { stepFounder, updateStepFounder, nextStep, prevStep } = useValidationStore();
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<StepFounder>({
+  const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<StepFounder>({
     resolver: zodResolver(StepFounderSchema),
     defaultValues: {
       personallyFacedProblem: false,
@@ -108,6 +109,10 @@ export function StepFounder() {
       ...stepFounder,
     },
   });
+
+  useImperativeHandle(ref, () => ({
+    getPartialData: () => getValues() as Record<string, unknown>,
+  }));
 
   const onSubmit = (data: StepFounder) => {
     updateStepFounder(data);
@@ -133,6 +138,10 @@ export function StepFounder() {
   const techLevel      = watch('tech_level');
   const teamComp       = watch('team_composition');
   const tractionStatus = watch('traction_status');
+
+  // Barra de progreso: campos clave del paso fundador.
+  const founderFilled = [teamComp, tractionStatus, techLevel].filter(Boolean).length;
+  const FOUNDER_TOTAL = 3;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -253,6 +262,20 @@ export function StepFounder() {
 
       </div>
 
+      {/* Progreso de campos del paso */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-[#4A495E]">
+          <span>Completitud del paso</span>
+          <span className="font-bold tabular-nums">{founderFilled}/{FOUNDER_TOTAL}</span>
+        </div>
+        <div className="h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500 ease-out bg-indigo-500"
+            style={{ width: `${(founderFilled / FOUNDER_TOTAL) * 100}%` }}
+          />
+        </div>
+      </div>
+
       <div className="flex gap-4">
         <button
           type="button"
@@ -272,4 +295,4 @@ export function StepFounder() {
       </div>
     </form>
   );
-}
+});

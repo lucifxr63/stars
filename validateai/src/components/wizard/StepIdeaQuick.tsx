@@ -2,7 +2,23 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepIdeaQuickSchema, type StepIdeaQuick, BUSINESS_MODELS } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
-import { FlowSelector } from './FlowSelector';
+import { FlowSelector, type FlowCopy } from './FlowSelector';
+import { useIdeaQuality, type IdeaQuality } from '@/hooks/useIdeaQuality';
+
+function IdeaQualityIndicator({ quality, visible }: { quality: IdeaQuality; visible: boolean }) {
+  if (!visible) return null;
+  const cfg = {
+    poor:       { dot: 'bg-red-400',    text: 'text-red-500 dark:text-red-400',    label: 'Descripción vaga — añade números o palabras clave de dolor' },
+    acceptable: { dot: 'bg-amber-400',  text: 'text-amber-500 dark:text-amber-400', label: 'Aceptable — puedes añadir más contexto específico' },
+    good:       { dot: 'bg-emerald-500',text: 'text-emerald-600 dark:text-emerald-400', label: 'Específico — buen input para el análisis IA ✓' },
+  }[quality];
+  return (
+    <div className="flex items-center gap-1.5 mt-1.5">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+      <p className={`text-[11px] ${cfg.text}`}>{cfg.label}</p>
+    </div>
+  );
+}
 import { INDUSTRIES } from '@/utils/constants';
 import { supabase } from '@/lib/supabase';
 
@@ -48,8 +64,8 @@ function DescriptionQuality({ length }: { length: number }) {
   );
 }
 
-export function StepIdeaQuick() {
-  const { stepIdeaQuick, updateStepIdeaQuick, updateStepMarket, nextStep,
+export function StepIdeaQuick({ flowCopy }: { flowCopy?: FlowCopy }) {
+  const { stepIdeaQuick, updateStepIdeaQuick, updateStepMarket, updateStepIdea, nextStep,
           setStep, validationMode, setValidationMode } = useValidationStore();
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<StepIdeaQuick>({
@@ -57,8 +73,21 @@ export function StepIdeaQuick() {
     defaultValues: stepIdeaQuick as StepIdeaQuick,
   });
 
-  const descriptionLen = (watch('idea_description') ?? '').length;
-  const selectedModel  = watch('business_model');
+  const descriptionText = watch('idea_description') ?? '';
+  const descriptionLen  = descriptionText.length;
+  const selectedModel   = watch('business_model');
+  const descQuality     = useIdeaQuality(descriptionText);
+  // Upsell contextual: si el contexto es rico (> 200 chars) y el modo es Rápido,
+  // sugerir el análisis completo conservando todo el texto ya ingresado.
+  const showUpsellBanner = validationMode === 'quick' && descriptionText.length > 200;
+
+  const handleUpsell = () => {
+    // Copia los datos ya ingresados a stepIdea para pre-llenar StepIdea.
+    const currentValues = { idea_name: watch('idea_name'), idea_description: watch('idea_description'), idea_industry: watch('idea_industry') };
+    updateStepIdea(currentValues);
+    setValidationMode('detailed');
+    setStep(1);
+  };
 
   const onSubmit = (data: StepIdeaQuick) => {
     updateStepIdeaQuick(data);
@@ -83,10 +112,11 @@ export function StepIdeaQuick() {
 
   return (
     <div className="space-y-6">
-      <FlowSelector value={validationMode as 'quick' | 'detailed'} onChange={(mode) => {
-        setValidationMode(mode);
-        setStep(1);
-      }} />
+      <FlowSelector
+        value={validationMode as 'quick' | 'detailed'}
+        onChange={(mode) => { setValidationMode(mode); setStep(1); }}
+        flowCopy={flowCopy}
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
@@ -115,6 +145,7 @@ export function StepIdeaQuick() {
             className={`${inputCls(!!errors.idea_description)} resize-none leading-relaxed`}
           />
           <DescriptionQuality length={descriptionLen} />
+          <IdeaQualityIndicator quality={descQuality} visible={descriptionLen > 0} />
           {errors.idea_description && <ErrorMsg message={errors.idea_description.message} />}
         </div>
 
@@ -179,6 +210,29 @@ export function StepIdeaQuick() {
           </div>
           {errors.idea_industry && <ErrorMsg message="Selecciona una industria" />}
         </div>
+
+        {/* Upsell contextual: contexto rico detectado en modo Rápido */}
+        {showUpsellBanner && (
+          <button
+            type="button"
+            onClick={handleUpsell}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl
+                       bg-[#7C6FF7]/10 border border-[#7C6FF7]/30 text-left
+                       hover:bg-[#7C6FF7]/15 transition-all duration-200 animate-in fade-in slide-in-from-bottom-1"
+          >
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <p className="text-xs font-semibold text-[#A78BFA] leading-snug">
+                Tienes buen contexto → el Análisis completo te dará un score más preciso
+              </p>
+            </div>
+            <span className="shrink-0 text-[10px] font-bold text-[#7C6FF7] bg-[#7C6FF7]/20 px-2 py-0.5 rounded-full">
+              Cambiar →
+            </span>
+          </button>
+        )}
 
         <button
           type="submit"

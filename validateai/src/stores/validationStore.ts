@@ -203,3 +203,25 @@ export const useValidationStore = create<ValidationState>()(
     )
   )
 );
+
+// ── Sincronización cross-tab via BroadcastChannel ─────────────────────────────
+// Propaga cambios de store a otras pestañas abiertas del mismo origen.
+// tabId único por pestaña evita que el origen del mensaje re-aplique su propio estado.
+// isApplyingRemoteState previene el loop: tab A → tab B → tab A → ...
+if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+  const tabId   = crypto.randomUUID();
+  const channel = new BroadcastChannel('validateai_store');
+  let   isApplyingRemoteState = false;
+
+  channel.onmessage = (event: MessageEvent<{ sender: string; state: unknown }>) => {
+    if (event.data.sender === tabId) return;
+    isApplyingRemoteState = true;
+    useValidationStore.setState(event.data.state as ReturnType<typeof useValidationStore.getState>);
+    isApplyingRemoteState = false;
+  };
+
+  useValidationStore.subscribe((state) => {
+    if (isApplyingRemoteState) return;
+    channel.postMessage({ sender: tabId, state });
+  });
+}

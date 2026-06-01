@@ -1,28 +1,38 @@
+export interface FlowCopy {
+  quick: string;
+  detailed: string;
+}
+
+const DEFAULT_COPY: FlowCopy = {
+  quick:    'Análisis rápido',
+  detailed: 'Análisis completo',
+};
+
 interface FlowSelectorProps {
   value: 'quick' | 'detailed'
   onChange: (mode: 'quick' | 'detailed') => void
+  flowCopy?: FlowCopy
 }
 
 const OPTIONS = [
   {
     id: 'quick' as const,
     icon: '⚡',
-    title: 'Análisis rápido',
-    time: '5 min',
+    time: '~3 min',
     desc: 'Solo describe tu idea. La IA infiere el resto.',
     bullets: ['1 formulario corto', 'Resultado inmediato', 'Score + análisis esencial'],
   },
   {
     id: 'detailed' as const,
     icon: '🔍',
-    title: 'Análisis completo',
-    time: '10 min',
+    time: '~7 min',
     desc: 'Más contexto, más profundidad en el resultado.',
     bullets: ['3 pasos guiados', 'Perfil de mercado y fundador', 'Análisis founder fit incluido'],
   },
 ]
 
-export function FlowSelector({ value, onChange }: FlowSelectorProps) {
+export function FlowSelector({ value, onChange, flowCopy }: FlowSelectorProps) {
+  const copy = flowCopy ?? DEFAULT_COPY;
   return (
     <div className="mb-8">
       <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-3">¿Cómo quieres validar tu idea?</p>
@@ -44,7 +54,9 @@ export function FlowSelector({ value, onChange }: FlowSelectorProps) {
                 {opt.time}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1">{opt.title}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1">
+              {opt.id === 'quick' ? copy.quick : copy.detailed}
+            </p>
             <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-3">{opt.desc}</p>
             <ul className="space-y-1">
               {opt.bullets.map((b) => (
