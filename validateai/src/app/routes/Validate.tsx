@@ -96,6 +96,7 @@ export function Validate() {
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const exitShownRef = useRef(false);
+  const mountedAtRef = useRef(Date.now());
   const [emailInput, setEmailInput] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
@@ -193,17 +194,31 @@ export function Validate() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validationId]);
   // Exit-intent: mouseleave viewport → show 1-click dialog (once per wizard session)
+  // 400 ms delay prevents accidental triggers from fast mouse movements
   useEffect(() => {
     const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
+    let leaveTimer: ReturnType<typeof setTimeout> | null = null;
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY > 0) return;
       if (currentStep >= lastStep) return;
       if (exitShownRef.current) return;
-      exitShownRef.current = true;
-      setShowExitDialog(true);
+      if (Date.now() - mountedAtRef.current < 20000) return;
+      leaveTimer = setTimeout(() => {
+        if (exitShownRef.current) return;
+        exitShownRef.current = true;
+        setShowExitDialog(true);
+      }, 400);
+    };
+    const handleMouseEnter = () => {
+      if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
     };
     document.addEventListener('mouseleave', handleMouseLeave);
-    return () => document.removeEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseenter', handleMouseEnter);
+    return () => {
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseenter', handleMouseEnter);
+      if (leaveTimer) clearTimeout(leaveTimer);
+    };
   }, [currentStep, isPremiumMode, isQuickMode]);
 
   // Rem 1: visibilitychange + pagehide replace beforeunload (BFCache-compatible, mobile-safe).
@@ -237,13 +252,13 @@ export function Validate() {
   }, [isPremiumMode, isQuickMode, tier]);
 
   // Rem 3a: mobile exit-intent — scroll reversal velocity heuristic.
-  // Triggers when user scrolled ≥ 80 px down then inverts fast (≥ 1.5 px/ms upward).
+  // Triggers when user scrolled ≥ 300 px down then inverts fast (≥ 3.0 px/ms upward).
   useEffect(() => {
     let lastY = window.scrollY;
     let lastT = Date.now();
     let maxDepth = 0;
-    const MIN_DEPTH = 80;
-    const MIN_VELOCITY = 1.5; // px/ms
+    const MIN_DEPTH = 300;
+    const MIN_VELOCITY = 3.0; // px/ms
 
     const onScroll = () => {
       const now = Date.now();
@@ -259,7 +274,8 @@ export function Validate() {
           velocity < -MIN_VELOCITY &&
           maxDepth > MIN_DEPTH &&
           step < lastStep &&
-          !exitShownRef.current
+          !exitShownRef.current &&
+          Date.now() - mountedAtRef.current >= 20000
         ) {
           exitShownRef.current = true;
           setShowExitDialog(true);
@@ -287,7 +303,7 @@ export function Validate() {
       // Re-inject guard so repeated back-button presses are caught
       window.history.pushState({ validateai_guard: true }, '');
 
-      if (!exitShownRef.current) {
+      if (!exitShownRef.current && Date.now() - mountedAtRef.current >= 20000) {
         exitShownRef.current = true;
         setShowExitDialog(true);
       }
