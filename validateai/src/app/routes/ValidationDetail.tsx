@@ -569,7 +569,7 @@ export function ValidationDetail() {
 
       // Ejecutar secuencialmente con 700ms entre llamadas para evitar 429
       const settled = await runThrottled(
-        advancedTasks.filter((t): t is () => Promise<unknown> => t !== null),
+        advancedTasks.filter((t): t is NonNullable<typeof t> => t !== null) as Array<() => Promise<unknown>>,
         700,
       );
 
