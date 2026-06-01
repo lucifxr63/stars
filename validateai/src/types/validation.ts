@@ -34,7 +34,7 @@ export const StepIdeaSchema = z.object({
   idea_industry: IndustryEnum,
   current_solution: z.string()
     .min(10, 'Nombra al menos 2 herramientas o métodos que usa tu cliente hoy (mínimo 10 caracteres).')
-    .max(300),
+    .max(500),
 });
 
 export const StepMarketSchema = z.object({
