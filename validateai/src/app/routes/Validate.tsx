@@ -95,7 +95,7 @@ const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
 
 export function Validate() {
   const navigate = useNavigate();
-  const { currentStep, validationId, reset, setValidationMode, validationMode,
+  const { currentStep, validationId, setValidationId, reset, setValidationMode, validationMode,
           stepIdea, updateStepIdea, updateStepMarket, updateStepIdeaQuick, setStep } = useValidationStore();
   const { isPro: isPremium, loading: tierLoading, tier } = useUserTier();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();

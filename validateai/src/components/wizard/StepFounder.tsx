@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { StepFounderSchema, type StepFounder } from '@/types/validation';
+import { StepFounderSchema, type StepFounder as StepFounderData } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 import { supabase } from '@/lib/supabase';
 import type { StepAutoSaveRef } from './StepMarket';
@@ -101,7 +101,7 @@ function ErrorMsg({ message }: { message?: string }) {
 export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, ref) {
   const { stepFounder, updateStepFounder, nextStep, prevStep } = useValidationStore();
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<StepFounder>({
+  const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<StepFounderData>({
     resolver: zodResolver(StepFounderSchema),
     defaultValues: {
       personallyFacedProblem: false,
@@ -114,7 +114,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
     getPartialData: () => getValues() as Record<string, unknown>,
   }));
 
-  const onSubmit = (data: StepFounder) => {
+  const onSubmit = (data: StepFounderData) => {
     updateStepFounder(data);
 
     const { validationId } = useValidationStore.getState();

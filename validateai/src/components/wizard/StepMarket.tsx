@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { StepMarketSchema, type StepMarket, TARGET_COUNTRIES, BUSINESS_MODELS, PRICING_RANGES } from '@/types/validation';
+import { StepMarketSchema, type StepMarket as StepMarketData, TARGET_COUNTRIES, BUSINESS_MODELS, PRICING_RANGES } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 import { supabase } from '@/lib/supabase';
 
@@ -52,9 +52,9 @@ function ErrorMsg({ message }: { message?: string }) {
 export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref) {
   const { stepMarket, updateStepMarket, nextStep, prevStep } = useValidationStore();
 
-  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<StepMarket>({
+  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<StepMarketData>({
     resolver: zodResolver(StepMarketSchema),
-    defaultValues: stepMarket as StepMarket,
+    defaultValues: stepMarket as StepMarketData,
   });
 
   // Expone getPartialData() al padre (Validate.tsx) para el auto-guardado de 30s.
@@ -74,7 +74,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
   // Se muestra como warning no bloqueante — el usuario puede continuar, pero no lo ignorará.
   const showB2bFreeWarning = selectedModel === 'b2b' && selectedPricing === 'free';
 
-  const onSubmit = (data: StepMarket) => {
+  const onSubmit = (data: StepMarketData) => {
     updateStepMarket(data);
 
     const { validationId } = useValidationStore.getState();
@@ -177,7 +177,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
               <button
                 key={m}
                 type="button"
-                onClick={() => setValue('business_model', m as StepMarket['business_model'], { shouldValidate: true })}
+                onClick={() => setValue('business_model', m as StepMarketData['business_model'], { shouldValidate: true })}
                 className={`px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium transition-all duration-150
                   ${selectedModel === m
                     ? 'bg-indigo-600 text-white border-indigo-600'
