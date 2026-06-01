@@ -1,5 +1,6 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { phCapture } from '../_shared/posthog.ts';
 
 // â”€â”€ Env vars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
@@ -1469,6 +1470,7 @@ serve(async (req) => {
     const limits = MONTHLY_LIMITS[userTier];
 
     if (EXPENSIVE_TYPES.has(prompt_type) && limits.expensive === 0) {
+      phCapture('paywall_hit', user.id, { prompt_type, tier: userTier, reason: 'tier_blocked' });
       return new Response(JSON.stringify({
         error: 'rate_limit_tier',
         message: 'Este anÃ¡lisis requiere plan Basic o superior.',
@@ -1486,6 +1488,7 @@ serve(async (req) => {
       .gte('created_at', monthStart.toISOString());
 
     if ((totalThisMonth ?? 0) >= limits.total) {
+      phCapture('paywall_hit', user.id, { prompt_type, tier: userTier, reason: 'monthly_limit', limit: limits.total });
       return new Response(JSON.stringify({
         error: 'rate_limit_monthly',
         message: `LÃ­mite mensual de ${limits.total} anÃ¡lisis para el plan ${userTier} alcanzado.`,
@@ -1632,6 +1635,16 @@ serve(async (req) => {
     // Llamada AI con routing dual
     const tierForAI = (userTier === 'premium' ? 'pro' : userTier) as 'free' | 'basic' | 'pro';
     const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride, tierForAI);
+
+    phCapture('ai_prompt_called', user.id, {
+      prompt_type,
+      tier: userTier,
+      model,
+      tokens_in: inputTokens,
+      tokens_out: outputTokens,
+      tokens_total: inputTokens + outputTokens,
+      validation_id: validation_id ?? null,
+    });
 
     // Guardar en cachÃ© (no bloqueante)
     if (ideaCacheKey && cacheableTypes.includes(prompt_type)) {
