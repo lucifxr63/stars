@@ -24,9 +24,9 @@ interface ValidationRow {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  completed: { label: 'Completada', className: 'bg-green-100 text-green-700 border border-green-200' },
-  in_progress: { label: 'En progreso', className: 'bg-blue-100 text-blue-700 border border-blue-200' },
-  archived: { label: 'Archivada', className: 'bg-gray-100 text-gray-500 border border-gray-200' },
+  completed:   { label: 'Completada',  className: 'bg-green-500/10 text-green-500 border border-green-500/20' },
+  in_progress: { label: 'En progreso', className: 'bg-blue-500/10 text-blue-400 border border-blue-500/20'   },
+  archived:    { label: 'Archivada',   className: 'bg-gray-500/10 text-gray-400 border border-gray-500/20'   },
 };
 
 function ScoreBadge({ score }: { score: number | null }) {
@@ -40,10 +40,10 @@ function ScoreBadge({ score }: { score: number | null }) {
   const isGood = score >= 70;
   const isMid = score >= 40;
   const colorClass = isGood
-    ? 'bg-green-500 border-green-600/20'
+    ? 'bg-green-500 border-green-400/30 shadow-lg shadow-green-500/20'
     : isMid
-    ? 'bg-amber-500 border-amber-600/20'
-    : 'bg-red-500 border-red-600/20';
+    ? 'bg-amber-500 border-amber-400/30 shadow-lg shadow-amber-500/20'
+    : 'bg-red-500 border-red-400/30 shadow-lg shadow-red-500/20';
 
   return (
     <div className={`w-14 h-14 rounded-2xl border-2 ${colorClass} flex flex-col items-center justify-center shrink-0`}>
@@ -203,7 +203,11 @@ export function Results() {
         {/* In progress */}
         {!loading && inProgress.length > 0 && (
           <div className="mb-6">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">En progreso</p>
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">En progreso</p>
+              <span className="text-xs text-gray-600 font-medium">{inProgress.length}</span>
+            </div>
             <div className="space-y-2">
               {inProgress.map((v) => (
                 <ValidationCard key={v.id} v={v} onContinue={handleContinue} />
@@ -215,7 +219,11 @@ export function Results() {
         {/* Completed */}
         {!loading && completed.length > 0 && (
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Completadas</p>
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Completadas</p>
+              <span className="text-xs text-gray-600 font-medium">{completed.length}</span>
+            </div>
             <div className="space-y-2">
               {completed.map((v) => (
                 <ValidationCard key={v.id} v={v} onContinue={handleContinue} onPivot={setPivotTarget} />
@@ -227,8 +235,10 @@ export function Results() {
         {/* Dataset Consent Widget */}
         {!loading && (
           <div className="mt-12 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 flex items-start gap-4 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
-              <span className="text-xl">🧠</span>
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+              </svg>
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between gap-4">
@@ -308,9 +318,10 @@ function ValidationCard({
   return (
     <div
       onClick={v.status === 'completed' ? handleClick : undefined}
-      className={`bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 sm:p-5 shadow-sm
-                  hover:shadow-md hover:border-gray-200 dark:border-white/10 transition-all duration-150 flex items-center gap-4
-                  ${v.status === 'completed' ? 'cursor-pointer hover:bg-gray-50 dark:bg-[#0A0A0F]/50' : ''}`}
+      className={`group bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-4 sm:p-5
+                  shadow-sm hover:shadow-lg hover:border-gray-200 dark:hover:border-white/[0.12]
+                  transition-all duration-200 flex items-center gap-4
+                  ${v.status === 'completed' ? 'cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02]' : ''}`}
     >
       <ScoreBadge score={v.validation_score} />
 
@@ -323,28 +334,28 @@ function ValidationCard({
             {status.label}
           </span>
           {v.validation_mode === 'quick' && (
-            <span className="text-[10px] bg-yellow-500/10 text-yellow-600 px-1.5 py-0.5 rounded-full border border-yellow-500/20">
-              ⚡ Rápido
+            <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded-full border border-yellow-500/20 font-semibold">
+              Rápido
             </span>
           )}
           {v.parent_id && (
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
               Pivot v{v.version ?? 2}
             </span>
           )}
           {v.idea_industry && (
-            <span className="text-xs text-gray-400 capitalize hidden sm:inline">{v.idea_industry}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 capitalize hidden sm:inline">{v.idea_industry}</span>
           )}
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
           {new Date(v.created_at).toLocaleDateString('es-CL', {
             day: '2-digit', month: 'short', year: 'numeric',
           })}
           {v.status === 'in_progress' && (
-            <span className="ml-2 text-blue-500 font-medium">· Paso {v.current_step} de 6</span>
+            <span className="ml-2 text-blue-400 font-medium">· Paso {v.current_step} de 6</span>
           )}
           {v.pivot_reason && (
-            <span className="ml-2 text-amber-600 truncate hidden sm:inline">· {v.pivot_reason}</span>
+            <span className="ml-2 text-amber-500/80 truncate hidden sm:inline">· {v.pivot_reason}</span>
           )}
         </p>
       </div>
@@ -352,9 +363,9 @@ function ValidationCard({
       {v.status === 'in_progress' ? (
         <button
           onClick={(e) => { e.stopPropagation(); onContinue(v); }}
-          className="px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl
+          className="px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl cursor-pointer
                      hover:bg-teal-600 active:scale-[0.97] transition-all shrink-0
-                     shadow-sm shadow-teal-500/20"
+                     shadow-sm shadow-teal-500/25"
         >
           Continuar →
         </button>
@@ -363,8 +374,8 @@ function ValidationCard({
           <button
             onClick={() => navigate(`/market/${v.id}`)}
             title="Ver estudio de mercado"
-            className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200
-                       rounded-xl hover:bg-blue-100 transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20
+                       rounded-xl hover:bg-blue-500/20 transition-colors duration-150 cursor-pointer flex items-center gap-1"
           >
             <BarChart2 className="w-3 h-3" />
             Mercado
@@ -373,13 +384,13 @@ function ValidationCard({
             <button
               onClick={() => onPivot(v)}
               title="Pivotar esta idea"
-              className="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200
-                         rounded-xl hover:bg-amber-100 transition-colors"
+              className="px-3 py-1.5 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20
+                         rounded-xl hover:bg-amber-500/20 transition-colors duration-150 cursor-pointer"
             >
               Pivotar
             </button>
           )}
-          <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-4 h-4 text-gray-400 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </div>

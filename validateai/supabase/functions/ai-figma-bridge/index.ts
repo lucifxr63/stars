@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const ANTHROPIC_API_KEY   = Deno.env.get('ANTHROPIC_API_KEY')!;
@@ -6,7 +6,7 @@ const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -28,7 +28,7 @@ function json(data: unknown, status = 200, extra: HeadersInit = {}) {
   });
 }
 
-// ── Figma API types ────────────────────────────────────────────────────────────
+// â”€â”€ Figma API types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface FigmaNode {
   id: string;
@@ -66,7 +66,7 @@ interface ReactFlowEdge {
   data?: { triggerType: string; transitionType?: string; isExternal?: boolean };
 }
 
-// ── Graph processing ───────────────────────────────────────────────────────────
+// â”€â”€ Graph processing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function extractFrames(
   node: FigmaNode,
@@ -197,7 +197,7 @@ function applyLayout(
   });
 }
 
-// ── AI analysis ────────────────────────────────────────────────────────────────
+// â”€â”€ AI analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function analyzeWithAI(
   nodes: ReactFlowNode[],
@@ -217,27 +217,27 @@ async function analyzeWithAI(
     })),
   };
 
-  const prompt = `Eres un experto en UX y arquitectura de información. Analiza este mapa de navegación de una aplicación llamada "${fileName}"${appCategory ? ` (categoría: ${appCategory})` : ''}.
+  const prompt = `Eres un experto en UX y arquitectura de informaciÃ³n. Analiza este mapa de navegaciÃ³n de una aplicaciÃ³n llamada "${fileName}"${appCategory ? ` (categorÃ­a: ${appCategory})` : ''}.
 
 DATOS DEL GRAFO:
 ${JSON.stringify(graphSummary, null, 2)}
 
-Proporciona un análisis estructurado en JSON con exactamente estas claves:
+Proporciona un anÃ¡lisis estructurado en JSON con exactamente estas claves:
 {
-  "summary": "Resumen en 2 oraciones del estado general de la navegación",
-  "health_score": número entre 0-100 que representa la calidad de la arquitectura de navegación,
-  "critical_screens": ["lista de pantallas que son cuellos de botella (más de 3 conexiones entrantes)"],
-  "orphan_screens": ["pantallas sin ninguna conexión de salida ni entrada — completamente aisladas"],
+  "summary": "Resumen en 2 oraciones del estado general de la navegaciÃ³n",
+  "health_score": nÃºmero entre 0-100 que representa la calidad de la arquitectura de navegaciÃ³n,
+  "critical_screens": ["lista de pantallas que son cuellos de botella (mÃ¡s de 3 conexiones entrantes)"],
+  "orphan_screens": ["pantallas sin ninguna conexiÃ³n de salida ni entrada â€” completamente aisladas"],
   "dead_ends": ["pantallas sin conexiones de salida (dead ends para el usuario)"],
   "insights": [
     {
       "type": "warning|info|error",
-      "title": "título corto",
-      "description": "descripción accionable"
+      "title": "tÃ­tulo corto",
+      "description": "descripciÃ³n accionable"
     }
   ],
-  "breadth_depth_ratio": "flat|balanced|deep — descripción del tipo de arquitectura",
-  "recommendation": "Recomendación principal en 1-2 oraciones para mejorar el flujo"
+  "breadth_depth_ratio": "flat|balanced|deep â€” descripciÃ³n del tipo de arquitectura",
+  "recommendation": "RecomendaciÃ³n principal en 1-2 oraciones para mejorar el flujo"
 }
 
 Responde SOLO con el JSON, sin texto adicional.`;
@@ -268,7 +268,7 @@ Responde SOLO con el JSON, sin texto adicional.`;
   }
 }
 
-// ── Main handler ───────────────────────────────────────────────────────────────
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 serve(async (req) => {
   const cors = getCorsHeaders(req);
@@ -298,7 +298,7 @@ serve(async (req) => {
       // https://www.figma.com/design/KEY/Name
       // https://www.figma.com/proto/KEY/Name
       const match = figma_url.match(/figma\.com\/(?:file|design|proto)\/([a-zA-Z0-9]+)/);
-      if (!match) return json({ error: 'URL de Figma inválida. Usa el enlace del archivo desde Figma.' }, 400, cors);
+      if (!match) return json({ error: 'URL de Figma invÃ¡lida. Usa el enlace del archivo desde Figma.' }, 400, cors);
 
       const fileKey = match[1];
 
@@ -316,7 +316,7 @@ serve(async (req) => {
       });
 
       if (!metaRes.ok) {
-        if (metaRes.status === 403) return json({ error: 'Sin acceso a ese archivo. Asegúrate de ser colaborador en Figma.' }, 403, cors);
+        if (metaRes.status === 403) return json({ error: 'Sin acceso a ese archivo. AsegÃºrate de ser colaborador en Figma.' }, 403, cors);
         if (metaRes.status === 404) return json({ error: 'Archivo no encontrado. Verifica la URL.' }, 404, cors);
         throw new Error(`Figma API error: ${metaRes.status}`);
       }
@@ -383,7 +383,7 @@ serve(async (req) => {
       const framesMap = extractFrames(targetPage);
       const frameIds = new Set(framesMap.keys());
 
-      // For frames with interactions, we need depth>2 — fetch their details
+      // For frames with interactions, we need depth>2 â€” fetch their details
       const frameIdList = [...frameIds].join(',');
       let detailedNodes: FigmaNode[] = targetPage.children ?? [];
 

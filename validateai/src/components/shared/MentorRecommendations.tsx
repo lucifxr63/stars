@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function MentorRecommendations({ ideaDescription, founderGaps }: Props) {
-  const { mentors, loading } = useMentors(ideaDescription);
+  const { mentors, loading } = useMentors(ideaDescription, founderGaps);
 
   const displayMentors = mentors;
 

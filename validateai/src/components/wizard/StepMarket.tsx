@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepMarketSchema, type StepMarket, TARGET_COUNTRIES, BUSINESS_MODELS, PRICING_RANGES } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
+import { supabase } from '@/lib/supabase';
 
 const BUSINESS_MODEL_LABELS: Record<string, string> = {
   b2b: 'B2B (Empresas)',
@@ -39,6 +40,20 @@ export function StepMarket() {
 
   const onSubmit = (data: StepMarket) => {
     updateStepMarket(data);
+
+    const { validationId } = useValidationStore.getState();
+    if (validationId) {
+      supabase.from('validations').update({
+        customer_segment:     data.customer_segment,
+        target_country:       data.target_country,
+        target_region:        data.target_region ?? null,
+        business_model:       data.business_model,
+        pricing_range:        data.pricing_range,
+        acquisition_channel:  data.acquisition_channel ?? null,
+        current_step:         3,
+      }).eq('id', validationId).then(() => {});
+    }
+
     nextStep();
   };
 

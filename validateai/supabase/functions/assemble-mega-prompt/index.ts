@@ -1,9 +1,9 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Config ────────────────────────────────────────────────────────────────────
+// â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -13,9 +13,9 @@ const ANTHROPIC_KEY   = Deno.env.get('ANTHROPIC_API_KEY')!;
 const OPENAI_API_KEY  = Deno.env.get('OPENAI_API_KEY');     // para embeddings
 const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 
-// Umbrales de caché: 0.92 para due diligence (mayor rigor = menos falsos positivos).
-// Un score 0.92 implica que dos ideas son ~92% semánticamente idénticas — seguro
-// para reutilizar un análisis legal/financiero sin riesgo de resultado incorrecto.
+// Umbrales de cachÃ©: 0.92 para due diligence (mayor rigor = menos falsos positivos).
+// Un score 0.92 implica que dos ideas son ~92% semÃ¡nticamente idÃ©nticas â€” seguro
+// para reutilizar un anÃ¡lisis legal/financiero sin riesgo de resultado incorrecto.
 const CACHE_TYPE      = 'due_diligence';
 const CACHE_THRESHOLD = 0.92;
 
@@ -29,9 +29,9 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-// ── Embeddings ────────────────────────────────────────────────────────────────
-// Usa text-embedding-3-small de OpenAI (1536d) — mismo modelo que el resto del proyecto.
-// Si OPENAI_API_KEY no está configurada, las funciones de caché y RAG se saltean
+// â”€â”€ Embeddings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Usa text-embedding-3-small de OpenAI (1536d) â€” mismo modelo que el resto del proyecto.
+// Si OPENAI_API_KEY no estÃ¡ configurada, las funciones de cachÃ© y RAG se saltean
 // sin crashear (degraded gracefully).
 async function generateEmbedding(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY) return null;
@@ -53,9 +53,9 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   }
 }
 
-// ── S5-A: filterRelevantContext ───────────────────────────────────────────────
-// Determina qué fuentes de datos son necesarias para ESTE usuario en ESTE momento.
-// Objetivo: no gastar tokens ni latencia en fuentes que no aportarán señal analítica.
+// â”€â”€ S5-A: filterRelevantContext â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Determina quÃ© fuentes de datos son necesarias para ESTE usuario en ESTE momento.
+// Objetivo: no gastar tokens ni latencia en fuentes que no aportarÃ¡n seÃ±al analÃ­tica.
 
 type DataSource = 'sii' | 'inapi' | 'fintoc' | 'pjud' | 'cmf_best';
 
@@ -76,24 +76,24 @@ function filterRelevantContext(params: {
   const sources = new Set<DataSource>();
   const skipped: { source: DataSource; reason: string }[] = [];
 
-  // ── SII: siempre incluir si hay RUT disponible ────────────────────────────
-  // El estado tributario es señal de riesgo base — independiente de etapa y tier.
+  // â”€â”€ SII: siempre incluir si hay RUT disponible â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // El estado tributario es seÃ±al de riesgo base â€” independiente de etapa y tier.
   if (rutEmpresa) {
     sources.add('sii');
   } else {
     skipped.push({ source: 'sii', reason: 'RUT de empresa no proporcionado' });
   }
 
-  // ── INAPI: solo si hay nombre de marca definido ───────────────────────────
+  // â”€â”€ INAPI: solo si hay nombre de marca definido â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (brandName) {
     sources.add('inapi');
   } else {
     skipped.push({ source: 'inapi', reason: 'Nombre de marca no proporcionado' });
   }
 
-  // ── Fintoc: solo para startups con ventas declaradas y tier Pro/Premium ───
-  // Una startup pre-revenue sin cuenta bancaria activa no tiene movimientos útiles.
-  // El análisis de flujo de caja solo es accionable cuando ya hay ingresos.
+  // â”€â”€ Fintoc: solo para startups con ventas declaradas y tier Pro/Premium â”€â”€â”€
+  // Una startup pre-revenue sin cuenta bancaria activa no tiene movimientos Ãºtiles.
+  // El anÃ¡lisis de flujo de caja solo es accionable cuando ya hay ingresos.
   const fintocTiers = ['pro', 'premium', 'admin'];
   if (hasRevenue && fintocTiers.includes(tier)) {
     sources.add('fintoc');
@@ -103,9 +103,9 @@ function filterRelevantContext(params: {
     skipped.push({ source: 'fintoc', reason: `Tier ${tier}: Open Banking requiere Pro/Premium` });
   }
 
-  // ── PJUD: solo en etapas avanzadas del wizard y tier Premium ─────────────
+  // â”€â”€ PJUD: solo en etapas avanzadas del wizard y tier Premium â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // El historial judicial es relevante en due diligence final (stepFounder en adelante),
-  // no en las primeras etapas de ideación donde la empresa puede no estar constituida.
+  // no en las primeras etapas de ideaciÃ³n donde la empresa puede no estar constituida.
   const advancedSteps = new Set(['stepFounder', 'stepGrowth', 'stepFunding', 'complete']);
   const pjudTiers = ['premium', 'admin'];
   if (advancedSteps.has(currentStep) && pjudTiers.includes(tier)) {
@@ -116,21 +116,21 @@ function filterRelevantContext(params: {
     skipped.push({ source: 'pjud', reason: `Tier ${tier}: historial judicial requiere Premium` });
   }
 
-  // ── CMF BEST: indicadores del mercado financiero chileno ─────────────────
-  // Solo aplica a startups chilenas. Siempre activo cuando el país es Chile,
-  // independiente del tier: el contexto de TMC y solvencia bancaria es señal base.
+  // â”€â”€ CMF BEST: indicadores del mercado financiero chileno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Solo aplica a startups chilenas. Siempre activo cuando el paÃ­s es Chile,
+  // independiente del tier: el contexto de TMC y solvencia bancaria es seÃ±al base.
   if (targetCountry?.toUpperCase() === 'CL' || targetCountry?.toLowerCase() === 'chile') {
     sources.add('cmf_best');
   } else {
-    skipped.push({ source: 'cmf_best', reason: `País "${targetCountry ?? 'N/D'}": BEST CMF aplica solo a Chile` });
+    skipped.push({ source: 'cmf_best', reason: `PaÃ­s "${targetCountry ?? 'N/D'}": BEST CMF aplica solo a Chile` });
   }
 
   return { sources, skipped };
 }
 
-// ── S5-B: Due Diligence Cache ─────────────────────────────────────────────────
-// Antes de llamar a Claude, verifica si ya existe un análisis semánticamente similar
-// en cached_analyses (TTL 30 días, umbral 0.92). Ahorra ~$0.015 por validación
+// â”€â”€ S5-B: Due Diligence Cache â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Antes de llamar a Claude, verifica si ya existe un anÃ¡lisis semÃ¡nticamente similar
+// en cached_analyses (TTL 30 dÃ­as, umbral 0.92). Ahorra ~$0.015 por validaciÃ³n
 // reutilizada y baja latencia de ~25s a <100ms para ideas procesadas previamente.
 
 async function checkDueDiligenceCache(
@@ -171,11 +171,11 @@ async function saveDueDiligenceCache(
   }).select().single();
 }
 
-// ── S5-C: Knowledge Base RAG (HNSW semantic search) ──────────────────────────
-// Recupera los 3 chunks más relevantes de knowledge_base usando pgvector HNSW.
-// Reemplaza la inyección de contexto fijo por recuperación dinámica y semántica:
+// â”€â”€ S5-C: Knowledge Base RAG (HNSW semantic search) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Recupera los 3 chunks mÃ¡s relevantes de knowledge_base usando pgvector HNSW.
+// Reemplaza la inyecciÃ³n de contexto fijo por recuperaciÃ³n dinÃ¡mica y semÃ¡ntica:
 // el prompt recibe solo la inteligencia legal/de mercado pertinente a ESTA idea,
-// reduciendo tokens de contexto fijo ~800 → ~300 tokens de RAG dirigido.
+// reduciendo tokens de contexto fijo ~800 â†’ ~300 tokens de RAG dirigido.
 
 interface KnowledgeChunk {
   title: string;
@@ -195,9 +195,9 @@ async function searchKnowledgeBase(
   const embedding = await generateEmbedding(queryText);
   if (!embedding) return '';
 
-  // Mapeo de industria a categoría para pre-filtrar antes del vector search.
-  // El índice GIN de tags hace este filtro en O(1) antes del scan HNSW.
-  const regulatedIndustries = new Set(['fintech', 'salud', 'healthtech', 'educación', 'agtech']);
+  // Mapeo de industria a categorÃ­a para pre-filtrar antes del vector search.
+  // El Ã­ndice GIN de tags hace este filtro en O(1) antes del scan HNSW.
+  const regulatedIndustries = new Set(['fintech', 'salud', 'healthtech', 'educaciÃ³n', 'agtech']);
   const filterCategory = regulatedIndustries.has(industry.toLowerCase()) ? 'regulatory' : null;
 
   const { data, error } = await supabase.rpc('search_knowledge_base', {
@@ -212,13 +212,13 @@ async function searchKnowledgeBase(
 
   return (data as KnowledgeChunk[])
     .map(chunk =>
-      `[${chunk.title} — Fuente: ${chunk.source} | Similitud: ${(chunk.similarity * 100).toFixed(0)}%]\n${chunk.content}`
+      `[${chunk.title} â€” Fuente: ${chunk.source} | Similitud: ${(chunk.similarity * 100).toFixed(0)}%]\n${chunk.content}`
     )
     .join('\n\n');
 }
 
-// ── Circuit Breaker ───────────────────────────────────────────────────────────
-// Patrón explícito de tolerancia a fallos para llamadas a fuentes externas.
+// â”€â”€ Circuit Breaker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// PatrÃ³n explÃ­cito de tolerancia a fallos para llamadas a fuentes externas.
 // Si la fuente falla o supera el timeout, retorna { ok: false } sin crashear el flujo.
 // Promise.allSettled() en el handler garantiza que TODOS los breakers se ejecuten
 // en paralelo y sus fallos se conviertan en dataWarnings, no en excepciones.
@@ -235,12 +235,12 @@ async function withCircuitBreaker<T>(
     return { ok: true, data };
   } catch (err) {
     const reason = (err as Error).message ?? 'fuente no disponible';
-    console.warn(`[CircuitBreaker:${sourceName}] abierto — ${reason}`);
+    console.warn(`[CircuitBreaker:${sourceName}] abierto â€” ${reason}`);
     return { ok: false, reason };
   }
 }
 
-// ── Internal edge-function caller ─────────────────────────────────────────────
+// â”€â”€ Internal edge-function caller â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function callEdgeFunction(name: string, body: unknown): Promise<unknown> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
     method: 'POST',
@@ -256,7 +256,7 @@ async function callEdgeFunction(name: string, body: unknown): Promise<unknown> {
   return data;
 }
 
-// ── temp_context reader ───────────────────────────────────────────────────────
+// â”€â”€ temp_context reader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function readTempContext(
   // deno-lint-ignore no-explicit-any
   supabase: any,
@@ -277,9 +277,9 @@ async function readTempContext(
   return data.payload;
 }
 
-// ── Context compressors ───────────────────────────────────────────────────────
-// Cada compresor extrae la señal analítica relevante y descarta el ruido.
-// Presupuesto: ≤ 250 tokens por fuente → ≤ 1.000 tokens de datos externos totales.
+// â”€â”€ Context compressors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Cada compresor extrae la seÃ±al analÃ­tica relevante y descarta el ruido.
+// Presupuesto: â‰¤ 250 tokens por fuente â†’ â‰¤ 1.000 tokens de datos externos totales.
 
 function compressSii(raw: Record<string, unknown>): string {
   const d = (raw.data ?? raw) as Record<string, unknown>;
@@ -289,26 +289,26 @@ function compressSii(raw: Record<string, unknown>): string {
     .join('; ') || 'N/D';
   const riesgo = (raw.risk_classification as Record<string, string>)?.nivel ?? 'Indeterminado';
   return [
-    '[SII — Empresa Verificada]',
-    `RUT: ${d.rut} | Razón social: ${d.razon_social}`,
+    '[SII â€” Empresa Verificada]',
+    `RUT: ${d.rut} | RazÃ³n social: ${d.razon_social}`,
     `Estado tributario: ${d.estado_tributario} | Inicio actividades: ${d.inicio_actividades ?? 'N/D'}`,
     `Giros: ${giros}`,
-    `Anotaciones vigentes: ${d.anotaciones_vigentes ? 'SÍ ⚠️' : 'No'} | Riesgo tributario: ${riesgo}`,
+    `Anotaciones vigentes: ${d.anotaciones_vigentes ? 'SÃ âš ï¸' : 'No'} | Riesgo tributario: ${riesgo}`,
   ].join('\n');
 }
 
 function compressInapi(raw: Record<string, unknown>): string {
   const colisiones = (raw.colisiones as Array<Record<string, unknown>> ?? []);
   if (colisiones.length === 0) {
-    return `[INAPI — Marcas] "${raw.brand_name}": 0 colisiones activas — denominación aparentemente disponible.`;
+    return `[INAPI â€” Marcas] "${raw.brand_name}": 0 colisiones activas â€” denominaciÃ³n aparentemente disponible.`;
   }
   const top = colisiones.slice(0, 4)
-    .map(c => `  • "${c.denominacion}" | Estado: ${c.estado} | Titular: ${c.titular} | Clases: ${c.clases}`)
+    .map(c => `  â€¢ "${c.denominacion}" | Estado: ${c.estado} | Titular: ${c.titular} | Clases: ${c.clases}`)
     .join('\n');
   return [
-    `[INAPI — Marcas] "${raw.brand_name}" | Riesgo: ${raw.risk_level} | ${colisiones.length} colisión(es):`,
+    `[INAPI â€” Marcas] "${raw.brand_name}" | Riesgo: ${raw.risk_level} | ${colisiones.length} colisiÃ³n(es):`,
     top,
-    colisiones.length > 4 ? `  ... +${colisiones.length - 4} más.` : '',
+    colisiones.length > 4 ? `  ... +${colisiones.length - 4} mÃ¡s.` : '',
   ].filter(Boolean).join('\n');
 }
 
@@ -326,7 +326,7 @@ function compressFintoc(payload: Record<string, unknown>): string {
       .filter(Boolean),
   )].slice(0, 5);
   return [
-    `[Fintoc — Open Banking | 90 días]`,
+    `[Fintoc â€” Open Banking | 90 dÃ­as]`,
     `Ingresos: CLP ${inflow.toLocaleString('es-CL')} | Egresos: CLP ${Math.abs(outflow).toLocaleString('es-CL')}`,
     `Movimientos: ${recent.length} | KYC RUT: ${payload.holder_rut ?? 'N/D'} | Banco: ${payload.institution ?? 'N/D'}`,
     senders.length ? `Emisores: ${senders.join(', ')}` : '',
@@ -335,15 +335,15 @@ function compressFintoc(payload: Record<string, unknown>): string {
 
 function compressPjud(payload: Record<string, unknown>): string {
   const causas  = (payload.causas as Array<Record<string, unknown>> ?? []);
-  const activas = causas.filter(c => c.estado === 'activa' || c.estado === 'en tramitación');
+  const activas = causas.filter(c => c.estado === 'activa' || c.estado === 'en tramitaciÃ³n');
   if (activas.length === 0) return '[PJUD] Sin causas activas registradas.';
   const top = activas.slice(0, 3)
-    .map(c => `  • ${c.tipo} | ${c.materia} | Rol: ${c.rol} (${c.tribunal})`)
+    .map(c => `  â€¢ ${c.tipo} | ${c.materia} | Rol: ${c.rol} (${c.tribunal})`)
     .join('\n');
   return [
-    `[PJUD — Historial Judicial] ⚠️ ${activas.length} causa(s) activa(s) de ${causas.length} totales:`,
+    `[PJUD â€” Historial Judicial] âš ï¸ ${activas.length} causa(s) activa(s) de ${causas.length} totales:`,
     top,
-    activas.length > 3 ? `  ... +${activas.length - 3} más.` : '',
+    activas.length > 3 ? `  ... +${activas.length - 3} mÃ¡s.` : '',
   ].filter(Boolean).join('\n');
 }
 
@@ -359,16 +359,16 @@ function compressCmfBest(payload: Record<string, unknown>): string {
   const ind = (payload.indicators as Record<string, { value: number | null; period: string; unit: string }>) ?? {};
   const lines = Object.entries(ind)
     .filter(([, v]) => v.value !== null)
-    .map(([k, v]) => `  • ${k}: ${v.value?.toFixed(2)}${v.unit} (${v.period})`);
+    .map(([k, v]) => `  â€¢ ${k}: ${v.value?.toFixed(2)}${v.unit} (${v.period})`);
   if (lines.length === 0) return '[CMF BEST] Indicadores no disponibles.';
-  return ['[CMF BEST — Mercado Financiero Chile]', ...lines].join('\n');
+  return ['[CMF BEST â€” Mercado Financiero Chile]', ...lines].join('\n');
 }
 
-// ── Schema validator ──────────────────────────────────────────────────────────
+// â”€â”€ Schema validator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Valida que la respuesta de Claude tenga la estructura exacta de DueDiligenceScore
-// (src/types/validation.ts). Lanza excepción descriptiva si el schema es inválido,
+// (src/types/validation.ts). Lanza excepciÃ³n descriptiva si el schema es invÃ¡lido,
 // lo que activa el bloque catch del handler y devuelve HTTP 500 con detalle del error.
-// Evita que el frontend reciba un objeto malformado que causaría un crash silencioso.
+// Evita que el frontend reciba un objeto malformado que causarÃ­a un crash silencioso.
 function validateDueDiligenceSchema(raw: Record<string, unknown>): void {
   const requiredTop = ['total', 'dimensions', 'investorReadiness', 'topGaps', 'verdict_summary'];
   for (const key of requiredTop) {
@@ -377,7 +377,7 @@ function validateDueDiligenceSchema(raw: Record<string, unknown>): void {
 
   const total = raw.total as unknown;
   if (typeof total !== 'number' || (total as number) < 0 || (total as number) > 100) {
-    throw new Error(`DueDiligenceScore: "total" debe ser número 0-100, recibido: ${JSON.stringify(total)}`);
+    throw new Error(`DueDiligenceScore: "total" debe ser nÃºmero 0-100, recibido: ${JSON.stringify(total)}`);
   }
 
   const dims = raw.dimensions;
@@ -387,14 +387,14 @@ function validateDueDiligenceSchema(raw: Record<string, unknown>): void {
   const requiredDims = ['financiero', 'legal', 'mercado', 'equipo', 'traccion'];
   for (const k of requiredDims) {
     const dim = (dims as Record<string, unknown>)[k] as Record<string, unknown> | undefined;
-    if (!dim) throw new Error(`DueDiligenceScore: dimensión requerida ausente: "${k}"`);
-    if (typeof dim.score !== 'number') throw new Error(`DueDiligenceScore: "${k}.score" debe ser número, recibido: ${JSON.stringify(dim.score)}`);
+    if (!dim) throw new Error(`DueDiligenceScore: dimensiÃ³n requerida ausente: "${k}"`);
+    if (typeof dim.score !== 'number') throw new Error(`DueDiligenceScore: "${k}.score" debe ser nÃºmero, recibido: ${JSON.stringify(dim.score)}`);
     if (!Array.isArray(dim.gaps))      throw new Error(`DueDiligenceScore: "${k}.gaps" debe ser array`);
   }
 
   const validReadiness = ['not_ready', 'early', 'developing', 'ready'];
   if (!validReadiness.includes(raw.investorReadiness as string)) {
-    throw new Error(`DueDiligenceScore: "investorReadiness" inválido: "${raw.investorReadiness}". Válidos: ${validReadiness.join(', ')}`);
+    throw new Error(`DueDiligenceScore: "investorReadiness" invÃ¡lido: "${raw.investorReadiness}". VÃ¡lidos: ${validReadiness.join(', ')}`);
   }
 
   if (!Array.isArray(raw.topGaps)) {
@@ -405,7 +405,7 @@ function validateDueDiligenceSchema(raw: Record<string, unknown>): void {
   }
 }
 
-// ── Mega-prompt builder ───────────────────────────────────────────────────────
+// â”€â”€ Mega-prompt builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function buildMegaPrompt(
   validation: Record<string, unknown>,
   contextSections: string[],
@@ -415,58 +415,58 @@ function buildMegaPrompt(
   hasVerifiedFinancialData: boolean,
 ): { system: string; user: string } {
   // Techo de cristal: se aplica cuando ninguna fuente financiera verificada (SII o Fintoc)
-  // aportó datos reales. Sin esto, métricas auto-reportadas inflatadas producen scores
-  // de "Listo para Ronda" que no tienen ningún respaldo externo, exponiendo a ValidateAI
+  // aportÃ³ datos reales. Sin esto, mÃ©tricas auto-reportadas inflatadas producen scores
+  // de "Listo para Ronda" que no tienen ningÃºn respaldo externo, exponiendo a ValidateAI
   // a riesgo reputacional y legal si el reporte llega a un fondo de VC.
   const glassCeilingBlock = !hasVerifiedFinancialData
     ? `
-TECHO DE CRISTAL — REGLAS INAMOVIBLES DE PUNTUACIÓN (NIVEL 1: AUTO-REPORTADO):
-Los datos financieros y de tracción de este análisis son EXCLUSIVAMENTE auto-declarados por el fundador.
-Ninguna fuente financiera externa (SII, Fintoc) aportó datos verificados.
-Los siguientes límites son ABSOLUTOS e INAMOVIBLES, independientemente de cuán convincente sea el pitch:
+TECHO DE CRISTAL â€” REGLAS INAMOVIBLES DE PUNTUACIÃ“N (NIVEL 1: AUTO-REPORTADO):
+Los datos financieros y de tracciÃ³n de este anÃ¡lisis son EXCLUSIVAMENTE auto-declarados por el fundador.
+Ninguna fuente financiera externa (SII, Fintoc) aportÃ³ datos verificados.
+Los siguientes lÃ­mites son ABSOLUTOS e INAMOVIBLES, independientemente de cuÃ¡n convincente sea el pitch:
 
-• financiero.score ≤ 60 — prohibido superar sin verificación tributaria (SII) o bancaria (Fintoc) real
-• traccion.score ≤ 60 — prohibido superar sin respaldo de ingresos verificado externamente
-• total ≤ 75 — este análisis es Nivel 1 (auto-reportado); el techo refleja la incertidumbre epistémica
-• investorReadiness: PROHIBIDO usar "ready". Máximo permitido: "developing".
-  Un fondo de VC no califica "listo para ronda" a un proyecto cuyas métricas financieras
+â€¢ financiero.score â‰¤ 60 â€” prohibido superar sin verificaciÃ³n tributaria (SII) o bancaria (Fintoc) real
+â€¢ traccion.score â‰¤ 60 â€” prohibido superar sin respaldo de ingresos verificado externamente
+â€¢ total â‰¤ 75 â€” este anÃ¡lisis es Nivel 1 (auto-reportado); el techo refleja la incertidumbre epistÃ©mica
+â€¢ investorReadiness: PROHIBIDO usar "ready". MÃ¡ximo permitido: "developing".
+  Un fondo de VC no califica "listo para ronda" a un proyecto cuyas mÃ©tricas financieras
   no han sido contrastadas con fuentes oficiales (SII, Fintoc o estado de cuenta auditado).
 
-En verdict_summary, menciona explícitamente que el análisis es Nivel 1 (auto-reportado) y que
-conectar SII/Fintoc elevaría la confianza del score.
+En verdict_summary, menciona explÃ­citamente que el anÃ¡lisis es Nivel 1 (auto-reportado) y que
+conectar SII/Fintoc elevarÃ­a la confianza del score.
 `
     : '';
 
-  const system = `Eres un analista de due diligence de venture capital de grado institucional, especializado en startups de Chile y Latinoamérica (2025-2026).
-Tu análisis se basa EXCLUSIVAMENTE en los datos verificados provistos — nunca inventas métricas ni rellenas vacíos con optimismo.
-Cuando los datos son parciales, ajustas score y data_completeness a la baja y lo señalas en verdict_summary.
+  const system = `Eres un analista de due diligence de venture capital de grado institucional, especializado en startups de Chile y LatinoamÃ©rica (2025-2026).
+Tu anÃ¡lisis se basa EXCLUSIVAMENTE en los datos verificados provistos â€” nunca inventas mÃ©tricas ni rellenas vacÃ­os con optimismo.
+Cuando los datos son parciales, ajustas score y data_completeness a la baja y lo seÃ±alas en verdict_summary.
 
-REGLAS CRÍTICAS PARA FUENTES NO DISPONIBLES:
-1. Si una sección del contexto dice "[fuente] Sin datos — fuente no disponible", esa AUSENCIA no implica score 0.
-   Asigna la dimensión afectada en rango 30-55 con nota "información no verificada" en gaps.
-   Un score 0 se reserva ÚNICAMENTE para riesgos confirmados y verificados (ej: deuda tributaria activa, causa judicial ejecutiva).
-2. Los datos de CMF BEST son indicadores de referencia sistémica (TMC, tasas, solvencia bancaria).
-   Si no están presentes en el contexto, NO descuentes puntos de "financiero" por su ausencia.
-   Mencionarlos en verdict_summary solo si están disponibles.
-3. Fuentes "excluidas por filtro adaptativo" (no requeridas por etapa/tier) no generan penalización.
-4. NUNCA uses datos de CMF BEST para hacer afirmaciones sobre la startup específica — son benchmarks del sistema financiero chileno, no métricas de la empresa.
+REGLAS CRÃTICAS PARA FUENTES NO DISPONIBLES:
+1. Si una secciÃ³n del contexto dice "[fuente] Sin datos â€” fuente no disponible", esa AUSENCIA no implica score 0.
+   Asigna la dimensiÃ³n afectada en rango 30-55 con nota "informaciÃ³n no verificada" en gaps.
+   Un score 0 se reserva ÃšNICAMENTE para riesgos confirmados y verificados (ej: deuda tributaria activa, causa judicial ejecutiva).
+2. Los datos de CMF BEST son indicadores de referencia sistÃ©mica (TMC, tasas, solvencia bancaria).
+   Si no estÃ¡n presentes en el contexto, NO descuentes puntos de "financiero" por su ausencia.
+   Mencionarlos en verdict_summary solo si estÃ¡n disponibles.
+3. Fuentes "excluidas por filtro adaptativo" (no requeridas por etapa/tier) no generan penalizaciÃ³n.
+4. NUNCA uses datos de CMF BEST para hacer afirmaciones sobre la startup especÃ­fica â€” son benchmarks del sistema financiero chileno, no mÃ©tricas de la empresa.
 ${glassCeilingBlock}
-Responde SOLO con JSON válido, sin texto adicional, sin markdown.`;
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown.`;
 
   const warningBlock = dataWarnings.length > 0
-    ? `\n[⚠️ ANÁLISIS CON DATOS PARCIALES]\n${dataWarnings.map(w => `• ${w}`).join('\n')}\n`
-    : '\n[✓ Todas las fuentes disponibles]\n';
+    ? `\n[âš ï¸ ANÃLISIS CON DATOS PARCIALES]\n${dataWarnings.map(w => `â€¢ ${w}`).join('\n')}\n`
+    : '\n[âœ“ Todas las fuentes disponibles]\n';
 
   const skippedBlock = skipped.length > 0
-    ? `[Fuentes excluidas por filtro adaptativo]\n${skipped.map(s => `• ${s.source}: ${s.reason}`).join('\n')}\n`
+    ? `[Fuentes excluidas por filtro adaptativo]\n${skipped.map(s => `â€¢ ${s.source}: ${s.reason}`).join('\n')}\n`
     : '';
 
   const ragBlock = knowledgeChunks
-    ? `\n[CONTEXTO REGULATORIO Y METODOLÓGICO — base de conocimiento ValidateAI]\n${knowledgeChunks}\n`
+    ? `\n[CONTEXTO REGULATORIO Y METODOLÃ“GICO â€” base de conocimiento ValidateAI]\n${knowledgeChunks}\n`
     : '';
 
   // El schema JSON debe coincidir EXACTAMENTE con la interfaz DueDiligenceScore
-  // del frontend (src/types/validation.ts) para que DueDiligenceScoreCard renderice sin adaptación.
+  // del frontend (src/types/validation.ts) para que DueDiligenceScoreCard renderice sin adaptaciÃ³n.
   const user = `IDEA: ${validation.idea_name ?? 'N/A'}
 INDUSTRIA: ${validation.idea_industry ?? 'N/A'}
 MODELO DE NEGOCIO: ${validation.business_model ?? 'N/A'}
@@ -476,19 +476,19 @@ ${warningBlock}
 ${skippedBlock}
 ${contextSections.filter(Boolean).join('\n\n')}
 ${ragBlock}
-Responde SOLO con este JSON — cada campo es obligatorio:
+Responde SOLO con este JSON â€” cada campo es obligatorio:
 {
   "total": 0-100,
   "dimensions": {
     "financiero": {
       "score": 0-100,
       "label": "Financiero",
-      "gaps": ["Gap financiero concreto — citar dato de SII, Fintoc o CMF BEST si disponible"]
+      "gaps": ["Gap financiero concreto â€” citar dato de SII, Fintoc o CMF BEST si disponible"]
     },
     "legal": {
       "score": 0-100,
       "label": "Legal & Regulatorio",
-      "gaps": ["Gap legal — citar ley aplicable (ej: Ley 21.719, Ley 21.521)"]
+      "gaps": ["Gap legal â€” citar ley aplicable (ej: Ley 21.719, Ley 21.521)"]
     },
     "mercado": {
       "score": 0-100,
@@ -498,28 +498,28 @@ Responde SOLO con este JSON — cada campo es obligatorio:
     "equipo": {
       "score": 0-100,
       "label": "Equipo",
-      "gaps": ["Gap de equipo — track record, roles faltantes"]
+      "gaps": ["Gap de equipo â€” track record, roles faltantes"]
     },
     "traccion": {
       "score": 0-100,
-      "label": "Tracción",
-      "gaps": ["Gap de tracción — MRR, clientes, LOIs, pilotos"]
+      "label": "TracciÃ³n",
+      "gaps": ["Gap de tracciÃ³n â€” MRR, clientes, LOIs, pilotos"]
     }
   },
   "investorReadiness": "not_ready",
   "topGaps": ["Gap 1 citando fuente de dato", "Gap 2 citando fuente de dato"],
-  "verdict_summary": "80-120 palabras — citar fuentes disponibles y señalar las que faltaron",
+  "verdict_summary": "80-120 palabras â€” citar fuentes disponibles y seÃ±alar las que faltaron",
   "red_flags": ["bandera roja con fuente citada"],
   "strengths": ["fortaleza con fuente citada"],
-  "recommended_next_steps": ["paso accionable con dueño y plazo"]
+  "recommended_next_steps": ["paso accionable con dueÃ±o y plazo"]
 }
-Valores válidos para investorReadiness: not_ready, early, developing, ready
-topGaps: máximo 5 elementos, ordenados de mayor a menor impacto en el fundraising`.trim();
+Valores vÃ¡lidos para investorReadiness: not_ready, early, developing, ready
+topGaps: mÃ¡ximo 5 elementos, ordenados de mayor a menor impacto en el fundraising`.trim();
 
   return { system, user };
 }
 
-// ── Claude caller ─────────────────────────────────────────────────────────────
+// â”€â”€ Claude caller â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function callClaude(system: string, user: string): Promise<Record<string, unknown>> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -540,13 +540,13 @@ async function callClaude(system: string, user: string): Promise<Record<string, 
   const data = await res.json();
   const rawText = (data.content[0].text as string) ?? '';
   const match = rawText.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error(`Claude no devolvió JSON válido. Respuesta: ${rawText.slice(0, 200)}`);
+  if (!match) throw new Error(`Claude no devolviÃ³ JSON vÃ¡lido. Respuesta: ${rawText.slice(0, 200)}`);
   const parsed = JSON.parse(match[0]) as Record<string, unknown>;
   validateDueDiligenceSchema(parsed);
   return parsed;
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 serve(async (req) => {
   const cors = getCorsHeaders(req);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -583,21 +583,21 @@ serve(async (req) => {
       });
     }
 
-    // Cargar validación + tier del usuario en paralelo
+    // Cargar validaciÃ³n + tier del usuario en paralelo
     const [{ data: validation, error: validationError }, { data: profile }] = await Promise.all([
       supabase.from('validations').select('*').eq('id', validation_id).eq('user_id', user.id).single(),
       supabase.from('profiles').select('tier').eq('id', user.id).single(),
     ]);
 
-    if (validationError || !validation) throw new Error('Validación no encontrada o sin acceso.');
+    if (validationError || !validation) throw new Error('ValidaciÃ³n no encontrada o sin acceso.');
 
     const tier = (profile?.tier as string) ?? 'free';
     const hasRevenue = Boolean(validation.has_revenue) ||
       (typeof validation.monthly_revenue === 'number' && (validation.monthly_revenue as number) > 0);
 
-    // ── Rate Limiting (Sprint 8) ───────────────────────────────────────────────
+    // â”€â”€ Rate Limiting (Sprint 8) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Due diligence consume ~$0.015 USD/request (Claude Sonnet + embeddings).
-    // Límites mensuales por tier para la Beta (ajustar con datos reales post-Fase 1).
+    // LÃ­mites mensuales por tier para la Beta (ajustar con datos reales post-Fase 1).
     const DD_MONTHLY_LIMITS: Record<string, number> = {
       free:    2,
       basic:   5,
@@ -622,16 +622,16 @@ serve(async (req) => {
       if ((ddThisMonth ?? 0) >= ddLimit) {
         return new Response(JSON.stringify({
           error: 'rate_limit_monthly',
-          message: `Límite mensual de ${ddLimit} Due Diligences para el plan ${tier} alcanzado.`,
+          message: `LÃ­mite mensual de ${ddLimit} Due Diligences para el plan ${tier} alcanzado.`,
           tier,
           limit: ddLimit,
           used: ddThisMonth,
         }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
       }
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    // ── S5-A: filtrado adaptativo de fuentes ──────────────────────────────────
+    // â”€â”€ S5-A: filtrado adaptativo de fuentes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { sources, skipped } = filterRelevantContext({
       currentStep: current_step,
       tier,
@@ -641,7 +641,7 @@ serve(async (req) => {
       targetCountry: (validation.target_country as string) ?? null,
     });
 
-    // ── S5-B: verificar caché antes de gastar tokens de Claude ────────────────
+    // â”€â”€ S5-B: verificar cachÃ© antes de gastar tokens de Claude â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const cacheQueryText = [
       validation.idea_name,
       validation.idea_industry,
@@ -660,8 +660,8 @@ serve(async (req) => {
       }), { headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
-    // ── S5-C + S6: Fuentes en paralelo con circuit breaker por cada una ───────
-    // RAG y fuentes B2G/B2B se lanzan simultáneamente.
+    // â”€â”€ S5-C + S6: Fuentes en paralelo con circuit breaker por cada una â”€â”€â”€â”€â”€â”€â”€
+    // RAG y fuentes B2G/B2B se lanzan simultÃ¡neamente.
     // withCircuitBreaker garantiza que ninguna fuente cuelgue el pipeline completo.
     const [
       ragBreaker,
@@ -688,10 +688,10 @@ serve(async (req) => {
         : { ok: false as const, reason: 'PJUD no requerido por filtro adaptativo' },
       sources.has('cmf_best')
         ? withCircuitBreaker('cmf-best-fetch', () => callEdgeFunction('cmf-best-fetch', { validation_id }), 15_000)
-        : { ok: false as const, reason: 'CMF BEST no requerido (país no es Chile)' },
+        : { ok: false as const, reason: 'CMF BEST no requerido (paÃ­s no es Chile)' },
     ]);
 
-    // ── Construir secciones de contexto + dataWarnings ────────────────────────
+    // â”€â”€ Construir secciones de contexto + dataWarnings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Solo emitir dataWarning para fuentes ACTIVAS que fallaron.
     // Fuentes omitidas por filtro van en skipped[], no en dataWarnings[].
     const dataWarnings: string[] = [];
@@ -708,12 +708,12 @@ serve(async (req) => {
         try {
           contextSections.push(compress(breaker.data as Record<string, unknown>));
         } catch (e) {
-          dataWarnings.push(`${label}: error procesando — ${(e as Error).message}`);
+          dataWarnings.push(`${label}: error procesando â€” ${(e as Error).message}`);
           contextSections.push(`[${label}] Datos recibidos pero no procesables.`);
         }
       } else {
         dataWarnings.push(`${label}: ${breaker.reason}`);
-        contextSections.push(`[${label}] Sin datos — fuente no disponible.`);
+        contextSections.push(`[${label}] Sin datos â€” fuente no disponible.`);
       }
     }
 
@@ -726,31 +726,31 @@ serve(async (req) => {
     const ragChunks = ragBreaker.ok ? (ragBreaker.data as string) : '';
 
     // Techo de cristal: verdadero solo si SII o Fintoc aportaron datos reales.
-    // No basta con que la fuente haya sido solicitada — el circuit breaker debe haber OK'd.
+    // No basta con que la fuente haya sido solicitada â€” el circuit breaker debe haber OK'd.
     const hasVerifiedFinancialData =
       (sources.has('sii')    && siiBreaker.ok) ||
       (sources.has('fintoc') && fintocBreaker.ok);
 
-    // ── Llamar Claude ─────────────────────────────────────────────────────────
+    // â”€â”€ Llamar Claude â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { system, user: userPrompt } = buildMegaPrompt(
       validation, contextSections, ragChunks, dataWarnings, skipped, hasVerifiedFinancialData,
     );
     const dueDiligenceScore = await callClaude(system, userPrompt);
 
-    // ── Log de interacción para rate limiting + auditoría (fire-and-forget) ────
+    // â”€â”€ Log de interacciÃ³n para rate limiting + auditorÃ­a (fire-and-forget) â”€â”€â”€â”€
     supabase.from('ai_interactions').insert({
       user_id:       user.id,
       validation_id,
       prompt_type:   'due_diligence',
       input_data:    { sources: [...sources], skipped },
       output_data:   { total: dueDiligenceScore.total, investorReadiness: dueDiligenceScore.investorReadiness },
-      tokens_used:   0,  // Claude Sonnet no devuelve token count en esta integración
+      tokens_used:   0,  // Claude Sonnet no devuelve token count en esta integraciÃ³n
       model:         ANTHROPIC_MODEL,
     }).then(({ error: logErr }) => {
       if (logErr) console.warn('[dd-log] ai_interactions insert error:', logErr.message);
     });
 
-    // ── Guardar en caché para reutilización futura ────────────────────────────
+    // â”€â”€ Guardar en cachÃ© para reutilizaciÃ³n futura â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Fire-and-forget: el usuario recibe la respuesta antes de que termine el save.
     saveDueDiligenceCache(
       supabase, cacheQueryText, dueDiligenceScore,
@@ -758,9 +758,9 @@ serve(async (req) => {
       validation.target_country as string,
     ).catch(e => console.warn('cache save warning:', e));
 
-    // ── Persistir resultado + audit trail en validations ─────────────────────
+    // â”€â”€ Persistir resultado + audit trail en validations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // El audit trail se embede dentro de due_diligence_score para no requerir
-    // una migración nueva. El frontend lo extrae en la carga inicial, garantizando
+    // una migraciÃ³n nueva. El frontend lo extrae en la carga inicial, garantizando
     // que las advertencias sobrevivan recargas y vistas de inversores via share link.
     await supabase
       .from('validations')

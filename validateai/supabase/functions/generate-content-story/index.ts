@@ -1,9 +1,9 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
@@ -35,25 +35,25 @@ function buildSystemPrompt(platform: 'linkedin' | 'instagram', frame: 'pas' | 'a
     : 'carrusel de Instagram (PNG ZIP, vertical 4:5, tono B2C directo y visual)';
 
   const frameDesc = frame === 'pas'
-    ? 'Problema → Agitación → Solución (PAS): el hook expone el problema, los slides intermedios lo agitan y revelan la solución, el CTA invita a actuar.'
-    : 'Atención → Interés → Deseo → Acción (AIDA): el hook capta atención, slides generan interés y deseo, el CTA concreta la acción.';
+    ? 'Problema â†’ AgitaciÃ³n â†’ SoluciÃ³n (PAS): el hook expone el problema, los slides intermedios lo agitan y revelan la soluciÃ³n, el CTA invita a actuar.'
+    : 'AtenciÃ³n â†’ InterÃ©s â†’ Deseo â†’ AcciÃ³n (AIDA): el hook capta atenciÃ³n, slides generan interÃ©s y deseo, el CTA concreta la acciÃ³n.';
 
   return `Eres un experto en data storytelling y marketing de contenidos para startups y fundadores en LatAm.
-Tu misión: convertir datos reales de una plataforma de validación de startups en un ${formatDesc} de 7 diapositivas con narrativa estructurada.
+Tu misiÃ³n: convertir datos reales de una plataforma de validaciÃ³n de startups en un ${formatDesc} de 7 diapositivas con narrativa estructurada.
 
 MARCO NARRATIVO: ${frameDesc}
 
 REGLAS ESTRICTAS:
-1. Slide 1 (cover): Hook que detiene el scroll. Headline ≤ 10 palabras. Punto de dolor o dato impactante.
-2. Slides 2–6 (body): UNA sola idea por slide. Headline ≤ 8 palabras. Body ≤ 40 palabras. Datos concretos del contexto.
-3. Slide 7 (cta): Llamado a la acción específico. Headline ≤ 10 palabras. Body ≤ 30 palabras.
-4. Todos los textos en español latinoamericano.
-5. Usa los datos reales proporcionados — no inventes cifras que no estén en el contexto.
-6. Responde ÚNICAMENTE con JSON válido. Sin texto adicional. Sin markdown.
+1. Slide 1 (cover): Hook que detiene el scroll. Headline â‰¤ 10 palabras. Punto de dolor o dato impactante.
+2. Slides 2â€“6 (body): UNA sola idea por slide. Headline â‰¤ 8 palabras. Body â‰¤ 40 palabras. Datos concretos del contexto.
+3. Slide 7 (cta): Llamado a la acciÃ³n especÃ­fico. Headline â‰¤ 10 palabras. Body â‰¤ 30 palabras.
+4. Todos los textos en espaÃ±ol latinoamericano.
+5. Usa los datos reales proporcionados â€” no inventes cifras que no estÃ©n en el contexto.
+6. Responde ÃšNICAMENTE con JSON vÃ¡lido. Sin texto adicional. Sin markdown.
 
 SCHEMA JSON REQUERIDO (no cambies los nombres de campo):
 {
-  "campaign_title": "string (título interno, máx 60 chars)",
+  "campaign_title": "string (tÃ­tulo interno, mÃ¡x 60 chars)",
   "slides": [
     { "id": "slide-1", "type": "cover", "headline": "string", "body": "string", "icon": "string (emoji)" },
     { "id": "slide-2", "type": "body",  "headline": "string", "body": "string", "icon": "string (emoji)" },
@@ -70,30 +70,30 @@ function buildUserPrompt(center: string, customData: string, adminData: Record<s
   const data = JSON.stringify(adminData, null, 2);
 
   const centerPrompts: Record<string, string> = {
-    metrics: `Genera un carrusel sobre el ESTADO ACTUAL DE LA PLATAFORMA ValidateAI y el ecosistema de validación de startups en LatAm.
-Usa estas métricas reales:
+    metrics: `Genera un carrusel sobre el ESTADO ACTUAL DE LA PLATAFORMA ValidateAI y el ecosistema de validaciÃ³n de startups en LatAm.
+Usa estas mÃ©tricas reales:
 ${data}
-Ángulo: los datos de la plataforma revelan tendencias sorprendentes sobre cómo los fundadores validan sus ideas hoy.`,
+Ãngulo: los datos de la plataforma revelan tendencias sorprendentes sobre cÃ³mo los fundadores validan sus ideas hoy.`,
 
     market_trends: `Genera un carrusel sobre las TENDENCIAS DE MERCADO detectadas en las validaciones de startups de LatAm.
-Usa estos datos reales de industrias, países y etapas:
+Usa estos datos reales de industrias, paÃ­ses y etapas:
 ${data}
-Ángulo: qué sectores e ideas están dominando el ecosistema emprendedor latinoamericano según datos reales.`,
+Ãngulo: quÃ© sectores e ideas estÃ¡n dominando el ecosistema emprendedor latinoamericano segÃºn datos reales.`,
 
-    validation_patterns: `Genera un carrusel sobre los PATRONES DE VALIDACIÓN: qué diferencia las ideas de alto score de las que fallan.
-Usa estos datos reales de scores, tasas de completación y embudos:
+    validation_patterns: `Genera un carrusel sobre los PATRONES DE VALIDACIÃ“N: quÃ© diferencia las ideas de alto score de las que fallan.
+Usa estos datos reales de scores, tasas de completaciÃ³n y embudos:
 ${data}
-Ángulo: insights accionables que los founders pueden aplicar para mejorar sus probabilidades de éxito.`,
+Ãngulo: insights accionables que los founders pueden aplicar para mejorar sus probabilidades de Ã©xito.`,
 
-    ai_usage: `Genera un carrusel sobre cómo la INTELIGENCIA ARTIFICIAL está transformando la validación de startups.
-Usa estos datos reales de uso de modelos, prompts y análisis:
+    ai_usage: `Genera un carrusel sobre cÃ³mo la INTELIGENCIA ARTIFICIAL estÃ¡ transformando la validaciÃ³n de startups.
+Usa estos datos reales de uso de modelos, prompts y anÃ¡lisis:
 ${data}
-Ángulo: cómo la IA está democratizando el acceso a análisis de nivel inversión para cualquier founder.`,
+Ãngulo: cÃ³mo la IA estÃ¡ democratizando el acceso a anÃ¡lisis de nivel inversiÃ³n para cualquier founder.`,
 
     custom: `Genera un carrusel sobre el siguiente tema:
 "${customData || 'Ecosistema emprendedor en LatAm 2026'}"
 
-Datos de contexto de la plataforma (úsalos como evidencia de respaldo):
+Datos de contexto de la plataforma (Ãºsalos como evidencia de respaldo):
 ${data}`,
   };
 
@@ -143,7 +143,7 @@ serve(async (req) => {
     const parsed = JSON.parse(jsonStr);
 
     if (!Array.isArray(parsed.slides) || parsed.slides.length < 7) {
-      throw new Error('Estructura de respuesta inválida');
+      throw new Error('Estructura de respuesta invÃ¡lida');
     }
 
     return new Response(JSON.stringify(parsed), {

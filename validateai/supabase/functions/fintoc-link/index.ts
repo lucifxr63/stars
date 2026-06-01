@@ -1,14 +1,14 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Config ────────────────────────────────────────────────────────────────────
-// FINTOC_SECRET_KEY: clave secreta de Fintoc — nunca expuesta al frontend.
-// Disponible en https://app.fintoc.com -> Configuración -> API Keys
+// â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// FINTOC_SECRET_KEY: clave secreta de Fintoc â€” nunca expuesta al frontend.
+// Disponible en https://app.fintoc.com -> ConfiguraciÃ³n -> API Keys
 const FINTOC_SECRET_KEY = Deno.env.get('FINTOC_SECRET_KEY');
 const FINTOC_API = 'https://api.fintoc.com/v1';
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -30,7 +30,7 @@ function getSupabase() {
   );
 }
 
-// ── Fintoc API helpers ────────────────────────────────────────────────────────
+// â”€â”€ Fintoc API helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface FintocMovement {
   id: string;
@@ -72,20 +72,20 @@ async function fintocGet<T>(path: string): Promise<T> {
   return res.json();
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
-// Contrato: el frontend envía el link_token recibido después de que el usuario
-// completó el widget de Fintoc. Esta función usa el token para buscar las cuentas
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Contrato: el frontend envÃ­a el link_token recibido despuÃ©s de que el usuario
+// completÃ³ el widget de Fintoc. Esta funciÃ³n usa el token para buscar las cuentas
 // y movimientos del banco, y los almacena en temp_context para el mega-prompt.
 serve(async (req) => {
   const cors = getCorsHeaders(req);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
-  // Credenciales no configuradas — modo degradado sin crash
+  // Credenciales no configuradas â€” modo degradado sin crash
   if (!FINTOC_SECRET_KEY) {
     return new Response(JSON.stringify({
       available: false,
       reason: 'fintoc_not_configured',
-      message: 'Integración Fintoc pendiente de configuración. Agrega FINTOC_SECRET_KEY a Supabase Secrets.',
+      message: 'IntegraciÃ³n Fintoc pendiente de configuraciÃ³n. Agrega FINTOC_SECRET_KEY a Supabase Secrets.',
     }), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
   }
 
@@ -120,10 +120,10 @@ serve(async (req) => {
     const accounts = await fintocGet<FintocAccount[]>(`/links/${link_token}/accounts`);
     if (!accounts.length) throw new Error('No se encontraron cuentas bancarias para este link_token');
 
-    // Priorizar cuenta corriente sobre otras (mejor señal de flujo operacional)
+    // Priorizar cuenta corriente sobre otras (mejor seÃ±al de flujo operacional)
     const account = accounts.find(a => a.name.toLowerCase().includes('corriente')) ?? accounts[0];
 
-    // 2. Obtener movimientos de los últimos 90 días
+    // 2. Obtener movimientos de los Ãºltimos 90 dÃ­as
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const movements = await fintocGet<FintocMovement[]>(
       `/links/${link_token}/accounts/${account.id}/movements?since=${since}`

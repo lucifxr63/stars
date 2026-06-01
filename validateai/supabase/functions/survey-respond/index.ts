@@ -1,17 +1,17 @@
-// Edge Function: survey-respond
-// Endpoint PÚBLICO para recibir respuestas de encuestas.
-// Valida el payload contra el schema_json del formulario en tiempo de ejecución.
-// Requiere consentimiento explícito del encuestado (Ley 21.719).
+﻿// Edge Function: survey-respond
+// Endpoint PÃšBLICO para recibir respuestas de encuestas.
+// Valida el payload contra el schema_json del formulario en tiempo de ejecuciÃ³n.
+// Requiere consentimiento explÃ­cito del encuestado (Ley 21.719).
 // POST /survey-respond  body: { slug, response_data, consent_given, _hp?, metadata? }
 //
 // Anti-bot:
-//   _hp (honeypot): campo oculto CSS. Si llega no-vacío → silently reject.
+//   _hp (honeypot): campo oculto CSS. Si llega no-vacÃ­o â†’ silently reject.
 //   Rate limit: 5 submissions/IP/hora por formulario (IP prefix /24 en metadata).
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'https://validateai.cl',
   'http://localhost:5173',
   'http://localhost:4173',
@@ -33,7 +33,7 @@ function json(data: unknown, status = 200, req: Request) {
   });
 }
 
-// ── Tipos del schema_json ─────────────────────────────────
+// â”€â”€ Tipos del schema_json â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type FieldType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'scale' | 'date' | 'select';
 
 interface FormField {
@@ -51,7 +51,7 @@ interface FormSchema {
   fields: FormField[];
 }
 
-// ── Helpers anti-bot ─────────────────────────────────────
+// â”€â”€ Helpers anti-bot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getClientIP(req: Request): string | null {
   return req.headers.get('cf-connecting-ip')
       ?? req.headers.get('x-real-ip')
@@ -69,7 +69,7 @@ function anonymizeIPPrefix(ip: string): string | null {
   return null;
 }
 
-// ── Validador dinámico ────────────────────────────────────
+// â”€â”€ Validador dinÃ¡mico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function validateResponseData(
   responseData: Record<string, unknown>,
   schema: FormSchema,
@@ -105,21 +105,21 @@ function validateResponseData(
 
     if (field.type === 'scale') {
       const num = Number(value);
-      if (isNaN(num)) { errors.push(`"${field.label}" debe ser un número.`); continue; }
-      if (v.min !== undefined && num < v.min) errors.push(`"${field.label}" mínimo: ${v.min}`);
-      if (v.max !== undefined && num > v.max) errors.push(`"${field.label}" máximo: ${v.max}`);
+      if (isNaN(num)) { errors.push(`"${field.label}" debe ser un nÃºmero.`); continue; }
+      if (v.min !== undefined && num < v.min) errors.push(`"${field.label}" mÃ­nimo: ${v.min}`);
+      if (v.max !== undefined && num > v.max) errors.push(`"${field.label}" mÃ¡ximo: ${v.max}`);
     }
 
     if (field.type === 'radio' || field.type === 'select') {
       if (field.options && !field.options.includes(String(value)))
-        errors.push(`"${field.label}": opción inválida.`);
+        errors.push(`"${field.label}": opciÃ³n invÃ¡lida.`);
     }
 
     if (field.type === 'checkbox') {
       if (!Array.isArray(value)) { errors.push(`"${field.label}" debe ser un arreglo.`); continue; }
       if (field.options) {
         const invalid = (value as string[]).filter(v => !field.options!.includes(v));
-        if (invalid.length) errors.push(`"${field.label}": opciones inválidas: ${invalid.join(', ')}`);
+        if (invalid.length) errors.push(`"${field.label}": opciones invÃ¡lidas: ${invalid.join(', ')}`);
       }
     }
   }
@@ -143,17 +143,17 @@ Deno.serve(async (req: Request) => {
     if (!slug) return json({ error: 'slug is required' }, 400, req);
     if (!response_data || typeof response_data !== 'object') return json({ error: 'response_data must be an object' }, 400, req);
 
-    // Honeypot: campo oculto CSS — bots rellenan todo, humanos no lo ven
+    // Honeypot: campo oculto CSS â€” bots rellenan todo, humanos no lo ven
     // Silently return 201 para no revelar la defensa al bot
     if (typeof _hp === 'string' && _hp.length > 0) {
-      console.warn('[survey-respond] Honeypot triggered — bot detected, silent reject');
+      console.warn('[survey-respond] Honeypot triggered â€” bot detected, silent reject');
       return json({ ok: true, submission_id: 'honeypot' }, 201, req);
     }
 
-    // Consentimiento explícito obligatorio — Ley 21.719
+    // Consentimiento explÃ­cito obligatorio â€” Ley 21.719
     if (!consent_given) {
       return json({
-        error: 'Debes aceptar el consentimiento para enviar tus respuestas (Ley N° 21.719).',
+        error: 'Debes aceptar el consentimiento para enviar tus respuestas (Ley NÂ° 21.719).',
         code: 'CONSENT_REQUIRED',
       }, 400, req);
     }
@@ -170,14 +170,14 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Formulario no encontrado o no publicado.' }, 404, req);
     }
 
-    // Validar respuestas contra el schema dinámico
+    // Validar respuestas contra el schema dinÃ¡mico
     const schema = form.schema_json as FormSchema;
     const { valid, errors } = validateResponseData(response_data as Record<string, unknown>, schema);
     if (!valid) {
-      return json({ error: 'Datos inválidos.', validation_errors: errors }, 422, req);
+      return json({ error: 'Datos invÃ¡lidos.', validation_errors: errors }, 422, req);
     }
 
-    // Rate limit por IP: máx 5 submissions por formulario por hora
+    // Rate limit por IP: mÃ¡x 5 submissions por formulario por hora
     const clientIP   = getClientIP(req);
     const ipPrefix   = clientIP ? anonymizeIPPrefix(clientIP) : null;
 
@@ -191,7 +191,7 @@ Deno.serve(async (req: Request) => {
         .gte('created_at', oneHourAgo);
 
       if ((recentCount ?? 0) >= 5) {
-        return json({ error: 'Demasiadas respuestas. Intenta de nuevo más tarde.', code: 'RATE_LIMITED' }, 429, req);
+        return json({ error: 'Demasiadas respuestas. Intenta de nuevo mÃ¡s tarde.', code: 'RATE_LIMITED' }, 429, req);
       }
     }
 
@@ -200,7 +200,7 @@ Deno.serve(async (req: Request) => {
       user_agent: String(metadata.user_agent ?? '').slice(0, 512),
       completed_at: new Date().toISOString(),
       referrer: String(metadata.referrer ?? '').slice(0, 512),
-      ip_prefix: ipPrefix,  // /24 o /48 — nunca IP completa
+      ip_prefix: ipPrefix,  // /24 o /48 â€” nunca IP completa
     };
 
     // Insertar respuesta

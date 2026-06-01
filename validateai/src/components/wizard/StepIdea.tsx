@@ -4,6 +4,7 @@ import { StepIdeaSchema, type StepIdea } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 import { FlowSelector } from './FlowSelector';
 import { INDUSTRIES } from '@/utils/constants';
+import { supabase } from '@/lib/supabase';
 
 function ErrorMsg({ message }: { message?: string }) {
   if (!message) return null;
@@ -59,6 +60,20 @@ export function StepIdea() {
 
   const onSubmit = (data: StepIdea) => {
     updateStepIdea(data);
+
+    // Persistir a Supabase si ya existe el row (best-effort, no bloquea la UI)
+    const { validationId } = useValidationStore.getState();
+    if (validationId) {
+      const nextStepNum = validationMode === 'premium' ? 3 : 2;
+      supabase.from('validations').update({
+        idea_name:        data.idea_name,
+        idea_description: data.idea_description,
+        idea_industry:    data.idea_industry,
+        current_solution: data.current_solution ?? null,
+        current_step:     nextStepNum,
+      }).eq('id', validationId).then(() => {});
+    }
+
     if (validationMode === 'premium') {
       setStep(3);
     } else if (validationMode === 'quick') {

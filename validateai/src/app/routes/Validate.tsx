@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
-import { useUserTier } from '@/hooks/useUserTier';
+import { useUserTier, type UserTier } from '@/hooks/useUserTier';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -15,6 +15,34 @@ import { StepUpload } from '@/components/wizard/StepUpload';
 import { trackWizardStep, trackWizardAbandoned } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent, trackTelemetryBeacon } from '@/lib/telemetry';
 import { OnboardingOverlay, useOnboarding } from '@/components/shared/OnboardingOverlay';
+
+const TIER_BADGE_CONFIG: Record<'free' | 'pro' | 'premium', {
+  label: string;
+  includes: string;
+  cls: string;
+  dot: string;
+  upgrade: boolean;
+}> = {
+  free:    { label: 'Free',    includes: 'Veredicto + Validación base',            cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:border-gray-500/40',  dot: 'bg-gray-400',   upgrade: true  },
+  pro:     { label: 'Pro',     includes: 'Completo · Estrategia y Finanzas',       cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',                      dot: 'bg-indigo-400', upgrade: false },
+  premium: { label: 'Premium', includes: 'Due Diligence completo — todo incluido', cls: 'bg-violet-500/10 text-violet-400 border-violet-500/20',                      dot: 'bg-violet-400', upgrade: false },
+};
+
+function ValidationPlanBadge({ tier }: { tier: UserTier }) {
+  const key = (tier === 'pro' || tier === 'premium') ? tier : 'free';
+  const cfg = TIER_BADGE_CONFIG[key];
+  const inner = (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold transition-colors ${cfg.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+      <span className="opacity-75">{cfg.includes}</span>
+      <span className="opacity-40 mx-0.5">·</span>
+      <span>{cfg.label}</span>
+      {cfg.upgrade && <span className="opacity-50 ml-0.5">↑</span>}
+    </span>
+  );
+  if (cfg.upgrade) return <Link to="/pricing">{inner}</Link>;
+  return inner;
+}
 
 // Flujo detallado (free/basic): Idea → Mercado → Fundador → Generando
 const STEP_COMPONENTS_DETAILED: Record<number, React.FC> = {
@@ -57,7 +85,8 @@ const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
 
 export function Validate() {
   const navigate = useNavigate();
-  const { currentStep, validationId, reset, setValidationMode, validationMode } = useValidationStore();
+  const { currentStep, validationId, reset, setValidationMode, validationMode,
+          stepIdea, updateStepIdea, updateStepMarket, setStep } = useValidationStore();
   const { isPro: isPremium, loading: tierLoading, tier } = useUserTier();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -104,26 +133,46 @@ export function Validate() {
   }, [tierLoading, isPremium]);
 
   useEffect(() => {
-    if (!validationId) {
-      // Sin ID persistido — flujo limpio, no hacer nada
-      return;
-    }
+    if (!validationId) return;
+
     supabase
       .from('validations')
-      .select('id, status')
+      .select('id, status, current_step, idea_name, idea_description, idea_industry, current_solution, customer_segment, target_country, target_region, business_model, pricing_range, acquisition_channel')
       .eq('id', validationId)
       .single()
       .then(({ data, error }) => {
-        if (error || !data) {
-          // El row no existe (borrado o ID corrupto) — resetear store
-          reset();
+        if (error || !data) { reset(); return; }
+
+        if (data.status === 'completed') {
+          navigate(`/results/${data.id}`, { replace: true });
           return;
         }
-        if (data.status === 'completed') {
-          // Ya está completa, ir directo al resultado sin gastar tokens
-          navigate(`/results/${data.id}`, { replace: true });
+
+        // Rehidratar store desde DB si el store está vacío (p.ej. otro browser)
+        if (!stepIdea.idea_name && data.idea_name) {
+          updateStepIdea({
+            idea_name:        data.idea_name ?? '',
+            idea_description: data.idea_description ?? '',
+            idea_industry:    data.idea_industry ?? '',
+            current_solution: data.current_solution ?? '',
+          });
+        }
+        if (!useValidationStore.getState().stepMarket.target_country && data.target_country) {
+          updateStepMarket({
+            customer_segment:    data.customer_segment ?? '',
+            target_country:      data.target_country ?? '',
+            target_region:       data.target_region ?? '',
+            business_model:      data.business_model ?? '',
+            pricing_range:       data.pricing_range ?? '',
+            acquisition_channel: data.acquisition_channel ?? '',
+          });
+        }
+        // Posicionar en el step correcto si el store está en step 1
+        if (currentStep === 1 && data.current_step > 1 && data.current_step < 4) {
+          setStep(data.current_step as number);
         }
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validationId]);
   // Exit-intent: mouseleave viewport → show 1-click dialog (once per wizard session)
   useEffect(() => {
@@ -267,16 +316,19 @@ export function Validate() {
         {/* Step header */}
         {((isPremiumMode && currentStep < 3) || (isQuickMode && currentStep < 2) || (!isPremiumMode && !isQuickMode && currentStep < 4)) && (
           <div className="mb-5 px-1">
-            {!isPremiumMode && (
-              <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-1">
-                Paso {currentStep} de {isQuickMode ? 1 : 3}
-              </p>
-            )}
-            {isPremiumMode && (
-              <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-1">
-                ✦ Validación Premium · Paso {currentStep} de 2
-              </p>
-            )}
+            <div className="flex items-center justify-between mb-1">
+              {!isPremiumMode && (
+                <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">
+                  Paso {currentStep} de {isQuickMode ? 1 : 3}
+                </p>
+              )}
+              {isPremiumMode && (
+                <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">
+                  ✦ Validación Premium · Paso {currentStep} de 2
+                </p>
+              )}
+              {!tierLoading && <ValidationPlanBadge tier={tier} />}
+            </div>
             <h1 className="font-heading text-2xl font-bold text-gray-900 dark:text-[#F0EFF8]">{meta?.title}</h1>
             <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mt-0.5">{meta?.hint}</p>
           </div>

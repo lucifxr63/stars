@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -11,7 +11,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-// ── Node types ─────────────────────────────────────────────────────────────────
+// â”€â”€ Node types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type PageType = 'public' | 'auth' | 'protected' | 'admin' | 'system';
 
@@ -34,7 +34,7 @@ const TYPE_STYLES: Record<PageType, { bg: string; border: string; badge: string;
 };
 
 const TYPE_LABELS: Record<PageType, string> = {
-  public:    'Público',
+  public:    'PÃºblico',
   auth:      'Auth',
   protected: 'Autenticado',
   admin:     'Admin',
@@ -62,7 +62,7 @@ function PageNode({ data }: { data: PageMeta }) {
 
 const nodeTypes = { page: PageNode };
 
-// ── Static navigation map ──────────────────────────────────────────────────────
+// â”€â”€ Static navigation map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Layout: columns by user journey phase
 // Col 0 (x=0):   Entry points (public)
 // Col 1 (x=280): Auth flow
@@ -71,28 +71,28 @@ const nodeTypes = { page: PageNode };
 // Col 4 (x=1120): Deep / admin
 
 const PAGES: PageMeta[] = [
-  // ── Public ─────────────────────────────────
-  { id: 'landing',    path: '/',                  label: 'Landing',           description: 'Página principal y pitch',          type: 'public',    x: 0,    y: 0   },
+  // â”€â”€ Public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id: 'landing',    path: '/',                  label: 'Landing',           description: 'PÃ¡gina principal y pitch',          type: 'public',    x: 0,    y: 0   },
   { id: 'pricing',    path: '/pricing',            label: 'Pricing',           description: 'Planes y precios',                  type: 'public',    x: 0,    y: 160 },
   { id: 'demo',       path: '/demo',               label: 'Demo',              description: 'Preview sin cuenta',                type: 'public',    x: 0,    y: 320 },
-  { id: 'shared',     path: '/shared/:token',      label: 'Validación Pública',description: 'Resultado compartido (link único)', type: 'public',    x: 0,    y: 480 },
+  { id: 'shared',     path: '/shared/:token',      label: 'ValidaciÃ³n PÃºblica',description: 'Resultado compartido (link Ãºnico)', type: 'public',    x: 0,    y: 480 },
 
-  // ── Auth ────────────────────────────────────
+  // â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   { id: 'login',      path: '/login',              label: 'Login / Sign up',   description: 'Acceso con Google / email',         type: 'auth',      x: 300,  y: 0   },
   { id: 'callback',   path: '/auth/callback',      label: 'Auth Callback',     description: 'Intercambio PKCE + redirect',       type: 'system',    x: 300,  y: 160 },
-  { id: 'figmacb',    path: '/figma/callback',     label: 'Figma Callback',    description: 'OAuth2 Figma → token exchange',     type: 'system',    x: 300,  y: 320 },
+  { id: 'figmacb',    path: '/figma/callback',     label: 'Figma Callback',    description: 'OAuth2 Figma â†’ token exchange',     type: 'system',    x: 300,  y: 320 },
 
-  // ── Core app ────────────────────────────────
-  { id: 'validate',   path: '/validate',           label: 'Wizard Validación', description: 'Formulario multi-paso (6 steps)',   type: 'protected', x: 620,  y: 0   },
+  // â”€â”€ Core app â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id: 'validate',   path: '/validate',           label: 'Wizard ValidaciÃ³n', description: 'Formulario multi-paso (6 steps)',   type: 'protected', x: 620,  y: 0   },
   { id: 'results',    path: '/results',            label: 'Mis Validaciones',  description: 'Historial de validaciones',         type: 'protected', x: 620,  y: 200 },
 
-  // ── Detail views ────────────────────────────
-  { id: 'detail',     path: '/results/:id',        label: 'Detalle Validación',description: '8 tabs: Veredicto → Due Diligence', type: 'protected', x: 940,  y: 100 },
+  // â”€â”€ Detail views â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id: 'detail',     path: '/results/:id',        label: 'Detalle ValidaciÃ³n',description: '8 tabs: Veredicto â†’ Due Diligence', type: 'protected', x: 940,  y: 100 },
   { id: 'history',    path: '/results/:id/history',label: 'Historial de Pivots',description: 'Versiones e iteraciones',          type: 'protected', x: 1260, y: 0   },
-  { id: 'market',     path: '/market/:id',         label: 'Estudio de Mercado',description: 'Análisis TAM/SAM/SOM + mapa geo',   type: 'protected', x: 1260, y: 180 },
+  { id: 'market',     path: '/market/:id',         label: 'Estudio de Mercado',description: 'AnÃ¡lisis TAM/SAM/SOM + mapa geo',   type: 'protected', x: 1260, y: 180 },
 
-  // ── Admin ───────────────────────────────────
-  { id: 'admin',      path: '/admin',              label: 'Admin Panel',       description: 'Métricas, usuarios, IA, Figma',     type: 'admin',     x: 620,  y: 400 },
+  // â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id: 'admin',      path: '/admin',              label: 'Admin Panel',       description: 'MÃ©tricas, usuarios, IA, Figma',     type: 'admin',     x: 620,  y: 400 },
 ];
 
 const EDGES_DEF: Array<{
@@ -101,15 +101,15 @@ const EDGES_DEF: Array<{
   color?: string;
   dashed?: boolean;
 }> = [
-  // Landing → outbound
+  // Landing â†’ outbound
   { source: 'landing',  target: 'login',    label: 'CTA' },
   { source: 'landing',  target: 'pricing' },
   { source: 'landing',  target: 'demo' },
 
-  // Pricing → Login
+  // Pricing â†’ Login
   { source: 'pricing',  target: 'login',    label: 'Upgrade' },
 
-  // Demo → Login
+  // Demo â†’ Login
   { source: 'demo',     target: 'login',    label: 'Registro' },
 
   // Auth flow
@@ -125,7 +125,7 @@ const EDGES_DEF: Array<{
   { source: 'results',  target: 'detail' },
   { source: 'results',  target: 'validate', label: 'Nueva idea', dashed: true },
 
-  // Detail → sub-views
+  // Detail â†’ sub-views
   { source: 'detail',   target: 'history',  label: 'Ver historial' },
   { source: 'detail',   target: 'market',   label: 'Estudio mercado' },
   { source: 'detail',   target: 'shared',   label: 'Compartir', dashed: true },
@@ -134,7 +134,7 @@ const EDGES_DEF: Array<{
   { source: 'login',    target: 'admin',    label: 'Admin only', dashed: true },
 ];
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function SitemapPanel() {
   const nodes: Node[] = useMemo(() =>
@@ -174,10 +174,10 @@ export function SitemapPanel() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8]">
-            Árbol de Navegación — ValidateAI
+            Ãrbol de NavegaciÃ³n â€” ValidateAI
           </h2>
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0] mt-0.5">
-            {PAGES.length} rutas · {EDGES_DEF.length} transiciones · validateai-mu.vercel.app
+            {PAGES.length} rutas Â· {EDGES_DEF.length} transiciones Â· validus.scouttech.lat
           </p>
         </div>
 
@@ -199,7 +199,7 @@ export function SitemapPanel() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Rutas públicas',      count: PAGES.filter(p => p.type === 'public').length,    color: '#34D399' },
+          { label: 'Rutas pÃºblicas',      count: PAGES.filter(p => p.type === 'public').length,    color: '#34D399' },
           { label: 'Rutas protegidas',    count: PAGES.filter(p => p.type === 'protected').length, color: '#7C6FF7' },
           { label: 'Flujos de auth',      count: PAGES.filter(p => p.type === 'auth' || p.type === 'system').length, color: '#FBBF24' },
           { label: 'Transiciones totales', count: EDGES_DEF.length,                                color: '#F0EFF8' },

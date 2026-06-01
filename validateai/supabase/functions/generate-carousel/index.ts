@@ -1,9 +1,9 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
@@ -38,15 +38,15 @@ function buildSystemPrompt(platform: 'linkedin' | 'instagram'): string {
 Tu tarea es generar el contenido textual de un carrusel de 7 diapositivas optimizado para ${format}.
 
 REGLAS ESTRICTAS:
-1. Slide 1 (cover): Hook potente. Máx 10 palabras en headline. Detiene el scroll con un punto de dolor o pregunta provocadora.
-2. Slides 2-6 (body): UNA sola idea por slide. Usa el marco PAS o AIDA. Headline máx 8 palabras, body máx 40 palabras.
-3. Slide 7 (cta): Llamado a la acción claro y específico. Headline máx 10 palabras, body máx 30 palabras.
-4. Todos los textos en español.
-5. Responde ÚNICAMENTE con JSON válido, sin texto adicional, sin markdown, sin explicaciones.
+1. Slide 1 (cover): Hook potente. MÃ¡x 10 palabras en headline. Detiene el scroll con un punto de dolor o pregunta provocadora.
+2. Slides 2-6 (body): UNA sola idea por slide. Usa el marco PAS o AIDA. Headline mÃ¡x 8 palabras, body mÃ¡x 40 palabras.
+3. Slide 7 (cta): Llamado a la acciÃ³n claro y especÃ­fico. Headline mÃ¡x 10 palabras, body mÃ¡x 30 palabras.
+4. Todos los textos en espaÃ±ol.
+5. Responde ÃšNICAMENTE con JSON vÃ¡lido, sin texto adicional, sin markdown, sin explicaciones.
 
 SCHEMA JSON REQUERIDO (no cambies los nombres de campo):
 {
-  "campaign_title": "string (título interno de la campaña, máx 60 chars)",
+  "campaign_title": "string (tÃ­tulo interno de la campaÃ±a, mÃ¡x 60 chars)",
   "slides": [
     {
       "id": "slide-1",
@@ -78,15 +78,15 @@ function buildUserPrompt(ctx: Record<string, unknown>): string {
   return `Genera un carrusel basado en esta idea de negocio validada:
 
 IDEA: ${ctx.idea_name ?? 'Sin nombre'}
-DESCRIPCIÓN: ${ctx.idea_description ?? 'Sin descripción'}
+DESCRIPCIÃ“N: ${ctx.idea_description ?? 'Sin descripciÃ³n'}
 INDUSTRIA: ${ctx.idea_industry ?? 'No especificada'}
 SEGMENTO OBJETIVO: ${ctx.customer_segment ?? 'No especificado'}
 MODELO DE NEGOCIO: ${ctx.business_model ?? 'No especificado'}
 PROPUESTA DE VALOR: ${ctx.value_prop ?? 'No especificada'}
 PROBLEMA QUE RESUELVE: ${ctx.problem ?? 'No especificado'}
-SOLUCIÓN ACTUAL DEL MERCADO: ${ctx.current_solution ?? 'No especificada'}
+SOLUCIÃ“N ACTUAL DEL MERCADO: ${ctx.current_solution ?? 'No especificada'}
 
-Asegúrate de que la narrativa fluya con coherencia: el hook del cover conecte con el problema, los slides intermedios desarrollen la solución con datos o pasos, y el CTA sea concreto y orientado a resultados.`;
+AsegÃºrate de que la narrativa fluya con coherencia: el hook del cover conecte con el problema, los slides intermedios desarrollen la soluciÃ³n con datos o pasos, y el CTA sea concreto y orientado a resultados.`;
 }
 
 serve(async (req) => {
@@ -128,9 +128,9 @@ serve(async (req) => {
     const jsonStr = extractJSON(rawText);
     const parsed = JSON.parse(jsonStr);
 
-    // Validación mínima de estructura
+    // ValidaciÃ³n mÃ­nima de estructura
     if (!Array.isArray(parsed.slides) || parsed.slides.length < 7) {
-      throw new Error('Respuesta de IA con estructura inválida');
+      throw new Error('Respuesta de IA con estructura invÃ¡lida');
     }
 
     return new Response(JSON.stringify(parsed), {

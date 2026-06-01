@@ -1,8 +1,8 @@
-// Edge Function: survey-analyze
+﻿// Edge Function: survey-analyze
 // Procesa respuestas cualitativas con LLM usando Structured Outputs.
 // Implementa el paradigma descrito en VALIDATEAI_CLIENTES.MD:
-//   - Extracción semántica: problema central, severidad, soluciones actuales, WTP, friction score
-//   - Pipeline de privacidad: marca submissions como 'pseudonymized' después del análisis
+//   - ExtracciÃ³n semÃ¡ntica: problema central, severidad, soluciones actuales, WTP, friction score
+//   - Pipeline de privacidad: marca submissions como 'pseudonymized' despuÃ©s del anÃ¡lisis
 // POST /survey-analyze body: { form_id }  (procesa todas las submissions 'raw' del form)
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -12,7 +12,7 @@ const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SRK      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'https://validateai.cl',
   'http://localhost:5173',
   'http://localhost:4173',
@@ -34,18 +34,18 @@ function json(data: unknown, status = 200, req: Request) {
   });
 }
 
-// ── Schema de Structured Output (según el doc) ────────────
+// â”€â”€ Schema de Structured Output (segÃºn el doc) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // El LLM debe retornar EXACTAMENTE este JSON para cada respuesta
-const ANALYSIS_SYSTEM_PROMPT = `Eres un analista experto en Customer Development y metodología "The Mom Test".
-Tu función es analizar respuestas de encuestas de validación de problemas de mercado.
+const ANALYSIS_SYSTEM_PROMPT = `Eres un analista experto en Customer Development y metodologÃ­a "The Mom Test".
+Tu funciÃ³n es analizar respuestas de encuestas de validaciÃ³n de problemas de mercado.
 
-Debes retornar EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta (sin texto adicional):
+Debes retornar EXCLUSIVAMENTE un objeto JSON vÃ¡lido con esta estructura exacta (sin texto adicional):
 {
-  "central_problem": "descripción concisa del problema central identificado",
+  "central_problem": "descripciÃ³n concisa del problema central identificado",
   "severity": "tolerable" | "critico" | "paralizante",
-  "current_solutions": ["solución1", "solución2"],
+  "current_solutions": ["soluciÃ³n1", "soluciÃ³n2"],
   "willingness_to_pay": true | false,
-  "friction_score": <número entero del 1 al 10>,
+  "friction_score": <nÃºmero entero del 1 al 10>,
   "key_quotes": ["cita textual 1", "cita textual 2"],
   "mom_test_signals": {
     "talks_about_past": true | false,
@@ -59,17 +59,17 @@ Criterios:
 - severity "critico": el problema afecta operaciones regularmente y tiene consecuencias reales
 - severity "paralizante": el problema detiene operaciones o tiene consecuencias financieras graves
 - willingness_to_pay: true SOLO si el encuestado menciona haber gastado dinero o tiempo significativo en soluciones actuales
-- friction_score: 1=mínima fricción, 10=fricción máxima paralizante
-- mom_test_signals: indicadores de que la respuesta sigue el método "The Mom Test" (habla de hechos pasados, no hipótesis)`;
+- friction_score: 1=mÃ­nima fricciÃ³n, 10=fricciÃ³n mÃ¡xima paralizante
+- mom_test_signals: indicadores de que la respuesta sigue el mÃ©todo "The Mom Test" (habla de hechos pasados, no hipÃ³tesis)`;
 
-// ── PII Shield: mascara PII en key_quotes antes de persistir ─────────────
-// Solo cubre patrones de alta precisión (bajo false-positive rate):
-// email, teléfono chileno, RUT formato XX.XXX.XXX-X.
-// Textos libres de nombres propios quedan para la generalización semántica del pipeline K/L/T.
+// â”€â”€ PII Shield: mascara PII en key_quotes antes de persistir â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Solo cubre patrones de alta precisiÃ³n (bajo false-positive rate):
+// email, telÃ©fono chileno, RUT formato XX.XXX.XXX-X.
+// Textos libres de nombres propios quedan para la generalizaciÃ³n semÃ¡ntica del pipeline K/L/T.
 function maskPII(text: string): { masked: string; hasPII: boolean } {
   const rules: [RegExp, string][] = [
     [/[\w.+\-]+@[\w\-]+\.[\w.]+/g,             '[email]'],
-    [/(\+?56)?[\s\-]?(9\d{8}|[2-9]\d{7})/g,   '[teléfono]'],
+    [/(\+?56)?[\s\-]?(9\d{8}|[2-9]\d{7})/g,   '[telÃ©fono]'],
     [/\b\d{1,2}\.?\d{3}\.?\d{3}[-]\d[\dkK]\b/g, '[RUT]'],
   ];
 
@@ -85,7 +85,7 @@ function maskPII(text: string): { masked: string; hasPII: boolean } {
   return { masked, hasPII };
 }
 
-// ── Análisis de una submission individual ────────────────
+// â”€â”€ AnÃ¡lisis de una submission individual â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function analyzeSingleSubmission(
   responseData: Record<string, unknown>,
   formFields: Array<{ id: string; label: string; type: string }>,
@@ -135,7 +135,7 @@ async function analyzeSingleSubmission(
   }
 
   try {
-    // Extraer JSON de la respuesta (por si el modelo añade texto antes/después)
+    // Extraer JSON de la respuesta (por si el modelo aÃ±ade texto antes/despuÃ©s)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     return JSON.parse(jsonMatch[0]);
@@ -176,7 +176,7 @@ Deno.serve(async (req: Request) => {
 
     if (formError || !form) return json({ error: 'Form not found' }, 404, req);
 
-    // Obtener submissions pendientes de análisis
+    // Obtener submissions pendientes de anÃ¡lisis
     const { data: submissions, error: subError } = await supabaseAdmin
       .from('survey_submissions')
       .select('id, response_data')
@@ -194,7 +194,7 @@ Deno.serve(async (req: Request) => {
     let processed = 0;
     let failed = 0;
 
-    // Procesar en paralelo con concurrencia limitada (3 simultáneas)
+    // Procesar en paralelo con concurrencia limitada (3 simultÃ¡neas)
     const CONCURRENCY = 3;
     for (let i = 0; i < submissions.length; i += CONCURRENCY) {
       const batch = submissions.slice(i, i + CONCURRENCY);

@@ -1,10 +1,10 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const DEFAULT_CLASES_NIZA = ['35', '38', '42'];
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -26,7 +26,7 @@ function getSupabase() {
   );
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface INAPIRecord {
   denominacion: string;
   estado: string;
@@ -36,20 +36,20 @@ interface INAPIRecord {
 }
 
 // Statuses that represent active, enforceable trademarks in inapi_records
-const ACTIVE_STATUSES = ['Registrada', 'En Trámite', 'En trámite', 'Esperando renovación'];
+const ACTIVE_STATUSES = ['Registrada', 'En TrÃ¡mite', 'En trÃ¡mite', 'Esperando renovaciÃ³n'];
 
 function normalizeText(text: string): string {
   return text
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[Ì€-Í¯]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
     .toUpperCase();
 }
 
-// ── DB search via inapi_records (trigram index on brand_name) ─────────────────
+// â”€â”€ DB search via inapi_records (trigram index on brand_name) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function searchINAPILocal(supabase: ReturnType<typeof createClient>, brandName: string): Promise<INAPIRecord[]> {
-  // Use pg similarity search — the gin_trgm_ops index makes this fast
+  // Use pg similarity search â€” the gin_trgm_ops index makes this fast
   const { data, error } = await supabase.rpc('search_inapi_brands', {
     p_brand_name: brandName,
     p_limit: 25,
@@ -66,7 +66,7 @@ async function searchINAPILocal(supabase: ReturnType<typeof createClient>, brand
   }));
 }
 
-// ── Collision risk classifier ─────────────────────────────────────────────────
+// â”€â”€ Collision risk classifier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function classifyCollisionRisk(records: INAPIRecord[], brandName: string): {
   colisiones: INAPIRecord[];
   risk_level: 'none' | 'low' | 'medium' | 'high';
@@ -88,24 +88,24 @@ function classifyCollisionRisk(records: INAPIRecord[], brandName: string): {
     return {
       colisiones: [...exactas, ...parciales],
       risk_level: 'high',
-      risk_rationale: `${exactas.length} marca(s) con denominación EXACTA activa en INAPI. El registro de "${brandName}" sería rechazado.`,
+      risk_rationale: `${exactas.length} marca(s) con denominaciÃ³n EXACTA activa en INAPI. El registro de "${brandName}" serÃ­a rechazado.`,
     };
   }
   if (parciales.length > 0) {
     return {
       colisiones: parciales,
       risk_level: 'medium',
-      risk_rationale: `${parciales.length} marca(s) parcialmente similar(es) activa(s). Posible objeción de INAPI por similitud fonética o conceptual.`,
+      risk_rationale: `${parciales.length} marca(s) parcialmente similar(es) activa(s). Posible objeciÃ³n de INAPI por similitud fonÃ©tica o conceptual.`,
     };
   }
   return {
     colisiones: [],
     risk_level: 'none',
-    risk_rationale: 'Sin colisiones detectadas en el registro INAPI para esta denominación.',
+    risk_rationale: 'Sin colisiones detectadas en el registro INAPI para esta denominaciÃ³n.',
   };
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 serve(async (req) => {
   const cors = getCorsHeaders(req);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -139,7 +139,7 @@ serve(async (req) => {
     // 1. Consultar tabla local inapi_records
     const records = await searchINAPILocal(supabase, brand_name);
 
-    // 2. Clasificar riesgo de colisión
+    // 2. Clasificar riesgo de colisiÃ³n
     const { colisiones, risk_level, risk_rationale } = classifyCollisionRisk(records, brand_name);
 
     const payload = {

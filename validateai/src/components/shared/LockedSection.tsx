@@ -13,9 +13,9 @@ interface Props {
 }
 
 const TIER_LABELS: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  basic:   { label: 'Basic',   color: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-200'   },
-  pro:     { label: 'Pro',     color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
-  premium: { label: 'Premium', color: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-200'  },
+  basic:   { label: 'Basic',   color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/25'   },
+  pro:     { label: 'Pro',     color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/25' },
+  premium: { label: 'Premium', color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/25'  },
 };
 
 export function LockedSection({ title, description, requiredTier, hint }: Props) {

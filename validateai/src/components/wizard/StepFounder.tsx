@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepFounderSchema, type StepFounder } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
+import { supabase } from '@/lib/supabase';
 
 const TECH_LEVELS = [
   { value: 'non_technical', label: 'Nada técnico', desc: 'Usaríamos No-Code o contrataríamos' },
@@ -36,7 +37,21 @@ export function StepFounder() {
 
   const onSubmit = (data: StepFounder) => {
     updateStepFounder(data);
-    nextStep(); // Goes to Generation step
+
+    const { validationId } = useValidationStore.getState();
+    if (validationId) {
+      supabase.from('validations').update({
+        founder_context: {
+          yearsInIndustry:        data.yearsInIndustry,
+          hasTechnicalCofounder:  data.hasTechnicalCofounder,
+          personallyFacedProblem: data.personallyFacedProblem,
+        },
+        tech_level:   data.tech_level,
+        current_step: 4,
+      }).eq('id', validationId).then(() => {});
+    }
+
+    nextStep();
   };
 
   const hasTech = watch('hasTechnicalCofounder');

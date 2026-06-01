@@ -1,48 +1,48 @@
-openapi: 3.0.3
+﻿openapi: 3.0.3
 info:
   title: ValidateAI RaaS API
   version: "1.0.0"
   description: |
-    API de Validación de Ideas de Negocio como Servicio (RAG-as-a-Service).
+    API de ValidaciÃ³n de Ideas de Negocio como Servicio (RAG-as-a-Service).
 
-    Orquesta datos gubernamentales chilenos en tiempo real (SII, CMF, INAPI) con búsqueda
-    vectorial semántica (pgvector) e inteligencia artificial (Claude Sonnet) para emitir
-    diagnósticos de viabilidad de grado institucional.
+    Orquesta datos gubernamentales chilenos en tiempo real (SII, CMF, INAPI) con bÃºsqueda
+    vectorial semÃ¡ntica (pgvector) e inteligencia artificial (Claude Sonnet) para emitir
+    diagnÃ³sticos de viabilidad de grado institucional.
 
-    ## Autenticación
-    Todas las rutas bajo `/api/v1` requieren una API Key válida:
+    ## AutenticaciÃ³n
+    Todas las rutas bajo `/api/v1` requieren una API Key vÃ¡lida:
     ```
     Authorization: Bearer val_live_XXXX...
     ```
-    Genera y gestiona tus llaves en el [Portal de Desarrolladores](https://validateai-mu.vercel.app/developers).
+    Genera y gestiona tus llaves en el [Portal de Desarrolladores](https://validus.scouttech.lat/developers).
 
     ## Rate Limiting
     - 100 requests/minuto por API Key
     - Headers de control: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
   contact:
     name: ValidateAI
-    url: https://validateai-mu.vercel.app
+    url: https://validus.scouttech.lat
   license:
     name: Propietario
 servers:
   - url: https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1
-    description: Producción
+    description: ProducciÃ³n
 
 tags:
   - name: RAG
-    description: Motor de búsqueda semántica y base de conocimiento
-  - name: Datos Económicos
+    description: Motor de bÃºsqueda semÃ¡ntica y base de conocimiento
+  - name: Datos EconÃ³micos
     description: Indicadores financieros en tiempo real (CMF, SII)
   - name: Webhooks
-    description: Notificaciones asíncronas (PJUD, Fintoc)
-  - name: Ingestión
+    description: Notificaciones asÃ­ncronas (PJUD, Fintoc)
+  - name: IngestiÃ³n
     description: Poblar la base de conocimiento propietaria
 
 paths:
   /api/v1/rag/query:
     post:
       tags: [RAG]
-      summary: Consulta semántica a la base de conocimiento
+      summary: Consulta semÃ¡ntica a la base de conocimiento
       security:
         - BearerAuth: []
       requestBody:
@@ -84,9 +84,9 @@ paths:
 
   /api/v1/data/economy:
     get:
-      tags: [Datos Económicos]
-      summary: Retorna indicadores económicos en caché
-      description: UF, IPC y Dólar cacheados desde CMF y SII.
+      tags: [Datos EconÃ³micos]
+      summary: Retorna indicadores econÃ³micos en cachÃ©
+      description: UF, IPC y DÃ³lar cacheados desde CMF y SII.
       security:
         - BearerAuth: []
       responses:
@@ -112,7 +112,7 @@ paths:
   /api/v1/webhooks:
     post:
       tags: [Webhooks]
-      summary: Registra un webhook de notificación
+      summary: Registra un webhook de notificaciÃ³n
       security:
         - BearerAuth: []
       requestBody:
@@ -148,7 +148,7 @@ paths:
 
   /api/v1/rag/ingest/text:
     post:
-      tags: [Ingestión]
+      tags: [IngestiÃ³n]
       summary: Ingesta texto plano a la base vectorial
       security:
         - BearerAuth: []
@@ -179,13 +179,13 @@ components:
 
   responses:
     BadRequest:
-      description: Parámetros inválidos.
+      description: ParÃ¡metros invÃ¡lidos.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Unauthorized:
-      description: API Key faltante, inválida o revocada.
+      description: API Key faltante, invÃ¡lida o revocada.
       content:
         application/json:
           schema:

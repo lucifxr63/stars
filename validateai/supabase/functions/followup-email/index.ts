@@ -1,9 +1,9 @@
-// Edge Function: followup-email
+﻿// Edge Function: followup-email
 // Cron recomendado: "0 10 * * *" (diariamente a las 10:00 UTC)
 //
-// Selecciona usuarios en tier free que completaron su primera validación hace
-// exactamente 7 días y aún no han hecho upgrade.
-// Cuando RESEND_API_KEY esté configurado, envía el email real; si no, solo loguea.
+// Selecciona usuarios en tier free que completaron su primera validaciÃ³n hace
+// exactamente 7 dÃ­as y aÃºn no han hecho upgrade.
+// Cuando RESEND_API_KEY estÃ© configurado, envÃ­a el email real; si no, solo loguea.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -22,7 +22,7 @@ interface EligibleUser {
 
 async function sendFollowupEmail(user: EligibleUser): Promise<boolean> {
   if (!RESEND_KEY) {
-    console.log(`[followup-email] DRY RUN — would send to ${user.email} (idea: "${user.idea_name}")`);
+    console.log(`[followup-email] DRY RUN â€” would send to ${user.email} (idea: "${user.idea_name}")`);
     return true;
   }
 
@@ -31,20 +31,20 @@ async function sendFollowupEmail(user: EligibleUser): Promise<boolean> {
 
   const html = `
     <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1a1a2e">
-      <h2 style="color:#7C6FF7">¿Cómo va ${ideaName}?</h2>
-      <p>Hace 7 días validaste tu idea y obtuviste un score de <strong>${score}/100</strong>.</p>
+      <h2 style="color:#7C6FF7">Â¿CÃ³mo va ${ideaName}?</h2>
+      <p>Hace 7 dÃ­as validaste tu idea y obtuviste un score de <strong>${score}/100</strong>.</p>
       <p>Con el plan Basic puedes desbloquear:</p>
       <ul>
-        <li>Análisis de Riesgo detallado</li>
+        <li>AnÃ¡lisis de Riesgo detallado</li>
         <li>Unit Economics (CAC/LTV)</li>
-        <li>Exportación PDF investor-ready</li>
+        <li>ExportaciÃ³n PDF investor-ready</li>
       </ul>
-      <a href="https://validateai-mu.vercel.app/pricing"
+      <a href="https://validus.scouttech.lat/pricing"
          style="display:inline-block;margin-top:16px;padding:12px 24px;background:#7C6FF7;color:#fff;border-radius:10px;text-decoration:none;font-weight:700">
-        Ver planes →
+        Ver planes â†’
       </a>
       <p style="color:#999;font-size:12px;margin-top:32px">
-        ValidateAI · <a href="https://validateai-mu.vercel.app/profile">Gestionar preferencias</a>
+        ValidateAI Â· <a href="https://validus.scouttech.lat/profile">Gestionar preferencias</a>
       </p>
     </div>
   `;
@@ -58,7 +58,7 @@ async function sendFollowupEmail(user: EligibleUser): Promise<boolean> {
     body: JSON.stringify({
       from: FROM_EMAIL,
       to: [user.email],
-      subject: `¿Cómo va ${ideaName}? Tu análisis de ValidateAI`,
+      subject: `Â¿CÃ³mo va ${ideaName}? Tu anÃ¡lisis de ValidateAI`,
       html,
     }),
   });
@@ -74,11 +74,11 @@ Deno.serve(async () => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SRK);
 
   const now = new Date();
-  // Ventana: validaciones completadas entre 7d 1h y 6d 23h atrás (±1h para cubrir desfases de cron)
+  // Ventana: validaciones completadas entre 7d 1h y 6d 23h atrÃ¡s (Â±1h para cubrir desfases de cron)
   const windowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000 - 60 * 60 * 1000).toISOString();
   const windowEnd   = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000 - 60 * 60 * 1000).toISOString();
 
-  // Obtener usuarios free que completaron su primera validación en la ventana
+  // Obtener usuarios free que completaron su primera validaciÃ³n en la ventana
   const { data: candidates, error } = await supabase
     .from('validations')
     .select(`

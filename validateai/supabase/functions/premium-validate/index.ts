@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const ANTHROPIC_API_KEY    = Deno.env.get('ANTHROPIC_API_KEY')!;
@@ -9,7 +9,7 @@ const REDDIT_CLIENT_SECRET = Deno.env.get('REDDIT_CLIENT_SECRET');
 const SERPAPI_KEY          = Deno.env.get('SERPAPI_KEY');
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -31,7 +31,7 @@ function json(body: unknown, status = 200, req: Request) {
   });
 }
 
-// ── Reddit API ────────────────────────────────────────────────────────────────
+// â”€â”€ Reddit API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface RedditPost {
   subreddit: string;
@@ -107,7 +107,7 @@ async function fetchRedditReal(idea: string): Promise<unknown> {
 async function fetchRedditMockFallback(_idea: string): Promise<unknown> {
   return {
     status: 'mock',
-    source: 'Reddit (mock — agrega REDDIT_CLIENT_ID y REDDIT_CLIENT_SECRET para datos reales)',
+    source: 'Reddit (mock â€” agrega REDDIT_CLIENT_ID y REDDIT_CLIENT_SECRET para datos reales)',
     top_discussions: [
       {
         subreddit: 'r/entrepreneur',
@@ -133,11 +133,11 @@ async function fetchReddit(idea: string): Promise<unknown> {
   if (REDDIT_CLIENT_ID && REDDIT_CLIENT_SECRET) {
     return fetchRedditReal(idea);
   }
-  console.warn('[premium-validate] Sin credenciales Reddit — usando mock. Agrega REDDIT_CLIENT_ID y REDDIT_CLIENT_SECRET.');
+  console.warn('[premium-validate] Sin credenciales Reddit â€” usando mock. Agrega REDDIT_CLIENT_ID y REDDIT_CLIENT_SECRET.');
   return fetchRedditMockFallback(idea);
 }
 
-// ── Google Trends (SerpApi) ───────────────────────────────────────────────────
+// â”€â”€ Google Trends (SerpApi) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function fetchTrendsReal(idea: string): Promise<unknown> {
   const keyword = encodeURIComponent(idea.slice(0, 100));
@@ -176,7 +176,7 @@ async function fetchTrendsReal(idea: string): Promise<unknown> {
 async function fetchTrendsMockFallback(_idea: string): Promise<unknown> {
   return {
     status: 'mock',
-    source: 'Google Trends (mock — agrega SERPAPI_KEY para datos reales)',
+    source: 'Google Trends (mock â€” agrega SERPAPI_KEY para datos reales)',
     keyword: _idea.slice(0, 100),
     average_interest_last_12_months: 78,
     trend_trajectory: 'upward',
@@ -188,11 +188,11 @@ async function fetchTrends(idea: string): Promise<unknown> {
   if (SERPAPI_KEY) {
     return fetchTrendsReal(idea);
   }
-  console.warn('[premium-validate] Sin SERPAPI_KEY — usando mock.');
+  console.warn('[premium-validate] Sin SERPAPI_KEY â€” usando mock.');
   return fetchTrendsMockFallback(idea);
 }
 
-// ── AI Synthesizer ────────────────────────────────────────────────────────────
+// â”€â”€ AI Synthesizer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function synthesize(
   idea: string,
@@ -207,8 +207,8 @@ async function synthesize(
     ? `## Google Trends Signal\n${JSON.stringify(trendsData, null, 2)}`
     : '## Google Trends Signal\n(datos no disponibles)';
 
-  const prompt = `Eres un analista de startups experto. Basándote en los datos de mercado a continuación,
-redacta un "Executive Summary" de máximo 1000 caracteres evaluando la viabilidad de la siguiente idea:
+  const prompt = `Eres un analista de startups experto. BasÃ¡ndote en los datos de mercado a continuaciÃ³n,
+redacta un "Executive Summary" de mÃ¡ximo 1000 caracteres evaluando la viabilidad de la siguiente idea:
 
 IDEA: ${idea}
 
@@ -216,8 +216,8 @@ ${redditSection}
 
 ${trendsSection}
 
-El resumen debe mencionar: demanda detectada, sentimiento de la comunidad, tendencia de búsqueda
-y una recomendación concisa. Responde SOLO con el texto del resumen, sin títulos ni markdown adicional.`;
+El resumen debe mencionar: demanda detectada, sentimiento de la comunidad, tendencia de bÃºsqueda
+y una recomendaciÃ³n concisa. Responde SOLO con el texto del resumen, sin tÃ­tulos ni markdown adicional.`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -242,14 +242,14 @@ y una recomendación concisa. Responde SOLO con el texto del resumen, sin títul
   return text.slice(0, 1000);
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders(req) });
   }
 
-  // Auth — verifica JWT del usuario
+  // Auth â€” verifica JWT del usuario
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) return json({ error: 'Missing authorization' }, 401, req);
 
@@ -285,7 +285,7 @@ serve(async (req: Request) => {
     return json({ error: 'validation_id and idea_description are required' }, 400, req);
   }
 
-  // Verificar que la validación pertenece al usuario
+  // Verificar que la validaciÃ³n pertenece al usuario
   const { data: validation } = await supabase
     .from('validations')
     .select('id, user_id')
@@ -313,7 +313,7 @@ serve(async (req: Request) => {
 
   const logId = logRow.id;
 
-  // ── Fan-Out: dispara ambos agentes en paralelo ────────────────────────────
+  // â”€â”€ Fan-Out: dispara ambos agentes en paralelo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [redditResult, trendsResult] = await Promise.allSettled([
     fetchReddit(idea_description),
     fetchTrends(idea_description),
@@ -341,7 +341,7 @@ serve(async (req: Request) => {
     })
     .eq('id', logId);
 
-  // ── Sintetizador IA ───────────────────────────────────────────────────────
+  // â”€â”€ Sintetizador IA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let executiveSummary: string | null = null;
   try {
     executiveSummary = await synthesize(idea_description, redditData, trendsData);
@@ -350,7 +350,7 @@ serve(async (req: Request) => {
     errorDetails.synthesis = String(err);
   }
 
-  // Guardar resumen y marcar validación como completada
+  // Guardar resumen y marcar validaciÃ³n como completada
   await supabase
     .from('validation_agents_log')
     .update({

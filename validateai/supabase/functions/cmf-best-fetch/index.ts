@@ -1,26 +1,26 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Config ────────────────────────────────────────────────────────────────────
-// BEST = "Banco de Estadísticas y Series de Tiempo", CMF Chile
-// API docs: https://apibest.cmfchile.cl — autenticación via x-api-key header
-// SLA: 24x7, máx 30 min downtime horario principal, 1000 req/hora por key
+// â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// BEST = "Banco de EstadÃ­sticas y Series de Tiempo", CMF Chile
+// API docs: https://apibest.cmfchile.cl â€” autenticaciÃ³n via x-api-key header
+// SLA: 24x7, mÃ¡x 30 min downtime horario principal, 1000 req/hora por key
 const BEST_API_BASE = 'https://apibest.cmfchile.cl';
 
 // Cuadros seleccionados para due diligence de startups chilenas.
-// TagRecurso = identificador único en BEST (descubierto del bundle Angular del portal).
+// TagRecurso = identificador Ãºnico en BEST (descubierto del bundle Angular del portal).
 // Estos 5 cuadros cubren el contexto financiero que un analista de VC necesita
 // para evaluar el entorno crediticio y de mercado en Chile.
 const CUADROS = [
   {
     tag:   'SBIF_TMC_CL_TRPL_TRUF_PORC_MONT',
-    label: 'TMC (Tasa Máxima Convencional, todas las operaciones)',
+    label: 'TMC (Tasa MÃ¡xima Convencional, todas las operaciones)',
     key:   'tmc_vigente',
     unit:  '%/mes',
   },
   {
     tag:   'CMF_COMP_TASAS_MNNR_0D90_CCO_CREDCUO_BANC_PORC_MONT',
-    label: 'Tasa crédito comercial CLP <90 días (bancos)',
+    label: 'Tasa crÃ©dito comercial CLP <90 dÃ­as (bancos)',
     key:   'tasa_comercial_banc',
     unit:  '%/mes',
   },
@@ -38,14 +38,14 @@ const CUADROS = [
   },
   {
     tag:   'CMF_CONT_ACTIV_CRED_CONT_AGIFI_STO_VANR_PORC_MONT',
-    label: 'Morosidad cartera crédito (VANR / cartera total)',
+    label: 'Morosidad cartera crÃ©dito (VANR / cartera total)',
     key:   'morosidad',
     unit:  '%',
   },
 ] as const;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -60,9 +60,9 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-// ── BEST API fetch ─────────────────────────────────────────────────────────────
-// Obtiene los últimos 3 períodos de un cuadro via BEST API v1.
-// Retorna null si la key no está configurada o el cuadro no existe (graceful).
+// â”€â”€ BEST API fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Obtiene los Ãºltimos 3 perÃ­odos de un cuadro via BEST API v1.
+// Retorna null si la key no estÃ¡ configurada o el cuadro no existe (graceful).
 interface BestSerie {
   serieInfo: {
     cod_serie:        string;
@@ -99,7 +99,7 @@ async function fetchCuadro(
       signal: AbortSignal.timeout(10_000),
     });
 
-    if (res.status === 401) return { cuadro: null, error: 'API key inválida (401)' };
+    if (res.status === 401) return { cuadro: null, error: 'API key invÃ¡lida (401)' };
     if (res.status === 404) return { cuadro: null, error: `Cuadro "${tag}" no encontrado` };
     if (res.status === 429) return { cuadro: null, error: 'Rate limit BEST API (429)' };
     if (!res.ok)            return { cuadro: null, error: `HTTP ${res.status}` };
@@ -111,7 +111,7 @@ async function fetchCuadro(
   }
 }
 
-// ── Extractor: toma el último valor no-nulo de las series del cuadro ──────────
+// â”€â”€ Extractor: toma el Ãºltimo valor no-nulo de las series del cuadro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function extractLatestValue(
   cuadro: BestResponse,
 ): { value: number | null; fecha: number | null; period: string } {
@@ -124,14 +124,14 @@ function extractLatestValue(
   const latest = sorted.find(v => v.valor !== null && v.valor !== undefined);
   if (!latest) return { value: null, fecha: null, period: 'N/D' };
 
-  // Convertir fecha YYYYMMDD → "MM/YYYY"
+  // Convertir fecha YYYYMMDD â†’ "MM/YYYY"
   const f = String(latest.fecha);
   const period = f.length === 8 ? `${f.slice(4, 6)}/${f.slice(0, 4)}` : f;
 
   return { value: latest.valor, fecha: latest.fecha, period };
 }
 
-// ── Compressor: convierte los cuadros en ≤250 tokens de contexto analítico ───
+// â”€â”€ Compressor: convierte los cuadros en â‰¤250 tokens de contexto analÃ­tico â”€â”€â”€
 function buildSummary(
   results: Array<{
     key:    string;
@@ -147,26 +147,26 @@ function buildSummary(
   const failed    = results.filter(r => r.value === null || r.error);
 
   if (available.length === 0) {
-    return `[CMF BEST] Sin datos disponibles${apiKey ? '' : ' — CMF_BEST_KEY no configurada'}.`;
+    return `[CMF BEST] Sin datos disponibles${apiKey ? '' : ' â€” CMF_BEST_KEY no configurada'}.`;
   }
 
   const lines = available.map(r =>
-    `  • ${r.label}: ${r.value?.toFixed(2)}${r.unit} (${r.period})`
+    `  â€¢ ${r.label}: ${r.value?.toFixed(2)}${r.unit} (${r.period})`
   );
 
   const block = [
-    '[CMF BEST — Mercado Financiero Chile]',
+    '[CMF BEST â€” Mercado Financiero Chile]',
     ...lines,
   ];
 
   if (failed.length > 0) {
-    block.push(`  ⚠ Sin datos: ${failed.map(r => r.key).join(', ')}`);
+    block.push(`  âš  Sin datos: ${failed.map(r => r.key).join(', ')}`);
   }
 
   return block.join('\n');
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 serve(async (req) => {
   const cors = getCorsHeaders(req);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -205,12 +205,12 @@ serve(async (req) => {
 
     // Graceful degradation cuando no hay key configurada
     if (!apiKey) {
-      console.warn('cmf-best-fetch: CMF_BEST_KEY no configurada — omitiendo BEST.');
+      console.warn('cmf-best-fetch: CMF_BEST_KEY no configurada â€” omitiendo BEST.');
       const payload = {
         available: false,
         reason: 'CMF_BEST_KEY no configurada en Supabase Secrets',
         indicators: {},
-        summary: '[CMF BEST] Sin datos — CMF_BEST_KEY no configurada.',
+        summary: '[CMF BEST] Sin datos â€” CMF_BEST_KEY no configurada.',
         fetched_at: new Date().toISOString(),
       };
       await supabase.from('temp_context').upsert(
@@ -236,7 +236,7 @@ serve(async (req) => {
 
     const summary = buildSummary(fetched, apiKey);
 
-    // Construir indicators map para serialización estructurada
+    // Construir indicators map para serializaciÃ³n estructurada
     const indicators: Record<string, { value: number | null; period: string; unit: string }> = {};
     for (const r of fetched) {
       indicators[r.key] = { value: r.value, period: r.period, unit: r.unit };

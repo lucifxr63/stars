@@ -1,7 +1,7 @@
-import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore, PitchDeckContent, LeanRoadmap, FinancialProjection, ComplianceRoadmap } from '@/types/validation';
+﻿import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore, PitchDeckContent, LeanRoadmap, FinancialProjection, ComplianceRoadmap } from '@/types/validation';
 import { matchCorfoInstruments } from '@/data/corfoInstruments';
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface PDFData {
   idea_name?: string;
   idea_description?: string;
@@ -50,12 +50,12 @@ export const PDF_THEMES: { id: PDFTheme; label: string; desc: string }[] = [
   { id: 'gradient', label: 'Gradient Startup',  desc: 'Colores vivos. Estilo Figma/Loom.' },
 ];
 
-// ── Layout constants ───────────────────────────────────────────────────────────
+// â”€â”€ Layout constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PAGE_W = 210;
 const MARGIN  = 16;
 const CON_W   = PAGE_W - MARGIN * 2;
 
-// ── Base colours (shared) ─────────────────────────────────────────────────────
+// â”€â”€ Base colours (shared) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   teal:       [13,  148, 136] as [number,number,number],
   tealDark:   [15,  118, 110] as [number,number,number],
@@ -90,9 +90,9 @@ const C = {
   violet:     [139, 92,  246] as [number,number,number],
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  Theme token resolver
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getThemeTokens(theme: PDFTheme) {
   switch (theme) {
     case 'dark':
@@ -165,14 +165,14 @@ function getThemeTokens(theme: PDFTheme) {
   }
 }
 
-// ── Entry point ───────────────────────────────────────────────────────────────
+// â”€â”€ Entry point â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'clean'): Promise<void> {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   let y = MARGIN;
   const T = getThemeTokens(theme);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const checkPage = (needed = 16) => {
     if (y + needed > 276) { doc.addPage(); y = MARGIN; }
@@ -229,7 +229,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.roundedRect(x, by, fill, 3.5, 1, 1, 'F');
   };
 
-  // Separador horizontal — usado en secciones de contenido
+  // Separador horizontal â€” usado en secciones de contenido
   const divider = (extraY = 0) => {
     y += extraY;
     doc.setDrawColor(...T.dividerColor);
@@ -315,12 +315,12 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   };
 
-  // ── Section header — style varies by theme ────────────────────────────────
+  // â”€â”€ Section header â€” style varies by theme â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const sectionHeader = (title: string, colorOverride?: [number,number,number]) => {
     checkPage(14);
 
     if (T.sectionStyle === 'clean') {
-      // Borde izquierdo teal + título gris oscuro
+      // Borde izquierdo teal + tÃ­tulo gris oscuro
       const accent = colorOverride ?? T.accent;
       doc.setFillColor(...accent);
       doc.rect(MARGIN, y + 0.5, 3.5, 7, 'F');
@@ -343,7 +343,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       y += 11;
 
     } else {
-      // Gradient: pill teal sólido
+      // Gradient: pill teal sÃ³lido
       const accent = colorOverride ?? T.accent;
       doc.setFillColor(...accent);
       doc.roundedRect(MARGIN, y, CON_W, 8, 2, 2, 'F');
@@ -355,18 +355,18 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // MOTOR GEOMÉTRICO — primitivas robustas
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // MOTOR GEOMÃ‰TRICO â€” primitivas robustas
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const CELL_PAD   = 2.5;  // padding interno de celda (mm)
-  const LINE_H     = 4.5;  // altura de línea de texto (mm)
+  const LINE_H     = 4.5;  // altura de lÃ­nea de texto (mm)
   const HDR_H      = 8;    // altura de fila de cabecera (mm)
   const PAGE_FLOOR = 270;  // margen inferior de seguridad (mm)
 
-  // ── drawTable ─────────────────────────────────────────────────────────────
-  // Gestiona zebra-striping, saltos de página con cabecera repetida,
-  // y altura dinámica de celda según contenido multi-línea.
+  // â”€â”€ drawTable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Gestiona zebra-striping, saltos de pÃ¡gina con cabecera repetida,
+  // y altura dinÃ¡mica de celda segÃºn contenido multi-lÃ­nea.
   const drawTable = (
     headers: string[],
     rows: string[][],
@@ -389,7 +389,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       return { lines, rowH: maxL * LINE_H + CELL_PAD * 2 };
     });
 
-    // Draw header row — extracted so it can be repeated after page break
+    // Draw header row â€” extracted so it can be repeated after page break
     const renderHeader = () => {
       doc.setFillColor(...headerBg);
       doc.roundedRect(MARGIN, y, totalW, HDR_H, 2, 2, 'F');
@@ -439,10 +439,10 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 5;
   };
 
-  // ── infoCard ──────────────────────────────────────────────────────────────
-  // Renderiza texto largo de IA en contenedores con borde lateral semántico.
-  // Si el cuerpo no cabe en la página restante, lo divide en chunks y dibuja
-  // una tarjeta por chunk ("continuación" en las siguientes).
+  // â”€â”€ infoCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Renderiza texto largo de IA en contenedores con borde lateral semÃ¡ntico.
+  // Si el cuerpo no cabe en la pÃ¡gina restante, lo divide en chunks y dibuja
+  // una tarjeta por chunk ("continuaciÃ³n" en las siguientes).
   const infoCard = (
     title: string,
     body: string,
@@ -453,12 +453,12 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     if (!body?.trim()) return;
 
     const BODY_W    = CON_W - 14;
-    const TITLE_H   = 14;     // título + padding superior
-    const BODY_LINE = 5;      // altura de línea de cuerpo
+    const TITLE_H   = 14;     // tÃ­tulo + padding superior
+    const BODY_LINE = 5;      // altura de lÃ­nea de cuerpo
 
     const allLines: string[] = doc.splitTextToSize(body, BODY_W);
 
-    // Calcula cuántas líneas caben en el espacio restante de la página actual
+    // Calcula cuÃ¡ntas lÃ­neas caben en el espacio restante de la pÃ¡gina actual
     const linesPerPage = (availableH: number) =>
       Math.max(1, Math.floor((availableH - TITLE_H) / BODY_LINE));
 
@@ -469,7 +469,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       const availH = PAGE_FLOOR - y;
       const maxL   = linesPerPage(availH);
 
-      // Si no cabe ni el título, nueva página
+      // Si no cabe ni el tÃ­tulo, nueva pÃ¡gina
       if (availH < TITLE_H + BODY_LINE) {
         doc.addPage();
         y = MARGIN;
@@ -480,7 +480,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       const cardTitle = isFirst ? title : `${title} (cont.)`;
       const cardH     = Math.max(chunk.length * BODY_LINE + TITLE_H, 18);
 
-      checkPage(Math.min(cardH, 40)); // al menos un bloque mínimo
+      checkPage(Math.min(cardH, 40)); // al menos un bloque mÃ­nimo
       doc.setFillColor(...bgColor);
       doc.setDrawColor(...accentColor); doc.setLineWidth(0.5);
       doc.roundedRect(MARGIN, y, CON_W, cardH, 2, 2, 'FD');
@@ -492,11 +492,11 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.text(chunk, MARGIN + 8, y + TITLE_H);
       y += cardH + 4;
       isFirst = false;
-      void maxL; // usado implícitamente en el cálculo del primer chunk
+      void maxL; // usado implÃ­citamente en el cÃ¡lculo del primer chunk
     }
   };
 
-  // ── drawKPI: fila de métricas numéricas en tarjetas side-by-side ──────────
+  // â”€â”€ drawKPI: fila de mÃ©tricas numÃ©ricas en tarjetas side-by-side â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const drawKPI = (
     metrics: { label: string; value: string; color: [number,number,number] }[],
   ) => {
@@ -519,17 +519,17 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 24;
   };
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 1 · PORTADA
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 1 Â· PORTADA
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  // ── PORTADA PREMIUM (página completa) ─────────────────────────────────────
+  // â”€â”€ PORTADA PREMIUM (pÃ¡gina completa) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const dateStr = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
   const vcScore = data.playbook_analysis?.viability_score ?? data.validation_score ?? (data.summary?.score as number ?? 0);
   const vcColor: [number,number,number] = vcScore >= 70 ? C.green : vcScore >= 40 ? C.amber : C.red;
-  const vcLabel = vcScore >= 70 ? 'Viable · Pre-Seed Ready' : vcScore >= 40 ? 'Validación Pendiente' : 'Pivot Recomendado';
+  const vcLabel = vcScore >= 70 ? 'Viable Â· Pre-Seed Ready' : vcScore >= 40 ? 'ValidaciÃ³n Pendiente' : 'Pivot Recomendado';
 
-  // Franja superior temática (80mm de alto)
+  // Franja superior temÃ¡tica (80mm de alto)
   const coverBgTop: [number,number,number] = theme === 'dark' ? C.darkBg : theme === 'gradient' ? C.navy : [17, 24, 39];
   const coverBgMid: [number,number,number] = theme === 'gradient' ? C.teal : C.teal;
   doc.setFillColor(...coverBgTop);
@@ -541,7 +541,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
   doc.text('ValidateAI', 10, 12);
   doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
-  doc.text('Dossier de Inversión · Generado el ' + dateStr, 10, 18);
+  doc.text('Dossier de InversiÃ³n Â· Generado el ' + dateStr, 10, 18);
 
   // Nombre de la idea
   const ideaName = data.idea_name ?? 'Sin nombre';
@@ -550,7 +550,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   doc.text(nameLines, 10, 34);
   const nameLinesH = nameLines.length * 9;
 
-  // Descripción corta (máx 2 líneas)
+  // DescripciÃ³n corta (mÃ¡x 2 lÃ­neas)
   if (data.idea_description) {
     const descLines = doc.splitTextToSize(data.idea_description, PAGE_W - 30);
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
@@ -569,7 +569,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   const vclW = doc.getTextWidth(vcLabel);
   doc.text(vcLabel, PAGE_W - 50 + (40 - vclW) / 2, 47);
 
-  // Línea divisora entre portada top y sección de metadata
+  // LÃ­nea divisora entre portada top y secciÃ³n de metadata
   doc.setFillColor(...C.teal);
   doc.rect(0, 80, PAGE_W, 1.5, 'F');
 
@@ -579,11 +579,11 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
   // Chips de metadata en la franja media
   const metaCols = [
-    { label: 'Industria', value: data.idea_industry ?? '—' },
-    { label: 'País',      value: data.target_country ?? '—' },
-    { label: 'Modelo',    value: (data.business_model ?? '—').replace(/_/g, ' ').toUpperCase() },
-    { label: 'Etapa',     value: (data.business_stage ?? '—').toUpperCase() },
-    { label: 'Precio',    value: data.pricing_range ?? '—' },
+    { label: 'Industria', value: data.idea_industry ?? 'â€”' },
+    { label: 'PaÃ­s',      value: data.target_country ?? 'â€”' },
+    { label: 'Modelo',    value: (data.business_model ?? 'â€”').replace(/_/g, ' ').toUpperCase() },
+    { label: 'Etapa',     value: (data.business_stage ?? 'â€”').toUpperCase() },
+    { label: 'Precio',    value: data.pricing_range ?? 'â€”' },
   ];
   const colW2 = PAGE_W / metaCols.length;
   for (const [i, col] of metaCols.entries()) {
@@ -591,17 +591,17 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(107, 114, 128);
     doc.text(col.label.toUpperCase(), cx2, 92);
     doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(17, 24, 39);
-    doc.text(doc.splitTextToSize(col.value, colW2 - 6)[0] ?? '—', cx2, 100);
+    doc.text(doc.splitTextToSize(col.value, colW2 - 6)[0] ?? 'â€”', cx2, 100);
   }
 
-  // Propuesta de valor / descripción en la franja media
+  // Propuesta de valor / descripciÃ³n en la franja media
   if (data.value_proposition) {
     doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
     const vpLines = doc.splitTextToSize(`"${data.value_proposition}"`, PAGE_W - 30);
     doc.text(vpLines.slice(0, 2), 10, 115);
   }
 
-  // Sección de resumen de módulos incluidos (índice visual)
+  // SecciÃ³n de resumen de mÃ³dulos incluidos (Ã­ndice visual)
   doc.setFillColor(17, 24, 39);
   doc.rect(0, 131.5, PAGE_W, 66, 'F');
   doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
@@ -609,14 +609,14 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
   const sections2 = [
     { n: '01', label: 'Veredicto VC & Harsh Truth' },
-    { n: '02', label: 'Análisis JTBD & Mom Test' },
+    { n: '02', label: 'AnÃ¡lisis JTBD & Mom Test' },
     { n: '03', label: 'Score Breakdown & FODA' },
     { n: '04', label: 'Mercado: TAM / SAM / SOM' },
-    { n: '05', label: 'Análisis de Competencia' },
+    { n: '05', label: 'AnÃ¡lisis de Competencia' },
     { n: '06', label: 'Unit Economics & Riesgos' },
     { n: '07', label: 'GTM, Producto e IA' },
     { n: '08', label: 'Hoja de Ruta MVP & Tech Stack' },
-    { n: '09', label: 'Inversión: CORFO & Mentores' },
+    { n: '09', label: 'InversiÃ³n: CORFO & Mentores' },
     { n: '10', label: 'Veredicto de Fundraising' },
   ];
   const colCnt = 2;
@@ -634,25 +634,25 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
   // Pie de portada
   doc.setFontSize(6); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
-  doc.text('Confidencial · Generado por ValidateAI · validateai-mu.vercel.app', PAGE_W / 2 - 40, 202);
+  doc.text('Confidencial Â· Generado por ValidateAI Â· validus.scouttech.lat', PAGE_W / 2 - 40, 202);
 
-  // Siguiente página para el contenido
+  // Siguiente pÃ¡gina para el contenido
   doc.addPage();
   y = MARGIN;
 
-  // Descripción detallada (primera sección del contenido)
+  // DescripciÃ³n detallada (primera secciÃ³n del contenido)
   if (data.idea_description) {
-    sectionHeader('Descripción de la Idea', C.teal);
+    sectionHeader('DescripciÃ³n de la Idea', C.teal);
     const n = wrapText(data.idea_description, MARGIN, CON_W, 9.5, T.bodyMid);
     y += n * 5 + 6;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 2 · SCORE PRINCIPAL
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 2 Â· SCORE PRINCIPAL
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const score = data.validation_score ?? (data.summary?.score as number) ?? 0;
   const scoreColor: [number,number,number] = score >= 70 ? C.green : score >= 40 ? C.amber : C.red;
-  const scoreLabel = score >= 70 ? 'Bien validada' : score >= 40 ? 'Validación parcial' : 'Necesita trabajo';
+  const scoreLabel = score >= 70 ? 'Bien validada' : score >= 40 ? 'ValidaciÃ³n parcial' : 'Necesita trabajo';
 
   checkPage(32);
 
@@ -678,7 +678,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     // Score box con acento gradient
     doc.setFillColor(...scoreColor);
     doc.roundedRect(MARGIN, y, 54, 24, 3, 3, 'F');
-    // Línea accent
+    // LÃ­nea accent
     doc.setFillColor(...C.navy);
     doc.roundedRect(MARGIN + 54 - 4, y, 4, 24, 0, 3, 'F');
     doc.setFontSize(26);
@@ -692,7 +692,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.text(scoreLabel, MARGIN + 3, y + 22);
 
   } else {
-    // Clean: score pill simple con color semántico
+    // Clean: score pill simple con color semÃ¡ntico
     doc.setFillColor(...scoreColor);
     doc.roundedRect(MARGIN, y, 54, 24, 3, 3, 'F');
     doc.setFontSize(26);
@@ -715,17 +715,17 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   }
   y += 30;
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 3 · SCORE BREAKDOWN
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 3 Â· SCORE BREAKDOWN
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.score_breakdown) {
     sectionHeader('Desglose del Score', theme === 'gradient' ? C.teal : C.teal);
 
     const dims = [
       { label: 'Problema (25%)', value: data.score_breakdown.problem ?? 0, color: C.red },
       { label: 'Mercado (20%)', value: data.score_breakdown.market ?? 0, color: C.blue },
-      { label: 'Solución (25%)', value: data.score_breakdown.solution ?? 0, color: C.teal },
-      { label: 'Ejecución (15%)', value: data.score_breakdown.execution ?? 0, color: C.purple },
+      { label: 'SoluciÃ³n (25%)', value: data.score_breakdown.solution ?? 0, color: C.teal },
+      { label: 'EjecuciÃ³n (15%)', value: data.score_breakdown.execution ?? 0, color: C.purple },
       { label: 'Competencia (15%)', value: data.score_breakdown.competition ?? 0, color: C.amber },
     ];
 
@@ -749,11 +749,11 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 48;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 4 · PREGUNTAS Y RESPUESTAS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 4 Â· PREGUNTAS Y RESPUESTAS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.questions_answers?.length) {
-    sectionHeader('Preguntas de Validación',
+    sectionHeader('Preguntas de ValidaciÃ³n',
       theme === 'gradient' ? C.indigo :
       theme === 'dark'     ? undefined :
                              C.teal);
@@ -779,9 +779,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 2;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 5 · CLIENTE OBJETIVO
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 5 Â· CLIENTE OBJETIVO
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.customer_segment || data.customer_pain_points?.length || data.customer_context) {
     sectionHeader('Cliente Objetivo',
       theme === 'gradient' ? C.teal :
@@ -809,7 +809,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.text('Pain points:', MARGIN, y); y += 5;
       for (const pain of data.customer_pain_points) {
         checkPage(8);
-        const pLines = doc.splitTextToSize(`• ${pain}`, CON_W - 4);
+        const pLines = doc.splitTextToSize(`â€¢ ${pain}`, CON_W - 4);
         doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
         doc.text(pLines, MARGIN + 2, y);
         y += pLines.length * 4.5 + 1.5;
@@ -818,9 +818,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 6 · PROPUESTA DE VALOR
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 6 Â· PROPUESTA DE VALOR
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.value_proposition || data.differentiator) {
     sectionHeader('Propuesta de Valor',
       theme === 'gradient' ? C.violet :
@@ -843,9 +843,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 7 · PLAN DE MVP
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 7 Â· PLAN DE MVP
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.mvp_type || data.mvp_features?.length || data.mvp_user_flow) {
     sectionHeader('Plan de MVP',
       theme === 'gradient' ? C.amber :
@@ -891,14 +891,14 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 8 · FORTALEZAS Y ÁREAS DE MEJORA (FODA)
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 8 Â· FORTALEZAS Y ÃREAS DE MEJORA (FODA)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const strengths  = data.summary?.strengths  as string[] | undefined;
   const weaknesses = data.summary?.weaknesses as string[] | undefined;
 
   if (strengths?.length || weaknesses?.length) {
-    sectionHeader('Análisis FODA',
+    sectionHeader('AnÃ¡lisis FODA',
       theme === 'gradient' ? C.green :
       theme === 'dark'     ? undefined :
                              C.green);
@@ -906,7 +906,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     const colW = (CON_W - 4) / 2;
     const startY = y;
 
-    // Fortalezas — col izquierda
+    // Fortalezas â€” col izquierda
     if (theme === 'dark') {
       doc.setFillColor(...C.darkCard);
       doc.roundedRect(MARGIN, y, colW, 6.5, 1.5, 1.5, 'F');
@@ -924,19 +924,19 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.setTextColor(theme === 'gradient' ? 255 : theme === 'dark' ? C.green[0] : C.greenDark[0],
       theme === 'gradient' ? 255 : theme === 'dark' ? C.green[1] : C.greenDark[1],
       theme === 'gradient' ? 255 : theme === 'dark' ? C.green[2] : C.greenDark[2]);
-    doc.text('✓  FORTALEZAS', MARGIN + (theme === 'dark' ? 5 : 3), y + 4.5);
+    doc.text('âœ“  FORTALEZAS', MARGIN + (theme === 'dark' ? 5 : 3), y + 4.5);
     y += 8;
 
     for (const s of strengths ?? []) {
       checkPage(7);
-      const sL = doc.splitTextToSize(`• ${s}`, colW - 3);
+      const sL = doc.splitTextToSize(`â€¢ ${s}`, colW - 3);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...T.bodyMid);
       doc.text(sL, MARGIN, y);
       y += sL.length * 4.5 + 1;
     }
     const leftEndY = y;
 
-    // Debilidades — col derecha
+    // Debilidades â€” col derecha
     y = startY;
     const rx = MARGIN + colW + 4;
 
@@ -957,11 +957,11 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.setTextColor(theme === 'gradient' ? 255 : theme === 'dark' ? C.amber[0] : C.amberDark[0],
       theme === 'gradient' ? 255 : theme === 'dark' ? C.amber[1] : C.amberDark[1],
       theme === 'gradient' ? 255 : theme === 'dark' ? C.amber[2] : C.amberDark[2]);
-    doc.text('!  ÁREAS DE MEJORA', rx + (theme === 'dark' ? 5 : 3), y + 4.5);
+    doc.text('!  ÃREAS DE MEJORA', rx + (theme === 'dark' ? 5 : 3), y + 4.5);
     y += 8;
 
     for (const w of weaknesses ?? []) {
-      const wL = doc.splitTextToSize(`• ${w}`, colW - 3);
+      const wL = doc.splitTextToSize(`â€¢ ${w}`, colW - 3);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...T.bodyMid);
       doc.text(wL, rx, y);
       y += wL.length * 4.5 + 1;
@@ -969,12 +969,12 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y = Math.max(leftEndY, y) + 5;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 8.5 · ANÁLISIS DE RIESGOS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 8.5 Â· ANÃLISIS DE RIESGOS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.risk_analysis) {
     const ra = data.risk_analysis;
-    sectionHeader('Análisis de Riesgos', C.red);
+    sectionHeader('AnÃ¡lisis de Riesgos', C.red);
 
     checkPage(20);
     const riskScore = ra.overallRiskScore;
@@ -990,13 +990,13 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
     doc.text(`Riesgo ${riskLabel}`, MARGIN + 20, y + 7);
     doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
-    doc.text('Score general (0 = mínimo, 100 = máximo riesgo)', MARGIN + 20, y + 13);
+    doc.text('Score general (0 = mÃ­nimo, 100 = mÃ¡ximo riesgo)', MARGIN + 20, y + 13);
     y += 22;
 
     const dimW = (CON_W - 4) / 2;
     const dims = [
       { label: 'Mercado', d: ra.dimensions.market },
-      { label: 'Técnico', d: ra.dimensions.technical },
+      { label: 'TÃ©cnico', d: ra.dimensions.technical },
       { label: 'Regulatorio', d: ra.dimensions.regulatory },
       { label: 'Timing', d: ra.dimensions.timing },
     ];
@@ -1025,7 +1025,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
         doc.text(label, xOff + 3, rowY + 11);
 
-        const badge = `${d.score} · ${d.label}`;
+        const badge = `${d.score} Â· ${d.label}`;
         const badgeW = doc.getTextWidth(badge) + 5;
         doc.setFillColor(...dimColor);
         doc.roundedRect(xOff + dimW - badgeW - 1, rowY + 7.5, badgeW, 5, 1.5, 1.5, 'F');
@@ -1061,12 +1061,12 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 9 · PRÓXIMOS PASOS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 9 Â· PRÃ“XIMOS PASOS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const nextSteps = data.summary?.next_steps as string[] | undefined;
   if (nextSteps?.length) {
-    sectionHeader('Próximos Pasos Recomendados');
+    sectionHeader('PrÃ³ximos Pasos Recomendados');
 
     for (const [i, step] of nextSteps.entries()) {
       checkPage(13);
@@ -1082,26 +1082,26 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 2;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 9.5 · UNIT ECONOMICS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 9.5 Â· UNIT ECONOMICS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.unit_economics) {
     const ue = data.unit_economics;
     sectionHeader('Unit Economics', C.blue);
 
     const cur = ue.cac.currency === 'CLP' ? '$' : 'USD ';
     const fmtRange = (min: number, max: number) =>
-      `${cur}${min.toLocaleString('es-CL')} – ${cur}${max.toLocaleString('es-CL')}`;
+      `${cur}${min.toLocaleString('es-CL')} â€“ ${cur}${max.toLocaleString('es-CL')}`;
 
     const ratioColor: [number,number,number] = ue.ltvCacRatio.value >= 5 ? C.green : ue.ltvCacRatio.value >= 3 ? C.amber : C.red;
-    const ratioLabel = ue.ltvCacRatio.value >= 5 ? 'Saludable' : ue.ltvCacRatio.value >= 3 ? 'Viable' : 'Crítico';
+    const ratioLabel = ue.ltvCacRatio.value >= 5 ? 'Saludable' : ue.ltvCacRatio.value >= 3 ? 'Viable' : 'CrÃ­tico';
 
     drawKPI([
       { label: 'CAC Estimado',         value: fmtRange(ue.cac.min, ue.cac.max),          color: C.blue   },
       { label: 'LTV Estimado',         value: fmtRange(ue.ltv.min, ue.ltv.max),          color: C.indigo },
-      { label: `LTV/CAC · ${ue.ltvCacRatio.value.toFixed(1)}x`, value: ratioLabel,       color: ratioColor },
+      { label: `LTV/CAC Â· ${ue.ltvCacRatio.value.toFixed(1)}x`, value: ratioLabel,       color: ratioColor },
       { label: 'Break-even',           value: `${ue.breakEvenUsers} usuarios`,           color: C.teal   },
-      { label: 'Payback',              value: `${ue.paybackMonths.min}–${ue.paybackMonths.max} meses`, color: C.purple },
+      { label: 'Payback',              value: `${ue.paybackMonths.min}â€“${ue.paybackMonths.max} meses`, color: C.purple },
     ]);
 
     // BarChart CAC vs LTV
@@ -1145,7 +1145,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
     checkPage(12);
     doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
-    const churnText = `Payback: ${ue.paybackMonths.min}–${ue.paybackMonths.max} meses  ·  Churn mensual estimado: ${ue.monthlyChurnEstimate}%`;
+    const churnText = `Payback: ${ue.paybackMonths.min}â€“${ue.paybackMonths.max} meses  Â·  Churn mensual estimado: ${ue.monthlyChurnEstimate}%`;
     doc.text(churnText, MARGIN, y); y += 8;
 
     if (ue.assumptions?.length) {
@@ -1153,7 +1153,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.text('Supuestos clave:', MARGIN, y); y += 5;
       for (const a of ue.assumptions) {
         checkPage(7);
-        const aL = doc.splitTextToSize(`• ${a}`, CON_W - 4);
+        const aL = doc.splitTextToSize(`â€¢ ${a}`, CON_W - 4);
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...T.bodyMid);
         doc.text(aL, MARGIN + 2, y);
         y += aL.length * 4 + 1;
@@ -1162,9 +1162,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 4;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 9.6 · FOUNDER-MARKET FIT
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 9.6 Â· FOUNDER-MARKET FIT
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.founder_fit) {
     const ff = data.founder_fit;
     sectionHeader('Founder-Market Fit', C.purple);
@@ -1189,7 +1189,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     const dims5 = [
       { label: 'Conocimiento del problema', value: ff.dimensions.problemKnowledge },
       { label: 'Experiencia en industria',  value: ff.dimensions.industryExperience },
-      { label: 'Capacidad técnica',         value: ff.dimensions.technicalCapability },
+      { label: 'Capacidad tÃ©cnica',         value: ff.dimensions.technicalCapability },
       { label: 'Red de contactos',          value: ff.dimensions.networkStrength },
       { label: 'Track record previo',       value: ff.dimensions.trackRecord },
     ].map(d => ({ ...d, color: (d.value >= 70 ? C.green : d.value >= 40 ? C.amber : C.red) as [number,number,number] }));
@@ -1229,12 +1229,12 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 4;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 10 · TAMAÑO DE MERCADO (TAM / SAM / SOM)
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 10 Â· TAMAÃ‘O DE MERCADO (TAM / SAM / SOM)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.market_sizing) {
     const ms = data.market_sizing;
-    sectionHeader('Tamaño de Mercado (TAM / SAM / SOM)',
+    sectionHeader('TamaÃ±o de Mercado (TAM / SAM / SOM)',
       theme === 'gradient' ? C.blue :
       theme === 'dark'     ? undefined :
                              C.blue);
@@ -1268,7 +1268,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.text(label, MARGIN + 1.5, y + 4.8);
 
       doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
-      const rangeText = `${fmtUSD(tier.value_low)} – ${fmtUSD(tier.value_high)}`;
+      const rangeText = `${fmtUSD(tier.value_low)} â€“ ${fmtUSD(tier.value_high)}`;
       doc.text(rangeText, MARGIN + 18, y + 5);
 
       const confX = MARGIN + 18 + doc.getTextWidth(rangeText) + 4;
@@ -1303,7 +1303,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         doc.text('Supuestos clave:', MARGIN, y); y += 5;
         for (const a of tier.assumptions) {
           checkPage(7);
-          const aL = doc.splitTextToSize(`· ${a}`, CON_W - 4);
+          const aL = doc.splitTextToSize(`Â· ${a}`, CON_W - 4);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...T.bodyMid);
           doc.text(aL, MARGIN + 2, y);
           y += aL.length * 4 + 1;
@@ -1314,25 +1314,25 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
     if (ms.methodology) {
       checkPage(10);
-      const mL = doc.splitTextToSize(`Metodología: ${ms.methodology}`, CON_W);
+      const mL = doc.splitTextToSize(`MetodologÃ­a: ${ms.methodology}`, CON_W);
       doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(160, 160, 170);
       doc.text(mL, MARGIN, y);
       y += mL.length * 4 + 4;
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 10.5 · SEÑALES DE MERCADO
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 10.5 Â· SEÃ‘ALES DE MERCADO
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.market_signals) {
     const ms2 = data.market_signals;
-    sectionHeader('Señales de Mercado', C.indigo);
+    sectionHeader('SeÃ±ales de Mercado', C.indigo);
 
     checkPage(20);
     const TREND_COLOR: Record<string, [number,number,number]> = { growing: C.green, stable: C.amber, declining: C.red };
     const TREND_LABEL: Record<string, string> = { growing: 'Creciendo', stable: 'Estable', declining: 'Declining' };
     const TIME_COLOR: Record<string, [number,number,number]> = { optimal: C.green, too_early: C.amber, late: C.red, uncertain: C.gray };
-    const TIME_LABEL: Record<string, string> = { optimal: 'Timing óptimo', too_early: 'Demasiado temprano', late: 'Tarde', uncertain: 'Incierto' };
+    const TIME_LABEL: Record<string, string> = { optimal: 'Timing Ã³ptimo', too_early: 'Demasiado temprano', late: 'Tarde', uncertain: 'Incierto' };
 
     const tc2 = TREND_COLOR[ms2.trendDirection] ?? C.gray;
     chip(TREND_LABEL[ms2.trendDirection] ?? ms2.trendDirection, MARGIN, y - 1, tc2, C.white);
@@ -1354,11 +1354,11 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     if (ms2.recentFunding?.length) {
       checkPage(12);
       doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
-      doc.text('Rondas de inversión recientes', MARGIN, y); y += 6;
+      doc.text('Rondas de inversiÃ³n recientes', MARGIN, y); y += 6;
       for (const f of ms2.recentFunding) {
         checkPage(7);
         doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
-        doc.text(`• ${f.company} — ${f.amount} (${f.date})`, MARGIN + 2, y); y += 5;
+        doc.text(`â€¢ ${f.company} â€” ${f.amount} (${f.date})`, MARGIN + 2, y); y += 5;
       }
       y += 2;
     }
@@ -1380,12 +1380,12 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 11 · ANÁLISIS DE COMPETENCIA
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 11 Â· ANÃLISIS DE COMPETENCIA
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.competitive_analysis) {
     const ca = data.competitive_analysis;
-    sectionHeader('Análisis de Competencia',
+    sectionHeader('AnÃ¡lisis de Competencia',
       theme === 'gradient' ? C.violet :
       theme === 'dark'     ? undefined :
                              C.purple);
@@ -1436,9 +1436,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         const syStart = y;
 
         doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.greenDark);
-        doc.text('✓ Fortalezas', MARGIN, y); y += 4.5;
+        doc.text('âœ“ Fortalezas', MARGIN, y); y += 4.5;
         for (const s of c.strengths ?? []) {
-          const sL = doc.splitTextToSize(`• ${s}`, cColW - 3);
+          const sL = doc.splitTextToSize(`â€¢ ${s}`, cColW - 3);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...T.bodyMid);
           doc.text(sL, MARGIN, y);
           y += sL.length * 4 + 0.5;
@@ -1448,9 +1448,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         y = syStart;
         const rxx = MARGIN + cColW + 4;
         doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.amberDark);
-        doc.text('✗ Debilidades', rxx, y); y += 4.5;
+        doc.text('âœ— Debilidades', rxx, y); y += 4.5;
         for (const w of c.weaknesses ?? []) {
-          const wL = doc.splitTextToSize(`• ${w}`, cColW - 3);
+          const wL = doc.splitTextToSize(`â€¢ ${w}`, cColW - 3);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...T.bodyMid);
           doc.text(wL, rxx, y);
           y += wL.length * 4 + 0.5;
@@ -1496,7 +1496,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         doc.text(gap.gap, MARGIN + badgeW + 2, y + 3);
         y += 8;
         if (gap.opportunity) {
-          const oL = doc.splitTextToSize(`→ ${gap.opportunity}`, CON_W - 4);
+          const oL = doc.splitTextToSize(`â†’ ${gap.opportunity}`, CON_W - 4);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...T.bodyMid);
           doc.text(oL, MARGIN + 2, y);
           y += oL.length * 4 + 3;
@@ -1520,9 +1520,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 12 · GOBERNANZA Y ESTRUCTURA LEGAL
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 12 Â· GOBERNANZA Y ESTRUCTURA LEGAL
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.governance_assessment) {
     const gov = data.governance_assessment;
     checkPage(30);
@@ -1585,7 +1585,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         const pc = priorityColors[item.priority] ?? priorityColors.important;
         doc.setFillColor(...T.cardBg); doc.setDrawColor(...T.cardBorder); doc.setLineWidth(0.3);
         doc.roundedRect(MARGIN, y, CON_W, 10, 1.5, 1.5, 'FD');
-        chip(item.priority === 'critical' ? 'Crítico' : item.priority === 'important' ? 'Importante' : 'Deseable',
+        chip(item.priority === 'critical' ? 'CrÃ­tico' : item.priority === 'important' ? 'Importante' : 'Deseable',
           MARGIN + 3, y + 2.5, pc.bg, pc.fg);
         doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
         doc.text(item.item, MARGIN + 28, y + 4.5);
@@ -1604,7 +1604,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       for (const w of gov.cap_table_warnings.slice(0, 3)) {
         checkPage(8);
         doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
-        const wLines = doc.splitTextToSize(`⚠  ${w}`, CON_W);
+        const wLines = doc.splitTextToSize(`âš   ${w}`, CON_W);
         doc.text(wLines.slice(0, 2), MARGIN, y);
         y += wLines.slice(0, 2).length * 4.5 + 2;
       }
@@ -1612,9 +1612,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 4;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 13 · ESTRATEGIA DE FUNDRAISING
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 13 Â· ESTRATEGIA DE FUNDRAISING
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.fundraising_roadmap) {
     const fr = data.fundraising_roadmap;
     checkPage(30);
@@ -1654,13 +1654,13 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.text(instrLabel[fr.recommended_instrument] ?? fr.recommended_instrument, MARGIN + 3, fRowY + 12);
     const ticketMin = fr.suggested_ticket_size.min >= 1000 ? `$${Math.round(fr.suggested_ticket_size.min / 1000)}K` : `$${fr.suggested_ticket_size.min}`;
     const ticketMax = fr.suggested_ticket_size.max >= 1000 ? `$${Math.round(fr.suggested_ticket_size.max / 1000)}K` : `$${fr.suggested_ticket_size.max}`;
-    doc.text(`${ticketMin} – ${ticketMax}`, MARGIN + fColW + 7, fRowY + 12);
+    doc.text(`${ticketMin} â€“ ${ticketMax}`, MARGIN + fColW + 7, fRowY + 12);
     doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
     const ratLines = doc.splitTextToSize(fr.instrument_rationale, fColW - 6);
     doc.text(ratLines.slice(0, 2), MARGIN + 3, fRowY + 16);
     const preMin = fr.pre_money_valuation_range.min >= 1000000 ? `$${(fr.pre_money_valuation_range.min / 1000000).toFixed(1)}M` : `$${Math.round(fr.pre_money_valuation_range.min / 1000)}K`;
     const preMax = fr.pre_money_valuation_range.max >= 1000000 ? `$${(fr.pre_money_valuation_range.max / 1000000).toFixed(1)}M` : `$${Math.round(fr.pre_money_valuation_range.max / 1000)}K`;
-    doc.text(`Pre-money: ${preMin} – ${preMax}`, MARGIN + fColW + 7, fRowY + 16);
+    doc.text(`Pre-money: ${preMin} â€“ ${preMax}`, MARGIN + fColW + 7, fRowY + 16);
     y = fRowY + 28;
 
     // Pitch narrative
@@ -1688,7 +1688,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
         doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
         doc.text(fund.name, MARGIN + 3, y + 4);
         doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
-        doc.text(`${fund.focus} · ${fund.stage}`, MARGIN + 3, y + 7.5);
+        doc.text(`${fund.focus} Â· ${fund.stage}`, MARGIN + 3, y + 7.5);
         y += 11;
       }
     }
@@ -1700,7 +1700,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.text('BLOQUEADORES ACTUALES', MARGIN, y); y += 4;
       for (const b of fr.blockers.slice(0, 4)) {
         checkPage(7);
-        const bLines = doc.splitTextToSize(`✕  ${b}`, CON_W);
+        const bLines = doc.splitTextToSize(`âœ•  ${b}`, CON_W);
         doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
         doc.text(bLines.slice(0, 1), MARGIN, y);
         y += 5;
@@ -1724,21 +1724,21 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     y += 4;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 14 · VEREDICTO VC (PLAYBOOK RAG) — NUEVA PÁGINA CON VISUAL CARDS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 14 Â· VEREDICTO VC (PLAYBOOK RAG) â€” NUEVA PÃGINA CON VISUAL CARDS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.playbook_analysis) {
     const pa = data.playbook_analysis;
     doc.addPage();
     y = MARGIN;
 
-    sectionHeader('Veredicto VC — Análisis Playbook', C.purple);
+    sectionHeader('Veredicto VC â€” AnÃ¡lisis Playbook', C.purple);
 
     // Score banner
     checkPage(26);
     const paScore = pa.viability_score ?? 0;
     const paColor: [number,number,number] = paScore >= 70 ? C.green : paScore >= 40 ? C.amber : C.red;
-    const paLabel = paScore >= 70 ? 'Viable para VC' : paScore >= 40 ? 'Validación Pendiente' : 'Pivot Necesario';
+    const paLabel = paScore >= 70 ? 'Viable para VC' : paScore >= 40 ? 'ValidaciÃ³n Pendiente' : 'Pivot Necesario';
     doc.setFillColor(...paColor);
     doc.roundedRect(MARGIN, y, CON_W, 20, 3, 3, 'F');
     doc.setFontSize(26); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
@@ -1748,62 +1748,62 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.setFontSize(12); doc.setFont('helvetica', 'bold');
     doc.text(paLabel, MARGIN + 50, y + 9);
     doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-    doc.text('Score de Viabilidad VC · Sin filtros de cortesía', MARGIN + 50, y + 16);
+    doc.text('Score de Viabilidad VC Â· Sin filtros de cortesÃ­a', MARGIN + 50, y + 16);
     y += 26;
 
-    // Verdad Incómoda — card roja
-    if (pa.harsh_truth) infoCard('Verdad Incómoda', pa.harsh_truth, C.red, [254,226,226], [153,27,27]);
-    // Sesgos del Fundador — card ámbar
-    if (pa.founder_bias_warning) infoCard('Diagnóstico de Sesgos del Fundador', pa.founder_bias_warning, C.amber, [254,243,199], [146,64,14]);
+    // Verdad IncÃ³moda â€” card roja
+    if (pa.harsh_truth) infoCard('Verdad IncÃ³moda', pa.harsh_truth, C.red, [254,226,226], [153,27,27]);
+    // Sesgos del Fundador â€” card Ã¡mbar
+    if (pa.founder_bias_warning) infoCard('DiagnÃ³stico de Sesgos del Fundador', pa.founder_bias_warning, C.amber, [254,243,199], [146,64,14]);
 
-    // JTBD — card teal
+    // JTBD â€” card teal
     if (pa.jtbd_analysis) {
       sectionHeader('Jobs-to-be-Done (JTBD)', C.teal);
-      infoCard('¿Qué trabajo contrata el cliente?', pa.jtbd_analysis, C.teal, [204,251,241], [15,118,110]);
+      infoCard('Â¿QuÃ© trabajo contrata el cliente?', pa.jtbd_analysis, C.teal, [204,251,241], [15,118,110]);
     }
 
-    // Mom Test — lista numerada en cards
+    // Mom Test â€” lista numerada en cards
     if ((pa.validation_playbook?.length ?? 0) > 0) {
-      sectionHeader('Mom Test — Pasos de Validación', C.teal);
+      sectionHeader('Mom Test â€” Pasos de ValidaciÃ³n', C.teal);
       drawTable(
-        ['#', 'Paso de Validación'],
+        ['#', 'Paso de ValidaciÃ³n'],
         pa.validation_playbook.map((step, i) => [String(i + 1), step]),
         [12, CON_W - 12],
         C.teal,
       );
     }
 
-    // GTM — card azul
+    // GTM â€” card azul
     if (pa.gtm_and_growth_plan) {
       sectionHeader('Plan GTM y Crecimiento', C.blue);
-      infoCard('Canal de Adquisición Recomendado', pa.gtm_and_growth_plan, C.blue, [219,234,254], [30,64,175]);
+      infoCard('Canal de AdquisiciÃ³n Recomendado', pa.gtm_and_growth_plan, C.blue, [219,234,254], [30,64,175]);
     }
 
-    // Producto & IA — card índigo
+    // Producto & IA â€” card Ã­ndigo
     if (pa.product_ai_strategy) {
       sectionHeader('Estrategia de Producto e IA', C.indigo);
-      infoCard('Evaluación IA vs. Blue Ocean', pa.product_ai_strategy, C.indigo, [224,231,255], [55,48,163]);
+      infoCard('EvaluaciÃ³n IA vs. Blue Ocean', pa.product_ai_strategy, C.indigo, [224,231,255], [55,48,163]);
     }
 
-    // Unit Economics Check — card ámbar
+    // Unit Economics Check â€” card Ã¡mbar
     if (pa.unit_economics_check) {
-      sectionHeader('Diagnóstico de Unit Economics', C.amber);
+      sectionHeader('DiagnÃ³stico de Unit Economics', C.amber);
       infoCard('Viabilidad Financiera con Benchmarks', pa.unit_economics_check, C.amber, [254,243,199], [146,64,14]);
     }
 
-    // Tech & Legal Stack — card gris
+    // Tech & Legal Stack â€” card gris
     if (pa.tech_and_legal_stack) {
-      sectionHeader('Stack Técnico y Legal', C.midGray);
+      sectionHeader('Stack TÃ©cnico y Legal', C.midGray);
       infoCard('No-Code Recomendado + Alertas Regulatorias', pa.tech_and_legal_stack, C.midGray, [241,245,249], [51,65,85]);
     }
 
-    // Funding Verdict — card verde destacada
-    if (pa.funding_verdict) infoCard('Veredicto de Inversión', pa.funding_verdict, C.green, [209,250,229], [6,95,70]);
+    // Funding Verdict â€” card verde destacada
+    if (pa.funding_verdict) infoCard('Veredicto de InversiÃ³n', pa.funding_verdict, C.green, [209,250,229], [6,95,70]);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 15 · INSTRUMENTOS CORFO (solo si target_country === 'Chile')
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 15 Â· INSTRUMENTOS CORFO (solo si target_country === 'Chile')
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.target_country === 'Chile' && data.business_stage && data.idea_industry) {
     const corfoMatches = matchCorfoInstruments({
       stage: data.business_stage,
@@ -1816,18 +1816,18 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       sectionHeader('Instrumentos CORFO Aplicables', [220, 38, 38]);
 
       const fmtClp = (n: number | null) => {
-        if (!n) return '—';
+        if (!n) return 'â€”';
         return n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(0)}M CLP` : `$${(n / 1_000).toFixed(0)}K CLP`;
       };
       const CAT_LABEL: Record<string, string> = {
-        seed: 'Capital Semilla', innovation: 'Innovación',
-        acceleration: 'Aceleración', internationalization: 'Internacionalización', credit: 'Crédito',
+        seed: 'Capital Semilla', innovation: 'InnovaciÃ³n',
+        acceleration: 'AceleraciÃ³n', internationalization: 'InternacionalizaciÃ³n', credit: 'CrÃ©dito',
       };
 
       drawTable(
-        ['Instrumento', 'Categoría', 'Monto Máximo', 'Descripción'],
+        ['Instrumento', 'CategorÃ­a', 'Monto MÃ¡ximo', 'DescripciÃ³n'],
         corfoMatches.slice(0, 5).map(({ instrument: inst }) => [
-          `${inst.acronym} — ${inst.name}`,
+          `${inst.acronym} â€” ${inst.name}`,
           CAT_LABEL[inst.category] ?? inst.category,
           fmtClp(inst.maxAmountClp),
           inst.description,
@@ -1840,11 +1840,11 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       if (corfoMatches[0]?.instrument.requirements?.length) {
         checkPage(20);
         doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
-        doc.text(`Requisitos — ${corfoMatches[0].instrument.name}:`, MARGIN, y);
+        doc.text(`Requisitos â€” ${corfoMatches[0].instrument.name}:`, MARGIN, y);
         y += 5;
         for (const req of corfoMatches[0].instrument.requirements) {
           checkPage(7);
-          const rL = doc.splitTextToSize(`• ${req}`, CON_W - 4);
+          const rL = doc.splitTextToSize(`â€¢ ${req}`, CON_W - 4);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...T.bodyMid);
           doc.text(rL, MARGIN + 2, y);
           y += rL.length * 4 + 1;
@@ -1854,13 +1854,13 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 15b · DUE DILIGENCE SCORE (si disponible)
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 15b Â· DUE DILIGENCE SCORE (si disponible)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.due_diligence) {
     const dd = data.due_diligence;
     checkPage(60);
-    sectionHeader('Due Diligence Score — Preparación para Ronda de Inversión', [124, 111, 247]);
+    sectionHeader('Due Diligence Score â€” PreparaciÃ³n para Ronda de InversiÃ³n', [124, 111, 247]);
 
     // Score hero row
     const ddColor: [number,number,number] = dd.total >= 70 ? C.green : dd.total >= 45 ? C.amber : C.red;
@@ -1874,7 +1874,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...ddColor);
     doc.text(readinessLabel, MARGIN + 40, y + 9);
     doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.gray);
-    doc.text('Score de preparación para due diligence de inversores VC.', MARGIN + 40, y + 15);
+    doc.text('Score de preparaciÃ³n para due diligence de inversores VC.', MARGIN + 40, y + 15);
     y += 24;
 
     // 5 dimension bars
@@ -1883,7 +1883,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       { key: 'legal',      label: 'Legal' },
       { key: 'mercado',    label: 'Mercado' },
       { key: 'equipo',     label: 'Equipo' },
-      { key: 'traccion',   label: 'Tracción' },
+      { key: 'traccion',   label: 'TracciÃ³n' },
     ];
     const barW = (CON_W - 40) / DIMS.length;
     for (const [i, dim] of DIMS.entries()) {
@@ -1908,7 +1908,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     if (dd.topGaps.length > 0) {
       checkPage(30);
       doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
-      doc.text('Gaps críticos detectados:', MARGIN, y);
+      doc.text('Gaps crÃ­ticos detectados:', MARGIN, y);
       y += 6;
       for (const gap of dd.topGaps.slice(0, 5)) {
         checkPage(10);
@@ -1927,24 +1927,24 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     doc.setFillColor(124, 111, 247);
     doc.roundedRect(MARGIN, y, CON_W, 12, 2, 2, 'F');
     doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-    const stampText = 'Audited by ValidateAI Pro · validateai-mu.vercel.app';
+    const stampText = 'Audited by ValidateAI Pro Â· validus.scouttech.lat';
     doc.text(stampText, MARGIN + (CON_W - doc.getTextWidth(stampText)) / 2, y + 8);
     y += 18;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 16 · MENTORES RECOMENDADOS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 16 Â· MENTORES RECOMENDADOS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (data.mentors?.length) {
     checkPage(30);
     sectionHeader('Mentores Recomendados por IA', C.teal);
 
     drawTable(
-      ['Mentor', 'Especialidades', 'Bio', 'Sesión'],
+      ['Mentor', 'Especialidades', 'Bio', 'SesiÃ³n'],
       data.mentors.map((m) => [
         m.name,
         (m.expertise ?? []).join(', '),
-        m.bio ?? '—',
+        m.bio ?? 'â€”',
         m.session_price_clp ? `$${(m.session_price_clp / 1000).toFixed(0)}K CLP` : 'Consultar',
       ]),
       [32, 40, CON_W - 112, 28],
@@ -1952,9 +1952,9 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // FOOTER EN TODAS LAS PÁGINAS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // FOOTER EN TODAS LAS PÃGINAS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const pageCount = (doc as unknown as { internal: { getNumberOfPages(): number } })
     .internal.getNumberOfPages();
 
@@ -1967,8 +1967,8 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.setFillColor(...C.teal);
       doc.rect(0, 279, PAGE_W, 0.5, 'F');
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.darkMid);
-      doc.text('ValidateAI · valida tu idea antes de construirla', MARGIN, 286);
-      doc.text(`Página ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`Página ${i} de ${pageCount}`), 286);
+      doc.text('ValidateAI Â· valida tu idea antes de construirla', MARGIN, 286);
+      doc.text(`PÃ¡gina ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`PÃ¡gina ${i} de ${pageCount}`), 286);
 
     } else if (theme === 'gradient') {
       doc.setFillColor(...C.navy);
@@ -1976,25 +1976,25 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.setFillColor(...C.teal);
       doc.rect(0, 279, PAGE_W, 0.8, 'F');
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.darkMid);
-      doc.text('ValidateAI · valida tu idea antes de construirla', MARGIN, 286);
-      doc.text(`Página ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`Página ${i} de ${pageCount}`), 286);
+      doc.text('ValidateAI Â· valida tu idea antes de construirla', MARGIN, 286);
+      doc.text(`PÃ¡gina ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`PÃ¡gina ${i} de ${pageCount}`), 286);
 
     } else {
-      // Clean: línea superior teal en el footer
+      // Clean: lÃ­nea superior teal en el footer
       doc.setFillColor(...C.teal);
       doc.rect(0, 279, PAGE_W, 0.8, 'F');
       doc.setDrawColor(...C.lightGray);
       doc.setLineWidth(0.25);
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.gray);
-      doc.text('ValidateAI · valida tu idea antes de construirla', MARGIN, 285);
-      doc.text(`Página ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`Página ${i} de ${pageCount}`), 285);
+      doc.text('ValidateAI Â· valida tu idea antes de construirla', MARGIN, 285);
+      doc.text(`PÃ¡gina ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`PÃ¡gina ${i} de ${pageCount}`), 285);
     }
   }
 
   doc.save(`ValidateAI_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`);
 }
 
-// ── Premium PDF (react-pdf/renderer) ─────────────────────────────────────────
+// â”€â”€ Premium PDF (react-pdf/renderer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Generates a Blob and triggers a browser download.
 
 export async function generatePremiumPDF(data: PDFData): Promise<void> {

@@ -1,61 +1,60 @@
-import { Component, type ReactNode } from 'react';
+import { Component, type ReactNode, type ErrorInfo } from 'react';
 
 interface Props {
   children: ReactNode;
+  label?: string;
+  fallback?: ReactNode;
+  onError?: (error: Error, info: ErrorInfo) => void;
 }
 
 interface State {
-  hasError: boolean;
-  message: string;
+  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, message: '' };
+  state: State = { error: null };
+
+  static getDerivedStateFromError(error: Error): State {
+    return { error };
   }
 
-  static getDerivedStateFromError(error: unknown): State {
-    return {
-      hasError: true,
-      message: error instanceof Error ? error.message : 'Error inesperado',
-    };
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(
+      `[ErrorBoundary:${this.props.label ?? 'unknown'}]`,
+      error.message,
+      info.componentStack?.slice(0, 300),
+    );
+    this.props.onError?.(error, info);
   }
-
-  handleReset = () => {
-    this.setState({ hasError: false, message: '' });
-  };
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] px-4">
-          <div className="max-w-md w-full bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm p-8 text-center">
-            <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-2">Algo salió mal</h2>
-            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-6 font-mono bg-gray-50 dark:bg-[#0A0A0F] rounded-lg p-3">
-              {this.state.message}
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={this.handleReset}
-                className="px-5 py-2.5 bg-teal-500 text-white font-semibold rounded-xl
-                           hover:bg-teal-600 transition text-sm"
-              >
-                Intentar de nuevo
-              </button>
-              <button
-                onClick={() => window.location.replace('/')}
-                className="px-5 py-2.5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-[#8B8AA0] font-medium
-                           rounded-xl hover:bg-gray-50 dark:bg-[#0A0A0F] transition text-sm"
-              >
-                Ir al inicio
-              </button>
-            </div>
-          </div>
+    if (!this.state.error) return this.props.children;
+
+    return this.props.fallback ?? (
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center space-y-3">
+        <svg
+          className="w-8 h-8 text-red-400/60 mx-auto"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+          />
+        </svg>
+        <div>
+          <p className="text-sm font-semibold text-red-400">
+            {this.props.label ? `${this.props.label} no disponible` : 'Error al cargar componente'}
+          </p>
+          <p className="text-xs text-red-400/50 mt-1 font-mono">
+            {this.state.error.message.slice(0, 120)}
+          </p>
         </div>
-      );
-    }
-    return this.props.children;
+        <button
+          onClick={() => this.setState({ error: null })}
+          className="text-xs text-red-400/70 hover:text-red-400 underline underline-offset-2 transition-colors"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 }

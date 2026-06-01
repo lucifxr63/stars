@@ -1,18 +1,18 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ]
 
-// ── OWASP LLM01: Input Sanitization ──────────────────────────────────────────
+// â”€â”€ OWASP LLM01: Input Sanitization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Bloquea patrones de prompt injection antes de que el texto del fundador
-// llegue al modelo. Un PDF o formulario malicioso podría contener instrucciones
+// llegue al modelo. Un PDF o formulario malicioso podrÃ­a contener instrucciones
 // ocultas que sobrescriban el system prompt o expongan secrets de entorno.
 //
-// Referencia: OWASP Top 10 for LLM Applications 2025 — LLM01 Prompt Injection
+// Referencia: OWASP Top 10 for LLM Applications 2025 â€” LLM01 Prompt Injection
 const INJECTION_PATTERNS: { pattern: RegExp; label: string }[] = [
   { pattern: /ignore\s+(all\s+)?(previous|prior|your)\s+instructions/i,  label: 'override_instructions' },
   { pattern: /forget\s+(everything|all|your\s+system)/i,                  label: 'forget_context' },
@@ -28,7 +28,7 @@ const INJECTION_PATTERNS: { pattern: RegExp; label: string }[] = [
   { pattern: /\$\{.*?\}/,                                                 label: 'js_template_injection' },
 ]
 
-const MAX_INPUT_CHARS = 4_000  // Límite razonable para descripción de startup
+const MAX_INPUT_CHARS = 4_000  // LÃ­mite razonable para descripciÃ³n de startup
 
 interface SanitizeResult {
   safe: boolean
@@ -39,7 +39,7 @@ interface SanitizeResult {
 function sanitizeInput(text: string): SanitizeResult {
   if (!text || typeof text !== 'string') return { safe: false, sanitized: '', flags: ['invalid_type'] }
 
-  // Límite de longitud — textos excesivamente largos pueden ser vectores de ataque
+  // LÃ­mite de longitud â€” textos excesivamente largos pueden ser vectores de ataque
   const truncated = text.slice(0, MAX_INPUT_CHARS)
 
   const flags: string[] = []
@@ -81,7 +81,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // ── Auth ─────────────────────────────────────────────────────────────────
+    // â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
@@ -97,8 +97,8 @@ serve(async (req) => {
       })
     }
 
-    // ── Rate limit: 5 anonimizaciones/día por usuario ────────────────────────
-    // Consulta training_data_audit (privada) — training_data ya no tiene user_id
+    // â”€â”€ Rate limit: 5 anonimizaciones/dÃ­a por usuario â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Consulta training_data_audit (privada) â€” training_data ya no tiene user_id
     const todayStart = new Date()
     todayStart.setUTCHours(0, 0, 0, 0)
     const { count: callsToday } = await supabaseAdmin
@@ -107,13 +107,13 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .gte('contributed_at', todayStart.toISOString())
     if ((callsToday ?? 0) >= 5) {
-      return new Response(JSON.stringify({ error: 'rate_limit', message: 'Límite diario de anonimizaciones alcanzado.' }), {
+      return new Response(JSON.stringify({ error: 'rate_limit', message: 'LÃ­mite diario de anonimizaciones alcanzado.' }), {
         status: 429, headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    // 1. Obtener la validación
+    // 1. Obtener la validaciÃ³n
     const { data: validation, error } = await supabaseAdmin
       .from('validations')
       .select('idea_name, idea_description, idea_industry, target_country, business_model, customer_segment, value_proposition, validation_score, score_breakdown, risk_analysis')
@@ -133,25 +133,25 @@ serve(async (req) => {
     const sanitizeResult = sanitizeInput(fieldsToSanitize)
 
     if (!sanitizeResult.safe) {
-      // Loguear el intento de inyección para auditoría — no exponer los flags al cliente
+      // Loguear el intento de inyecciÃ³n para auditorÃ­a â€” no exponer los flags al cliente
       console.warn(`[anonymize-idea] Prompt injection bloqueado para user_id=${user.id}`, {
         flags: sanitizeResult.flags,
         validation_id,
       })
-      // Continuar con el texto sanitizado (no bloqueamos al usuario legítimo que
-      // accidentalmente usó una frase que coincide con un patrón).
-      // Si el porcentaje de flags es alto (>3), sí bloqueamos.
+      // Continuar con el texto sanitizado (no bloqueamos al usuario legÃ­timo que
+      // accidentalmente usÃ³ una frase que coincide con un patrÃ³n).
+      // Si el porcentaje de flags es alto (>3), sÃ­ bloqueamos.
       if (sanitizeResult.flags.length > 3) {
         return new Response(JSON.stringify({
           error: 'input_rejected',
-          message: 'El texto contiene contenido no permitido. Revisa la descripción de tu idea.',
+          message: 'El texto contiene contenido no permitido. Revisa la descripciÃ³n de tu idea.',
         }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
       }
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 
-    // Usar texto sanitizado — los campos individuales también pasan por sanitizeInput
+    // Usar texto sanitizado â€” los campos individuales tambiÃ©n pasan por sanitizeInput
     const sanitizeName    = sanitizeInput(validation.idea_name ?? '').sanitized
     const sanitizeDesc    = sanitizeInput(validation.idea_description ?? '').sanitized
     const sanitizeSegment = sanitizeInput(validation.customer_segment ?? '').sanitized
@@ -159,7 +159,7 @@ serve(async (req) => {
 
     const rawText = `
     Nombre: ${sanitizeName}
-    Descripción: ${sanitizeDesc}
+    DescripciÃ³n: ${sanitizeDesc}
     Cliente: ${sanitizeSegment}
     Propuesta: ${sanitizeProp}
     `
@@ -175,8 +175,8 @@ serve(async (req) => {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 500,
         temperature: 0,
-        system: `Eres un asistente experto en privacidad y anonimización de datos. 
-Tu tarea es leer la descripción de una startup y reescribirla en 2-3 frases de manera GENÉRICA y COMPLETAMENTE SECRETA, eliminando cualquier dato identificable, nombres propios, nombres de empresas reales, locaciones precisas o datos sensibles. Redacta el resumen preservando únicamente la mecánica del problema y solución. Responde SOLO con el texto anonimizado.`,
+        system: `Eres un asistente experto en privacidad y anonimizaciÃ³n de datos. 
+Tu tarea es leer la descripciÃ³n de una startup y reescribirla en 2-3 frases de manera GENÃ‰RICA y COMPLETAMENTE SECRETA, eliminando cualquier dato identificable, nombres propios, nombres de empresas reales, locaciones precisas o datos sensibles. Redacta el resumen preservando Ãºnicamente la mecÃ¡nica del problema y soluciÃ³n. Responde SOLO con el texto anonimizado.`,
         messages: [{ role: 'user', content: rawText }]
       }),
     })
@@ -192,7 +192,7 @@ Tu tarea es leer la descripción de una startup y reescribirla en 2-3 frases de 
       .map((b) => b.text ?? '')
       .join('')
 
-    // 3. Guardar en training_data (sin user_id — anónimo) + audit trail separado
+    // 3. Guardar en training_data (sin user_id â€” anÃ³nimo) + audit trail separado
     const scoresJSON = {
       score: validation.validation_score,
       breakdown: validation.score_breakdown,

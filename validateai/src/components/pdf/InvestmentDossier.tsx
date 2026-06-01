@@ -1,4 +1,4 @@
-import {
+﻿import {
   Document,
   Page,
   View,
@@ -17,7 +17,7 @@ import type {
   ScoreBreakdown,
 } from '@/types/validation';
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function scoreColor(score: number): string {
   if (score >= 70) return colors.green;
@@ -34,17 +34,17 @@ function scoreLabel(score: number): string {
 function formatTier(tier: MarketSizingTier): string {
   const lo = tier.value_low.toLocaleString('es-CL');
   const hi = tier.value_high.toLocaleString('es-CL');
-  return `${tier.currency} ${lo} – ${hi}`;
+  return `${tier.currency} ${lo} â€“ ${hi}`;
 }
 
-// ── Radar Chart (SVG) ─────────────────────────────────────────────────────────
+// â”€â”€ Radar Chart (SVG) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const RADAR_KEYS: { key: keyof ScoreBreakdown; label: string }[] = [
   { key: 'problem',     label: 'Problema' },
   { key: 'market',      label: 'Mercado' },
   { key: 'competition', label: 'Competencia' },
-  { key: 'solution',    label: 'Solución' },
-  { key: 'execution',   label: 'Ejecución' },
+  { key: 'solution',    label: 'SoluciÃ³n' },
+  { key: 'execution',   label: 'EjecuciÃ³n' },
 ];
 
 const CX = 80;
@@ -115,7 +115,7 @@ function RadarChart({ sb }: { sb: ScoreBreakdown }) {
           );
         })}
 
-        {/* Data polygon — filled area */}
+        {/* Data polygon â€” filled area */}
         <Polygon
           points={dataPolygon}
           fill={`${colors.accent}33`}
@@ -153,12 +153,12 @@ function RadarChart({ sb }: { sb: ScoreBreakdown }) {
   );
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+// â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function Footer({ pageLabel }: { pageLabel: string }) {
   return (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>ValidateAI · Investment Dossier</Text>
+      <Text style={styles.footerText}>ValidateAI Â· Investment Dossier</Text>
       <Text style={styles.footerText}>{pageLabel}</Text>
     </View>
   );
@@ -169,7 +169,7 @@ function BulletList({ items }: { items: string[] }) {
     <View>
       {items.map((item, i) => (
         <View key={i} style={styles.listItem}>
-          <Text style={styles.bullet}>›</Text>
+          <Text style={styles.bullet}>â€º</Text>
           <Text style={styles.listText}>{item}</Text>
         </View>
       ))}
@@ -178,7 +178,7 @@ function BulletList({ items }: { items: string[] }) {
 }
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
-  // ScoreBreakdown values are 0–100
+  // ScoreBreakdown values are 0â€“100
   const display = Math.round(Math.min(value, 100));
   const color = scoreColor(display);
   return (
@@ -194,7 +194,7 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-// ── Cover Page ─────────────────────────────────────────────────────────────────
+// â”€â”€ Cover Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CoverPage({ data }: { data: PDFData }) {
   const score = data.validation_score ?? 0;
@@ -208,7 +208,7 @@ function CoverPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.coverPage}>
       {/* Hero banner */}
       <View style={styles.coverHero}>
-        <Text style={styles.coverBadge}>Investment Dossier · ValidateAI</Text>
+        <Text style={styles.coverBadge}>Investment Dossier Â· ValidateAI</Text>
 
         <Text style={styles.coverTitle}>{data.idea_name ?? 'Startup Report'}</Text>
 
@@ -250,7 +250,7 @@ function CoverPage({ data }: { data: PDFData }) {
           <View style={styles.coverMetaItem}>
             <Text style={styles.coverMetaLabel}>Mercado</Text>
             <Text style={styles.coverMetaValue}>
-              {data.target_country}{data.target_region ? ` · ${data.target_region}` : ''}
+              {data.target_country}{data.target_region ? ` Â· ${data.target_region}` : ''}
             </Text>
           </View>
         )}
@@ -274,7 +274,7 @@ function CoverPage({ data }: { data: PDFData }) {
         </View>
       </View>
 
-      {/* "Audited by ValidateAI Pro" stamp — PLG watermark */}
+      {/* "Audited by ValidateAI Pro" stamp â€” PLG watermark */}
       {data.due_diligence && (
         <View style={{
           marginHorizontal: 40,
@@ -288,7 +288,7 @@ function CoverPage({ data }: { data: PDFData }) {
           gap: 6,
         }}>
           <Text style={{ fontSize: 7, color: '#ffffff', fontWeight: 'bold', letterSpacing: 0.5 }}>
-            ✓ AUDITED BY VALIDATEAI PRO · validateai-mu.vercel.app
+            âœ“ AUDITED BY VALIDATEAI PRO Â· validus.scouttech.lat
           </Text>
           <Text style={{ fontSize: 7, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>
             DD Score: {data.due_diligence.total}/100
@@ -299,7 +299,7 @@ function CoverPage({ data }: { data: PDFData }) {
   );
 }
 
-// ── Executive Summary Page ─────────────────────────────────────────────────────
+// â”€â”€ Executive Summary Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ExecutiveSummaryPage({ data }: { data: PDFData }) {
   const summary    = data.summary as Record<string, unknown> | undefined;
@@ -313,10 +313,10 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Resumen Ejecutivo</Text>
-        <Text style={styles.pageLabel}>01 · Executive Summary</Text>
+        <Text style={styles.pageLabel}>01 Â· Executive Summary</Text>
       </View>
 
-      {/* Score Breakdown — radar + bars side by side */}
+      {/* Score Breakdown â€” radar + bars side by side */}
       <View style={[styles.card, { marginBottom: 16 }]} wrap={false}>
         <Text style={styles.cardTitle}>Score Breakdown</Text>
         {sb ? (
@@ -330,8 +330,8 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
               <ScoreBar label="Problema"    value={sb.problem} />
               <ScoreBar label="Mercado"     value={sb.market} />
               <ScoreBar label="Competencia" value={sb.competition} />
-              <ScoreBar label="Solución"    value={sb.solution} />
-              <ScoreBar label="Ejecución"   value={sb.execution} />
+              <ScoreBar label="SoluciÃ³n"    value={sb.solution} />
+              <ScoreBar label="EjecuciÃ³n"   value={sb.execution} />
             </View>
           </View>
         ) : (
@@ -344,7 +344,7 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
       {/* Feedback */}
       {feedback ? (
         <View style={styles.card} wrap={false}>
-          <Text style={styles.cardTitle}>Evaluación General</Text>
+          <Text style={styles.cardTitle}>EvaluaciÃ³n General</Text>
           <Text style={styles.cardBody}>{feedback}</Text>
         </View>
       ) : null}
@@ -367,17 +367,17 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
 
       {nextSteps.length > 0 && (
         <View style={styles.card} wrap={false}>
-          <Text style={styles.cardTitle}>Próximos Pasos</Text>
+          <Text style={styles.cardTitle}>PrÃ³ximos Pasos</Text>
           <BulletList items={nextSteps} />
         </View>
       )}
 
-      <Footer pageLabel="01 · Resumen Ejecutivo" />
+      <Footer pageLabel="01 Â· Resumen Ejecutivo" />
     </Page>
   );
 }
 
-// ── Market & Competition Page ──────────────────────────────────────────────────
+// â”€â”€ Market & Competition Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function MarketPage({ data }: { data: PDFData }) {
   const ms = data.market_sizing;
@@ -387,13 +387,13 @@ function MarketPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Mercado y Competencia</Text>
-        <Text style={styles.pageLabel}>02 · Market & Competition</Text>
+        <Text style={styles.pageLabel}>02 Â· Market & Competition</Text>
       </View>
 
       <View style={styles.twoCol}>
         {/* Market Sizing */}
         <View style={styles.col}>
-          <Text style={styles.sectionTitle}>Tamaño de Mercado</Text>
+          <Text style={styles.sectionTitle}>TamaÃ±o de Mercado</Text>
           {ms ? (
             <>
               {[
@@ -421,7 +421,7 @@ function MarketPage({ data }: { data: PDFData }) {
 
         {/* Competitive Analysis */}
         <View style={styles.col}>
-          <Text style={styles.sectionTitle}>Análisis Competitivo</Text>
+          <Text style={styles.sectionTitle}>AnÃ¡lisis Competitivo</Text>
           {ca ? (
             <>
               {ca.competitors?.slice(0, 3).map((c: CompetitorEntry, i: number) => (
@@ -432,7 +432,7 @@ function MarketPage({ data }: { data: PDFData }) {
                   <Text style={styles.cardBody}>{c.description}</Text>
                   {c.strengths?.length > 0 && (
                     <Text style={[styles.cardBody, { color: colors.green, marginTop: 4 }]}>
-                      + {c.strengths.join(' · ')}
+                      + {c.strengths.join(' Â· ')}
                     </Text>
                   )}
                 </View>
@@ -447,7 +447,7 @@ function MarketPage({ data }: { data: PDFData }) {
           ) : (
             <View style={styles.card}>
               <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>Análisis competitivo no disponible</Text>
+                <Text style={styles.placeholderText}>AnÃ¡lisis competitivo no disponible</Text>
               </View>
             </View>
           )}
@@ -462,12 +462,12 @@ function MarketPage({ data }: { data: PDFData }) {
         </View>
       )}
 
-      <Footer pageLabel="02 · Mercado y Competencia" />
+      <Footer pageLabel="02 Â· Mercado y Competencia" />
     </Page>
   );
 }
 
-// ── Financials Page ────────────────────────────────────────────────────────────
+// â”€â”€ Financials Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function FinancialsPage({ data }: { data: PDFData }) {
   const ue = data.unit_economics;
@@ -479,7 +479,7 @@ function FinancialsPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Finanzas y Riesgos</Text>
-        <Text style={styles.pageLabel}>03 · Financials & Risk</Text>
+        <Text style={styles.pageLabel}>03 Â· Financials & Risk</Text>
       </View>
 
       <View style={styles.twoCol}>
@@ -489,10 +489,10 @@ function FinancialsPage({ data }: { data: PDFData }) {
             <Text style={styles.sectionTitle}>Unit Economics</Text>
             <View style={styles.card} wrap={false}>
               {[
-                ['CAC',          `${ue.cac.currency} ${ue.cac.min.toLocaleString()} – ${ue.cac.max.toLocaleString()}`],
-                ['LTV',          `${ue.ltv.currency} ${ue.ltv.min.toLocaleString()} – ${ue.ltv.max.toLocaleString()}`],
+                ['CAC',          `${ue.cac.currency} ${ue.cac.min.toLocaleString()} â€“ ${ue.cac.max.toLocaleString()}`],
+                ['LTV',          `${ue.ltv.currency} ${ue.ltv.min.toLocaleString()} â€“ ${ue.ltv.max.toLocaleString()}`],
                 ['LTV/CAC',      `${ue.ltvCacRatio.value.toFixed(1)}x (${ue.ltvCacRatio.assessment})`],
-                ['Payback',      `${ue.paybackMonths.min}–${ue.paybackMonths.max} meses`],
+                ['Payback',      `${ue.paybackMonths.min}â€“${ue.paybackMonths.max} meses`],
                 ['Break-even',   `${ue.breakEvenUsers.toLocaleString()} usuarios`],
                 ['Churn mensual',`${ue.monthlyChurnEstimate}%`],
               ].map(([label, val], i) => (
@@ -542,12 +542,12 @@ function FinancialsPage({ data }: { data: PDFData }) {
         )}
       </View>
 
-      <Footer pageLabel="03 · Finanzas y Riesgos" />
+      <Footer pageLabel="03 Â· Finanzas y Riesgos" />
     </Page>
   );
 }
 
-// ── Investment Strategy Page ───────────────────────────────────────────────────
+// â”€â”€ Investment Strategy Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function InvestmentPage({ data }: { data: PDFData }) {
   const fr = data.fundraising_roadmap;
@@ -559,13 +559,13 @@ function InvestmentPage({ data }: { data: PDFData }) {
   return (
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Estrategia de Inversión</Text>
-        <Text style={styles.pageLabel}>04 · Investment Strategy</Text>
+        <Text style={styles.pageTitle}>Estrategia de InversiÃ³n</Text>
+        <Text style={styles.pageLabel}>04 Â· Investment Strategy</Text>
       </View>
 
       {pa?.funding_verdict && (
         <View style={[styles.card, { borderColor: colors.green + '44', borderWidth: 1.5 }]} wrap={false}>
-          <Text style={[styles.cardTitle, { color: colors.green }]}>Veredicto de Inversión</Text>
+          <Text style={[styles.cardTitle, { color: colors.green }]}>Veredicto de InversiÃ³n</Text>
           <Text style={styles.cardBody}>{pa.funding_verdict}</Text>
         </View>
       )}
@@ -582,7 +582,7 @@ function InvestmentPage({ data }: { data: PDFData }) {
               </Text>
               <Text style={styles.cardTitle}>Ticket Size</Text>
               <Text style={[styles.cardBody, { fontFamily: 'Helvetica-Bold', color: colors.white }]}>
-                {fr.suggested_ticket_size.currency} {fr.suggested_ticket_size.min.toLocaleString()} – {fr.suggested_ticket_size.max.toLocaleString()}
+                {fr.suggested_ticket_size.currency} {fr.suggested_ticket_size.min.toLocaleString()} â€“ {fr.suggested_ticket_size.max.toLocaleString()}
               </Text>
             </View>
             {fr.pitch_narrative && (
@@ -637,12 +637,12 @@ function InvestmentPage({ data }: { data: PDFData }) {
         )}
       </View>
 
-      <Footer pageLabel="04 · Inversión" />
+      <Footer pageLabel="04 Â· InversiÃ³n" />
     </Page>
   );
 }
 
-// ── Due Diligence Page ─────────────────────────────────────────────────────────
+// â”€â”€ Due Diligence Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function DueDiligencePage({ data }: { data: PDFData }) {
   const dd = data.due_diligence!;
@@ -657,7 +657,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
     { key: 'legal',      label: 'Legal'      },
     { key: 'mercado',    label: 'Mercado'    },
     { key: 'equipo',     label: 'Equipo'     },
-    { key: 'traccion',   label: 'Tracción'   },
+    { key: 'traccion',   label: 'TracciÃ³n'   },
   ];
 
   return (
@@ -668,7 +668,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
           DUE DILIGENCE SCORE
         </Text>
         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff' }}>
-          Preparación para Ronda de Inversión
+          PreparaciÃ³n para Ronda de InversiÃ³n
         </Text>
       </View>
 
@@ -684,15 +684,15 @@ function DueDiligencePage({ data }: { data: PDFData }) {
               <Text style={{ fontSize: 8, fontWeight: 'bold', color: scoreCol }}>{readinessLabel}</Text>
             </View>
             <Text style={{ fontSize: 8.5, color: '#475569', lineHeight: 1.5 }}>
-              Score de preparación evaluado en 5 dimensiones: Financiero, Legal, Mercado, Equipo y Tracción.
-              Un score de 80+ indica readiness para primera reunión con inversores VC.
+              Score de preparaciÃ³n evaluado en 5 dimensiones: Financiero, Legal, Mercado, Equipo y TracciÃ³n.
+              Un score de 80+ indica readiness para primera reuniÃ³n con inversores VC.
             </Text>
           </View>
         </View>
 
         {/* Dimension bars */}
         <Text style={{ fontSize: 8, fontWeight: 'bold', color: colors.muted, letterSpacing: 0.8, marginBottom: 10 }}>
-          DESGLOSE POR DIMENSIÓN
+          DESGLOSE POR DIMENSIÃ“N
         </Text>
         {DIMS.map(({ key, label }) => {
           const dim = dd.dimensions[key];
@@ -708,7 +708,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
               </View>
               {dim.gaps.length > 0 && (
                 <Text style={{ fontSize: 6.5, color: colors.muted, marginTop: 2 }}>
-                  {dim.gaps.slice(0, 2).join(' · ')}
+                  {dim.gaps.slice(0, 2).join(' Â· ')}
                 </Text>
               )}
             </View>
@@ -719,7 +719,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
         {dd.topGaps.length > 0 && (
           <View style={{ marginTop: 16 }}>
             <Text style={{ fontSize: 8, fontWeight: 'bold', color: colors.muted, letterSpacing: 0.8, marginBottom: 8 }}>
-              GAPS CRÍTICOS — QUÉ EXIGIRÁ UN INVERSOR
+              GAPS CRÃTICOS â€” QUÃ‰ EXIGIRÃ UN INVERSOR
             </Text>
             {dd.topGaps.slice(0, 5).map((gap, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
@@ -735,7 +735,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
         {/* Stamp */}
         <View style={{ marginTop: 20, padding: 8, backgroundColor: '#7C6FF7', borderRadius: 4, alignItems: 'center' }}>
           <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#ffffff', letterSpacing: 0.5 }}>
-            ✓ AUDITED BY VALIDATEAI PRO · validateai-mu.vercel.app
+            âœ“ AUDITED BY VALIDATEAI PRO Â· validus.scouttech.lat
           </Text>
         </View>
       </View>
@@ -743,7 +743,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
   );
 }
 
-// ── Root Document ──────────────────────────────────────────────────────────────
+// â”€â”€ Root Document â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function InvestmentDossier({ data }: { data: PDFData }) {
   return (

@@ -1,4 +1,4 @@
-// ⚠️  SETUP PENDIENTE — ver /validateai/SETUP_LEMONSQUEEZY.md
+﻿// âš ï¸  SETUP PENDIENTE â€” ver /validateai/SETUP_LEMONSQUEEZY.md
 // Requiere secrets: LEMONSQUEEZY_API_KEY, LS_STORE_ID, LS_VARIANT_BASIC/PRO/PREMIUM
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -7,7 +7,7 @@ const LS_API_KEY        = Deno.env.get('LEMONSQUEEZY_API_KEY')!;
 const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Variant IDs de Lemon Squeezy (Products → Variants en el dashboard)
+// Variant IDs de Lemon Squeezy (Products â†’ Variants en el dashboard)
 const VARIANT_IDS: Record<string, string> = {
   basic:   Deno.env.get('LS_VARIANT_BASIC')!,
   pro:     Deno.env.get('LS_VARIANT_PRO')!,
@@ -17,7 +17,7 @@ const VARIANT_IDS: Record<string, string> = {
 const LS_STORE_ID = Deno.env.get('LS_STORE_ID')!;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -66,7 +66,7 @@ serve(async (req) => {
 
     const variantId = VARIANT_IDS[tier];
     if (!variantId) {
-      return new Response(JSON.stringify({ error: `Tier inválido: ${tier}` }), {
+      return new Response(JSON.stringify({ error: `Tier invÃ¡lido: ${tier}` }), {
         status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
@@ -93,7 +93,7 @@ serve(async (req) => {
             product_options: {
               redirect_url: success_url,
               receipt_button_text: 'Ir al dashboard',
-              receipt_thank_you_note: '¡Gracias por confiar en ValidateAI! Tu plan ya está activo.',
+              receipt_thank_you_note: 'Â¡Gracias por confiar en ValidateAI! Tu plan ya estÃ¡ activo.',
             },
             checkout_options: {
               button_color: '#7C6FF7',

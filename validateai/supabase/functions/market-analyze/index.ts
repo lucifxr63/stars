@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const BDE_USER = Deno.env.get('BDE_USER')!
@@ -6,19 +6,19 @@ const BDE_PASS = Deno.env.get('BDE_PASS')!
 const BDE_BASE = 'https://si3.bcentral.cl/SieteRestWS/SieteRestWS.ashx'
 const INE_BASE = 'https://rapps.ine.cl:9292'
 
-// IDs validados contra el catálogo BCCh real.
-// Sector-specific: pendiente de validación (buscar con SearchSeries&searchParam=IMACEC).
+// IDs validados contra el catÃ¡logo BCCh real.
+// Sector-specific: pendiente de validaciÃ³n (buscar con SearchSeries&searchParam=IMACEC).
 // NOTE: This is currently empty and serves as a placeholder. We are only using macro series 
 // to avoid errors fetching unverified or unstable sector-specific indices from BCCh.
 const SECTOR_SERIES: Record<string, { id: string; label: string }[]> = {}
 
 const MACRO_SERIES = [
-  { id: 'G073.IPC.IND.2023.M',  label: 'IPC General (base 2023)' },   // validado ✓
-  { id: 'G073.IPC.V12.2023.M',  label: 'IPC variación anual' },        // validado ✓
+  { id: 'G073.IPC.IND.2023.M',  label: 'IPC General (base 2023)' },   // validado âœ“
+  { id: 'G073.IPC.V12.2023.M',  label: 'IPC variaciÃ³n anual' },        // validado âœ“
 ]
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ]
@@ -64,7 +64,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // ── Auth ─────────────────────────────────────────────────────────────────
+    // â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
@@ -80,7 +80,7 @@ serve(async (req) => {
       })
     }
 
-    // ── Middleware Ley 21.719 (Consentimiento) ──────────────────────────────────
+    // â”€â”€ Middleware Ley 21.719 (Consentimiento) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { data: consent } = await supabase
       .from('consent_logs')
       .select('id')
@@ -92,14 +92,14 @@ serve(async (req) => {
     if (!consent) {
       return new Response(JSON.stringify({ 
         error: 'consent_required', 
-        message: 'Debe aceptar los términos de la Ley 21.719 para continuar.' 
+        message: 'Debe aceptar los tÃ©rminos de la Ley 21.719 para continuar.' 
       }), {
         status: 403, headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    // ── Rate limit: 10 calls/día por usuario ─────────────────────────────────
+    // â”€â”€ Rate limit: 10 calls/dÃ­a por usuario â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const todayStart = new Date()
     todayStart.setUTCHours(0, 0, 0, 0)
     const { count: callsToday } = await supabase
@@ -108,13 +108,13 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .gte('created_at', todayStart.toISOString())
     if ((callsToday ?? 0) >= 10) {
-      return new Response(JSON.stringify({ error: 'rate_limit', message: 'Límite diario de análisis de mercado alcanzado.' }), {
+      return new Response(JSON.stringify({ error: 'rate_limit', message: 'LÃ­mite diario de anÃ¡lisis de mercado alcanzado.' }), {
         status: 429, headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    // ── PASO 1: Verificar caché ───────────────────────────────────────
+    // â”€â”€ PASO 1: Verificar cachÃ© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { data: existingInsight } = await supabase
       .from('market_ai_insights')
       .select('insights_json, caenes_code, raw_series')
@@ -133,7 +133,7 @@ serve(async (req) => {
       )
     }
 
-    // ── PASO 2: Clasificar con INE ────────────────────────────────────
+    // â”€â”€ PASO 2: Clasificar con INE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const inputText = `${industry} ${idea_description}`.toLowerCase().slice(0, 300)
 
     const { data: cachedClass } = await supabase
@@ -163,7 +163,7 @@ serve(async (req) => {
       }
     }
 
-    // ── PASO 3: Fetch series BCCh + datos del wizard en paralelo ─────
+    // â”€â”€ PASO 3: Fetch series BCCh + datos del wizard en paralelo â”€â”€â”€â”€â”€
     const sectorSeries = SECTOR_SERIES[caenes] ?? []
     const allSeries = [...sectorSeries, ...MACRO_SERIES]
     const { today, fiveYearsAgo } = getDateRange()
@@ -250,18 +250,18 @@ serve(async (req) => {
       if (bdeSettledResult.status === 'fulfilled') {
         bdeRes = bdeSettledResult.value.map((res, i) => {
           if (res.status === 'fulfilled') return res.value
-          warnings.push(`Serie BCCh ${allSeries[i].id} falló: ${res.reason?.message ?? res.reason}`)
+          warnings.push(`Serie BCCh ${allSeries[i].id} fallÃ³: ${res.reason?.message ?? res.reason}`)
           return { id: allSeries[i].id, label: allSeries[i].label, obs: [] }
         })
       } else {
-        warnings.push('Fallo catastrófico obteniendo series BCCh')
+        warnings.push('Fallo catastrÃ³fico obteniendo series BCCh')
       }
 
       const valData = settled[1].status === 'fulfilled' ? settled[1].value : null
-      if (settled[1].status === 'rejected') warnings.push('Validations DB falló: ' + settled[1].reason)
+      if (settled[1].status === 'rejected') warnings.push('Validations DB fallÃ³: ' + settled[1].reason)
 
       const compData = settled[2].status === 'fulfilled' ? settled[2].value : null
-      if (settled[2].status === 'rejected') warnings.push('Competitive AI Data DB falló: ' + settled[2].reason)
+      if (settled[2].status === 'rejected') warnings.push('Competitive AI Data DB fallÃ³: ' + settled[2].reason)
 
       let caCtx = ''
       if (settled[3].status === 'fulfilled') {
@@ -271,20 +271,20 @@ serve(async (req) => {
           caCtx += caData.indicators.slice(0, 5).map((i: any) => `- ${i.name_es}: ${i.value} ${i.unit}`).join('\n')
         }
       } else {
-        warnings.push('API Chile Abierto falló: ' + (settled[3].reason?.message || settled[3].reason))
+        warnings.push('API Chile Abierto fallÃ³: ' + (settled[3].reason?.message || settled[3].reason))
       }
 
       let mpCtx = ''
       if (settled[4].status === 'fulfilled') {
-        mpCtx = `\nMERCADO PÚBLICO (Licitaciones activas):\nSe detectó conectividad B2G exitosa.`
+        mpCtx = `\nMERCADO PÃšBLICO (Licitaciones activas):\nSe detectÃ³ conectividad B2G exitosa.`
       } else {
-        warnings.push('API Mercado Público falló: ' + (settled[4].reason?.message || settled[4].reason))
+        warnings.push('API Mercado PÃºblico fallÃ³: ' + (settled[4].reason?.message || settled[4].reason))
       }
 
       return [bdeRes, valData, compData, caCtx, mpCtx, warnings] as const
     })()
 
-    // ── PASO 4: Construir contexto y prompt ──────────────────────────
+    // â”€â”€ PASO 4: Construir contexto y prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const seriesSummary = bdeResults
       .filter(r => r.obs.length > 0)
       .map(r => {
@@ -294,7 +294,7 @@ serve(async (req) => {
       .join('\n')
 
     const wizardContext = validationData ? `
-CONTEXTO ESPECÍFICO DE LA IDEA:
+CONTEXTO ESPECÃFICO DE LA IDEA:
 - Segmento objetivo: ${validationData.customer_segment ?? 'no especificado'}
 - Pain points: ${(validationData.customer_pain_points ?? []).join(', ') || 'no especificados'}
 - Contexto del cliente: ${validationData.customer_context ?? 'no especificado'}
@@ -303,17 +303,17 @@ CONTEXTO ESPECÍFICO DE LA IDEA:
 - Tipo de MVP: ${validationData.mvp_type ?? 'no especificado'}` : ''
 
     const competitiveContext = competitiveData ? `
-COMPETIDORES IDENTIFICADOS (análisis previo con web_search):
+COMPETIDORES IDENTIFICADOS (anÃ¡lisis previo con web_search):
 ${JSON.stringify(competitiveData).slice(0, 1500)}` : ''
 
     const seriesWithData = bdeResults.filter(r => r.obs.length > 0).length
     const totalSeries = bdeResults.length
     const dataConfidence = Math.round((seriesWithData / totalSeries) * 100)
 
-    const prompt = `Eres un analista de mercado experto en Chile. Analiza el mercado para una startup en el sector "${industry}" (código CAENES: ${caenes}).
+    const prompt = `Eres un analista de mercado experto en Chile. Analiza el mercado para una startup en el sector "${industry}" (cÃ³digo CAENES: ${caenes}).
 
-DATOS BCCh REALES (${seriesWithData}/${totalSeries} series con datos — confianza: ${dataConfidence}%):
-${seriesSummary || 'Sin datos disponibles del BCCh — usar conocimiento general del sector en Chile'}
+DATOS BCCh REALES (${seriesWithData}/${totalSeries} series con datos â€” confianza: ${dataConfidence}%):
+${seriesSummary || 'Sin datos disponibles del BCCh â€” usar conocimiento general del sector en Chile'}
 ${wizardContext}
 ${competitiveContext}
 ${chileAbiertoContext}
@@ -326,28 +326,28 @@ Responde SOLO con este JSON (sin texto adicional, sin markdown):
   "data_confidence": ${dataConfidence},
   "trend": "creciente" | "estable" | "decreciente",
   "trend_description": "2-3 oraciones sobre la tendencia basada en los datos",
-  "trend_pct": número (variación % anual aproximada, puede ser negativo),
+  "trend_pct": nÃºmero (variaciÃ³n % anual aproximada, puede ser negativo),
   "key_metrics": [
-    { "label": "Tamaño del sector", "value": "X.X MMM CLP", "context": "..." },
+    { "label": "TamaÃ±o del sector", "value": "X.X MMM CLP", "context": "..." },
     { "label": "Crecimiento anual", "value": "X.X%", "context": "..." },
     { "label": "Desempleo sectorial", "value": "X.X%", "context": "..." }
   ],
-  "tam_clp": número en millones de CLP,
-  "sam_clp": número en millones de CLP (mercado accesible en Chile para esta idea específica),
-  "tam_description": "metodología de estimación del TAM y SAM",
+  "tam_clp": nÃºmero en millones de CLP,
+  "sam_clp": nÃºmero en millones de CLP (mercado accesible en Chile para esta idea especÃ­fica),
+  "tam_description": "metodologÃ­a de estimaciÃ³n del TAM y SAM",
   "entry_barriers": ["barrera 1", "barrera 2", "barrera 3"],
-  "regulation": "descripción de regulación relevante en Chile para este sector (SVS, CMF, Minsal, SII, etc.)",
+  "regulation": "descripciÃ³n de regulaciÃ³n relevante en Chile para este sector (SVS, CMF, Minsal, SII, etc.)",
   "key_players": [
     { "name": "nombre empresa", "type": "incumbente" | "startup" | "internacional", "notes": "..." }
   ],
-  "seasonality": "descripción de estacionalidad del sector en Chile (si aplica) o 'Sin estacionalidad relevante'",
-  "idea_fit": "análisis de qué tan bien encaja esta idea específica en el contexto del mercado chileno, basado en su segmento, pain points y propuesta de valor",
+  "seasonality": "descripciÃ³n de estacionalidad del sector en Chile (si aplica) o 'Sin estacionalidad relevante'",
+  "idea_fit": "anÃ¡lisis de quÃ© tan bien encaja esta idea especÃ­fica en el contexto del mercado chileno, basado en su segmento, pain points y propuesta de valor",
   "opportunities": ["oportunidad 1", "oportunidad 2", "oportunidad 3"],
   "risks": ["riesgo 1", "riesgo 2", "riesgo 3"],
-  "chile_context": "contexto específico de Chile: regulación, cultura de consumo, geografía, concentración RM vs regiones"
+  "chile_context": "contexto especÃ­fico de Chile: regulaciÃ³n, cultura de consumo, geografÃ­a, concentraciÃ³n RM vs regiones"
 }`
 
-    // ── PASO 5: Llamar GPT-4o-mini ────────────────────────────────────
+    // â”€â”€ PASO 5: Llamar GPT-4o-mini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -376,7 +376,7 @@ Responde SOLO con este JSON (sin texto adicional, sin markdown):
       insights = { error: 'parse_failed', caenes_code: caenes }
     }
 
-    // ── PASO 6: Persistir ─────────────────────────────────────────────
+    // â”€â”€ PASO 6: Persistir â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const rawSeriesPayload = bdeResults.map(r => ({
       id: r.id,
       label: r.label,

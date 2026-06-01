@@ -1,12 +1,12 @@
-// Edge Function: register-consent
-// Registra el consentimiento explícito del usuario bajo Ley N° 21.719 (Chile)
+﻿// Edge Function: register-consent
+// Registra el consentimiento explÃ­cito del usuario bajo Ley NÂ° 21.719 (Chile)
 // Usa SERVICE_ROLE_KEY para bypasear RLS e insertar en consent_logs.
 // El cliente NO tiene permiso de INSERT directo sobre esa tabla.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'https://validateai.cl',
   'https://www.validateai.cl',
   'http://localhost:5173',
@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Verificar sesión del usuario
+    // Verificar sesiÃ³n del usuario
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -66,7 +66,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const { ip_address, rut, consent_type = 'data_processing' } = body;
 
-    // Verificar si ya existe un registro válido (evitar duplicados)
+    // Verificar si ya existe un registro vÃ¡lido (evitar duplicados)
     const { data: existing } = await supabaseAdmin
       .from('consent_logs')
       .select('id')
@@ -76,7 +76,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (existing) {
-      // Ya tiene consentimiento — retornar OK sin duplicar
+      // Ya tiene consentimiento â€” retornar OK sin duplicar
       return new Response(JSON.stringify({ ok: true, already_registered: true }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

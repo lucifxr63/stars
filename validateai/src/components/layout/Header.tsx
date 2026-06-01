@@ -4,8 +4,16 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { getPreviewTier, setPreviewTier, type UserTier } from '@/hooks/useUserTier';
 
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
+
+const PREVIEW_COLORS: Record<UserTier, string> = {
+  free:    'bg-gray-800 text-gray-200 border-gray-600',
+  basic:   'bg-sky-900 text-sky-200 border-sky-600',
+  pro:     'bg-indigo-900 text-indigo-200 border-indigo-600',
+  premium: 'bg-violet-900 text-violet-200 border-violet-600',
+};
 
 export function Header() {
   const navigate = useNavigate();
@@ -13,11 +21,20 @@ export function Header() {
   const reset = useValidationStore((s) => s.reset);
   const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [previewTier, setPreviewTierState] = useState<UserTier | null>(() => getPreviewTier());
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setIsAdmin(data.user?.email === ADMIN_EMAIL);
     });
+  }, []);
+
+  useEffect(() => {
+    const onPreview = (e: Event) => {
+      setPreviewTierState((e as CustomEvent<UserTier | null>).detail);
+    };
+    window.addEventListener('validateai:tier-preview', onPreview);
+    return () => window.removeEventListener('validateai:tier-preview', onPreview);
   }, []);
 
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
@@ -40,6 +57,17 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-gray-50 dark:bg-[#0A0A0F]/80 backdrop-blur-xl">
+      {previewTier && (
+        <div className={`flex items-center justify-between px-4 py-1.5 text-xs font-bold border-b ${PREVIEW_COLORS[previewTier]}`}>
+          <span>Modo preview: vista como usuario <span className="uppercase">{previewTier}</span></span>
+          <button
+            onClick={() => { setPreviewTier(null); setPreviewTierState(null); }}
+            className="ml-4 underline opacity-80 hover:opacity-100"
+          >
+            Salir del preview
+          </button>
+        </div>
+      )}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 group shrink-0">

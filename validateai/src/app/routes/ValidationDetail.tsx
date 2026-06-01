@@ -28,6 +28,7 @@ import { SwotMatrix } from '@/components/shared/SwotMatrix';
 import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
+import { runThrottled } from '@/lib/throttle';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, trackDueDiligenceCompleted, trackEncuestasCTAClicked } from '@/hooks/useAnalytics';
@@ -39,6 +40,7 @@ import { FundraisingRoadmapCard } from '@/components/shared/FundraisingRoadmapCa
 import { TractionTracker } from '@/components/shared/TractionTracker';
 import { PlaybookAnalysisCard } from '@/components/shared/PlaybookAnalysisCard';
 import { DueDiligenceScoreCard } from '@/components/shared/DueDiligenceScoreCard';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import type {
   MarketSizing,
   CompetitiveAnalysis as CompetitiveAnalysisType,
@@ -116,6 +118,19 @@ interface ValidationFull {
 const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión', 'Due Diligence'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
 
+const TAB_REQUIRED_TIER: Partial<Record<DashboardTab, 'pro' | 'premium'>> = {
+  'Estrategia':    'pro',
+  'Finanzas':      'pro',
+  'Hoja de Ruta':  'pro',
+  'Inversión':     'pro',
+  'Due Diligence': 'premium',
+};
+
+const LOCK_BADGE: Record<'pro' | 'premium', string> = {
+  pro:     'bg-purple-500/15 text-purple-400 border border-purple-500/20',
+  premium: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
+};
+
 export function ValidationDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -149,6 +164,7 @@ export function ValidationDetail() {
   } | null>(null);
   const { callAI } = useAI();
   const { tier, isPro: isPremium } = useUserTier();
+  const isProLocked = tier === 'free' || tier === 'basic';
   const founderProfile = useValidationStore((s) => s.founderProfile);
   const [reportFeedback, setReportFeedback] = useState<string | null>(null);
   const sections = getUserSections(tier);
@@ -542,14 +558,34 @@ export function ValidationDetail() {
         founderCtx.founder_competency_scores   = founderProfile.competency_scores;
       }
 
-      const [riskResult, unitResult, founderResult, signalsResult, governanceResult, fundraisingResult] = await Promise.all([
-        missingAdvanced.risk        ? callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx)              : Promise.resolve(null),
-        missingAdvanced.unit        ? callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx)             : Promise.resolve(null),
-        missingAdvanced.founder     ? callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx)            : Promise.resolve(null),
-        missingAdvanced.signals     ? callAI<MarketSignals>(data.id, 6, 'market_signals', ctx)             : Promise.resolve(null),
-        missingAdvanced.governance  ? callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) : Promise.resolve(null),
-        missingAdvanced.fundraising ? callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx)   : Promise.resolve(null),
-      ]);
+      const advancedTasks = [
+        missingAdvanced.risk        ? () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx)               : null,
+        missingAdvanced.unit        ? () => callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx)              : null,
+        missingAdvanced.founder     ? () => callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx)             : null,
+        missingAdvanced.signals     ? () => callAI<MarketSignals>(data.id, 6, 'market_signals', ctx)              : null,
+        missingAdvanced.governance  ? () => callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) : null,
+        missingAdvanced.fundraising ? () => callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx)    : null,
+      ];
+
+      // Ejecutar secuencialmente con 700ms entre llamadas para evitar 429
+      const settled = await runThrottled(
+        advancedTasks.filter((t): t is () => Promise<unknown> => t !== null),
+        700,
+      );
+
+      // Mapear resultados de vuelta a los slots originales (conserva null para skipped)
+      let si = 0;
+      const pick = <T,>(flag: boolean): T | null => {
+        if (!flag) return null;
+        const r = settled[si++];
+        return r.status === 'fulfilled' ? (r.value as T) : null;
+      };
+      const riskResult       = pick<RiskAnalysis>(missingAdvanced.risk);
+      const unitResult       = pick<UnitEconomics>(missingAdvanced.unit);
+      const founderResult    = pick<FounderFit>(missingAdvanced.founder);
+      const signalsResult    = pick<MarketSignals>(missingAdvanced.signals);
+      const governanceResult = pick<GovernanceAssessment>(missingAdvanced.governance);
+      const fundraisingResult= pick<FundraisingRoadmap>(missingAdvanced.fundraising);
 
       // La edge function ya persistió cada resultado en la DB.
       // Actualizamos solo el estado local para refrescar la UI sin reload.
@@ -1152,6 +1188,13 @@ export function ValidationDetail() {
                 break;
             }
 
+            const requiredTier = TAB_REQUIRED_TIER[t];
+            const isLocked = requiredTier === 'premium'
+              ? tier !== 'premium'
+              : requiredTier === 'pro'
+                ? tier === 'free' || tier === 'basic'
+                : false;
+
             return (
               <button
                 key={t}
@@ -1164,9 +1207,13 @@ export function ValidationDetail() {
               >
                 <span className={isActive ? 'text-[#A78BFA]' : 'text-[#8B8AA0]'}>{tabIcon}</span>
                 <span className="whitespace-nowrap">{t}</span>
-                {hasData && (
+                {isLocked && requiredTier ? (
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${LOCK_BADGE[requiredTier]}`}>
+                    {requiredTier}
+                  </span>
+                ) : hasData ? (
                   <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#7C6FF7]' : 'bg-[#7C6FF7]/50'}`} title="Datos disponibles" />
-                )}
+                ) : null}
               </button>
             );
           })}
@@ -1458,6 +1505,14 @@ export function ValidationDetail() {
 
           {/* ── ESTRATEGIA ─────────────────────────────────────────────────── */}
           {activeTab === 'Estrategia' && (
+            isProLocked ? (
+              <LockedSection
+                title="Estrategia"
+                description="Plan GTM, análisis de mercado (TAM/SAM/SOM), SWOT y análisis competitivo."
+                requiredTier="pro"
+                hint="¿Cómo llegarás a tus primeros clientes y superarás a la competencia?"
+              />
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* GTM & Growth Plan */}
               {data.playbook_analysis?.gtm_and_growth_plan && (
@@ -1532,10 +1587,19 @@ export function ValidationDetail() {
                 ) : null}
               </div>
             </div>
+            )
           )}
 
           {/* ── FINANZAS ───────────────────────────────────────────────────── */}
           {activeTab === 'Finanzas' && (
+            isProLocked ? (
+              <LockedSection
+                title="Finanzas"
+                description="Unit Economics (CAC, LTV, break-even), proyecciones financieras y análisis de riesgos."
+                requiredTier="pro"
+                hint="¿Tiene sentido financiero tu modelo de negocio?"
+              />
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Unit Economics Check (RAG) */}
               {data.playbook_analysis?.unit_economics_check && (
@@ -1588,9 +1652,18 @@ export function ValidationDetail() {
                 ) : null}
               </div>
             </div>
+            )
           )}
           {/* ── HOJA DE RUTA ───────────────────────────────────────────────── */}
           {activeTab === 'Hoja de Ruta' && (
+            isProLocked ? (
+              <LockedSection
+                title="Hoja de Ruta"
+                description="MVP Kanban, roadmap de producto, stack técnico y próximos pasos priorizados."
+                requiredTier="pro"
+                hint="¿Cuáles son los 3 pasos exactos para lanzar tu MVP esta semana?"
+              />
+            ) : (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Tech & Legal Stack (RAG) */}
               {data.playbook_analysis?.tech_and_legal_stack && (
@@ -1620,7 +1693,9 @@ export function ValidationDetail() {
                     </p>
                   </div>
                 </div>
-                <KanbanMVP features={data.mvp_features || []} userFlow={data.mvp_user_flow} />
+                <ErrorBoundary label="Plan de MVP">
+                  <KanbanMVP features={data.mvp_features || []} userFlow={data.mvp_user_flow} />
+                </ErrorBoundary>
               </div>
 
               {/* Próximos pasos */}
@@ -1636,36 +1711,47 @@ export function ValidationDetail() {
               )}
 
               {/* Deliverables */}
-              <DeliverableTabs
-                validationId={data.id}
-                unitEconomics={data.unit_economics}
-                context={{
-                  idea_name: data.idea_name,
-                  idea_description: data.idea_description,
-                  idea_industry: data.idea_industry,
-                  target_country: data.target_country,
-                  target_region: data.target_region,
-                  business_model: data.business_model,
-                  business_stage: data.business_stage,
-                  pricing_range: data.pricing_range,
-                  customer_segment: data.customer_segment,
-                  customer_pain_points: data.customer_pain_points,
-                  value_proposition: data.value_proposition,
-                  differentiator: data.differentiator,
-                  mvp_type: data.mvp_type,
-                  mvp_features: data.mvp_features,
-                  mvp_user_flow: data.mvp_user_flow,
-                  known_competitors: data.known_competitors,
-                  questions_answers: data.questions_answers,
-                  tech_level: data.tech_level,
-                  validation_score: data.validation_score,
-                }}
-              />
+              <ErrorBoundary label="Entregables PDF">
+                <DeliverableTabs
+                  validationId={data.id}
+                  unitEconomics={data.unit_economics}
+                  context={{
+                    idea_name: data.idea_name,
+                    idea_description: data.idea_description,
+                    idea_industry: data.idea_industry,
+                    target_country: data.target_country,
+                    target_region: data.target_region,
+                    business_model: data.business_model,
+                    business_stage: data.business_stage,
+                    pricing_range: data.pricing_range,
+                    customer_segment: data.customer_segment,
+                    customer_pain_points: data.customer_pain_points,
+                    value_proposition: data.value_proposition,
+                    differentiator: data.differentiator,
+                    mvp_type: data.mvp_type,
+                    mvp_features: data.mvp_features,
+                    mvp_user_flow: data.mvp_user_flow,
+                    known_competitors: data.known_competitors,
+                    questions_answers: data.questions_answers,
+                    tech_level: data.tech_level,
+                    validation_score: data.validation_score,
+                  }}
+                />
+              </ErrorBoundary>
             </div>
+            )
           )}
 
           {/* ── INVERSIÓN ──────────────────────────────────────────────────── */}
           {activeTab === 'Inversión' && (
+            isProLocked ? (
+              <LockedSection
+                title="Inversión"
+                description="Founder-Market Fit, gobernanza, fundraising roadmap, CORFO y Pitch Deck."
+                requiredTier="pro"
+                hint="¿Estás listo para buscar inversión? ¿Qué fondos deberías contactar?"
+              />
+            ) : (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Funding Verdict (RAG) */}
               {data.playbook_analysis?.funding_verdict && (
@@ -1813,11 +1899,19 @@ export function ValidationDetail() {
                 founderGaps={data.founder_fit?.gaps}
               />
             </div>
+            )
           )}
           {/* ── DUE DILIGENCE ──────────────────────────────────────────────── */}
           {activeTab === 'Due Diligence' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {generatingDueDiligence ? (
+              {tier !== 'premium' ? (
+                <LockedSection
+                  title="Due Diligence Score"
+                  description="Evaluación completa como si pasaras por el filtro de Paul Graham y fondos de Venture Capital."
+                  requiredTier="premium"
+                  hint="Consulta PJUD, Inapi y Fintoc. Análisis RAG con benchmarks de mercado."
+                />
+              ) : generatingDueDiligence ? (
                 <div className="flex flex-col items-center gap-4 py-14 text-center">
                   <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center animate-pulse">
                     <div className="w-7 h-7 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
@@ -1838,15 +1932,17 @@ export function ValidationDetail() {
                   </div>
                 </div>
               ) : data.due_diligence_score ? (
-                <DueDiligenceScoreCard
-                  score={data.due_diligence_score}
-                  extractedData={data.due_diligence_extracted}
-                  dataWarnings={ddAuditTrail?.dataWarnings}
-                  sourcesUsed={ddAuditTrail?.sourcesUsed}
-                  sourcesSkipped={ddAuditTrail?.sourcesSkipped}
-                  fromCache={ddAuditTrail?.fromCache}
-                  verdictSummary={ddAuditTrail?.verdictSummary}
-                />
+                <ErrorBoundary label="Due Diligence Score">
+                  <DueDiligenceScoreCard
+                    score={data.due_diligence_score}
+                    extractedData={data.due_diligence_extracted}
+                    dataWarnings={ddAuditTrail?.dataWarnings}
+                    sourcesUsed={ddAuditTrail?.sourcesUsed}
+                    sourcesSkipped={ddAuditTrail?.sourcesSkipped}
+                    fromCache={ddAuditTrail?.fromCache}
+                    verdictSummary={ddAuditTrail?.verdictSummary}
+                  />
+                </ErrorBoundary>
               ) : (
                 <div className="flex flex-col items-center gap-4 py-14 text-center">
                   <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center">

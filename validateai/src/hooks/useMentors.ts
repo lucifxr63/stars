@@ -3,46 +3,44 @@ import { supabase } from '@/lib/supabase';
 import type { MentorMatch } from '@/types/validation';
 
 /**
- * Busca mentores relevantes para una idea usando matching semántico.
- * Si no hay embeddings en la tabla, cae back a traer los primeros 3 disponibles.
+ * Matching semántico de mentores vía pgvector.
+ * Llama a la edge function `match-mentors` que genera un embedding de la idea
+ * y ejecuta el RPC `match_mentors` con similitud coseno.
+ * Cae back a los primeros 3 disponibles si los embeddings no están seedeados.
  */
-export function useMentors(ideaDescription: string | null | undefined) {
+export function useMentors(
+  ideaDescription: string | null | undefined,
+  founderGaps?: string[],
+) {
   const [mentors, setMentors] = useState<MentorMatch[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const gapsKey = founderGaps?.join(',') ?? '';
+
   useEffect(() => {
-    if (!ideaDescription) return;
+    if (!ideaDescription?.trim()) return;
 
     let cancelled = false;
     setLoading(true);
 
-    (async () => {
-      try {
-        // Intentar búsqueda semántica si hay embeddings disponibles
-        // (necesita que el script de seed haya corrido con embeddings reales)
-        const { data: fallback } = await supabase
-          .from('mentors')
-          .select('id,name,bio,expertise,linkedin_url,calendly_url,availability,session_price_clp,languages,photo_url')
-          .eq('availability', 'available')
-          .limit(3);
-
-        if (!cancelled && fallback) {
-          setMentors(
-            (fallback as Omit<MentorMatch, 'similarity'>[]).map((m) => ({
-              ...m,
-              similarity: 0.8, // placeholder hasta que tengamos embeddings reales
-            }))
-          );
+    supabase.functions
+      .invoke('match-mentors', {
+        body: { ideaDescription, founderGaps: founderGaps ?? [] },
+      })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && Array.isArray(data) && data.length > 0) {
+          setMentors(data as MentorMatch[]);
         }
-      } catch {
-        // silencioso — mentores son nice-to-have
-      } finally {
+        setLoading(false);
+      })
+      .catch(() => {
         if (!cancelled) setLoading(false);
-      }
-    })();
+      });
 
     return () => { cancelled = true; };
-  }, [ideaDescription]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ideaDescription, gapsKey]);
 
   return { mentors, loading };
 }

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
-import { useUserTier } from '@/hooks/useUserTier';
+import { useUserTier, type UserTier } from '@/hooks/useUserTier';
 import { toast } from 'sonner';
 import { trackWizardStep, trackValidationCompleted } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent } from '@/lib/telemetry';
@@ -15,6 +15,37 @@ interface GenerationTask {
   label: string;
   status: GenerationStatus;
   type: 'summary' | 'market_sizing' | 'competitive_analysis' | 'risk_analysis' | 'unit_economics' | 'founder_fit' | 'market_signals';
+}
+
+// ── Tier-based task chunking ──────────────────────────────────────────────────
+// free:    1 call  — score + feedback + breakdown (summary only)
+// basic:   2 calls — + competitive analysis
+// pro:     3 calls — + market sizing (expensive: uses web_search)
+// premium: separate premium-validate flow (handled below)
+
+const TASK_DEFINITIONS: Record<string, Omit<GenerationTask, 'status'>[]> = {
+  free: [
+    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
+  ],
+  basic: [
+    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
+    { id: 'competitors', label: 'Mapeando competencia...',          type: 'competitive_analysis' },
+  ],
+  pro: [
+    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
+    { id: 'market',      label: 'Calculando tamaño de mercado...',  type: 'market_sizing' },
+    { id: 'competitors', label: 'Mapeando competencia...',          type: 'competitive_analysis' },
+  ],
+  premium: [
+    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
+    { id: 'market',      label: 'Calculando tamaño de mercado...',  type: 'market_sizing' },
+    { id: 'competitors', label: 'Mapeando competencia...',          type: 'competitive_analysis' },
+  ],
+};
+
+function getTasksForTier(tier: UserTier): GenerationTask[] {
+  const defs = TASK_DEFINITIONS[tier] ?? TASK_DEFINITIONS.free;
+  return defs.map(d => ({ ...d, status: 'pending' as const }));
 }
 
 // ── Terminal Hacker UI (Premium) ──────────────────────────────────────────────
@@ -136,25 +167,38 @@ function MicroFeedbackPanel({ tier }: { tier: string }) {
   );
 }
 
+// ── Tier label pill ───────────────────────────────────────────────────────────
+
+const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
+  free:    { label: 'Validación Base',     cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  basic:   { label: 'Validación Básica',   cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  pro:     { label: 'Validación Completa', cls: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  premium: { label: 'Validación Premium',  cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+};
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function StepGenerating() {
   const navigate = useNavigate();
   const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, validationMode,
           setPremiumResult, setAgentLogId } = useValidationStore();
-  const { isPro: isPremium, tier } = useUserTier();
-  const [tasks, setTasks] = useState<GenerationTask[]>([
-    { id: 'summary', label: 'Evaluando viabilidad e idea...', status: 'pending', type: 'summary' },
-    { id: 'market', label: 'Calculando tamaño de mercado...', status: 'pending', type: 'market_sizing' },
-    { id: 'competitors', label: 'Mapeando competencia...', status: 'pending', type: 'competitive_analysis' },
-  ]);
+  const { isPro: isPremium, tier, loading: tierLoading } = useUserTier();
+
+  // Tasks start empty — populated once tier is known to avoid running with wrong tier
+  const [tasks, setTasks] = useState<GenerationTask[]>([]);
   const startedRef = useRef(false);
 
+  // Wait for tier to load, then start generation exactly once
   useEffect(() => {
+    if (tierLoading) return;
     if (startedRef.current) return;
     startedRef.current = true;
+
+    // Initialize tasks for this tier before starting
+    setTasks(getTasksForTier(tier));
     startGeneration();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tierLoading]);
 
   const updateTaskStatus = (taskId: string, status: GenerationStatus) => {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
@@ -266,13 +310,12 @@ export function StepGenerating() {
         };
       }
 
-      // Guard: idea_name e idea_industry son obligatorios
       if (!context.idea_name || !context.idea_industry) {
         toast.error('Completa el nombre e industria de tu idea antes de continuar.');
         return;
       }
 
-      // 1. Guardar o crear la validación inicial
+      // Guardar o crear la validación inicial
       let currentId = validationId;
       if (!currentId) {
         const { data, error } = await supabase.from('validations').insert({
@@ -293,9 +336,32 @@ export function StepGenerating() {
         }).eq('id', currentId);
       }
 
-      // 2. Disparar generación por bloques paralelamente
-      // Marcamos todas como 'loading'
-      setTasks(prev => prev.map(t => ({ ...t, status: 'loading' })));
+      // Verificar progreso previo para reanudar en lugar de reiniciar
+      const { data: existing } = await supabase
+        .from('validations')
+        .select('generation_progress')
+        .eq('id', currentId)
+        .single();
+      const prevProgress = (existing?.generation_progress ?? {}) as Record<string, string>;
+
+      const tierTasks = getTasksForTier(tier);
+
+      // Restaurar estado visual de tasks ya completados
+      setTasks(tierTasks.map(t => ({
+        ...t,
+        status: prevProgress[t.id] === 'success' ? 'success'
+              : prevProgress[t.id] === 'error'   ? 'pending' // retry errores
+              : 'loading',
+      })));
+
+      // Solo correr los tasks que no completaron en sesiones anteriores
+      const pendingTasks = tierTasks.filter(t => prevProgress[t.id] !== 'success');
+
+      if (pendingTasks.length === 0) {
+        await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId!);
+        navigate(`/results/${currentId}`);
+        return;
+      }
 
       const runAI = async (task: GenerationTask) => {
         try {
@@ -309,25 +375,27 @@ export function StepGenerating() {
           });
 
           if (!res.ok) throw new Error('Failed');
-          // La Edge Function persiste los resultados directamente en la DB
           await res.json();
+
+          // Persistir progreso atómicamente — sobrevive recargas
+          await supabase.rpc('merge_generation_progress', {
+            p_id: currentId, p_key: task.id, p_status: 'success',
+          });
           updateTaskStatus(task.id, 'success');
         } catch {
+          await supabase.rpc('merge_generation_progress', {
+            p_id: currentId, p_key: task.id, p_status: 'error',
+          });
           updateTaskStatus(task.id, 'error');
         }
       };
 
-      await Promise.allSettled(tasks.map(runAI));
-      
-      // Update completeness
-      await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId);
+      await Promise.allSettled(pendingTasks.map(runAI));
 
-      const summaryTask = tasks.find((t) => t.type === 'summary');
-      trackWizardStep(4, 'Generación', 'detailed');
-      if (summaryTask?.status === 'success') {
-        // score viene del store (setted vía setSummary) — no disponible aquí, usar 0 como fallback
-        trackValidationCompleted(currentId!, 0, context.idea_industry as string ?? '', 'free');
-      }
+      await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId!);
+
+      trackWizardStep(4, 'Generación', validationMode);
+      trackValidationCompleted(currentId!, 0, context.idea_industry as string ?? '', tier);
 
       toast.success('Análisis completado');
       navigate(`/results/${currentId}`);
@@ -339,7 +407,7 @@ export function StepGenerating() {
   };
 
   const completedCount = tasks.filter(t => t.status === 'success' || t.status === 'error').length;
-  const progressPct = Math.round((completedCount / tasks.length) * 100);
+  const progressPct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   const TASK_DESCRIPTIONS: Record<string, string> = {
     summary:              'Analizando viabilidad con criterios de inversor VC',
@@ -354,6 +422,18 @@ export function StepGenerating() {
     return <PremiumTerminal />;
   }
 
+  // Loading tier — show minimal spinner before starting
+  if (tierLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+        <p className="text-sm text-gray-400 dark:text-[#8B8AA0]">Preparando análisis...</p>
+      </div>
+    );
+  }
+
+  const tierLabel = TIER_LABELS[tier] ?? TIER_LABELS.free;
+
   return (
     <div className="flex flex-col py-8 space-y-6">
       {/* Header */}
@@ -363,11 +443,18 @@ export function StepGenerating() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
           </svg>
         </div>
-        <h2 className="text-xl font-black text-gray-900 dark:text-[#F0EFF8] mb-1">
-          Validando tu idea con criterios VC
-        </h2>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <h2 className="text-xl font-black text-gray-900 dark:text-[#F0EFF8]">
+            Validando tu idea con criterios VC
+          </h2>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${tierLabel.cls}`}>
+            {tierLabel.label}
+          </span>
+        </div>
         <p className="text-sm text-gray-500 dark:text-[#8B8AA0] max-w-sm mx-auto leading-relaxed">
-          Nuestros agentes analizan viabilidad, mercado y competencia en paralelo.
+          {tasks.length === 1
+            ? 'Analizando viabilidad y generando tu veredicto.'
+            : 'Nuestros agentes analizan viabilidad, mercado y competencia en paralelo.'}
         </p>
       </div>
 
@@ -455,6 +542,28 @@ export function StepGenerating() {
           </div>
         ))}
       </div>
+
+      {/* Upgrade CTA for free/basic */}
+      {(tier === 'free' || tier === 'basic') && (
+        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/15">
+          <svg className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-purple-300 leading-relaxed">
+              {tier === 'free'
+                ? 'Plan Pro incluye análisis de mercado (TAM/SAM/SOM) y mapeo competitivo.'
+                : 'Plan Pro incluye análisis de mercado completo (TAM/SAM/SOM).'}
+            </p>
+          </div>
+          <a
+            href="/pricing"
+            className="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/20 hover:bg-purple-500/25 transition-colors"
+          >
+            Ver planes
+          </a>
+        </div>
+      )}
 
       {/* Micro-feedback The Mom Test */}
       <MicroFeedbackPanel tier={tier ?? 'free'} />

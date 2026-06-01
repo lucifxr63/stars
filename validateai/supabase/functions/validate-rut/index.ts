@@ -1,8 +1,8 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -17,9 +17,9 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-// Algoritmo Módulo 11 para RUT chileno
+// Algoritmo MÃ³dulo 11 para RUT chileno
 function isValidRUT(rut: string): boolean {
-  if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rut)) return false;
+  if (!/^[0-9]+[-|â€]{1}[0-9kK]{1}$/.test(rut)) return false;
   const [rutBody, dv] = rut.split('-');
   let rutNum = parseInt(rutBody, 10);
   let m = 0;
@@ -40,7 +40,7 @@ serve(async (req) => {
     const { rut } = await req.json();
 
     if (!rut || !isValidRUT(rut)) {
-      return new Response(JSON.stringify({ error: 'RUT inválido' }), {
+      return new Response(JSON.stringify({ error: 'RUT invÃ¡lido' }), {
         status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
@@ -76,7 +76,7 @@ serve(async (req) => {
       throw new Error(`Error actualizando perfil: ${updateError.message}`);
     }
 
-    return new Response(JSON.stringify({ success: true, message: 'Identidad validada con éxito' }), {
+    return new Response(JSON.stringify({ success: true, message: 'Identidad validada con Ã©xito' }), {
       headers: { ...cors, 'Content-Type': 'application/json' },
     });
 

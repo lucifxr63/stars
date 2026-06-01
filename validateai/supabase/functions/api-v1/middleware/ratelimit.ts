@@ -1,4 +1,4 @@
-import { getSupabase } from './auth.ts'
+﻿import { getSupabase } from './auth.ts'
 
 // Limits per plan (requests per calendar month)
 const MONTHLY_LIMITS: Record<string, number> = {
@@ -36,7 +36,7 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
     return c.json({
       error: 'API access requires a Basic plan or higher.',
       code: 'TIER_INSUFFICIENT',
-      upgrade_url: 'https://validateai-mu.vercel.app/pricing',
+      upgrade_url: 'https://validus.scouttech.lat/pricing',
     }, 403)
   }
 
@@ -76,7 +76,7 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
       error: `Monthly quota exhausted. Your ${tier} plan allows ${monthlyLimit} requests/month.`,
       code: 'RATE_LIMIT_MONTHLY',
       quota: { limit: monthlyLimit, used: monthlyUsed, tier },
-      upgrade_url: 'https://validateai-mu.vercel.app/pricing',
+      upgrade_url: 'https://validus.scouttech.lat/pricing',
     }, 429)
   }
 

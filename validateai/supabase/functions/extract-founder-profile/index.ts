@@ -1,14 +1,14 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Env ───────────────────────────────────────────────────────────────────────
+// â”€â”€ Env â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const OPENAI_API_KEY     = Deno.env.get('OPENAI_API_KEY')!;
 const SUPABASE_URL       = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SCRAPER_API_URL    = Deno.env.get('SCRAPER_API_URL');   // opcional: proxy externo
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
@@ -24,7 +24,7 @@ function cors(req: Request) {
   };
 }
 
-// ── Tipos internos ────────────────────────────────────────────────────────────
+// â”€â”€ Tipos internos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface WorkEntry {
   company: string;
   title: string;
@@ -59,11 +59,11 @@ interface StructuredProfile {
   };
 }
 
-// ── Scraper ───────────────────────────────────────────────────────────────────
+// â”€â”€ Scraper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function scrapeLinkedIn(linkedinUrl: string): Promise<string> {
   if (!SCRAPER_API_URL) {
-    // Sin proxy configurado: devolvemos texto mínimo para que el LLM trabaje con la URL
-    return `LinkedIn URL: ${linkedinUrl}\n[Scraper proxy no configurado — inferir perfil a partir de la URL y datos disponibles]`;
+    // Sin proxy configurado: devolvemos texto mÃ­nimo para que el LLM trabaje con la URL
+    return `LinkedIn URL: ${linkedinUrl}\n[Scraper proxy no configurado â€” inferir perfil a partir de la URL y datos disponibles]`;
   }
   const res = await fetch(SCRAPER_API_URL, {
     method: 'POST',
@@ -75,12 +75,12 @@ async function scrapeLinkedIn(linkedinUrl: string): Promise<string> {
   return typeof data.text === 'string' ? data.text : JSON.stringify(data);
 }
 
-// ── LLM: Structured Outputs vía gpt-4o-mini ──────────────────────────────────
-const SYSTEM_PROMPT = `Eres un extractor de perfiles profesionales. Dado el texto crudo de un perfil LinkedIn en español, extrae la información relevante y devuelve SOLO JSON válido, sin markdown, con la siguiente estructura exacta:
+// â”€â”€ LLM: Structured Outputs vÃ­a gpt-4o-mini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const SYSTEM_PROMPT = `Eres un extractor de perfiles profesionales. Dado el texto crudo de un perfil LinkedIn en espaÃ±ol, extrae la informaciÃ³n relevante y devuelve SOLO JSON vÃ¡lido, sin markdown, con la siguiente estructura exacta:
 {
   "full_name": "string",
-  "headline": "string (cargo/descripción corta)",
-  "summary_bio": "string (resumen profesional, máx 300 chars)",
+  "headline": "string (cargo/descripciÃ³n corta)",
+  "summary_bio": "string (resumen profesional, mÃ¡x 300 chars)",
   "industry_expertise_years": number,
   "skills": ["string", ...],
   "work_experience": [
@@ -89,7 +89,7 @@ const SYSTEM_PROMPT = `Eres un extractor de perfiles profesionales. Dado el text
       "title": "string",
       "start_date": "YYYY-MM",
       "end_date": "YYYY-MM o null si es actual",
-      "description": "string (1-2 líneas)",
+      "description": "string (1-2 lÃ­neas)",
       "is_leadership": boolean,
       "industry": "string"
     }
@@ -110,7 +110,7 @@ const SYSTEM_PROMPT = `Eres un extractor de perfiles profesionales. Dado el text
     "resilienciaOperativa": number (0-100)
   }
 }
-Si algún campo no está disponible, usa valores razonables por defecto (strings vacíos, 0, arrays vacíos).
+Si algÃºn campo no estÃ¡ disponible, usa valores razonables por defecto (strings vacÃ­os, 0, arrays vacÃ­os).
 IMPORTANTE: Responde SOLO con JSON, sin texto adicional.`;
 
 async function structureWithLLM(rawText: string): Promise<StructuredProfile> {
@@ -141,7 +141,7 @@ async function structureWithLLM(rawText: string): Promise<StructuredProfile> {
   return JSON.parse(text) as StructuredProfile;
 }
 
-// ── Handler principal ─────────────────────────────────────────────────────────
+// â”€â”€ Handler principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 serve(async (req) => {
   const corsHeaders = cors(req);
 
@@ -174,7 +174,7 @@ serve(async (req) => {
     const linkedinUrl: string = body.linkedin_url ?? '';
 
     if (!linkedinUrl || !linkedinUrl.includes('linkedin.com')) {
-      return new Response(JSON.stringify({ error: 'URL de LinkedIn inválida' }), {
+      return new Response(JSON.stringify({ error: 'URL de LinkedIn invÃ¡lida' }), {
         status: 422,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -188,7 +188,7 @@ serve(async (req) => {
     // Scraping
     const rawText = await scrapeLinkedIn(linkedinUrl);
 
-    // Estructuración con LLM
+    // EstructuraciÃ³n con LLM
     const structured = await structureWithLLM(rawText);
 
     // Persistir en DB

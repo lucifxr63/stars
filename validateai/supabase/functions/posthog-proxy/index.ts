@@ -1,13 +1,13 @@
-/**
- * posthog-proxy — Supabase Edge Function (Deno 2)
+﻿/**
+ * posthog-proxy â€” Supabase Edge Function (Deno 2)
  *
  * Routes all PostHog traffic through a first-party subdomain so ad-blockers
  * (EasyPrivacy, uBlock) cannot intercept analytics events.
  *
  * Upstream paths forwarded transparently:
- *   /posthog-proxy/capture/  → https://app.posthog.com/capture/
- *   /posthog-proxy/static/*  → https://app.posthog.com/static/*   (SDK assets)
- *   /posthog-proxy/array/*   → https://app.posthog.com/array/*    (feature flags / remote config)
+ *   /posthog-proxy/capture/  â†’ https://app.posthog.com/capture/
+ *   /posthog-proxy/static/*  â†’ https://app.posthog.com/static/*   (SDK assets)
+ *   /posthog-proxy/array/*   â†’ https://app.posthog.com/array/*    (feature flags / remote config)
  *
  * Frontend config: VITE_POSTHOG_HOST = <SUPABASE_URL>/functions/v1/posthog-proxy
  */
@@ -16,7 +16,7 @@ const POSTHOG_UPSTREAM = 'https://app.posthog.com';
 const FUNCTION_SLUG    = 'posthog-proxy';
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
@@ -49,7 +49,7 @@ Deno.serve(async (req: Request) => {
     const subPath  = parts[1] || '/';
     const upstream = `${POSTHOG_UPSTREAM}${subPath}${url.search}`;
 
-    // Build forwarded headers — preserve Content-Type and GeoIP chain
+    // Build forwarded headers â€” preserve Content-Type and GeoIP chain
     const fwdHeaders: Record<string, string> = {
       'Content-Type': req.headers.get('Content-Type') ?? 'application/json',
     };

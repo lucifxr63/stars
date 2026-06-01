@@ -1,25 +1,25 @@
-// Edge Function: survey-anonymize
+﻿// Edge Function: survey-anonymize
 // Pipeline de privacidad en 4 pasos para el data lake de inteligencia de mercado.
 //
-// PASO 1 — Generalización semántica (LLM Structured Output)
-//   Claude mapea valores específicos extraídos del análisis (cargos, herramientas,
-//   industrias) a una taxonomía de enums controlados, reduciendo la cardinalidad
-//   de los cuasi-identificadores antes de aplicar las métricas estadísticas.
+// PASO 1 â€” GeneralizaciÃ³n semÃ¡ntica (LLM Structured Output)
+//   Claude mapea valores especÃ­ficos extraÃ­dos del anÃ¡lisis (cargos, herramientas,
+//   industrias) a una taxonomÃ­a de enums controlados, reduciendo la cardinalidad
+//   de los cuasi-identificadores antes de aplicar las mÃ©tricas estadÃ­sticas.
 //
-// PASO 2 — K-anonimato (k=5 por defecto)
+// PASO 2 â€” K-anonimato (k=5 por defecto)
 //   Agrupa registros por {generalized_industry, generalized_role, friction_bucket,
-//   willingness_to_pay}. Clases con count ≥ k pasan al data lake. Outliers: se
-//   suprime selectivamente el atributo más específico (industry → null) en lugar
-//   de borrar el registro completo, preservando su valor analítico.
+//   willingness_to_pay}. Clases con count â‰¥ k pasan al data lake. Outliers: se
+//   suprime selectivamente el atributo mÃ¡s especÃ­fico (industry â†’ null) en lugar
+//   de borrar el registro completo, preservando su valor analÃ­tico.
 //
-// PASO 3 — L-diversidad (l=2 por defecto)
-//   Dentro de cada clase de equivalencia, verifica que haya ≥ l valores distintos
+// PASO 3 â€” L-diversidad (l=2 por defecto)
+//   Dentro de cada clase de equivalencia, verifica que haya â‰¥ l valores distintos
 //   del atributo sensible (severity). Si falla, suprime la clase del data lake.
 //
-// PASO 4 — T-closeness (t=0.20 por defecto, Earth Mover's Distance 1D)
+// PASO 4 â€” T-closeness (t=0.20 por defecto, Earth Mover's Distance 1D)
 //   Neutraliza el ataque de sesgo y el ataque de similitud. Verifica que la
-//   distribución local de severity en cada clase no diste más de t de la
-//   distribución global (Wasserstein-1 sobre categorías ordenadas).
+//   distribuciÃ³n local de severity en cada clase no diste mÃ¡s de t de la
+//   distribuciÃ³n global (Wasserstein-1 sobre categorÃ­as ordenadas).
 //   Referencia: Li et al. (2007) "t-Closeness: Privacy Beyond k-Anonymity and l-Diversity"
 //
 // POST /survey-anonymize  body: { form_id, k?, l?, t? }
@@ -31,7 +31,7 @@ const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SRK      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'https://validateai.cl',
   'http://localhost:5173',
   'http://localhost:4173',
@@ -53,22 +53,22 @@ function json(data: unknown, status = 200, req: Request) {
   });
 }
 
-// ── Taxonomías controladas ────────────────────────────────
+// â”€â”€ TaxonomÃ­as controladas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const INDUSTRY_VALUES = [
-  'Manufactura e Industria', 'Tecnología y Software', 'Operaciones TI',
+  'Manufactura e Industria', 'TecnologÃ­a y Software', 'Operaciones TI',
   'Retail y Comercio', 'Servicios Financieros', 'Salud y Ciencias',
-  'Educación', 'Logística y Transporte', 'Construcción e Inmobiliario',
+  'EducaciÃ³n', 'LogÃ­stica y Transporte', 'ConstrucciÃ³n e Inmobiliario',
   'Agroindustria', 'Servicios Profesionales', 'Otro',
 ] as const;
 
 const ROLE_VALUES = [
-  'Fundador/Dueño', 'Dirección C-Level', 'Gerencia Media', 'Operativo/Staff', 'No especificado',
+  'Fundador/DueÃ±o', 'DirecciÃ³n C-Level', 'Gerencia Media', 'Operativo/Staff', 'No especificado',
 ] as const;
 
 const TECH_VALUES = [
-  'ERP/CRM', 'Productividad (Office/Sheets)', 'Comunicación (Slack/Teams/Email)',
+  'ERP/CRM', 'Productividad (Office/Sheets)', 'ComunicaciÃ³n (Slack/Teams/Email)',
   'Herramientas manuales (Excel/papel)', 'Software especializado vertical',
-  'Desarrollo propio', 'Sin herramienta específica', 'Múltiples herramientas',
+  'Desarrollo propio', 'Sin herramienta especÃ­fica', 'MÃºltiples herramientas',
 ] as const;
 
 type Industry = typeof INDUSTRY_VALUES[number] | null;
@@ -77,7 +77,7 @@ type TechFamily = typeof TECH_VALUES[number] | null;
 type FrictionBucket = 'baja' | 'media' | 'alta';
 type Severity = 'tolerable' | 'critico' | 'paralizante';
 
-// ── Tipos internos ────────────────────────────────────────
+// â”€â”€ Tipos internos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface AnalysisResult {
   central_problem: string;
   severity: Severity;
@@ -110,9 +110,9 @@ interface GeneralizedRecord {
   week_bucket: string;
 }
 
-// ── PASO 1: Generalización semántica vía LLM ─────────────
-const TAXONOMY_SYSTEM_PROMPT = `Eres un clasificador de taxonomía para un sistema de privacidad de datos de mercado.
-Tu función es mapear datos cualitativos a categorías controladas para reducir la cardinalidad antes de aplicar k-anonimato.
+// â”€â”€ PASO 1: GeneralizaciÃ³n semÃ¡ntica vÃ­a LLM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const TAXONOMY_SYSTEM_PROMPT = `Eres un clasificador de taxonomÃ­a para un sistema de privacidad de datos de mercado.
+Tu funciÃ³n es mapear datos cualitativos a categorÃ­as controladas para reducir la cardinalidad antes de aplicar k-anonimato.
 
 Retorna EXCLUSIVAMENTE un objeto JSON con esta estructura exacta (sin texto adicional):
 {
@@ -126,11 +126,11 @@ Enum role: ${JSON.stringify(ROLE_VALUES)}
 Enum tech_family: ${JSON.stringify(TECH_VALUES)}
 
 Instrucciones de mapeo:
-- Sé conservador: prefiere categorías amplias sobre específicas para maximizar la cardinalidad compartida
-- Si el texto menciona múltiples tecnologías, selecciona la familia más representada
+- SÃ© conservador: prefiere categorÃ­as amplias sobre especÃ­ficas para maximizar la cardinalidad compartida
+- Si el texto menciona mÃºltiples tecnologÃ­as, selecciona la familia mÃ¡s representada
 - Si el cargo es ambiguo o no menciona nivel, usa "No especificado"
-- Para cargos técnicos específicos (DevOps, SRE, Data Engineer), mapea a "Operaciones TI"
-- Para founders, CEOs, gerentes generales → "Fundador/Dueño" o "Dirección C-Level"`;
+- Para cargos tÃ©cnicos especÃ­ficos (DevOps, SRE, Data Engineer), mapea a "Operaciones TI"
+- Para founders, CEOs, gerentes generales â†’ "Fundador/DueÃ±o" o "DirecciÃ³n C-Level"`;
 
 async function semanticGeneralize(
   problem: string,
@@ -169,7 +169,7 @@ async function semanticGeneralize(
 
     const parsed = JSON.parse(match[0]);
 
-    // Validar que los valores estén dentro de los enums permitidos
+    // Validar que los valores estÃ©n dentro de los enums permitidos
     const industry = INDUSTRY_VALUES.includes(parsed.industry) ? parsed.industry as Industry : null;
     const role = ROLE_VALUES.includes(parsed.role) ? parsed.role as Role : null;
     const tech_family = TECH_VALUES.includes(parsed.tech_family) ? parsed.tech_family as TechFamily : null;
@@ -180,7 +180,7 @@ async function semanticGeneralize(
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function frictionBucket(score: number): FrictionBucket {
   if (score <= 3) return 'baja';
   if (score <= 6) return 'media';
@@ -198,7 +198,7 @@ function isoWeekBucket(dateStr: string): string {
   return `${thursday.getFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-// Clave de cuasi-identificadores para agrupar (null → 'NULL' para poder agrupar)
+// Clave de cuasi-identificadores para agrupar (null â†’ 'NULL' para poder agrupar)
 function qiKey(r: GeneralizedRecord, suppressIndustry = false): string {
   return [
     suppressIndustry ? 'NULL' : (r.generalized_industry ?? 'NULL'),
@@ -208,16 +208,16 @@ function qiKey(r: GeneralizedRecord, suppressIndustry = false): string {
   ].join('|');
 }
 
-// ── PASO 2: K-anonimato ───────────────────────────────────
+// â”€â”€ PASO 2: K-anonimato â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Devuelve los registros que pasan el umbral k.
-// Para outliers: suprime generalized_industry (más específico) y reintenta.
+// Para outliers: suprime generalized_industry (mÃ¡s especÃ­fico) y reintenta.
 function applyKAnonymity(
   records: GeneralizedRecord[],
   k: number,
 ): { passed: GeneralizedRecord[]; kClassSizes: Map<string, number> } {
   const kClassSizes = new Map<string, number>();
 
-  // Primera pasada: agrupa sin supresión
+  // Primera pasada: agrupa sin supresiÃ³n
   const groups = new Map<string, GeneralizedRecord[]>();
   for (const r of records) {
     const key = qiKey(r);
@@ -230,7 +230,7 @@ function applyKAnonymity(
 
   for (const [key, group] of groups) {
     if (group.length >= k) {
-      // Clase válida — registrar tamaño
+      // Clase vÃ¡lida â€” registrar tamaÃ±o
       for (const r of group) kClassSizes.set(r.submission_id, group.length);
       passed.push(...group);
     } else {
@@ -243,12 +243,12 @@ function applyKAnonymity(
       const mergedSize = existingClass.length + suppressed.length;
 
       if (mergedSize >= k) {
-        // La fusión alcanza k — aceptar con supresión de industry
+        // La fusiÃ³n alcanza k â€” aceptar con supresiÃ³n de industry
         for (const r of suppressed) kClassSizes.set(r.submission_id, mergedSize);
         passed.push(...suppressed);
-        console.log(`[k-anon] Outlier fusionado con supresión de industry: key=${key} → merged_size=${mergedSize}`);
+        console.log(`[k-anon] Outlier fusionado con supresiÃ³n de industry: key=${key} â†’ merged_size=${mergedSize}`);
       } else {
-        // No alcanza k ni con supresión máxima — excluir del data lake (no del DB original)
+        // No alcanza k ni con supresiÃ³n mÃ¡xima â€” excluir del data lake (no del DB original)
         console.log(`[k-anon] Registro excluido del data lake (class_size=${group.length} < k=${k}): key=${key}`);
       }
     }
@@ -257,10 +257,10 @@ function applyKAnonymity(
   return { passed, kClassSizes };
 }
 
-// ── PASO 4: T-closeness ───────────────────────────────────
-// Earth Mover's Distance 1D (Wasserstein-1) entre la distribución local de
-// severity en cada clase y la distribución global del batch.
-// Orden canónico: ['tolerable', 'critico', 'paralizante']
+// â”€â”€ PASO 4: T-closeness â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Earth Mover's Distance 1D (Wasserstein-1) entre la distribuciÃ³n local de
+// severity en cada clase y la distribuciÃ³n global del batch.
+// Orden canÃ³nico: ['tolerable', 'critico', 'paralizante']
 const SEVERITY_ORDER_TC = ['tolerable', 'critico', 'paralizante'] as const;
 
 function toFreqVector(records: GeneralizedRecord[]): number[] {
@@ -290,7 +290,7 @@ function applyTCloseness(records: GeneralizedRecord[], t: number): {
 
   const globalDist = toFreqVector(records);
 
-  // Agrupar por QI para calcular distribución local por clase
+  // Agrupar por QI para calcular distribuciÃ³n local por clase
   const classes = new Map<string, GeneralizedRecord[]>();
   for (const r of records) {
     const key = qiKey(r);
@@ -317,8 +317,8 @@ function applyTCloseness(records: GeneralizedRecord[], t: number): {
   return { passed, tExcluded };
 }
 
-// ── PASO 3: L-diversidad ──────────────────────────────────
-// Atributo sensible: severity. Requiere ≥ l valores distintos por clase.
+// â”€â”€ PASO 3: L-diversidad â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Atributo sensible: severity. Requiere â‰¥ l valores distintos por clase.
 function applyLDiversity(
   records: GeneralizedRecord[],
   kClassSizes: Map<string, number>,
@@ -341,16 +341,16 @@ function applyLDiversity(
     if (distinctSeverities.size >= l) {
       result.push(...group);
     } else {
-      // Homogeneidad detectada — intentar generalizar severity antes de suprimir
-      // Generalización: colapsar 'tolerable' y 'critico' en 'critico' si la clase solo tiene esos dos
+      // Homogeneidad detectada â€” intentar generalizar severity antes de suprimir
+      // GeneralizaciÃ³n: colapsar 'tolerable' y 'critico' en 'critico' si la clase solo tiene esos dos
       if (distinctSeverities.size === 1) {
-        // Un solo valor de severity — suprimir registros hasta que solo quede 1
+        // Un solo valor de severity â€” suprimir registros hasta que solo quede 1
         // (dejar exactamente 1 por clase para no divulgar atributo, pero no aportar al data lake)
-        console.log(`[l-diversity] Clase homogénea excluida del data lake (severity único: ${[...distinctSeverities][0]}): key=${key}`);
-        // No se agrega al resultado — registros quedan fuera del data lake
+        console.log(`[l-diversity] Clase homogÃ©nea excluida del data lake (severity Ãºnico: ${[...distinctSeverities][0]}): key=${key}`);
+        // No se agrega al resultado â€” registros quedan fuera del data lake
       } else {
-        // l=2 pero todos tienen la misma severity (edge case teórico con l>2):
-        // Incluir como best-effort con tamaño reducido
+        // l=2 pero todos tienen la misma severity (edge case teÃ³rico con l>2):
+        // Incluir como best-effort con tamaÃ±o reducido
         result.push(...group);
         console.log(`[l-diversity] Clase con diversity=${distinctSeverities.size} (requerido=${l}): key=${key}`);
       }
@@ -360,7 +360,7 @@ function applyLDiversity(
   return result;
 }
 
-// ── Handler principal ─────────────────────────────────────
+// â”€â”€ Handler principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(req) });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405, req);
@@ -415,9 +415,9 @@ Deno.serve(async (req: Request) => {
     const submissions = rawSubmissions as Submission[];
     console.log(`[survey-anonymize] form=${form_id} candidatos=${submissions.length} k=${k} l=${l} t=${t}`);
 
-    // ── PASO 1: Generalización semántica (LLM) ──────────────
-    console.log('[survey-anonymize] Paso 1: Generalización semántica...');
-    const BATCH_SIZE = 5; // Haiku es rápido; 5 simultáneas para no saturar
+    // â”€â”€ PASO 1: GeneralizaciÃ³n semÃ¡ntica (LLM) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    console.log('[survey-anonymize] Paso 1: GeneralizaciÃ³n semÃ¡ntica...');
+    const BATCH_SIZE = 5; // Haiku es rÃ¡pido; 5 simultÃ¡neas para no saturar
     const generalized: GeneralizedRecord[] = [];
 
     for (let i = 0; i < submissions.length; i += BATCH_SIZE) {
@@ -447,15 +447,15 @@ Deno.serve(async (req: Request) => {
       generalized.push(...batchResults);
     }
 
-    console.log(`[survey-anonymize] Generalización completa: ${generalized.length} registros`);
+    console.log(`[survey-anonymize] GeneralizaciÃ³n completa: ${generalized.length} registros`);
 
-    // ── PASO 2: K-anonimato ──────────────────────────────────
+    // â”€â”€ PASO 2: K-anonimato â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     console.log(`[survey-anonymize] Paso 2: K-anonimato (k=${k})...`);
     const { passed: kPassed, kClassSizes } = applyKAnonymity(generalized, k);
     const kExcluded = generalized.length - kPassed.length;
     console.log(`[survey-anonymize] K-anonimato: passed=${kPassed.length} excluded=${kExcluded}`);
 
-    // ── PASO 3: L-diversidad ─────────────────────────────────
+    // â”€â”€ PASO 3: L-diversidad â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     console.log(`[survey-anonymize] Paso 3: L-diversidad (l=${l})...`);
     const lPassed = applyLDiversity(kPassed, kClassSizes, l);
     const lExcluded = kPassed.length - lPassed.length;
@@ -473,7 +473,7 @@ Deno.serve(async (req: Request) => {
       }, 200, req);
     }
 
-    // ── PASO 4: T-closeness ──────────────────────────────────
+    // â”€â”€ PASO 4: T-closeness â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     console.log(`[survey-anonymize] Paso 4: T-closeness (t=${t})...`);
     const { passed: tPassed, tExcluded } = applyTCloseness(lPassed, t);
     console.log(`[survey-anonymize] T-closeness: passed=${tPassed.length} excluded=${tExcluded}`);
@@ -481,7 +481,7 @@ Deno.serve(async (req: Request) => {
     if (tPassed.length === 0) {
       return json({
         ok: true,
-        message: 'No records passed t-closeness. Distribution too skewed — accumulate more diverse responses.',
+        message: 'No records passed t-closeness. Distribution too skewed â€” accumulate more diverse responses.',
         candidates: submissions.length,
         k_excluded: kExcluded,
         l_excluded: lExcluded,
@@ -490,7 +490,7 @@ Deno.serve(async (req: Request) => {
       }, 200, req);
     }
 
-    // ── Inserción en el data lake ────────────────────────────
+    // â”€â”€ InserciÃ³n en el data lake â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const dataLakeRows = tPassed.map(r => ({
       form_id,
       generalized_industry: r.generalized_industry,
@@ -505,7 +505,7 @@ Deno.serve(async (req: Request) => {
       mom_test_signals: r.mom_test_signals,
       k_class_size: kClassSizes.get(r.submission_id) ?? k,
       l_diversity_score: l,
-      t_closeness_emd: 0, // La EMD exacta no se almacena para no revelar la distribución local
+      t_closeness_emd: 0, // La EMD exacta no se almacena para no revelar la distribuciÃ³n local
       week_bucket: r.week_bucket,
     }));
 
@@ -521,7 +521,7 @@ Deno.serve(async (req: Request) => {
     const ingested = tPassed.length;
 
     // Marcar submissions como 'anonymized' (todos los candidatos, no solo los que pasaron)
-    // Los que no pasaron también quedan marcados — su PII seguirá protegida por RLS
+    // Los que no pasaron tambiÃ©n quedan marcados â€” su PII seguirÃ¡ protegida por RLS
     const allCandidateIds = submissions.map(s => s.id);
     const { error: updateError } = await supabase
       .from('survey_submissions')

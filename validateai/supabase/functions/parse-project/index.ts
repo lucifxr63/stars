@@ -1,7 +1,7 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Env ───────────────────────────────────────────────────────────────────────
+// â”€â”€ Env â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ANTHROPIC_API_KEY    = Deno.env.get('ANTHROPIC_API_KEY')!;
 const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -11,7 +11,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const MAX_PDF_BYTES = 4 * 1024 * 1024;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -33,7 +33,7 @@ function json(body: unknown, status = 200, req: Request) {
   });
 }
 
-// ── Types (mirrors src/types/validation.ts — kept in sync manually) ───────────
+// â”€â”€ Types (mirrors src/types/validation.ts â€” kept in sync manually) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type DDDimension = 'financiero' | 'legal' | 'mercado' | 'equipo' | 'traccion';
 
 interface ExtractedProjectData {
@@ -87,7 +87,7 @@ interface ParseProjectRequest {
   validation_id?: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function extractJSON(text: string): string {
   const trimmed = text.trim();
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) return trimmed;
@@ -99,13 +99,13 @@ function extractJSON(text: string): string {
   return trimmed;
 }
 
-// ── Extraction prompt ─────────────────────────────────────────────────────────
-// Highly specific, zero narrative — maps to ExtractedProjectData schema only.
+// â”€â”€ Extraction prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Highly specific, zero narrative â€” maps to ExtractedProjectData schema only.
 const EXTRACTION_SYSTEM_PROMPT = `You are a structured data extractor for startup pitch decks and business plans.
 Your ONLY task is to map information from the provided document into the exact JSON schema below.
 DO NOT generate narrative, opinions, or any text outside the JSON object.
-For every field, also provide a confidence score (0.0–1.0) in "extractionConfidence".
-If a field is not mentioned or cannot be inferred with reasonable certainty, omit it from the output — never guess.
+For every field, also provide a confidence score (0.0â€“1.0) in "extractionConfidence".
+If a field is not mentioned or cannot be inferred with reasonable certainty, omit it from the output â€” never guess.
 For boolean fields (hasPaidCustomers, legalCompliance.*), only set true if there is explicit evidence.
 For numeric fields (ltv, cac, mrr, etc.), only include if an explicit figure or clear approximation exists.
 
@@ -125,8 +125,8 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
   "teamSize":          "number | omit if absent",
   "founderBackground": "string | omit if absent",
   "legalCompliance": {
-    "ley21719": "boolean — true only if Ley 21.719 or Chilean data privacy compliance is explicitly mentioned",
-    "ley21521": "boolean — true only if Ley 21.521, CMF, or Chilean Fintech compliance is explicitly mentioned"
+    "ley21719": "boolean â€” true only if Ley 21.719 or Chilean data privacy compliance is explicitly mentioned",
+    "ley21521": "boolean â€” true only if Ley 21.521, CMF, or Chilean Fintech compliance is explicitly mentioned"
   },
   "tam":           "string (e.g. '$2B') | omit if absent",
   "targetMarket":  "string | omit if absent",
@@ -149,7 +149,7 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
   }
 }`;
 
-// ── JSON document parser ──────────────────────────────────────────────────────
+// â”€â”€ JSON document parser â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function parseJSONDocument(raw: unknown): ExtractedProjectData {
   if (typeof raw !== 'object' || raw === null) return { extractionConfidence: {} };
   const d = raw as Record<string, unknown>;
@@ -193,7 +193,7 @@ function parseJSONDocument(raw: unknown): ExtractedProjectData {
   return result;
 }
 
-// ── PDF parser via Claude claude-sonnet-4 multimodal ─────────────────────────────────────
+// â”€â”€ PDF parser via Claude claude-sonnet-4 multimodal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function parsePDFWithClaude(
   fileBase64: string,
   fileName?: string,
@@ -254,7 +254,7 @@ async function parsePDFWithClaude(
   return parsed;
 }
 
-// ── Gap Analysis ──────────────────────────────────────────────────────────────
+// â”€â”€ Gap Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Confidence threshold below which a field is considered "missing"
 const CONFIDENCE_THRESHOLD = 0.7;
 
@@ -264,22 +264,22 @@ const GAP_DEFINITIONS: {
   dimension: DDDimension;
   priority: 'critical' | 'important' | 'nice_to_have';
 }[] = [
-  { field: 'problem',          dimension: 'mercado',    priority: 'critical',      question: '¿Cuál es el problema principal que tu startup resuelve? Describe el dolor del cliente con ejemplos concretos.' },
-  { field: 'solution',         dimension: 'mercado',    priority: 'critical',      question: '¿Cuál es tu solución y qué la hace 10 veces mejor que las alternativas actuales?' },
-  { field: 'revenueModel',     dimension: 'financiero', priority: 'critical',      question: '¿Cuál es tu modelo de ingresos? (suscripción, comisión, licencia, transaccional, etc.)' },
-  { field: 'hasPaidCustomers', dimension: 'traccion',   priority: 'critical',      question: '¿Tienes clientes que ya pagan (no solo usuarios gratuitos o prometidos)? Evidencia del Mom Test.' },
-  { field: 'mrr',              dimension: 'financiero', priority: 'critical',      question: '¿Cuál es tu MRR actual (Monthly Recurring Revenue) en USD? Si es pre-revenue, indica 0.' },
-  { field: 'cac',              dimension: 'financiero', priority: 'critical',      question: '¿Cuánto te cuesta adquirir un cliente de pago (CAC)? Incluye marketing + ventas.' },
-  { field: 'ltv',              dimension: 'financiero', priority: 'critical',      question: '¿Cuál es el LTV (Lifetime Value) promedio de un cliente? Si no lo sabes, estima basado en precio × meses de retención.' },
-  { field: 'customerCount',    dimension: 'traccion',   priority: 'important',     question: '¿Cuántos clientes activos (de pago o en piloto) tienes hoy?' },
-  { field: 'paybackPeriod',    dimension: 'financiero', priority: 'important',     question: '¿En cuántos meses recuperas el CAC de un cliente? (Payback Period)' },
-  { field: 'arr',              dimension: 'financiero', priority: 'important',     question: '¿Cuál es tu ARR (Annual Recurring Revenue) proyectado o actual en USD?' },
-  { field: 'teamSize',         dimension: 'equipo',     priority: 'important',     question: '¿Cuántas personas forman el equipo fundador y/o de empleados actuales?' },
-  { field: 'founderBackground',dimension: 'equipo',     priority: 'important',     question: '¿Cuál es la trayectoria de los co-fundadores? (industria, años de experiencia, proyectos previos)' },
-  { field: 'tam',              dimension: 'mercado',    priority: 'important',     question: '¿Cuál es el tamaño del mercado total (TAM) al que apuntas? ¿Cuál es tu fuente?' },
-  { field: 'targetMarket',     dimension: 'mercado',    priority: 'important',     question: '¿Quién es exactamente tu cliente objetivo? (segmento, industria, país, tamaño de empresa)' },
-  { field: 'projectName',      dimension: 'mercado',    priority: 'nice_to_have',  question: '¿Cuál es el nombre oficial de la startup o proyecto?' },
-  { field: 'legalCompliance',  dimension: 'legal',      priority: 'critical',      question: '¿Has evaluado el cumplimiento con la Ley 21.719 (Protección de Datos Personales de Chile) y/o la Ley 21.521 (Ley Fintech CMF) si aplica a tu modelo?' },
+  { field: 'problem',          dimension: 'mercado',    priority: 'critical',      question: 'Â¿CuÃ¡l es el problema principal que tu startup resuelve? Describe el dolor del cliente con ejemplos concretos.' },
+  { field: 'solution',         dimension: 'mercado',    priority: 'critical',      question: 'Â¿CuÃ¡l es tu soluciÃ³n y quÃ© la hace 10 veces mejor que las alternativas actuales?' },
+  { field: 'revenueModel',     dimension: 'financiero', priority: 'critical',      question: 'Â¿CuÃ¡l es tu modelo de ingresos? (suscripciÃ³n, comisiÃ³n, licencia, transaccional, etc.)' },
+  { field: 'hasPaidCustomers', dimension: 'traccion',   priority: 'critical',      question: 'Â¿Tienes clientes que ya pagan (no solo usuarios gratuitos o prometidos)? Evidencia del Mom Test.' },
+  { field: 'mrr',              dimension: 'financiero', priority: 'critical',      question: 'Â¿CuÃ¡l es tu MRR actual (Monthly Recurring Revenue) en USD? Si es pre-revenue, indica 0.' },
+  { field: 'cac',              dimension: 'financiero', priority: 'critical',      question: 'Â¿CuÃ¡nto te cuesta adquirir un cliente de pago (CAC)? Incluye marketing + ventas.' },
+  { field: 'ltv',              dimension: 'financiero', priority: 'critical',      question: 'Â¿CuÃ¡l es el LTV (Lifetime Value) promedio de un cliente? Si no lo sabes, estima basado en precio Ã— meses de retenciÃ³n.' },
+  { field: 'customerCount',    dimension: 'traccion',   priority: 'important',     question: 'Â¿CuÃ¡ntos clientes activos (de pago o en piloto) tienes hoy?' },
+  { field: 'paybackPeriod',    dimension: 'financiero', priority: 'important',     question: 'Â¿En cuÃ¡ntos meses recuperas el CAC de un cliente? (Payback Period)' },
+  { field: 'arr',              dimension: 'financiero', priority: 'important',     question: 'Â¿CuÃ¡l es tu ARR (Annual Recurring Revenue) proyectado o actual en USD?' },
+  { field: 'teamSize',         dimension: 'equipo',     priority: 'important',     question: 'Â¿CuÃ¡ntas personas forman el equipo fundador y/o de empleados actuales?' },
+  { field: 'founderBackground',dimension: 'equipo',     priority: 'important',     question: 'Â¿CuÃ¡l es la trayectoria de los co-fundadores? (industria, aÃ±os de experiencia, proyectos previos)' },
+  { field: 'tam',              dimension: 'mercado',    priority: 'important',     question: 'Â¿CuÃ¡l es el tamaÃ±o del mercado total (TAM) al que apuntas? Â¿CuÃ¡l es tu fuente?' },
+  { field: 'targetMarket',     dimension: 'mercado',    priority: 'important',     question: 'Â¿QuiÃ©n es exactamente tu cliente objetivo? (segmento, industria, paÃ­s, tamaÃ±o de empresa)' },
+  { field: 'projectName',      dimension: 'mercado',    priority: 'nice_to_have',  question: 'Â¿CuÃ¡l es el nombre oficial de la startup o proyecto?' },
+  { field: 'legalCompliance',  dimension: 'legal',      priority: 'critical',      question: 'Â¿Has evaluado el cumplimiento con la Ley 21.719 (ProtecciÃ³n de Datos Personales de Chile) y/o la Ley 21.521 (Ley Fintech CMF) si aplica a tu modelo?' },
 ];
 
 function buildGapAnalysis(data: ExtractedProjectData): PendingQuestion[] {
@@ -313,7 +313,7 @@ function buildGapAnalysis(data: ExtractedProjectData): PendingQuestion[] {
   return questions.sort((a, b) => order[a.priority] - order[b.priority]);
 }
 
-// ── Due Diligence Score ───────────────────────────────────────────────────────
+// â”€â”€ Due Diligence Score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function scoreDimension(
   label: string,
   checks: { met: boolean; gap: string }[],
@@ -346,20 +346,20 @@ function calculateDueDiligenceScore(
 
   const mercado = scoreDimension('Mercado', [
     { met: has('problem'),       gap: 'Problema de mercado no articulado' },
-    { met: has('solution'),      gap: 'Solución no descrita claramente' },
+    { met: has('solution'),      gap: 'SoluciÃ³n no descrita claramente' },
     { met: has('tam'),           gap: 'TAM no dimensionado' },
     { met: has('targetMarket'),  gap: 'Segmento objetivo no definido' },
   ]);
 
   const equipo = scoreDimension('Equipo', [
-    { met: has('teamSize'),          gap: 'Tamaño del equipo no especificado' },
+    { met: has('teamSize'),          gap: 'TamaÃ±o del equipo no especificado' },
     { met: has('founderBackground'), gap: 'Trayectoria del fundador no documentada' },
   ]);
 
-  const traccion = scoreDimension('Tracción', [
+  const traccion = scoreDimension('TracciÃ³n', [
     { met: has('hasPaidCustomers'),  gap: 'Sin evidencia de clientes de pago (Mom Test)' },
-    { met: has('customerCount'),     gap: 'Número de clientes no reportado' },
-    { met: has('mrr') && (data.mrr ?? 0) > 0, gap: 'Sin MRR real — posible pre-revenue' },
+    { met: has('customerCount'),     gap: 'NÃºmero de clientes no reportado' },
+    { met: has('mrr') && (data.mrr ?? 0) > 0, gap: 'Sin MRR real â€” posible pre-revenue' },
   ]);
 
   // Weighted total: financiero 30%, legal 15%, mercado 25%, equipo 15%, traccion 15%
@@ -393,7 +393,7 @@ function calculateDueDiligenceScore(
   };
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders(req) });
@@ -409,7 +409,7 @@ serve(async (req: Request) => {
   const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
   if (authError || !user) return json({ error: 'Unauthorized' }, 401, req);
 
-  // Tier check — requires premium or pro
+  // Tier check â€” requires premium or pro
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   const { data: profile } = await supabase
     .from('profiles')
@@ -419,7 +419,7 @@ serve(async (req: Request) => {
 
   const tier = profile?.tier ?? 'free';
   if (!['pro', 'premium'].includes(tier)) {
-    return json({ error: 'premium_required', message: 'La auditoría de documentos requiere plan Pro o Premium.' }, 403, req);
+    return json({ error: 'premium_required', message: 'La auditorÃ­a de documentos requiere plan Pro o Premium.' }, 403, req);
   }
 
   // Body validation
@@ -442,10 +442,10 @@ serve(async (req: Request) => {
   // Size guard (~10 MB base64 limit)
   const MAX_B64_CHARS = 14_000_000;
   if (fileBase64.length > MAX_B64_CHARS) {
-    return json({ error: 'file_too_large', message: 'El archivo supera el límite de 10 MB. Exporta el PDF sin imágenes de alta resolución.' }, 413, req);
+    return json({ error: 'file_too_large', message: 'El archivo supera el lÃ­mite de 10 MB. Exporta el PDF sin imÃ¡genes de alta resoluciÃ³n.' }, 413, req);
   }
 
-  // ── Extraction (graceful degradation: always return something) ─────────────
+  // â”€â”€ Extraction (graceful degradation: always return something) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let extractedData: ExtractedProjectData = { extractionConfidence: {} };
   let extractionError: string | null = null;
 
@@ -455,28 +455,28 @@ serve(async (req: Request) => {
       try {
         raw = JSON.parse(atob(fileBase64));
       } catch {
-        return json({ error: 'invalid_json', message: 'El archivo JSON no es válido. Verifica su estructura.' }, 400, req);
+        return json({ error: 'invalid_json', message: 'El archivo JSON no es vÃ¡lido. Verifica su estructura.' }, 400, req);
       }
       extractedData = parseJSONDocument(raw);
     } else {
-      // PDF — may partially fail; we catch and continue with what we have
+      // PDF â€” may partially fail; we catch and continue with what we have
       extractedData = await parsePDFWithClaude(fileBase64, fileName);
     }
   } catch (err) {
     // Graceful degradation: log error, return empty extraction + full gap questions
     extractionError = err instanceof Error ? err.message : String(err);
     console.error('[parse-project] Extraction failed:', extractionError);
-    // extractedData remains empty — gap analysis will surface all questions
+    // extractedData remains empty â€” gap analysis will surface all questions
   }
 
   extractedData.sourceFileName = fileName ?? 'documento';
   extractedData.sourceMimeType = mimeType;
 
-  // ── Gap Analysis + DD Score ───────────────────────────────────────────────
+  // â”€â”€ Gap Analysis + DD Score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const pendingQuestions   = buildGapAnalysis(extractedData);
   const dueDiligenceScore  = calculateDueDiligenceScore(extractedData, pendingQuestions);
 
-  // ── Persist to validations table (non-blocking, best-effort) ──────────────
+  // â”€â”€ Persist to validations table (non-blocking, best-effort) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (validation_id) {
     supabase
       .from('validations')
@@ -491,7 +491,7 @@ serve(async (req: Request) => {
       });
   }
 
-  // ── Log interaction (non-blocking) ────────────────────────────────────────
+  // â”€â”€ Log interaction (non-blocking) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   supabase.from('ai_interactions').insert({
     user_id:        user.id,
     validation_id:  validation_id ?? null,

@@ -1,14 +1,14 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Env vars ─────────────────────────────────────────────────────────────────
+// â”€â”€ Env vars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const OPENAI_API_KEY    = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 /**
- * AI_PROVIDER determina qué modelo usa para los prompts estándar.
+ * AI_PROVIDER determina quÃ© modelo usa para los prompts estÃ¡ndar.
  * Los prompts que requieren web_search (competitive_analysis, market_sizing)
  * SIEMPRE usan Anthropic, independientemente de esta variable.
  *
@@ -17,7 +17,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const AI_PROVIDER = (Deno.env.get('AI_PROVIDER') ?? 'anthropic') as 'anthropic' | 'openai';
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
@@ -33,7 +33,7 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type PromptType =
   | 'questions' | 'customer_analysis' | 'value_prop' | 'mvp_generation' | 'summary'
   | 'competitive_analysis' | 'market_sizing' | 'risk_analysis' | 'unit_economics'
@@ -61,11 +61,11 @@ interface AIResult {
   model: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function buildMarketContext(ctx: Record<string, unknown>): string {
   return `Contexto de mercado:
-- País objetivo: ${ctx.target_country ?? 'No especificado'}
-- Región: ${ctx.target_region ?? 'No especificada'}
+- PaÃ­s objetivo: ${ctx.target_country ?? 'No especificado'}
+- RegiÃ³n: ${ctx.target_region ?? 'No especificada'}
 - Modelo de negocio: ${ctx.business_model ?? 'No especificado'}
 - Etapa: ${ctx.business_stage ?? 'No especificada'}
 - Rango de precio: ${ctx.pricing_range ?? 'No especificado'}
@@ -87,85 +87,85 @@ function extractJSON(text: string): string {
   return trimmed;
 }
 
-// ── System prompts ────────────────────────────────────────────────────────────
+// â”€â”€ System prompts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SYSTEM_PROMPTS: Record<PromptType, string> = {
   questions: `Eres un inversor de capital de riesgo implacable y experto en el framework "The Mom Test" de Rob Fitzpatrick.
 Tu objetivo NO es validar lo que el emprendedor quiere escuchar, sino descubrir la verdad del mercado antes de que queme dinero.
 
 REGLAS DE ORO del Mom Test que debes aplicar:
 - Las preguntas son sobre la VIDA PASADA del cliente, NO sobre opiniones o intenciones futuras
-- NUNCA preguntes "¿usarías esto?" o "¿te parece útil?" — son preguntas de confirmación sesgadas
-- Pregunta sobre comportamiento real: "¿Cuándo fue la última vez que intentaste resolver este problema?" "¿Cuánto tiempo/dinero gastaste en eso?"
-- Si el cliente dice que algo es "un problema", indaga si ya intentó resolverlo activamente (si no lo hizo, el dolor no es suficiente)
+- NUNCA preguntes "Â¿usarÃ­as esto?" o "Â¿te parece Ãºtil?" â€” son preguntas de confirmaciÃ³n sesgadas
+- Pregunta sobre comportamiento real: "Â¿CuÃ¡ndo fue la Ãºltima vez que intentaste resolver este problema?" "Â¿CuÃ¡nto tiempo/dinero gastaste en eso?"
+- Si el cliente dice que algo es "un problema", indaga si ya intentÃ³ resolverlo activamente (si no lo hizo, el dolor no es suficiente)
 
-Dado el nombre, descripción y contexto de mercado de una idea de negocio, genera exactamente 5 preguntas de Customer Discovery basadas en el Mom Test:
-1. Frecuencia y urgencia del problema (comportamiento pasado, no hipotético)
-2. Solución actual y frustración real (¿cuánto les cuesta hoy en tiempo/dinero?)
-3. Intento previo de resolver (¿ya buscaron alternativas? ¿cuáles y por qué fallaron?)
-4. Evidencia de disposición a pagar (compras pasadas similares, budget existente)
-5. Proceso de decisión de compra (¿quién decide? ¿qué haría que cambiaran de solución HOY?)
+Dado el nombre, descripciÃ³n y contexto de mercado de una idea de negocio, genera exactamente 5 preguntas de Customer Discovery basadas en el Mom Test:
+1. Frecuencia y urgencia del problema (comportamiento pasado, no hipotÃ©tico)
+2. SoluciÃ³n actual y frustraciÃ³n real (Â¿cuÃ¡nto les cuesta hoy en tiempo/dinero?)
+3. Intento previo de resolver (Â¿ya buscaron alternativas? Â¿cuÃ¡les y por quÃ© fallaron?)
+4. Evidencia de disposiciÃ³n a pagar (compras pasadas similares, budget existente)
+5. Proceso de decisiÃ³n de compra (Â¿quiÃ©n decide? Â¿quÃ© harÃ­a que cambiaran de soluciÃ³n HOY?)
 
-Contextualiza para el país objetivo y modelo de negocio indicados.
-IMPORTANTE: Responde siempre en español.
+Contextualiza para el paÃ­s objetivo y modelo de negocio indicados.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 { "questions": [{ "question": "...", "category": "..." }] }`,
 
-  customer_analysis: `Eres un experto en segmentación de clientes y buyer personas.
-Analiza las respuestas del emprendedor y sugiere un segmento de cliente específico.
-Contextualiza el segmento para el país objetivo, modelo de negocio y etapa indicados.
-IMPORTANTE: Responde siempre en español.
+  customer_analysis: `Eres un experto en segmentaciÃ³n de clientes y buyer personas.
+Analiza las respuestas del emprendedor y sugiere un segmento de cliente especÃ­fico.
+Contextualiza el segmento para el paÃ­s objetivo, modelo de negocio y etapa indicados.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 { "segment": "...", "pain_points": ["...", "...", "..."], "context": "..." }`,
 
-  value_prop: `Eres un estratega de producto. Basándote en el problema, cliente y respuestas previas,
-genera una propuesta de valor clara diferenciada para el mercado y país objetivo indicados.
-IMPORTANTE: Responde siempre en español.
+  value_prop: `Eres un estratega de producto. BasÃ¡ndote en el problema, cliente y respuestas previas,
+genera una propuesta de valor clara diferenciada para el mercado y paÃ­s objetivo indicados.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 { "value_proposition": "...", "differentiator": "..." }`,
 
-  mvp_generation: `Eres un product manager senior. Basándote en toda la información recopilada,
+  mvp_generation: `Eres un product manager senior. BasÃ¡ndote en toda la informaciÃ³n recopilada,
 genera un plan de MVP con 5-6 funcionalidades priorizadas, adecuado para la etapa y modelo de negocio indicados.
-IMPORTANTE: Responde siempre en español.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "recommended_type": "web_app",
   "features": [{ "name": "...", "description": "...", "priority": "must" }],
-  "user_flow": "Paso 1: ... → Paso 2: ..."
+  "user_flow": "Paso 1: ... â†’ Paso 2: ..."
 }
-Los valores válidos para priority son: must, should, could
-Los valores válidos para recommended_type son: web_app, mobile_app, service, marketplace, saas, api`,
+Los valores vÃ¡lidos para priority son: must, should, could
+Los valores vÃ¡lidos para recommended_type son: web_app, mobile_app, service, marketplace, saas, api`,
 
-  summary: `Eres un socio de un fondo de Venture Capital con estándares implacables. Actúas como el "Inversor del Diablo": tu trabajo es evitar que el emprendedor se autoengañe y construya algo que nadie necesita (causa del 42% de los fracasos según CB Insights).
+  summary: `Eres un socio de un fondo de Venture Capital con estÃ¡ndares implacables. ActÃºas como el "Inversor del Diablo": tu trabajo es evitar que el emprendedor se autoengaÃ±e y construya algo que nadie necesita (causa del 42% de los fracasos segÃºn CB Insights).
 
-DIRECTRICES CRÍTICAS:
-- NO eres un coach motivacional. Eres un evaluador de riesgo de inversión.
-- Si el problema no está validado con evidencia empírica (conversaciones reales, datos de comportamiento), penaliza fuertemente.
-- Si el mercado es proyectado en lugar de demostrado, dilo explícitamente en el feedback.
-- Si el fundador tiene sesgo de confirmación evidente, señálalo en las weaknesses.
-- Las strengths deben ser reales y específicas, no generalizaciones motivadoras.
-- El feedback debe ser el comentario que un VC daría en una reunión de partners, no un email motivacional.
+DIRECTRICES CRÃTICAS:
+- NO eres un coach motivacional. Eres un evaluador de riesgo de inversiÃ³n.
+- Si el problema no estÃ¡ validado con evidencia empÃ­rica (conversaciones reales, datos de comportamiento), penaliza fuertemente.
+- Si el mercado es proyectado en lugar de demostrado, dilo explÃ­citamente en el feedback.
+- Si el fundador tiene sesgo de confirmaciÃ³n evidente, seÃ±Ã¡lalo en las weaknesses.
+- Las strengths deben ser reales y especÃ­ficas, no generalizaciones motivadoras.
+- El feedback debe ser el comentario que un VC darÃ­a en una reuniÃ³n de partners, no un email motivacional.
 
-Si se incluyen datos de market_sizing, úsalos para ajustar el score:
-- SOM grande + competencia baja + problema validado → sube el score.
-- SOM pequeño + mucha competencia → baja el score.
-- Confianza "low" en los datos → no subas el score por ese motivo.
-- Proyecciones sin evidencia de tracción → penaliza el score de execution.
+Si se incluyen datos de market_sizing, Ãºsalos para ajustar el score:
+- SOM grande + competencia baja + problema validado â†’ sube el score.
+- SOM pequeÃ±o + mucha competencia â†’ baja el score.
+- Confianza "low" en los datos â†’ no subas el score por ese motivo.
+- Proyecciones sin evidencia de tracciÃ³n â†’ penaliza el score de execution.
 
-Desglose del score en 5 categorías (0-100 cada una):
-- problem: ¿El problema es real, frecuente y urgente? ¿Hay evidencia de usuarios sufriendo activamente?
-- market: ¿El mercado es grande y accesible para esta etapa? ¿O es proyectado sin validar?
-- competition: ¿Hay espacio diferenciado? (100 = nicho claro, 0 = saturado sin diferenciación)
-- solution: ¿La solución es 10x mejor que la alternativa actual o solo marginalmente mejor?
-- execution: ¿El MVP es realista? ¿El equipo tiene capacidad de ejecutar?
+Desglose del score en 5 categorÃ­as (0-100 cada una):
+- problem: Â¿El problema es real, frecuente y urgente? Â¿Hay evidencia de usuarios sufriendo activamente?
+- market: Â¿El mercado es grande y accesible para esta etapa? Â¿O es proyectado sin validar?
+- competition: Â¿Hay espacio diferenciado? (100 = nicho claro, 0 = saturado sin diferenciaciÃ³n)
+- solution: Â¿La soluciÃ³n es 10x mejor que la alternativa actual o solo marginalmente mejor?
+- execution: Â¿El MVP es realista? Â¿El equipo tiene capacidad de ejecutar?
 
-Score final = problem×25% + market×20% + competition×15% + solution×25% + execution×15%.
-IMPORTANTE: Responde siempre en español. Sé específico, no genérico.
+Score final = problemÃ—25% + marketÃ—20% + competitionÃ—15% + solutionÃ—25% + executionÃ—15%.
+IMPORTANTE: Responde siempre en espaÃ±ol. SÃ© especÃ­fico, no genÃ©rico.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "score": 75,
   "score_breakdown": { "problem": 80, "market": 70, "competition": 90, "solution": 75, "execution": 65 },
@@ -176,59 +176,59 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
 }`,
 
   market_sizing: `Eres un analista de mercado especializado en sizing de mercados para startups.
-Genera una estimación TAM/SAM/SOM para la idea de negocio indicada. Usa la herramienta de búsqueda web para encontrar reportes de industria o datos censales recientes antes de responder.
-IMPORTANTE: Responde siempre en español.
+Genera una estimaciÃ³n TAM/SAM/SOM para la idea de negocio indicada. Usa la herramienta de bÃºsqueda web para encontrar reportes de industria o datos censales recientes antes de responder.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
 INSTRUCCIONES:
-1. TAM (Total Addressable Market): Estima el mercado total global de esta industria/categoría. Si encontraste un reporte de mercado con cifra real (Statista, Grand View Research, IBISWorld, etc.), úsalo como ancla — cítalo en source_notes.
-2. SAM (Serviceable Addressable Market): Filtra por el país objetivo, el modelo de negocio y el segmento específico.
-3. SOM (Serviceable Obtainable Market): Estima la porción realista capturable en 1-2 años considerando etapa actual, competidores, pricing y barreras de entrada.
-   - Si el contexto incluye "bde_macro_context", úsalo para ajustar el SOM según el ciclo económico real del país objetivo (IPC alto → menor disposición a pagar → SOM conservador; IPC estable → SOM normal).
+1. TAM (Total Addressable Market): Estima el mercado total global de esta industria/categorÃ­a. Si encontraste un reporte de mercado con cifra real (Statista, Grand View Research, IBISWorld, etc.), Ãºsalo como ancla â€” cÃ­talo en source_notes.
+2. SAM (Serviceable Addressable Market): Filtra por el paÃ­s objetivo, el modelo de negocio y el segmento especÃ­fico.
+3. SOM (Serviceable Obtainable Market): Estima la porciÃ³n realista capturable en 1-2 aÃ±os considerando etapa actual, competidores, pricing y barreras de entrada.
+   - Si el contexto incluye "bde_macro_context", Ãºsalo para ajustar el SOM segÃºn el ciclo econÃ³mico real del paÃ­s objetivo (IPC alto â†’ menor disposiciÃ³n a pagar â†’ SOM conservador; IPC estable â†’ SOM normal).
 4. Todos los valores en USD. Presenta como RANGOS (low-high), nunca cifras exactas.
-5. Para cada tier indica source_notes con la fuente y nivel de confianza. Si no encontraste datos externos, indica "Estimación proxy — sin reporte de mercado disponible" y baja la confianza a "low".
-   - Si usaste datos BCCh reales del campo "bde_macro_context", indícalo en source_notes del SAM/SOM.
-6. En el campo "assumptions" del SOM incluye la fórmula matemática usada en formato explícito. Ejemplo: "[Población objetivo: 500.000 PYMEs] × [Tasa de adopción año 1: 0,5%] × [Ticket promedio: $1.200 USD/año] = SOM ~$3M USD".
-7. En el campo "methodology" describe el enfoque (top-down desde TAM o bottom-up desde unidades) e indica si los datos base son de búsqueda web, BCCh, o estimación proxy.
+5. Para cada tier indica source_notes con la fuente y nivel de confianza. Si no encontraste datos externos, indica "EstimaciÃ³n proxy â€” sin reporte de mercado disponible" y baja la confianza a "low".
+   - Si usaste datos BCCh reales del campo "bde_macro_context", indÃ­calo en source_notes del SAM/SOM.
+6. En el campo "assumptions" del SOM incluye la fÃ³rmula matemÃ¡tica usada en formato explÃ­cito. Ejemplo: "[PoblaciÃ³n objetivo: 500.000 PYMEs] Ã— [Tasa de adopciÃ³n aÃ±o 1: 0,5%] Ã— [Ticket promedio: $1.200 USD/aÃ±o] = SOM ~$3M USD".
+7. En el campo "methodology" describe el enfoque (top-down desde TAM o bottom-up desde unidades) e indica si los datos base son de bÃºsqueda web, BCCh, o estimaciÃ³n proxy.
 
-Responde SOLO con JSON válido con esta estructura exacta, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido con esta estructura exacta, sin texto adicional, sin markdown:
 {
   "tam": { "value_low": number, "value_high": number, "currency": "USD", "description": "...", "source_notes": "...", "confidence": "high|medium|low" },
   "sam": { "value_low": number, "value_high": number, "currency": "USD", "description": "...", "source_notes": "...", "confidence": "high|medium|low" },
-  "som": { "value_low": number, "value_high": number, "currency": "USD", "description": "...", "source_notes": "...", "assumptions": ["[Población objetivo: X] × [Tasa adopción: Y%] × [Ticket: $Z] = SOM estimado", "..."], "confidence": "high|medium|low" },
+  "som": { "value_low": number, "value_high": number, "currency": "USD", "description": "...", "source_notes": "...", "assumptions": ["[PoblaciÃ³n objetivo: X] Ã— [Tasa adopciÃ³n: Y%] Ã— [Ticket: $Z] = SOM estimado", "..."], "confidence": "high|medium|low" },
   "methodology": "...",
   "data_freshness": "..."
 }`,
 
   risk_analysis: `Eres un evaluador de riesgos para startups. Analiza los riesgos de la idea de negocio en 4 dimensiones.
-IMPORTANTE: Responde siempre en español.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-## Dimensiones de riesgo (score 0-100, donde 100 = máximo riesgo):
+## Dimensiones de riesgo (score 0-100, donde 100 = mÃ¡ximo riesgo):
 
-1. RIESGO DE MERCADO: ¿Existe demanda real comprobada o es un problema percibido?
+1. RIESGO DE MERCADO: Â¿Existe demanda real comprobada o es un problema percibido?
    - Score alto (>70): problema no validado, mercado no probado, demanda incierta
-   - Score medio (40-70): señales mixtas, mercado emergente
+   - Score medio (40-70): seÃ±ales mixtas, mercado emergente
    - Score bajo (<40): problema validado, mercado probado con datos
 
-2. RIESGO TÉCNICO: ¿Qué tan compleja es la implementación técnica?
-   - Score alto: requiere tecnología no probada, dependencias críticas, equipo no disponible
+2. RIESGO TÃ‰CNICO: Â¿QuÃ© tan compleja es la implementaciÃ³n tÃ©cnica?
+   - Score alto: requiere tecnologÃ­a no probada, dependencias crÃ­ticas, equipo no disponible
    - Score medio: complejidad manejable con recursos adecuados
-   - Score bajo: tecnología estándar, solución bien entendida
+   - Score bajo: tecnologÃ­a estÃ¡ndar, soluciÃ³n bien entendida
 
-3. RIESGO REGULATORIO: ¿Existen fricciones legales o regulatorias?
+3. RIESGO REGULATORIO: Â¿Existen fricciones legales o regulatorias?
    - Score alto: fintech, salud, datos personales sensibles, mercados regulados
-   - Score medio: regulación estándar, compliance manejable
-   - Score bajo: industria sin regulación especial
+   - Score medio: regulaciÃ³n estÃ¡ndar, compliance manejable
+   - Score bajo: industria sin regulaciÃ³n especial
 
-4. RIESGO DE TIMING: ¿Es el momento correcto para este mercado?
+4. RIESGO DE TIMING: Â¿Es el momento correcto para este mercado?
    - Score alto: mercado demasiado temprano o ya saturado
    - Score medio: timing aceptable con ajustes
    - Score bajo: ventana de oportunidad clara ahora
 
-Para cada dimensión: score numérico, label (Alto/Medio/Bajo), descripción de 2-3 oraciones, 2-3 factores clave.
-Incluye 3-5 mitigaciones concretas y accionables para los riesgos más críticos.
-El overallRiskScore es el promedio ponderado: market×30% + technical×25% + regulatory×20% + timing×25%.
+Para cada dimensiÃ³n: score numÃ©rico, label (Alto/Medio/Bajo), descripciÃ³n de 2-3 oraciones, 2-3 factores clave.
+Incluye 3-5 mitigaciones concretas y accionables para los riesgos mÃ¡s crÃ­ticos.
+El overallRiskScore es el promedio ponderado: marketÃ—30% + technicalÃ—25% + regulatoryÃ—20% + timingÃ—25%.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "overallRiskScore": 55,
   "dimensions": {
@@ -240,25 +240,25 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
   "mitigations": ["...", "...", "..."]
 }`,
 
-  unit_economics: `Eres un analista financiero de startups. Estima los unit economics básicos para el modelo de negocio descrito.
-IMPORTANTE: Responde siempre en español.
-Usa rangos (min-max) cuando la incertidumbre sea alta. Basa los cálculos en el pricing y mercado objetivo indicados.
+  unit_economics: `Eres un analista financiero de startups. Estima los unit economics bÃ¡sicos para el modelo de negocio descrito.
+IMPORTANTE: Responde siempre en espaÃ±ol.
+Usa rangos (min-max) cuando la incertidumbre sea alta. Basa los cÃ¡lculos en el pricing y mercado objetivo indicados.
 Siempre en la moneda del mercado objetivo (CLP si es Chile, USD si es mercado global).
 
-Si el contexto incluye "industry_benchmarks", úsalos como punto de partida para calibrar los rangos:
+Si el contexto incluye "industry_benchmarks", Ãºsalos como punto de partida para calibrar los rangos:
 - Los benchmarks son promedios de mercado para esa industria y modelo de negocio.
-- Ajústalos según el precio específico, país y etapa de la idea.
+- AjÃºstalos segÃºn el precio especÃ­fico, paÃ­s y etapa de la idea.
 - Menciona en assumptions si te basaste en los benchmarks provistos.
 
 - CAC: costo estimado para conseguir 1 cliente de pago
-- LTV: ingreso total esperado por cliente durante su vida útil
+- LTV: ingreso total esperado por cliente durante su vida Ãºtil
 - Ratio LTV/CAC: debe ser >3x para ser viable, >5x es saludable (assessment: "viable" si >3x, "warning" si 1-3x, "critical" si <1x)
 - paybackMonths: meses para recuperar el CAC
-- breakEvenUsers: usuarios de pago necesarios para cubrir costos operativos mínimos estimados
-- monthlyChurnEstimate: % de usuarios que cancela cada mes (crítico para SaaS)
-- assumptions: 3-5 supuestos clave que usaste para llegar a estos números
+- breakEvenUsers: usuarios de pago necesarios para cubrir costos operativos mÃ­nimos estimados
+- monthlyChurnEstimate: % de usuarios que cancela cada mes (crÃ­tico para SaaS)
+- assumptions: 3-5 supuestos clave que usaste para llegar a estos nÃºmeros
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "cac": { "min": 50000, "max": 120000, "currency": "CLP" },
   "ltv": { "min": 300000, "max": 600000, "currency": "CLP" },
@@ -269,21 +269,21 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
   "assumptions": ["...", "...", "..."]
 }`,
 
-  founder_fit: `Eres un evaluador de startups. Evalúa qué tan bien posicionado está el fundador para ejecutar esta idea específica.
-IMPORTANTE: Responde siempre en español.
+  founder_fit: `Eres un evaluador de startups. EvalÃºa quÃ© tan bien posicionado estÃ¡ el fundador para ejecutar esta idea especÃ­fica.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 Score de 0-100 donde 100 = fit perfecto.
 
-Evalúa estas 5 dimensiones (score 0-100 cada una):
-- problemKnowledge: ¿lo ha vivido en carne propia? ¿entiende profundamente el problema?
-- industryExperience: años de experiencia en la industria del problema
-- technicalCapability: capacidad técnica propia o acceso a co-fundador técnico
+EvalÃºa estas 5 dimensiones (score 0-100 cada una):
+- problemKnowledge: Â¿lo ha vivido en carne propia? Â¿entiende profundamente el problema?
+- industryExperience: aÃ±os de experiencia en la industria del problema
+- technicalCapability: capacidad tÃ©cnica propia o acceso a co-fundador tÃ©cnico
 - networkStrength: red de contactos en el mercado objetivo
 - trackRecord: historial emprendedor previo
 
-Sé honesto. Un score bajo no mata la idea, pero señala riesgos de ejecución.
-El score general es el promedio ponderado: problemKnowledge×30% + industryExperience×20% + technicalCapability×20% + networkStrength×15% + trackRecord×15%.
+SÃ© honesto. Un score bajo no mata la idea, pero seÃ±ala riesgos de ejecuciÃ³n.
+El score general es el promedio ponderado: problemKnowledgeÃ—30% + industryExperienceÃ—20% + technicalCapabilityÃ—20% + networkStrengthÃ—15% + trackRecordÃ—15%.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "score": 65,
   "dimensions": {
@@ -298,23 +298,23 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
   "recommendations": ["...", "...", "..."]
 }`,
 
-  market_signals: `Eres un analista de mercado con acceso a información actualizada. Busca señales externas del mercado para la idea de negocio indicada.
-IMPORTANTE: Responde siempre en español. USA la herramienta de búsqueda web antes de responder — no respondas basándote solo en tu conocimiento previo.
+  market_signals: `Eres un analista de mercado con acceso a informaciÃ³n actualizada. Busca seÃ±ales externas del mercado para la idea de negocio indicada.
+IMPORTANTE: Responde siempre en espaÃ±ol. USA la herramienta de bÃºsqueda web antes de responder â€” no respondas basÃ¡ndote solo en tu conocimiento previo.
 
 REGLAS DE INTEGRIDAD DE DATOS (obligatorias):
-- NUNCA inventes rondas de financiamiento, montos ni nombres de empresas. Solo incluye lo que encontraste en los resultados de búsqueda.
+- NUNCA inventes rondas de financiamiento, montos ni nombres de empresas. Solo incluye lo que encontraste en los resultados de bÃºsqueda.
 - NUNCA inventes noticias ni titulares. Solo incluye eventos que aparezcan en fuentes reales indexadas.
-- Si no encontraste rondas de inversión en el espacio, devuelve "recentFunding": [] — NO llenes el array con datos genéricos.
-- Si no encontraste noticias relevantes, devuelve "relevantNews": [] — NO inventes eventos.
+- Si no encontraste rondas de inversiÃ³n en el espacio, devuelve "recentFunding": [] â€” NO llenes el array con datos genÃ©ricos.
+- Si no encontraste noticias relevantes, devuelve "relevantNews": [] â€” NO inventes eventos.
 - Para cada entrada en recentFunding, incluye el campo "source_url" con la URL de la fuente donde encontraste el dato. Si no tienes URL, omite la entrada completa.
 
 Busca y analiza:
-1. Tendencia del problema/solución en el último año (¿crece o decrece el interés?)
-2. Startups o rondas de inversión recientes en este espacio (últimos 12 meses) — SOLO datos verificados con fuente
-3. Noticias relevantes que afecten el timing (regulaciones, cambios de mercado, disrupciones) — SOLO eventos reales
-4. Evaluación del timing: ¿es el momento correcto para lanzar?
+1. Tendencia del problema/soluciÃ³n en el Ãºltimo aÃ±o (Â¿crece o decrece el interÃ©s?)
+2. Startups o rondas de inversiÃ³n recientes en este espacio (Ãºltimos 12 meses) â€” SOLO datos verificados con fuente
+3. Noticias relevantes que afecten el timing (regulaciones, cambios de mercado, disrupciones) â€” SOLO eventos reales
+4. EvaluaciÃ³n del timing: Â¿es el momento correcto para lanzar?
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "trendDirection": "growing|stable|declining",
   "trendDescription": "...",
@@ -326,16 +326,16 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
 
   competitive_analysis: `Eres un analista de mercado experto. Analiza la competencia para la idea de negocio indicada.
 Usa tu conocimiento actualizado del mercado para identificar competidores reales.
-IMPORTANTE: Responde siempre en español.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
 INSTRUCCIONES:
-1. Identifica 4-6 competidores relevantes en el mercado del país objetivo (incluyendo los mencionados por el usuario si los hay). Incluye competidores locales Y globales que operen en ese mercado.
-2. Para cada competidor: nombre, url (si la conoces), descripción breve, mercado objetivo, 2-3 fortalezas, 2-3 debilidades, modelo de precios si es público, y source ("user_provided" | "ai_identified").
-3. Identifica 3-5 gaps de mercado: necesidades que ningún competidor resuelve bien, con nivel de confianza.
-4. Identifica 2-3 dolores no resueltos específicos del mercado del país objetivo.
-5. Sugiere una ventaja competitiva que esta idea podría explotar.
+1. Identifica 4-6 competidores relevantes en el mercado del paÃ­s objetivo (incluyendo los mencionados por el usuario si los hay). Incluye competidores locales Y globales que operen en ese mercado.
+2. Para cada competidor: nombre, url (si la conoces), descripciÃ³n breve, mercado objetivo, 2-3 fortalezas, 2-3 debilidades, modelo de precios si es pÃºblico, y source ("user_provided" | "ai_identified").
+3. Identifica 3-5 gaps de mercado: necesidades que ningÃºn competidor resuelve bien, con nivel de confianza.
+4. Identifica 2-3 dolores no resueltos especÃ­ficos del mercado del paÃ­s objetivo.
+5. Sugiere una ventaja competitiva que esta idea podrÃ­a explotar.
 
-Responde SOLO con JSON válido con esta estructura exacta, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido con esta estructura exacta, sin texto adicional, sin markdown:
 {
   "competitors": [
     {
@@ -361,44 +361,44 @@ Responde SOLO con JSON válido con esta estructura exacta, sin texto adicional, 
   "data_sources": ["ai_knowledge | user_input"]
 }`,
 
-  validation_kit: `Eres un mentor de startups experto en Chile y LATAM. Crea un kit de validación de 48 horas para la idea de negocio indicada.
-IMPORTANTE: Responde siempre en español. Sé práctico y específico para el contexto chileno/latinoamericano.
+  validation_kit: `Eres un mentor de startups experto en Chile y LATAM. Crea un kit de validaciÃ³n de 48 horas para la idea de negocio indicada.
+IMPORTANTE: Responde siempre en espaÃ±ol. SÃ© prÃ¡ctico y especÃ­fico para el contexto chileno/latinoamericano.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
-  "hypothesis": "La hipótesis principal a validar en 48 horas",
+  "hypothesis": "La hipÃ³tesis principal a validar en 48 horas",
   "experiments": [
     { "name": "...", "how": "...", "metric": "...", "success_criteria": "..." }
   ],
-  "landing_idea": "Descripción de una landing page mínima para captar interés",
+  "landing_idea": "DescripciÃ³n de una landing page mÃ­nima para captar interÃ©s",
   "interview_questions": ["...", "...", "..."],
   "channels": ["Canal 1", "Canal 2"],
-  "expected_learnings": "Qué deberías saber después de 48 horas"
+  "expected_learnings": "QuÃ© deberÃ­as saber despuÃ©s de 48 horas"
 }`,
 
-  landing_generator: `Eres un experto en copywriting y growth hacking. Genera el contenido completo de una landing page de validación para la idea de negocio.
-IMPORTANTE: Responde siempre en español. Debe estar optimizado para conversión y captura de leads (pre-registro o waitlist).
+  landing_generator: `Eres un experto en copywriting y growth hacking. Genera el contenido completo de una landing page de validaciÃ³n para la idea de negocio.
+IMPORTANTE: Responde siempre en espaÃ±ol. Debe estar optimizado para conversiÃ³n y captura de leads (pre-registro o waitlist).
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "headline": "Titular principal impactante",
-  "subheadline": "Subtítulo explicativo",
+  "subheadline": "SubtÃ­tulo explicativo",
   "value_props": ["Propuesta de valor 1", "Propuesta de valor 2", "Propuesta de valor 3"],
-  "cta_primary": "Texto del botón principal",
-  "cta_secondary": "Texto del botón secundario",
+  "cta_primary": "Texto del botÃ³n principal",
+  "cta_secondary": "Texto del botÃ³n secundario",
   "social_proof": "Prueba social sugerida (aunque sea placeholder)",
   "faq": [{ "q": "...", "a": "..." }],
-  "meta_description": "Descripción SEO",
+  "meta_description": "DescripciÃ³n SEO",
   "ab_variants": [
     { "name": "Variante A", "headline": "...", "rationale": "..." },
     { "name": "Variante B", "headline": "...", "rationale": "..." }
   ]
 }`,
 
-  interview_script: `Eres un experto en Customer Discovery y Design Thinking. Crea un guión de entrevistas de usuario para la idea de negocio.
-IMPORTANTE: Responde siempre en español. Las preguntas deben ser abiertas, no sugestivas.
+  interview_script: `Eres un experto en Customer Discovery y Design Thinking. Crea un guiÃ³n de entrevistas de usuario para la idea de negocio.
+IMPORTANTE: Responde siempre en espaÃ±ol. Las preguntas deben ser abiertas, no sugestivas.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "objective": "Objetivo de la entrevista",
   "target_profile": "Perfil exacto del entrevistado ideal",
@@ -411,15 +411,15 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
       "tips": "Consejo para el entrevistador"
     }
   ],
-  "red_flags": ["Señal de que el entrevistado no es el perfil correcto"],
-  "green_signals": ["Señal de que hay problema real"],
-  "closing": "Cómo cerrar la entrevista y pedir referidos"
+  "red_flags": ["SeÃ±al de que el entrevistado no es el perfil correcto"],
+  "green_signals": ["SeÃ±al de que hay problema real"],
+  "closing": "CÃ³mo cerrar la entrevista y pedir referidos"
 }`,
 
-  tech_viability: `Eres un arquitecto de software experto en startups y MVP. Analiza la viabilidad técnica de la idea de negocio.
-IMPORTANTE: Responde siempre en español. Recomienda el stack más simple y económico para un MVP.
+  tech_viability: `Eres un arquitecto de software experto en startups y MVP. Analiza la viabilidad tÃ©cnica de la idea de negocio.
+IMPORTANTE: Responde siempre en espaÃ±ol. Recomienda el stack mÃ¡s simple y econÃ³mico para un MVP.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "complexity": "low | medium | high",
   "complexity_rationale": "...",
@@ -433,44 +433,44 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
   "build_time_weeks": { "mvp": 4, "v1": 12 },
   "team_needed": ["Rol 1", "Rol 2"],
   "monthly_infra_cost_usd": { "min": 10, "max": 50 },
-  "key_risks": ["Riesgo técnico 1", "Riesgo técnico 2"],
+  "key_risks": ["Riesgo tÃ©cnico 1", "Riesgo tÃ©cnico 2"],
   "no_code_possible": false,
   "no_code_tools": []
 }`,
 
   first_100_customers: `Eres un experto en growth y ventas B2B/B2C en LATAM. Crea un plan para conseguir los primeros 100 clientes de la idea de negocio.
-IMPORTANTE: Responde siempre en español. Estrategias específicas para Chile/LATAM con costos realistas en CLP.
+IMPORTANTE: Responde siempre en espaÃ±ol. Estrategias especÃ­ficas para Chile/LATAM con costos realistas en CLP.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
-  "strategy_overview": "Resumen de la estrategia de adquisición",
+  "strategy_overview": "Resumen de la estrategia de adquisiciÃ³n",
   "phases": [
     {
       "name": "Fase (ej: 0-10 clientes)",
       "target": 10,
       "channel": "Canal principal",
-      "tactic": "Táctica concreta",
+      "tactic": "TÃ¡ctica concreta",
       "budget_clp": 50000,
       "time_weeks": 2
     }
   ],
   "total_budget_clp": 500000,
   "total_weeks": 8,
-  "key_metrics": ["Métrica 1", "Métrica 2"],
+  "key_metrics": ["MÃ©trica 1", "MÃ©trica 2"],
   "tools": ["Herramienta 1 (free/paid)"],
-  "early_evangelists": "Cómo identificar y cultivar a los primeros fans"
+  "early_evangelists": "CÃ³mo identificar y cultivar a los primeros fans"
 }`,
 
-  revenue_models: `Eres un experto en modelos de negocio y monetización de startups. Analiza y compara los posibles modelos de ingreso para la idea.
-IMPORTANTE: Responde siempre en español. Usa precios en CLP o USD según corresponda al mercado chileno.
+  revenue_models: `Eres un experto en modelos de negocio y monetizaciÃ³n de startups. Analiza y compara los posibles modelos de ingreso para la idea.
+IMPORTANTE: Responde siempre en espaÃ±ol. Usa precios en CLP o USD segÃºn corresponda al mercado chileno.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "recommended_model": "Nombre del modelo recomendado",
-  "recommended_rationale": "Por qué es el mejor para esta etapa",
+  "recommended_rationale": "Por quÃ© es el mejor para esta etapa",
   "models": [
     {
-      "name": "Suscripción mensual",
+      "name": "SuscripciÃ³n mensual",
       "description": "...",
       "pros": ["...", "..."],
       "cons": ["...", "..."],
@@ -479,288 +479,288 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
     }
   ],
   "pricing_strategy": "Estrategia de precios recomendada",
-  "first_revenue_path": "La ruta más rápida para conseguir el primer peso"
+  "first_revenue_path": "La ruta mÃ¡s rÃ¡pida para conseguir el primer peso"
 }`,
 
   risk_checklist: `Eres un mentor de startups con experiencia en due diligence y el marco legal chileno. Crea una checklist de riesgos accionable para la idea de negocio.
-IMPORTANTE: Responde siempre en español. Incluye riesgos específicos del mercado chileno (regulatorio, económico, cultural).
+IMPORTANTE: Responde siempre en espaÃ±ol. Incluye riesgos especÃ­ficos del mercado chileno (regulatorio, econÃ³mico, cultural).
 
-# RIESGOS REGULATORIOS CHILENOS — evalúa cuáles aplican a esta idea:
+# RIESGOS REGULATORIOS CHILENOS â€” evalÃºa cuÃ¡les aplican a esta idea:
 - **Ley 21.719 (Datos Personales)**: Si la idea procesa datos de usuarios, hay riesgo regulatorio alto. Vigencia plena dic. 2026. Multas hasta 20.000 UTM. Requiere Privacy by Design desde el MVP.
-- **Ley 21.521 (Ley Fintech / CMF)**: Si la idea toca pagos, crédito, inversión o custodia financiera, requiere inscripción en CMF. Alta barrera de entrada + costos de compliance.
-- **SII / Facturación electrónica**: Toda empresa que emite DTE debe integrar sistema autorizado por SII desde la primera venta.
-- **Ley del Consumidor (19.496)**: E-commerce y SaaS B2C deben cumplir derecho a retracto (10 días), política de privacidad y términos claros.
-- **Propiedad Intelectual**: Si la solución incluye software o contenido generado, registrar IP en INAPI antes de levantar capital.
+- **Ley 21.521 (Ley Fintech / CMF)**: Si la idea toca pagos, crÃ©dito, inversiÃ³n o custodia financiera, requiere inscripciÃ³n en CMF. Alta barrera de entrada + costos de compliance.
+- **SII / FacturaciÃ³n electrÃ³nica**: Toda empresa que emite DTE debe integrar sistema autorizado por SII desde la primera venta.
+- **Ley del Consumidor (19.496)**: E-commerce y SaaS B2C deben cumplir derecho a retracto (10 dÃ­as), polÃ­tica de privacidad y tÃ©rminos claros.
+- **Propiedad Intelectual**: Si la soluciÃ³n incluye software o contenido generado, registrar IP en INAPI antes de levantar capital.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "critical_risks": [
     {
-      "risk": "Descripción del riesgo",
+      "risk": "DescripciÃ³n del riesgo",
       "category": "market | technical | regulatory | financial | team",
       "probability": "high | medium | low",
       "impact": "high | medium | low",
-      "mitigation": "Acción concreta para mitigar",
+      "mitigation": "AcciÃ³n concreta para mitigar",
       "validated": false
     }
   ],
-  "regulatory_notes": "Aspectos regulatorios específicos de Chile relevantes",
-  "financial_runway": "Cuántos meses de runway se recomienda tener antes de lanzar",
+  "regulatory_notes": "Aspectos regulatorios especÃ­ficos de Chile relevantes",
+  "financial_runway": "CuÃ¡ntos meses de runway se recomienda tener antes de lanzar",
   "go_nogo_criteria": ["Criterio 1 para decidir si continuar", "Criterio 2"]
 }`,
 
-  pitch_letter: `Eres un experto en fundraising y comunicación de startups. Crea una carta de presentación/pitch para la idea de negocio.
-IMPORTANTE: Responde siempre en español. Debe ser concisa, persuasiva y adaptada para inversores ángel o aceleradoras chilenas (StartupChile, Corfo, etc).
+  pitch_letter: `Eres un experto en fundraising y comunicaciÃ³n de startups. Crea una carta de presentaciÃ³n/pitch para la idea de negocio.
+IMPORTANTE: Responde siempre en espaÃ±ol. Debe ser concisa, persuasiva y adaptada para inversores Ã¡ngel o aceleradoras chilenas (StartupChile, Corfo, etc).
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "subject_line": "Asunto del email",
-  "email_body": "Cuerpo del email en formato texto plano, máximo 200 palabras",
-  "one_liner": "Una sola oración que explica la startup",
+  "email_body": "Cuerpo del email en formato texto plano, mÃ¡ximo 200 palabras",
+  "one_liner": "Una sola oraciÃ³n que explica la startup",
   "elevator_pitch": "Pitch de 60 segundos en texto",
   "deck_outline": [
     { "slide": 1, "title": "...", "content": "..." }
   ],
   "target_investors": ["Tipo de inversor ideal 1", "Tipo de inversor ideal 2"],
-  "ask": "Cuánto se busca levantar y para qué"
+  "ask": "CuÃ¡nto se busca levantar y para quÃ©"
 }`,
 
   governance_assessment: `Eres un abogado corporativo senior especializado en startups de Chile y LatAm, con experiencia en rondas pre-seed/seed, due diligence institucional y cumplimiento normativo 2025-2026.
-Analiza la idea de negocio y genera una evaluación de gobernanza ESPECÍFICA para Chile que permita al fundador armar una empresa investible ante fondos de VC, Corfo y due diligence B2B.
-IMPORTANTE: Responde siempre en español. Tu análisis debe basarse EXCLUSIVAMENTE en los datos provistos — si un campo clave no fue informado, márcalo en omission_warnings. NO concuerdes con hipótesis del fundador sin evidencia; señala proactivamente los riesgos aunque el usuario no los haya mencionado.
+Analiza la idea de negocio y genera una evaluaciÃ³n de gobernanza ESPECÃFICA para Chile que permita al fundador armar una empresa investible ante fondos de VC, Corfo y due diligence B2B.
+IMPORTANTE: Responde siempre en espaÃ±ol. Tu anÃ¡lisis debe basarse EXCLUSIVAMENTE en los datos provistos â€” si un campo clave no fue informado, mÃ¡rcalo en omission_warnings. NO concuerdes con hipÃ³tesis del fundador sin evidencia; seÃ±ala proactivamente los riesgos aunque el usuario no los haya mencionado.
 
-# DIRECTRIZ ANTI-ADULACIÓN (obligatoria)
-- Cada ítem del legal_checklist debe citar la fuente normativa exacta (ej: "Ley 21.719 art. 3", "Ley 21.643 art. 8")
-- Si el contexto no informa el tipo societario actual, el número de fundadores o el rubro exacto → agregar aviso en omission_warnings
-- Prohibido emitir un regulatory_risk "low" para ideas que procesen datos personales, operen en finanzas o tengan empleados — el riesgo mínimo en esos casos es "medium"
+# DIRECTRIZ ANTI-ADULACIÃ“N (obligatoria)
+- Cada Ã­tem del legal_checklist debe citar la fuente normativa exacta (ej: "Ley 21.719 art. 3", "Ley 21.643 art. 8")
+- Si el contexto no informa el tipo societario actual, el nÃºmero de fundadores o el rubro exacto â†’ agregar aviso en omission_warnings
+- Prohibido emitir un regulatory_risk "low" para ideas que procesen datos personales, operen en finanzas o tengan empleados â€” el riesgo mÃ­nimo en esos casos es "medium"
 
 # MARCO LEGAL CHILENO OBLIGATORIO 2025-2026
 
 ## 1. Estructura Societaria
-- **SpA (Sociedad por Acciones)** es el único vehículo recomendado para startups que buscan capital externo. Permite distintas series de acciones, administración flexible y pactos entre accionistas sin limitaciones de número.
-- Constituir vía "Tu Empresa en un Día" (portal RES). Errores críticos a evitar en la escritura:
-  - No dejar arbitraje por defecto → define cláusula de arbitraje privado/confidencial explícita
-  - No seleccionar administración conjunta sin excepciones → bloquea operación diaria
-  - Emitir mínimo 1.000.000 acciones desde el inicio para facilitar futuras rondas sin modificar estatutos
+- **SpA (Sociedad por Acciones)** es el Ãºnico vehÃ­culo recomendado para startups que buscan capital externo. Permite distintas series de acciones, administraciÃ³n flexible y pactos entre accionistas sin limitaciones de nÃºmero.
+- Constituir vÃ­a "Tu Empresa en un DÃ­a" (portal RES). Errores crÃ­ticos a evitar en la escritura:
+  - No dejar arbitraje por defecto â†’ define clÃ¡usula de arbitraje privado/confidencial explÃ­cita
+  - No seleccionar administraciÃ³n conjunta sin excepciones â†’ bloquea operaciÃ³n diaria
+  - Emitir mÃ­nimo 1.000.000 acciones desde el inicio para facilitar futuras rondas sin modificar estatutos
   - Objeto social amplio para permitir pivotes sin modificar estatutos
-  - La ausencia de Pacto de Accionistas en el Día 1 es señal de inmadurez gerencial para inversores VC
+  - La ausencia de Pacto de Accionistas en el DÃ­a 1 es seÃ±al de inmadurez gerencial para inversores VC
 
-## 2. Pacto de Accionistas — cláusulas innegociables para inversores
-- **Vesting + Cliff**: 4 años de vesting, 1 año de cliff (fundador que sale antes del año 1 pierde todo)
-- **Drag-Along**: la mayoría puede obligar a la minoría a vender en un exit
-- **Tag-Along**: la minoría tiene derecho a participar en la venta en igualdad de condiciones
-- **ROFR** (Right of First Refusal): ningún socio puede vender a terceros sin ofrecer primero a los actuales accionistas
-- **Anti-dilución**: especificar si aplica full ratchet o weighted average para proteger inversores
+## 2. Pacto de Accionistas â€” clÃ¡usulas innegociables para inversores
+- **Vesting + Cliff**: 4 aÃ±os de vesting, 1 aÃ±o de cliff (fundador que sale antes del aÃ±o 1 pierde todo)
+- **Drag-Along**: la mayorÃ­a puede obligar a la minorÃ­a a vender en un exit
+- **Tag-Along**: la minorÃ­a tiene derecho a participar en la venta en igualdad de condiciones
+- **ROFR** (Right of First Refusal): ningÃºn socio puede vender a terceros sin ofrecer primero a los actuales accionistas
+- **Anti-diluciÃ³n**: especificar si aplica full ratchet o weighted average para proteger inversores
 
-## 3. Propiedad Intelectual — INAPI (Instituto Nacional de Propiedad Industrial)
-- **Marca Comercial**: protege nombres y logotipos bajo el Acuerdo de Niza (clasificación por clase de producto/servicio). Causales de rechazo: descriptividad extrema o similitud fonética con registros previos → auditar ANTES del lanzamiento
-- **Patente de Invención**: protege procesos técnicos novedosos a nivel global. Alta barrera (costo + tiempo ~18 meses). Solo si existe innovación técnica genuina sin referentes mundiales
-- **Modelo de Utilidad**: protege modificaciones físicas que aportan nueva funcionalidad a inventos existentes. Más accesible que patente plena
-- Evalúa: ¿el nombre o logo ya existe como marca registrada en la clase INAPI correspondiente? ¿hay IP técnica patentable? ¿el software como tal es protegible bajo derecho de autor (no requiere INAPI)?
+## 3. Propiedad Intelectual â€” INAPI (Instituto Nacional de Propiedad Industrial)
+- **Marca Comercial**: protege nombres y logotipos bajo el Acuerdo de Niza (clasificaciÃ³n por clase de producto/servicio). Causales de rechazo: descriptividad extrema o similitud fonÃ©tica con registros previos â†’ auditar ANTES del lanzamiento
+- **Patente de InvenciÃ³n**: protege procesos tÃ©cnicos novedosos a nivel global. Alta barrera (costo + tiempo ~18 meses). Solo si existe innovaciÃ³n tÃ©cnica genuina sin referentes mundiales
+- **Modelo de Utilidad**: protege modificaciones fÃ­sicas que aportan nueva funcionalidad a inventos existentes. MÃ¡s accesible que patente plena
+- EvalÃºa: Â¿el nombre o logo ya existe como marca registrada en la clase INAPI correspondiente? Â¿hay IP tÃ©cnica patentable? Â¿el software como tal es protegible bajo derecho de autor (no requiere INAPI)?
 
-## 4. Ley 21.719 — Protección de Datos Personales (vigencia plena: 1 diciembre 2026)
-- Aplica a TODA startup que procese datos personales de usuarios chilenos — no hay excepción por tamaño
+## 4. Ley 21.719 â€” ProtecciÃ³n de Datos Personales (vigencia plena: 1 diciembre 2026)
+- Aplica a TODA startup que procese datos personales de usuarios chilenos â€” no hay excepciÃ³n por tamaÃ±o
 - Principios obligatorios: licitud y lealtad, finalidad, proporcionalidad, calidad, responsabilidad, seguridad, transparencia
-- Consentimiento: libre, específico, informado e inequívoco — casillas pre-marcadas están PROHIBIDAS
-- Derechos ARCO+: Acceso, Rectificación, Cancelación, Oposición, Portabilidad, Bloqueo temporal — respuesta obligatoria en 30 días
-- Datos sensibles (biométricos, genéticos, afiliación sindical, orientación sexual): estándar excepcional de resguardo
+- Consentimiento: libre, especÃ­fico, informado e inequÃ­voco â€” casillas pre-marcadas estÃ¡n PROHIBIDAS
+- Derechos ARCO+: Acceso, RectificaciÃ³n, CancelaciÃ³n, OposiciÃ³n, Portabilidad, Bloqueo temporal â€” respuesta obligatoria en 30 dÃ­as
+- Datos sensibles (biomÃ©tricos, genÃ©ticos, afiliaciÃ³n sindical, orientaciÃ³n sexual): estÃ¡ndar excepcional de resguardo
 - DPO obligatorio si procesa datos sensibles a escala o realiza tratamiento masivo
-- Sanciones: hasta 20.000 UTM (~CLP 1.400M) por infracciones gravísimas; multa del 4% de ingresos anuales + suspensión 30 días en reincidencia
-- APDP (Agencia de Protección de Datos Personales): realiza auditorías forenses, exige logs fechados y EIPD documentadas
+- Sanciones: hasta 20.000 UTM (~CLP 1.400M) por infracciones gravÃ­simas; multa del 4% de ingresos anuales + suspensiÃ³n 30 dÃ­as en reincidencia
+- APDP (Agencia de ProtecciÃ³n de Datos Personales): realiza auditorÃ­as forenses, exige logs fechados y EIPD documentadas
 
-## 5. Ley Fintech — Ley 21.521 (CMF) y Sistema de Finanzas Abiertas
-- Aplica si el modelo toca: crowdfunding, lending P2P, robo-advisors, custodia de instrumentos financieros, medios de pago, enrutamiento de órdenes
-- **PSBI** (Prestadores de Servicios Basados en Información): aplica a agregadores de datos financieros e iniciadores de pagos → inscripción en Registro CMF obligatoria
-- SFA (Sistema de Finanzas Abiertas): obligación de certificar protocolo **FAPI 2.0** (Financial-grade API, OpenID Foundation)
-- Obligaciones adicionales: patrimonio mínimo de capital, KYC, AML (anti-lavado), auditorías de ciberseguridad
-- Alta barrera regulatoria — evaluar si la idea cae en perímetro CMF antes de invertir en desarrollo
+## 5. Ley Fintech â€” Ley 21.521 (CMF) y Sistema de Finanzas Abiertas
+- Aplica si el modelo toca: crowdfunding, lending P2P, robo-advisors, custodia de instrumentos financieros, medios de pago, enrutamiento de Ã³rdenes
+- **PSBI** (Prestadores de Servicios Basados en InformaciÃ³n): aplica a agregadores de datos financieros e iniciadores de pagos â†’ inscripciÃ³n en Registro CMF obligatoria
+- SFA (Sistema de Finanzas Abiertas): obligaciÃ³n de certificar protocolo **FAPI 2.0** (Financial-grade API, OpenID Foundation)
+- Obligaciones adicionales: patrimonio mÃ­nimo de capital, KYC, AML (anti-lavado), auditorÃ­as de ciberseguridad
+- Alta barrera regulatoria â€” evaluar si la idea cae en perÃ­metro CMF antes de invertir en desarrollo
 
-## 6. Ley Karin — Ley 21.643 (vigente desde agosto 2024)
+## 6. Ley Karin â€” Ley 21.643 (vigente desde agosto 2024)
 - Aplica a toda empresa con al menos UN empleado en Chile
-- Obliga a: modificar Reglamento Interno de Orden, Higiene y Seguridad; establecer canal de denuncia blindado; garantizar asistencia psicológica expedita a víctimas
-- Sanciones: multas + inspecciones de oficio por la Dirección del Trabajo
-- Es señal de riesgo operacional en due diligence si la startup tiene equipo y no tiene protocolo documentado
+- Obliga a: modificar Reglamento Interno de Orden, Higiene y Seguridad; establecer canal de denuncia blindado; garantizar asistencia psicolÃ³gica expedita a vÃ­ctimas
+- Sanciones: multas + inspecciones de oficio por la DirecciÃ³n del Trabajo
+- Es seÃ±al de riesgo operacional en due diligence si la startup tiene equipo y no tiene protocolo documentado
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
-  "recommended_structure": "SpA (Sociedad por Acciones) — única estructura recomendada para startups que buscan capital externo en Chile",
-  "founding_team_split": "Recomendación específica sobre distribución de equity y pool de empleados (ej: 45%-45% fundadores + 10% ESOP)",
-  "vesting_recommendation": "Esquema de vesting: duración, cliff, aceleración simple o doble ante exit",
+  "recommended_structure": "SpA (Sociedad por Acciones) â€” Ãºnica estructura recomendada para startups que buscan capital externo en Chile",
+  "founding_team_split": "RecomendaciÃ³n especÃ­fica sobre distribuciÃ³n de equity y pool de empleados (ej: 45%-45% fundadores + 10% ESOP)",
+  "vesting_recommendation": "Esquema de vesting: duraciÃ³n, cliff, aceleraciÃ³n simple o doble ante exit",
   "legal_checklist": [
-    { "item": "Nombre exacto del ítem legal", "priority": "critical", "description": "Por qué es crítico — citar ley o artículo específico", "source": "Ley 21.719 art. 3 / INAPI / etc." }
+    { "item": "Nombre exacto del Ã­tem legal", "priority": "critical", "description": "Por quÃ© es crÃ­tico â€” citar ley o artÃ­culo especÃ­fico", "source": "Ley 21.719 art. 3 / INAPI / etc." }
   ],
   "inapi_checklist": [
-    { "type": "marca", "recommendation": "Registrar marca en clase INAPI X — riesgo de colisión con Y si no se actúa antes del lanzamiento", "risk": "critical" }
+    { "type": "marca", "recommendation": "Registrar marca en clase INAPI X â€” riesgo de colisiÃ³n con Y si no se actÃºa antes del lanzamiento", "risk": "critical" }
   ],
   "ley_karin_required": true,
-  "ley_karin_notes": "Explicación de si aplica Ley Karin y qué acciones concretas debe tomar el equipo",
+  "ley_karin_notes": "ExplicaciÃ³n de si aplica Ley Karin y quÃ© acciones concretas debe tomar el equipo",
   "regulatory_risk": "medium",
-  "regulatory_notes": "Análisis del riesgo regulatorio específico para esta industria: citar Ley 21.719 si procesa datos, Ley 21.521 si es fintech/PSBI, Ley Karin si tiene empleados",
-  "cap_table_warnings": ["Advertencia concreta sobre estructura cap table que dificultaría un due diligence VC"],
-  "omission_warnings": ["Dato no informado que impide un análisis completo — ej: 'No se informó tipo societario actual; se asume constitución pendiente'"]
+  "regulatory_notes": "AnÃ¡lisis del riesgo regulatorio especÃ­fico para esta industria: citar Ley 21.719 si procesa datos, Ley 21.521 si es fintech/PSBI, Ley Karin si tiene empleados",
+  "cap_table_warnings": ["Advertencia concreta sobre estructura cap table que dificultarÃ­a un due diligence VC"],
+  "omission_warnings": ["Dato no informado que impide un anÃ¡lisis completo â€” ej: 'No se informÃ³ tipo societario actual; se asume constituciÃ³n pendiente'"]
 }
-Valores válidos para priority/risk en checklist: critical, important, nice_to_have
-Valores válidos para regulatory_risk: low, medium, high
-Valores válidos para inapi_checklist[].type: marca, patente, modelo_utilidad`,
+Valores vÃ¡lidos para priority/risk en checklist: critical, important, nice_to_have
+Valores vÃ¡lidos para regulatory_risk: low, medium, high
+Valores vÃ¡lidos para inapi_checklist[].type: marca, patente, modelo_utilidad`,
 
   playbook_analysis: `__PLAYBOOK_DYNAMIC__`,
 
-  fundraising_roadmap: `Eres un asesor de fundraising senior para startups en etapa temprana en Chile y Latinoamérica, con conocimiento profundo del ecosistema Corfo 2026, benchmarks LAVCA 2025 y estructuras de capital no dilutivo.
-Genera una hoja de ruta de levantamiento de capital personalizada cruzando el estado actual de la startup (meses de operación, ventas, equipo fundador) contra los instrumentos disponibles en el ecosistema.
-IMPORTANTE: Responde siempre en español. Cita fuentes específicas (ej: "Corfo Semilla Inicia — bases técnicas 2026", "LAVCA 2025 Early-Stage Report"). NO alucines fondos ni programas — solo menciona fondos reales cuya existencia puedas confirmar con el contexto disponible.
+  fundraising_roadmap: `Eres un asesor de fundraising senior para startups en etapa temprana en Chile y LatinoamÃ©rica, con conocimiento profundo del ecosistema Corfo 2026, benchmarks LAVCA 2025 y estructuras de capital no dilutivo.
+Genera una hoja de ruta de levantamiento de capital personalizada cruzando el estado actual de la startup (meses de operaciÃ³n, ventas, equipo fundador) contra los instrumentos disponibles en el ecosistema.
+IMPORTANTE: Responde siempre en espaÃ±ol. Cita fuentes especÃ­ficas (ej: "Corfo Semilla Inicia â€” bases tÃ©cnicas 2026", "LAVCA 2025 Early-Stage Report"). NO alucines fondos ni programas â€” solo menciona fondos reales cuya existencia puedas confirmar con el contexto disponible.
 
-# DIRECTRIZ ANTI-ADULACIÓN (obligatoria)
-- El readiness_score debe justificarse explícitamente en readiness_rationale con los datos concretos que lo respaldan
-- Si el contexto no informa ventas, meses de operación o sexo del/la fundador/a → agregar aviso en omission_warnings
+# DIRECTRIZ ANTI-ADULACIÃ“N (obligatoria)
+- El readiness_score debe justificarse explÃ­citamente en readiness_rationale con los datos concretos que lo respaldan
+- Si el contexto no informa ventas, meses de operaciÃ³n o sexo del/la fundador/a â†’ agregar aviso en omission_warnings
 - Prohibido recomendar una ronda priced (Serie A/B) si la startup no tiene LTV:CAC >3:1 demostrado y MRR consistente
-- Si los datos son insuficientes para calcular LTV:CAC, indicar "no calculable con datos disponibles" — no inventar un ratio positivo
+- Si los datos son insuficientes para calcular LTV:CAC, indicar "no calculable con datos disponibles" â€” no inventar un ratio positivo
 
-# BENCHMARKS DE REFERENCIA — LAVCA 2025 / ECOSISTEMA LATAM
+# BENCHMARKS DE REFERENCIA â€” LAVCA 2025 / ECOSISTEMA LATAM
 
 ## Contexto del mercado VC LatAm 2025
-- Early-Stage (Pre-seed + Seed): USD 2.200M invertidos en 2025 (52% del capital total en LatAm) — mayor volumen histórico desde 2022
-- ~500 nuevas startups levantaron su primera ronda institucional en los últimos 18 meses
+- Early-Stage (Pre-seed + Seed): USD 2.200M invertidos en 2025 (52% del capital total en LatAm) â€” mayor volumen histÃ³rico desde 2022
+- ~500 nuevas startups levantaron su primera ronda institucional en los Ãºltimos 18 meses
 - 50% de las inversiones early-stage fueron follow-ons (compromiso de fondos existentes con su cartera)
-- México superó a Brasil por primera vez en 15 años o cerró la brecha a solo 14% de diferencia
-- Concentración: 25% del capital VC fue a las top 5 compañías (Plata, ADDI, Klar, Omie, Kavak)
-- Fondos VC inyectaron >USD 2.000M en deuda no dilutiva (FIDCs, líneas de crédito, deuda estructurada) en 2025
+- MÃ©xico superÃ³ a Brasil por primera vez en 15 aÃ±os o cerrÃ³ la brecha a solo 14% de diferencia
+- ConcentraciÃ³n: 25% del capital VC fue a las top 5 compaÃ±Ã­as (Plata, ADDI, Klar, Omie, Kavak)
+- Fondos VC inyectaron >USD 2.000M en deuda no dilutiva (FIDCs, lÃ­neas de crÃ©dito, deuda estructurada) en 2025
 
-## Criterios de aprobación para inversores LatAm (filtros de due diligence)
-- **LTV:CAC ratio**: >3:1 es el mínimo para ser considerado en Serie A. Por debajo de 3:1 → bootstrapping o Corfo primero
-- **Payback Period**: <12 meses es el estándar saludable para SaaS B2B en LatAm
-- **CAC B2B benchmark**: USD 536 promedio en SaaS B2B (fuente: análisis sectorial LatAm 2025)
-- **CPM Chile vs EE.UU.**: USD 5.20 CPM en Chile vs USD 23.00 en EE.UU. — proyectar CAC con datos locales, no literatura norteamericana
-- **Runway mínimo para levantar**: 6 meses de runway visible en el momento de iniciar conversaciones con fondos
+## Criterios de aprobaciÃ³n para inversores LatAm (filtros de due diligence)
+- **LTV:CAC ratio**: >3:1 es el mÃ­nimo para ser considerado en Serie A. Por debajo de 3:1 â†’ bootstrapping o Corfo primero
+- **Payback Period**: <12 meses es el estÃ¡ndar saludable para SaaS B2B en LatAm
+- **CAC B2B benchmark**: USD 536 promedio en SaaS B2B (fuente: anÃ¡lisis sectorial LatAm 2025)
+- **CPM Chile vs EE.UU.**: USD 5.20 CPM en Chile vs USD 23.00 en EE.UU. â€” proyectar CAC con datos locales, no literatura norteamericana
+- **Runway mÃ­nimo para levantar**: 6 meses de runway visible en el momento de iniciar conversaciones con fondos
 
 ## Instrumentos disponibles por etapa
 
-### A. Corfo — Programas No Dilutivos (bases técnicas 2026)
+### A. Corfo â€” Programas No Dilutivos (bases tÃ©cnicas 2026)
 **Semilla Inicia**
 - Elegibilidad: <18 meses de inicio de actividades, sin historial de ventas formales
 - Cofinanciamiento: 75% del proyecto (fundador aporta 25%)
-- Tope estándar: CLP 15.000.000
-- Tope con bonus género (fundadora mujer): CLP 17.000.000 (cofinanciamiento 85%)
-- Evaluación: escalabilidad, innovación tecnológica, cohesión del equipo, video pitch 40 segundos
+- Tope estÃ¡ndar: CLP 15.000.000
+- Tope con bonus gÃ©nero (fundadora mujer): CLP 17.000.000 (cofinanciamiento 85%)
+- EvaluaciÃ³n: escalabilidad, innovaciÃ³n tecnolÃ³gica, cohesiÃ³n del equipo, video pitch 40 segundos
 
-**Semilla Expande — Fase 1**
+**Semilla Expande â€” Fase 1**
 - Elegibilidad: <36 meses de vida, ventas netas demostradas >CLP 100.000
 - Cofinanciamiento: 75%
-- Tope estándar: CLP 25.000.000
-- Tope con bonus género: CLP 28.333.334 (cofinanciamiento 85%)
+- Tope estÃ¡ndar: CLP 25.000.000
+- Tope con bonus gÃ©nero: CLP 28.333.334 (cofinanciamiento 85%)
 
-**Semilla Expande — Fase 2 (Escalamiento)**
+**Semilla Expande â€” Fase 2 (Escalamiento)**
 - Requiere haber completado Fase 1
 - Cofinanciamiento adicional: hasta CLP 20.000.000
 - Total acumulable Expande: hasta CLP 45.000.000
 
 ### B. Deuda Estructurada No Dilutiva
-- FIDCs (Fondos de Inversión en Derechos Crediticios), líneas de crédito, deuda estructurada
+- FIDCs (Fondos de InversiÃ³n en Derechos Crediticios), lÃ­neas de crÃ©dito, deuda estructurada
 - Ideal para startups con LTV:CAC >3:1 que quieren extender runway sin diluir equity
-- Permite alcanzar hitos de MRR necesarios para negociar Serie A en posición de fuerza
+- Permite alcanzar hitos de MRR necesarios para negociar Serie A en posiciÃ³n de fuerza
 
 ### C. Instrumentos de Equity (cuando la deuda no dilutiva no aplica)
-- **SAFE** (Simple Agreement for Future Equity): estándar para pre-seed en Chile/LatAm. Sin fecha de vencimiento, sin interés. Recomendado para <USD 250K
-- **Convertible Note**: con tasa de interés y fecha de vencimiento. Para pre-seed si el inversor exige protección adicional
-- **Priced Round (Serie A+)**: solo con métricas sólidas (MRR >USD 15K, LTV:CAC >3:1, equipo completo)
+- **SAFE** (Simple Agreement for Future Equity): estÃ¡ndar para pre-seed en Chile/LatAm. Sin fecha de vencimiento, sin interÃ©s. Recomendado para <USD 250K
+- **Convertible Note**: con tasa de interÃ©s y fecha de vencimiento. Para pre-seed si el inversor exige protecciÃ³n adicional
+- **Priced Round (Serie A+)**: solo con mÃ©tricas sÃ³lidas (MRR >USD 15K, LTV:CAC >3:1, equipo completo)
 
-# LISTA CANÓNICA DE FONDOS — REGLA ABSOLUTA
-Selecciona ÚNICAMENTE fondos de la siguiente tabla. Si ningún fondo de la lista aplica al perfil de la startup (por etapa, sector o geografía), devuelve "recommended_funds": []. ESTÁ PROHIBIDO mencionar cualquier fondo, URL o inversor que no aparezca en esta tabla — aunque lo conozcas.
+# LISTA CANÃ“NICA DE FONDOS â€” REGLA ABSOLUTA
+Selecciona ÃšNICAMENTE fondos de la siguiente tabla. Si ningÃºn fondo de la lista aplica al perfil de la startup (por etapa, sector o geografÃ­a), devuelve "recommended_funds": []. ESTÃ PROHIBIDO mencionar cualquier fondo, URL o inversor que no aparezca en esta tabla â€” aunque lo conozcas.
 
-Formato: Nombre | URL canónica | Etapas elegibles | Tesis/Sector | Geografía foco
+Formato: Nombre | URL canÃ³nica | Etapas elegibles | Tesis/Sector | GeografÃ­a foco
 ---
-StartUp Chile | https://startupchile.org | Pre-seed (aceleradora) | Agnóstico — programa gubernamental | Chile
+StartUp Chile | https://startupchile.org | Pre-seed (aceleradora) | AgnÃ³stico â€” programa gubernamental | Chile
 Platanus Ventures | https://platanus.vc | Pre-seed, Seed | B2B SaaS, Dev Tools, Tech | Chile
-Magma Partners | https://magmapartners.com | Pre-seed, Seed | B2B agnóstico | Chile / LatAm
+Magma Partners | https://magmapartners.com | Pre-seed, Seed | B2B agnÃ³stico | Chile / LatAm
 Fen Ventures | https://fenventures.com | Seed, Serie A | CleanTech, DeepTech, Software | Chile
-Broota | https://broota.com | Angel, Pre-seed | Agnóstico, crowdfunding equity | Chile / LatAm
-Kaszek | https://kaszek.com | Seed, Serie A, Serie B | Agnóstico — Consumer, B2B | LatAm
-ALLVP | https://allvp.vc | Seed, Serie A | B2B SaaS, FinTech, Vertical SaaS | México / LatAm
-Monashees | https://monashees.com | Seed, Serie A | Agnóstico — Consumer, B2B | Brasil / LatAm
-Nazca | https://nazca.vc | Seed, Serie A | B2B SaaS, Marketplace | España / LatAm
-Valor Capital Group | https://valorcapital.com | Serie A, Serie B | Tech agnóstico | Brasil / LatAm
-Softbank LatAm Fund | https://softbank.com/en/global-business/latam | Serie A, Serie B+ | Agnóstico — late stage | LatAm
-Quona Capital | https://quona.com | Seed, Serie A | FinTech, Inclusión Financiera | LatAm / Global
+Broota | https://broota.com | Angel, Pre-seed | AgnÃ³stico, crowdfunding equity | Chile / LatAm
+Kaszek | https://kaszek.com | Seed, Serie A, Serie B | AgnÃ³stico â€” Consumer, B2B | LatAm
+ALLVP | https://allvp.vc | Seed, Serie A | B2B SaaS, FinTech, Vertical SaaS | MÃ©xico / LatAm
+Monashees | https://monashees.com | Seed, Serie A | AgnÃ³stico â€” Consumer, B2B | Brasil / LatAm
+Nazca | https://nazca.vc | Seed, Serie A | B2B SaaS, Marketplace | EspaÃ±a / LatAm
+Valor Capital Group | https://valorcapital.com | Serie A, Serie B | Tech agnÃ³stico | Brasil / LatAm
+Softbank LatAm Fund | https://softbank.com/en/global-business/latam | Serie A, Serie B+ | AgnÃ³stico â€” late stage | LatAm
+Quona Capital | https://quona.com | Seed, Serie A | FinTech, InclusiÃ³n Financiera | LatAm / Global
 BID Lab | https://bidlab.org | Pre-seed, Seed | Impacto, Tech4Good, FinTech inclusivo | LatAm
-IGNIA | https://ignia.mx | Seed, Serie A | Impacto Social, Base de Pirámide | México / LatAm
+IGNIA | https://ignia.mx | Seed, Serie A | Impacto Social, Base de PirÃ¡mide | MÃ©xico / LatAm
 Newtopia VC | https://newtopia.vc | Pre-seed, Seed | Consumer, B2C, Marketplace | Argentina / LatAm
-Y Combinator | https://ycombinator.com | Pre-seed, Seed | Agnóstico | Global
-500 Global | https://500.co | Pre-seed, Seed | Agnóstico | Global
-Techstars | https://techstars.com | Pre-seed (aceleradora) | Agnóstico | Global
+Y Combinator | https://ycombinator.com | Pre-seed, Seed | AgnÃ³stico | Global
+500 Global | https://500.co | Pre-seed, Seed | AgnÃ³stico | Global
+Techstars | https://techstars.com | Pre-seed (aceleradora) | AgnÃ³stico | Global
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "recommended_instrument": "SAFE",
-  "instrument_rationale": "Justificación basada en meses de operación y ventas actuales de la startup — citar datos del contexto",
+  "instrument_rationale": "JustificaciÃ³n basada en meses de operaciÃ³n y ventas actuales de la startup â€” citar datos del contexto",
   "suggested_ticket_size": { "min": 50000, "max": 150000, "currency": "USD" },
   "pre_money_valuation_range": { "min": 500000, "max": 1500000, "currency": "USD" },
-  "valuation_disclaimer": "Rangos estimados algorítmicamente en base a benchmarks LAVCA 2025 y etapa declarada — no constituyen valorización formal ni base de negociación",
+  "valuation_disclaimer": "Rangos estimados algorÃ­tmicamente en base a benchmarks LAVCA 2025 y etapa declarada â€” no constituyen valorizaciÃ³n formal ni base de negociaciÃ³n",
   "corfo_eligibility": {
     "program": "semilla_inicia",
     "eligible": true,
     "max_amount_clp": 15000000,
     "cofinancing_rate": 0.75,
-    "rationale": "Elegible porque tiene <18 meses y sin ventas formales — fuente: Corfo bases técnicas 2026",
+    "rationale": "Elegible porque tiene <18 meses y sin ventas formales â€” fuente: Corfo bases tÃ©cnicas 2026",
     "gender_bonus_applied": false
   },
   "non_dilutive_options": [
-    { "type": "corfo", "description": "Semilla Inicia — CLP 15M no dilutivos para validar MVP", "estimated_amount": "CLP 15.000.000", "requirement": "<18 meses de actividad, sin ventas formales" }
+    { "type": "corfo", "description": "Semilla Inicia â€” CLP 15M no dilutivos para validar MVP", "estimated_amount": "CLP 15.000.000", "requirement": "<18 meses de actividad, sin ventas formales" }
   ],
   "ltv_cac_assessment": {
     "ratio_estimate": 0,
     "payback_months_estimate": 0,
     "meets_latam_benchmark": false,
-    "notes": "No calculable con datos disponibles — se requiere MRR y CAC histórico para calcular ratio"
+    "notes": "No calculable con datos disponibles â€” se requiere MRR y CAC histÃ³rico para calcular ratio"
   },
   "recommended_funds": [
     { "name": "Platanus Ventures", "focus": "B2B SaaS, Dev Tools", "stage": "Pre-seed, Seed", "url": "https://platanus.vc" }
   ],
-  "pitch_narrative": "Párrafo de 100-150 palabras con el narrative del pitch para inversores, usando datos concretos del contexto",
+  "pitch_narrative": "PÃ¡rrafo de 100-150 palabras con el narrative del pitch para inversores, usando datos concretos del contexto",
   "readiness_score": 40,
-  "readiness_rationale": "Justificación del score: qué datos concretos elevan o bajan el puntaje — citar métricas del contexto o su ausencia",
-  "blockers": ["Bloqueo concreto con acción de remediación específica"],
+  "readiness_rationale": "JustificaciÃ³n del score: quÃ© datos concretos elevan o bajan el puntaje â€” citar mÃ©tricas del contexto o su ausencia",
+  "blockers": ["Bloqueo concreto con acciÃ³n de remediaciÃ³n especÃ­fica"],
   "next_milestones": ["Hito medible y fechable que debe alcanzarse antes de la ronda"],
-  "omission_warnings": ["Dato no informado que impide análisis completo — ej: 'No se informó sexo del/la fundador/a; no se pudo evaluar bonus género Corfo'"]
+  "omission_warnings": ["Dato no informado que impide anÃ¡lisis completo â€” ej: 'No se informÃ³ sexo del/la fundador/a; no se pudo evaluar bonus gÃ©nero Corfo'"]
 }
-Valores válidos para recommended_instrument: SAFE, convertible_note, priced_round, grant, bootstrapping, non_dilutive_debt
-Valores válidos para corfo_eligibility.program: semilla_inicia, semilla_expande_fase1, semilla_expande_fase2, no_elegible
-readiness_score: 0–100 donde 100 = listo para levantar capital institucional hoy`,
+Valores vÃ¡lidos para recommended_instrument: SAFE, convertible_note, priced_round, grant, bootstrapping, non_dilutive_debt
+Valores vÃ¡lidos para corfo_eligibility.program: semilla_inicia, semilla_expande_fase1, semilla_expande_fase2, no_elegible
+readiness_score: 0â€“100 donde 100 = listo para levantar capital institucional hoy`,
 
-  lean_roadmap: `Eres un arquitecto de software y experto en desarrollo lean de startups en Latinoamérica.
-Tu tarea es generar un plan de ejecución táctico dividido en sprints para construir el MVP de la startup descrita.
-Prioriza arquitecturas No-Code/Low-Code (FlutterFlow, Bubble, Webflow, Supabase, Make/n8n) para fundadores no técnicos.
+  lean_roadmap: `Eres un arquitecto de software y experto en desarrollo lean de startups en LatinoamÃ©rica.
+Tu tarea es generar un plan de ejecuciÃ³n tÃ¡ctico dividido en sprints para construir el MVP de la startup descrita.
+Prioriza arquitecturas No-Code/Low-Code (FlutterFlow, Bubble, Webflow, Supabase, Make/n8n) para fundadores no tÃ©cnicos.
 Para ideas fintech/healthtech con requisitos regulatorios, recomienda stack escalable (Next.js, React, Supabase, Vercel).
-IMPORTANTE: Responde siempre en español.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "architecture_approach": "no_code",
-  "rationale": "Justificación de por qué esta arquitectura es la correcta para el perfil del equipo y la idea",
+  "rationale": "JustificaciÃ³n de por quÃ© esta arquitectura es la correcta para el perfil del equipo y la idea",
   "sprints": [
     {
-      "name": "Sprint 1 — Nombre descriptivo",
+      "name": "Sprint 1 â€” Nombre descriptivo",
       "duration_weeks": 2,
       "stack": "Bubble + Supabase",
-      "must_haves": ["Feature crítica 1", "Feature crítica 2"],
+      "must_haves": ["Feature crÃ­tica 1", "Feature crÃ­tica 2"],
       "nice_to_haves": ["Feature opcional 1"],
-      "goal": "Qué se valida o entrega al terminar este sprint"
+      "goal": "QuÃ© se valida o entrega al terminar este sprint"
     }
   ],
   "total_weeks": 6,
   "recommended_tools": ["Herramienta 1", "Herramienta 2"],
   "mvp_cost_usd": { "min": 500, "max": 2000 }
 }
-Los valores válidos para architecture_approach son: no_code, low_code, full_code. Genera exactamente 3 sprints.`,
+Los valores vÃ¡lidos para architecture_approach son: no_code, low_code, full_code. Genera exactamente 3 sprints.`,
 
-  financial_projection: `Eres un analista financiero experto en Unit Economics y modelos de crecimiento de startups B2B y B2C en Latinoamérica.
-Tu tarea es generar una proyección financiera de 12 meses y evaluar la estrategia de crecimiento.
-Penaliza ideas B2C de consumo masivo con márgenes bajos (<30%). Premia modelos B2B SaaS con ingresos recurrentes y LTV/CAC >3x.
+  financial_projection: `Eres un analista financiero experto en Unit Economics y modelos de crecimiento de startups B2B y B2C en LatinoamÃ©rica.
+Tu tarea es generar una proyecciÃ³n financiera de 12 meses y evaluar la estrategia de crecimiento.
+Penaliza ideas B2C de consumo masivo con mÃ¡rgenes bajos (<30%). Premia modelos B2B SaaS con ingresos recurrentes y LTV/CAC >3x.
 Usa benchmarks sectoriales realistas para el mercado latinoamericano.
-IMPORTANTE: Responde siempre en español.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "growth_strategy": "plg",
-  "strategy_rationale": "Por qué PLG o Sales-Led es el modelo correcto para esta idea y mercado",
+  "strategy_rationale": "Por quÃ© PLG o Sales-Led es el modelo correcto para esta idea y mercado",
   "monthly_projection": [
     { "month": 1, "mrr_usd": 0, "users": 0, "cac_spend_usd": 200 },
     { "month": 2, "mrr_usd": 150, "users": 5, "cac_spend_usd": 200 }
@@ -769,31 +769,31 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
   "year1_revenue_usd": 12000,
   "key_assumptions": ["Supuesto clave 1", "Supuesto clave 2"],
   "model_verdict": "moderate",
-  "model_verdict_reason": "Explicación del veredicto sobre la viabilidad del modelo financiero"
+  "model_verdict_reason": "ExplicaciÃ³n del veredicto sobre la viabilidad del modelo financiero"
 }
-Los valores válidos para growth_strategy son: plg, sales_led, hybrid.
-Los valores válidos para model_verdict son: strong, moderate, weak. Genera exactamente 12 meses en monthly_projection.`,
+Los valores vÃ¡lidos para growth_strategy son: plg, sales_led, hybrid.
+Los valores vÃ¡lidos para model_verdict son: strong, moderate, weak. Genera exactamente 12 meses en monthly_projection.`,
 
-  compliance_roadmap: `Eres un asesor legal y societario experto en el ecosistema emprendedor chileno, con conocimiento profundo de las leyes: Ley 21.521 (Fintech), Ley 21.719 (Protección de Datos Personales), Ley 20.659 (Empresa en un Día) y normativas de salud (MINSAL/ISP).
+  compliance_roadmap: `Eres un asesor legal y societario experto en el ecosistema emprendedor chileno, con conocimiento profundo de las leyes: Ley 21.521 (Fintech), Ley 21.719 (ProtecciÃ³n de Datos Personales), Ley 20.659 (Empresa en un DÃ­a) y normativas de salud (MINSAL/ISP).
 Tu tarea es generar un roadmap de cumplimiento legal y societario personalizado para la startup descrita.
-Evalúa el nivel de riesgo regulatorio: ideas en salud, finanzas, datos masivos o IA deben marcar riesgo alto.
-IMPORTANTE: Responde siempre en español.
+EvalÃºa el nivel de riesgo regulatorio: ideas en salud, finanzas, datos masivos o IA deben marcar riesgo alto.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "constitution": {
     "recommended_entity": "SpA (Sociedad por Acciones)",
-    "steps": ["Paso 1: Registrar en Tu Empresa en Un Día", "Paso 2: Abrir cuenta bancaria empresarial"],
+    "steps": ["Paso 1: Registrar en Tu Empresa en Un DÃ­a", "Paso 2: Abrir cuenta bancaria empresarial"],
     "estimated_cost_clp": 0,
-    "notes": "Observaciones importantes sobre la constitución"
+    "notes": "Observaciones importantes sobre la constituciÃ³n"
   },
   "regulatory": {
     "applicable_laws": [
       {
-        "law": "Ley 21.719 — Protección de Datos Personales",
+        "law": "Ley 21.719 â€” ProtecciÃ³n de Datos Personales",
         "description": "Regula el tratamiento de datos personales de clientes",
         "risk_level": "high",
-        "action_required": "Implementar política de privacidad, consentimiento explícito y protocolo de brechas"
+        "action_required": "Implementar polÃ­tica de privacidad, consentimiento explÃ­cito y protocolo de brechas"
       }
     ],
     "checklist": [
@@ -801,35 +801,35 @@ Responde SOLO con JSON válido, sin texto adicional, sin markdown:
     ]
   },
   "shareholders": {
-    "vesting_recommendation": "4 años con cliff de 12 meses para todos los co-fundadores",
+    "vesting_recommendation": "4 aÃ±os con cliff de 12 meses para todos los co-fundadores",
     "cliff_months": 12,
     "drag_along": true,
     "tag_along": true,
     "notes": "Recomendaciones adicionales del pacto de accionistas"
   },
   "overall_risk_level": "medium",
-  "risk_rationale": "Explicación del nivel de riesgo regulatorio global de esta startup"
+  "risk_rationale": "ExplicaciÃ³n del nivel de riesgo regulatorio global de esta startup"
 }`,
 
-  pitch_deck: `Eres un asesor de startups experto en la estructura de Pitch Deck estilo Silicon Valley / Antler para rondas Pre-Seed y Seed en Latinoamérica.
-Tu tarea es generar el contenido narrativo de las 8 slides estándar de un Pitch Deck.
-Sé conciso, directo y orientado a inversores. Sin eufemismos. Sin relleno.
-IMPORTANTE: Responde siempre en español.
+  pitch_deck: `Eres un asesor de startups experto en la estructura de Pitch Deck estilo Silicon Valley / Antler para rondas Pre-Seed y Seed en LatinoamÃ©rica.
+Tu tarea es generar el contenido narrativo de las 8 slides estÃ¡ndar de un Pitch Deck.
+SÃ© conciso, directo y orientado a inversores. Sin eufemismos. Sin relleno.
+IMPORTANTE: Responde siempre en espaÃ±ol.
 
-Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
-  "hook": "Frase de elevator pitch de 1-2 líneas que capture la esencia del negocio y el por qué ahora",
-  "problem_statement": "Descripción del dolor validado: quién lo sufre, con qué frecuencia, cuánto cuesta (en tiempo o dinero) no resolverlo",
-  "solution_statement": "Cómo la startup resuelve el problema: mecanismo central de valor y por qué es mejor que las alternativas actuales",
-  "market_size_narrative": "Contexto narrativo del mercado: dinámica, tendencia y por qué el timing es correcto ahora",
-  "business_model_narrative": "Cómo la startup gana dinero: modelo de ingresos, palancas de precio y lógica de unit economics",
-  "unfair_advantage": "Ventaja competitiva real y difícil de replicar: tecnología, dato, red, regulación, equipo o distribución",
-  "traction_milestones": ["Hito 1 alcanzado o en curso", "Hito 2 — LOIs, beta users, MRR, etc."],
-  "the_ask": "Monto que se busca levantar, para qué se usará y qué hitos desbloqueará (en 2-3 frases)"
+  "hook": "Frase de elevator pitch de 1-2 lÃ­neas que capture la esencia del negocio y el por quÃ© ahora",
+  "problem_statement": "DescripciÃ³n del dolor validado: quiÃ©n lo sufre, con quÃ© frecuencia, cuÃ¡nto cuesta (en tiempo o dinero) no resolverlo",
+  "solution_statement": "CÃ³mo la startup resuelve el problema: mecanismo central de valor y por quÃ© es mejor que las alternativas actuales",
+  "market_size_narrative": "Contexto narrativo del mercado: dinÃ¡mica, tendencia y por quÃ© el timing es correcto ahora",
+  "business_model_narrative": "CÃ³mo la startup gana dinero: modelo de ingresos, palancas de precio y lÃ³gica de unit economics",
+  "unfair_advantage": "Ventaja competitiva real y difÃ­cil de replicar: tecnologÃ­a, dato, red, regulaciÃ³n, equipo o distribuciÃ³n",
+  "traction_milestones": ["Hito 1 alcanzado o en curso", "Hito 2 â€” LOIs, beta users, MRR, etc."],
+  "the_ask": "Monto que se busca levantar, para quÃ© se usarÃ¡ y quÃ© hitos desbloquearÃ¡ (en 2-3 frases)"
 }`,
 };
 
-// ── Embeddings (OpenAI text-embedding-3-small) ───────────────────────────────
+// â”€â”€ Embeddings (OpenAI text-embedding-3-small) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function generateEmbedding(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY) return null;
   try {
@@ -844,7 +844,7 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   } catch { return null; }
 }
 
-// ── RAG: competitor retrieval ─────────────────────────────────────────────────
+// â”€â”€ RAG: competitor retrieval â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function retrieveRelevantCompetitors(
   // deno-lint-ignore no-explicit-any
   supabase: any,
@@ -861,7 +861,7 @@ async function retrieveRelevantCompetitors(
   return data ?? [];
 }
 
-// ── RAG: playbook retrieval ───────────────────────────────────────────────────
+// â”€â”€ RAG: playbook retrieval â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const RAG_TAGS_BY_PROMPT: Partial<Record<PromptType, string[]>> = {
   playbook_analysis:    ['VALIDATION', 'MOM_TEST', 'JTBD', 'UNIT_ECONOMICS', 'FINANCE', 'LEGAL', 'CHILE', 'TECH', 'NO_CODE', 'MVP', 'GROWTH', 'GTM', 'B2B_SALES', 'PLG', 'FUNDING', 'VC', 'PITCH_DECK', 'LATAM', 'PRODUCT_STRATEGY', 'AI', 'BLUE_OCEAN', 'UX', 'PSYCHOLOGY', 'BIASES', 'FOUNDER_RISK', 'POST_MORTEM'],
   validation_kit:       ['VALIDATION', 'MOM_TEST', 'JTBD'],
@@ -895,27 +895,27 @@ async function retrieveRagPlaybooks(
     .join('\n\n---\n\n');
 }
 
-// ── GraphRAG: entity extraction + hybrid retrieval ───────────────────────────
+// â”€â”€ GraphRAG: entity extraction + hybrid retrieval â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Maps keyword patterns to known document_titles in knowledge_nodes
 const ENTITY_MAP: [RegExp, string][] = [
   [/fintech|cme?f|21\.521|ley de datos|21\.719|datos personales|pagos digit|wallet|credito digital|banca/i,
     'Ley Fintech 21.521, Ley de Datos 21.719 y Estructura Societaria'],
   [/corfo|fondef|sii|tributari|regimen tributario|financiamiento estatal|subsidio|incentivo/i,
-    'Financiamiento Estatal y Clasificación Tributaria SII'],
-  [/playbook|validaci[oó]n|lean|mom test|jtbd|jobs.to.be.done|prototipo|hipot[eé]sis/i,
+    'Financiamiento Estatal y ClasificaciÃ³n Tributaria SII'],
+  [/playbook|validaci[oÃ³]n|lean|mom test|jtbd|jobs.to.be.done|prototipo|hipot[eÃ©]sis/i,
     'Playbook de Validacion de Ideas'],
   [/unit economics|ltv|cac|churn|mrr|arr|saas metrics|benchmark|margen|payback/i,
     'Unit Economics y Benchmarks B2B SaaS'],
-  [/no.?code|low.?code|bubble|webflow|flutterflow|softr|stack tecnol|plataforma sin c[oó]digo/i,
+  [/no.?code|low.?code|bubble|webflow|flutterflow|softr|stack tecnol|plataforma sin c[oÃ³]digo/i,
     'Tech Stack No-Code y Low-Code'],
   [/gtm|go.to.market|ventas|growth|crecimiento|plg|product.led|spin selling|design partner/i,
     'Growth GTM y Ventas'],
-  [/blue ocean|ia|inteligencia artificial|errc|producto.ia|ai product|diferenciaci[oó]n/i,
+  [/blue ocean|ia|inteligencia artificial|errc|producto.ia|ai product|diferenciaci[oÃ³]n/i,
     'Producto IA y Blue Ocean Strategy'],
-  [/sesgo|psicolog|fundador|confirmation bias|dunning.kruger|ilusión de control|autopsia/i,
+  [/sesgo|psicolog|fundador|confirmation bias|dunning.kruger|ilusiÃ³n de control|autopsia/i,
     'Psicologia y Sesgos del Founder'],
-  [/fundraising|inversi[oó]n|vc|venture capital|angel|pre.seed|seed|serie a|pitch deck|valuaci[oó]n|ecosistema chileno/i,
+  [/fundraising|inversi[oÃ³]n|vc|venture capital|angel|pre.seed|seed|serie a|pitch deck|valuaci[oÃ³]n|ecosistema chileno/i,
     'Fundraising'],
 ];
 
@@ -955,37 +955,37 @@ async function retrieveHybridGraphRAG(
 }
 
 const PLAYBOOK_MASTER_PROMPT = (ragChunks: string) => `# SYSTEM ROLE
-Actúa como un Venture Builder experto, un Inversor de Capital de Riesgo (VC) implacable y un especialista legal/financiero en el ecosistema de Startups de LatAm (enfocado en Chile). Tu objetivo NO es complacer al emprendedor, sino evitar que construya algo que nadie quiere (riesgo del 42% según CB Insights).
+ActÃºa como un Venture Builder experto, un Inversor de Capital de Riesgo (VC) implacable y un especialista legal/financiero en el ecosistema de Startups de LatAm (enfocado en Chile). Tu objetivo NO es complacer al emprendedor, sino evitar que construya algo que nadie quiere (riesgo del 42% segÃºn CB Insights).
 
 # DIRECTRICES PRINCIPALES (REGLAS DE ORO)
-1. Metodología Lean & Mom Test: Exige siempre el "Aprendizaje Validado". Prohíbe al usuario hacer preguntas sesgadas. Oblígalo a aplicar el "Mom Test".
-2. Framework JTBD (Jobs-to-be-Done): Analiza el mercado por el "trabajo" que el cliente intenta resolver, no solo demografía.
-3. Unit Economics Realistas: Usa los benchmarks proporcionados en el contexto. Si el usuario proyecta costos irreales en LatAm, corrígelo con datos de la industria.
-4. Validación Técnica y No-Code: Recomienda el stack técnico exacto (ej. Bubble, FlutterFlow, Softr) según el tipo de proyecto para validar rápido.
-5. Cumplimiento y Regulación (Chile/LatAm): Evalúa el riesgo regulatorio. Aplica los criterios de la Ley Fintech o Ley de Protección de Datos (21.719) si corresponde.
-6. Estrategia GTM y Ventas: Evalúa si la idea necesita Product-Led Growth (PLG) o Growth Hacking/Outbound B2B. Identifica el canal de adquisición con mayor potencial de tracción inicial. Para B2B recomienda secuencias de outreach; para B2C recomienda loops virales o comunidades.
-7. Evaluación de Inversión: Dictamina con criterios VC si el proyecto tiene madurez para levantar Pre-Seed (producto, equipo, señales de mercado) o si primero debe validar con Bootstrapping o un grant (ej. StartupChile). Sé explícito sobre qué hitos deben cumplirse antes de hablar con inversores.
-8. Estrategia de Producto e IA: Si la idea usa IA, evalúa críticamente si es realmente necesaria según el framework JTBD/Blue Ocean o si es solo "hype" tecnológico que encarece el MVP sin agregar valor diferencial. Si no usa IA, evalúa si podría crear una ventaja competitiva sostenible.
-9. Diagnóstico Psicológico del Fundador: Identifica si el fundador está cayendo en "Sesgo de Confirmación" (busca validar lo que ya cree), "Ilusión de Control" (sobreestima su capacidad de ejecución), "Efecto Dunning-Kruger" (subestima la complejidad del mercado) u otros sesgos cognitivos comunes en fundadores, basándote en cómo describe el problema y la solución.
+1. MetodologÃ­a Lean & Mom Test: Exige siempre el "Aprendizaje Validado". ProhÃ­be al usuario hacer preguntas sesgadas. OblÃ­galo a aplicar el "Mom Test".
+2. Framework JTBD (Jobs-to-be-Done): Analiza el mercado por el "trabajo" que el cliente intenta resolver, no solo demografÃ­a.
+3. Unit Economics Realistas: Usa los benchmarks proporcionados en el contexto. Si el usuario proyecta costos irreales en LatAm, corrÃ­gelo con datos de la industria.
+4. ValidaciÃ³n TÃ©cnica y No-Code: Recomienda el stack tÃ©cnico exacto (ej. Bubble, FlutterFlow, Softr) segÃºn el tipo de proyecto para validar rÃ¡pido.
+5. Cumplimiento y RegulaciÃ³n (Chile/LatAm): EvalÃºa el riesgo regulatorio. Aplica los criterios de la Ley Fintech o Ley de ProtecciÃ³n de Datos (21.719) si corresponde.
+6. Estrategia GTM y Ventas: EvalÃºa si la idea necesita Product-Led Growth (PLG) o Growth Hacking/Outbound B2B. Identifica el canal de adquisiciÃ³n con mayor potencial de tracciÃ³n inicial. Para B2B recomienda secuencias de outreach; para B2C recomienda loops virales o comunidades.
+7. EvaluaciÃ³n de InversiÃ³n: Dictamina con criterios VC si el proyecto tiene madurez para levantar Pre-Seed (producto, equipo, seÃ±ales de mercado) o si primero debe validar con Bootstrapping o un grant (ej. StartupChile). SÃ© explÃ­cito sobre quÃ© hitos deben cumplirse antes de hablar con inversores.
+8. Estrategia de Producto e IA: Si la idea usa IA, evalÃºa crÃ­ticamente si es realmente necesaria segÃºn el framework JTBD/Blue Ocean o si es solo "hype" tecnolÃ³gico que encarece el MVP sin agregar valor diferencial. Si no usa IA, evalÃºa si podrÃ­a crear una ventaja competitiva sostenible.
+9. DiagnÃ³stico PsicolÃ³gico del Fundador: Identifica si el fundador estÃ¡ cayendo en "Sesgo de ConfirmaciÃ³n" (busca validar lo que ya cree), "IlusiÃ³n de Control" (sobreestima su capacidad de ejecuciÃ³n), "Efecto Dunning-Kruger" (subestima la complejidad del mercado) u otros sesgos cognitivos comunes en fundadores, basÃ¡ndote en cÃ³mo describe el problema y la soluciÃ³n.
 
-# CONTEXTO RAG — PLAYBOOKS DE METODOLOGÍA
+# CONTEXTO RAG â€” PLAYBOOKS DE METODOLOGÃA
 ${ragChunks || '(Sin contexto adicional disponible)'}
 
-Responde SOLO con JSON válido en español, sin texto adicional, sin markdown:
+Responde SOLO con JSON vÃ¡lido en espaÃ±ol, sin texto adicional, sin markdown:
 {
-  "harsh_truth": "Un párrafo directo y honesto sobre el principal riesgo de fracaso",
-  "jtbd_analysis": "Cuál es el verdadero Job-to-be-Done que el cliente contrata",
+  "harsh_truth": "Un pÃ¡rrafo directo y honesto sobre el principal riesgo de fracaso",
+  "jtbd_analysis": "CuÃ¡l es el verdadero Job-to-be-Done que el cliente contrata",
   "validation_playbook": ["Paso 1 exacto usando Mom Test", "Paso 2", "Paso 3"],
-  "unit_economics_check": "Evaluación de viabilidad financiera con benchmarks de la industria",
-  "tech_and_legal_stack": "Recomendación No-Code específica y advertencias legales en Chile",
-  "gtm_and_growth_plan": "El canal de adquisición recomendado (PLG / outbound B2B / community-led) y la táctica inicial concreta para los primeros 30 días",
-  "funding_verdict": "Dictamen explícito: ¿Pre-Seed con VC, grant/acceleradora, o bootstrapping primero? Indica qué hitos faltan antes de levantar capital",
-  "product_ai_strategy": "Evaluación técnica y de mercado (Blue Ocean): si usa IA, ¿es necesaria o es hype? Si no usa IA, ¿debería? Qué ventaja competitiva real otorga",
-  "founder_bias_warning": "Diagnóstico duro sobre los sesgos psicológicos detectados (Confirmación, Ilusión de Control, Dunning-Kruger, etc.) y cómo están distorsionando la visión del negocio",
+  "unit_economics_check": "EvaluaciÃ³n de viabilidad financiera con benchmarks de la industria",
+  "tech_and_legal_stack": "RecomendaciÃ³n No-Code especÃ­fica y advertencias legales en Chile",
+  "gtm_and_growth_plan": "El canal de adquisiciÃ³n recomendado (PLG / outbound B2B / community-led) y la tÃ¡ctica inicial concreta para los primeros 30 dÃ­as",
+  "funding_verdict": "Dictamen explÃ­cito: Â¿Pre-Seed con VC, grant/acceleradora, o bootstrapping primero? Indica quÃ© hitos faltan antes de levantar capital",
+  "product_ai_strategy": "EvaluaciÃ³n tÃ©cnica y de mercado (Blue Ocean): si usa IA, Â¿es necesaria o es hype? Si no usa IA, Â¿deberÃ­a? QuÃ© ventaja competitiva real otorga",
+  "founder_bias_warning": "DiagnÃ³stico duro sobre los sesgos psicolÃ³gicos detectados (ConfirmaciÃ³n, IlusiÃ³n de Control, Dunning-Kruger, etc.) y cÃ³mo estÃ¡n distorsionando la visiÃ³n del negocio",
   "viability_score": 65
 }`;
 
-// ── Analysis cache ────────────────────────────────────────────────────────────
+// â”€â”€ Analysis cache â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function checkAnalysisCache(
   // deno-lint-ignore no-explicit-any
   supabase: any,
@@ -1023,7 +1023,7 @@ async function saveAnalysisCache(
   });
 }
 
-// ── Haiku pre-pass ────────────────────────────────────────────────────────────
+// â”€â”€ Haiku pre-pass â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface StructuredIdea {
   problem: string;
   solution: string;
@@ -1047,7 +1047,7 @@ async function preprocessIdea(rawDescription: string): Promise<StructuredIdea | 
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 500,
-        system: 'Eres un extractor de datos. Tu única tarea es estructurar una idea de negocio en JSON. Responde SOLO con JSON válido, sin texto adicional.',
+        system: 'Eres un extractor de datos. Tu Ãºnica tarea es estructurar una idea de negocio en JSON. Responde SOLO con JSON vÃ¡lido, sin texto adicional.',
         messages: [{
           role: 'user',
           content: `Extrae y estructura esta idea de negocio:\n\n${rawDescription}\n\nResponde en este formato JSON exacto:\n{"problem":"...","solution":"...","targetAudience":"...","market":"...","revenueModel":"...","stage":"idea|validating|mvp|launched","geography":"..."}`,
@@ -1064,7 +1064,7 @@ async function preprocessIdea(rawDescription: string): Promise<StructuredIdea | 
   }
 }
 
-// ── Providers ─────────────────────────────────────────────────────────────────
+// â”€â”€ Providers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function callAnthropic(
   promptType: PromptType,
@@ -1073,7 +1073,7 @@ async function callAnthropic(
   tier?: 'free' | 'basic' | 'pro',
 ): Promise<AIResult> {
   if (!ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY no está configurada en los secrets de Supabase.');
+    throw new Error('ANTHROPIC_API_KEY no estÃ¡ configurada en los secrets de Supabase.');
   }
 
   const useWebSearch = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
@@ -1121,7 +1121,7 @@ async function callAnthropic(
   const data = await response.json();
 
   if (Deno.env.get('DENO_ENV') !== 'production') {
-    console.log(`[cache] ${promptType} — read: ${data.usage?.cache_read_input_tokens ?? 0}, created: ${data.usage?.cache_creation_input_tokens ?? 0}`);
+    console.log(`[cache] ${promptType} â€” read: ${data.usage?.cache_read_input_tokens ?? 0}, created: ${data.usage?.cache_creation_input_tokens ?? 0}`);
   }
 
   const textContent = (data.content as Array<{ type: string; text?: string }>)
@@ -1145,7 +1145,7 @@ async function callOpenAI(
   systemOverride?: string,
 ): Promise<AIResult> {
   if (!OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY no está configurada en los secrets de Supabase.');
+    throw new Error('OPENAI_API_KEY no estÃ¡ configurada en los secrets de Supabase.');
   }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -1162,7 +1162,7 @@ async function callOpenAI(
           role: 'system',
           content: (() => {
             const p = systemOverride ?? SYSTEM_PROMPTS[promptType];
-            return /json/i.test(p) ? p : `${p}\n\nResponde SOLO con JSON válido, sin texto adicional, sin markdown.`;
+            return /json/i.test(p) ? p : `${p}\n\nResponde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown.`;
           })(),
         },
         {
@@ -1193,8 +1193,8 @@ async function callOpenAI(
 
 /**
  * Routing principal:
- * - competitive_analysis y market_sizing → siempre Anthropic (web_search)
- * - Resto → según AI_PROVIDER, con fallback automático si falta la key
+ * - competitive_analysis y market_sizing â†’ siempre Anthropic (web_search)
+ * - Resto â†’ segÃºn AI_PROVIDER, con fallback automÃ¡tico si falta la key
  */
 async function callAI(
   promptType: PromptType,
@@ -1202,7 +1202,7 @@ async function callAI(
   systemOverride?: string,
   tier?: 'free' | 'basic' | 'pro',
 ): Promise<AIResult> {
-  // Prompts que idealmente usan web_search (solo Anthropic), pero si no hay créditos caen a OpenAI
+  // Prompts que idealmente usan web_search (solo Anthropic), pero si no hay crÃ©ditos caen a OpenAI
   const requiresAnthropic = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
 
   if (requiresAnthropic && ANTHROPIC_API_KEY) {
@@ -1222,16 +1222,16 @@ async function callAI(
 
   // Default: Anthropic
   if (ANTHROPIC_API_KEY) return callAnthropic(promptType, context, systemOverride, tier);
-  // Último fallback: intentar OpenAI si hay key
+  // Ãšltimo fallback: intentar OpenAI si hay key
   if (OPENAI_API_KEY) {
     console.warn('No hay ANTHROPIC_API_KEY. Usando OpenAI como fallback.');
     return callOpenAI(promptType, context, systemOverride);
   }
 
-  throw new Error('No hay ningún AI provider configurado. Agrega ANTHROPIC_API_KEY o OPENAI_API_KEY a los secrets de Supabase.');
+  throw new Error('No hay ningÃºn AI provider configurado. Agrega ANTHROPIC_API_KEY o OPENAI_API_KEY a los secrets de Supabase.');
 }
 
-// ── Sector benchmarks (CAC / LTV / churn medians by industry + model) ────────
+// â”€â”€ Sector benchmarks (CAC / LTV / churn medians by industry + model) â”€â”€â”€â”€â”€â”€â”€â”€
 // Source: Profitwell 2024, ChartMogul Benchmarks 2024, OpenView SaaS 2024
 // All values in USD unless noted. Updated: 2026-05.
 const SECTOR_BENCHMARKS: Record<string, Record<string, {
@@ -1243,59 +1243,59 @@ const SECTOR_BENCHMARKS: Record<string, Record<string, {
   note: string;
 }>> = {
   saas: {
-    b2b: { cac_usd: { min: 200, max: 800 }, ltv_usd: { min: 1500, max: 6000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 75, note: 'B2B SaaS mediana 2024 — ChartMogul' },
-    b2c: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 80, max: 400 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 70, note: 'B2C SaaS mediana 2024 — Profitwell' },
-    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 3000 }, monthly_churn_pct: { min: 2, max: 6 }, payback_months: { min: 4, max: 15 }, gross_margin_pct: 72, note: 'SaaS genérico — benchmark promedio 2024' },
+    b2b: { cac_usd: { min: 200, max: 800 }, ltv_usd: { min: 1500, max: 6000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 75, note: 'B2B SaaS mediana 2024 â€” ChartMogul' },
+    b2c: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 80, max: 400 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 70, note: 'B2C SaaS mediana 2024 â€” Profitwell' },
+    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 3000 }, monthly_churn_pct: { min: 2, max: 6 }, payback_months: { min: 4, max: 15 }, gross_margin_pct: 72, note: 'SaaS genÃ©rico â€” benchmark promedio 2024' },
   },
   fintech: {
-    b2b: { cac_usd: { min: 400, max: 1200 }, ltv_usd: { min: 3000, max: 15000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'Fintech B2B — altos costos de compliance y onboarding' },
-    b2c: { cac_usd: { min: 30, max: 120 }, ltv_usd: { min: 150, max: 800 }, monthly_churn_pct: { min: 2, max: 7 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 45, note: 'Fintech B2C LATAM — benchmark Kushki/Fintual 2023' },
-    default: { cac_usd: { min: 100, max: 600 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1, max: 5 }, payback_months: { min: 6, max: 20 }, gross_margin_pct: 50, note: 'Fintech genérico LATAM' },
+    b2b: { cac_usd: { min: 400, max: 1200 }, ltv_usd: { min: 3000, max: 15000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'Fintech B2B â€” altos costos de compliance y onboarding' },
+    b2c: { cac_usd: { min: 30, max: 120 }, ltv_usd: { min: 150, max: 800 }, monthly_churn_pct: { min: 2, max: 7 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 45, note: 'Fintech B2C LATAM â€” benchmark Kushki/Fintual 2023' },
+    default: { cac_usd: { min: 100, max: 600 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1, max: 5 }, payback_months: { min: 6, max: 20 }, gross_margin_pct: 50, note: 'Fintech genÃ©rico LATAM' },
   },
   edtech: {
-    b2b: { cac_usd: { min: 300, max: 900 }, ltv_usd: { min: 2000, max: 8000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 6, max: 15 }, gross_margin_pct: 65, note: 'EdTech B2B — ventas institucionales (colegios, empresas)' },
-    b2c: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 300 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 68, note: 'EdTech B2C LATAM — churn alto en primeros 3 meses' },
-    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 1500 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 66, note: 'EdTech genérico' },
+    b2b: { cac_usd: { min: 300, max: 900 }, ltv_usd: { min: 2000, max: 8000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 6, max: 15 }, gross_margin_pct: 65, note: 'EdTech B2B â€” ventas institucionales (colegios, empresas)' },
+    b2c: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 300 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 68, note: 'EdTech B2C LATAM â€” churn alto en primeros 3 meses' },
+    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 1500 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 66, note: 'EdTech genÃ©rico' },
   },
   healthtech: {
-    b2b: { cac_usd: { min: 500, max: 2000 }, ltv_usd: { min: 5000, max: 30000 }, monthly_churn_pct: { min: 0.5, max: 1.5 }, payback_months: { min: 12, max: 36 }, gross_margin_pct: 60, note: 'HealthTech B2B — ciclos de venta largos (6-18 meses)' },
-    b2c: { cac_usd: { min: 40, max: 150 }, ltv_usd: { min: 200, max: 1000 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 5, max: 15 }, gross_margin_pct: 55, note: 'HealthTech B2C — retención alta si genera resultados' },
-    default: { cac_usd: { min: 150, max: 800 }, ltv_usd: { min: 800, max: 8000 }, monthly_churn_pct: { min: 1, max: 6 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 57, note: 'HealthTech genérico' },
+    b2b: { cac_usd: { min: 500, max: 2000 }, ltv_usd: { min: 5000, max: 30000 }, monthly_churn_pct: { min: 0.5, max: 1.5 }, payback_months: { min: 12, max: 36 }, gross_margin_pct: 60, note: 'HealthTech B2B â€” ciclos de venta largos (6-18 meses)' },
+    b2c: { cac_usd: { min: 40, max: 150 }, ltv_usd: { min: 200, max: 1000 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 5, max: 15 }, gross_margin_pct: 55, note: 'HealthTech B2C â€” retenciÃ³n alta si genera resultados' },
+    default: { cac_usd: { min: 150, max: 800 }, ltv_usd: { min: 800, max: 8000 }, monthly_churn_pct: { min: 1, max: 6 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 57, note: 'HealthTech genÃ©rico' },
   },
   ecommerce: {
-    b2c: { cac_usd: { min: 10, max: 50 }, ltv_usd: { min: 50, max: 350 }, monthly_churn_pct: { min: 5, max: 15 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 35, note: 'E-commerce B2C — márgenes bajos, volumen necesario' },
-    marketplace: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 100, max: 600 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 30, note: 'Marketplace — take rate 10-20%' },
-    default: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 7 }, gross_margin_pct: 32, note: 'E-commerce genérico LATAM' },
+    b2c: { cac_usd: { min: 10, max: 50 }, ltv_usd: { min: 50, max: 350 }, monthly_churn_pct: { min: 5, max: 15 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 35, note: 'E-commerce B2C â€” mÃ¡rgenes bajos, volumen necesario' },
+    marketplace: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 100, max: 600 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 30, note: 'Marketplace â€” take rate 10-20%' },
+    default: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 7 }, gross_margin_pct: 32, note: 'E-commerce genÃ©rico LATAM' },
   },
   marketplace: {
-    default: { cac_usd: { min: 25, max: 100 }, ltv_usd: { min: 120, max: 700 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 30, note: 'Marketplace — 2 lados del mercado (supply + demand)' },
+    default: { cac_usd: { min: 25, max: 100 }, ltv_usd: { min: 120, max: 700 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 30, note: 'Marketplace â€” 2 lados del mercado (supply + demand)' },
   },
   logistics: {
-    b2b: { cac_usd: { min: 300, max: 1000 }, ltv_usd: { min: 2500, max: 12000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 8, max: 20 }, gross_margin_pct: 25, note: 'Logística B2B — márgenes bajos, alto volumen' },
-    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1.5, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 25, note: 'Logística genérico LATAM' },
+    b2b: { cac_usd: { min: 300, max: 1000 }, ltv_usd: { min: 2500, max: 12000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 8, max: 20 }, gross_margin_pct: 25, note: 'LogÃ­stica B2B â€” mÃ¡rgenes bajos, alto volumen' },
+    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1.5, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 25, note: 'LogÃ­stica genÃ©rico LATAM' },
   },
   foodtech: {
-    b2c: { cac_usd: { min: 8, max: 30 }, ltv_usd: { min: 40, max: 200 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 5 }, gross_margin_pct: 28, note: 'FoodTech B2C — altísimo churn, retention es el reto' },
+    b2c: { cac_usd: { min: 8, max: 30 }, ltv_usd: { min: 40, max: 200 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 5 }, gross_margin_pct: 28, note: 'FoodTech B2C â€” altÃ­simo churn, retention es el reto' },
     b2b: { cac_usd: { min: 200, max: 700 }, ltv_usd: { min: 1500, max: 7000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 5, max: 14 }, gross_margin_pct: 32, note: 'FoodTech B2B (restaurantes, dark kitchens)' },
-    default: { cac_usd: { min: 20, max: 200 }, ltv_usd: { min: 80, max: 2000 }, monthly_churn_pct: { min: 4, max: 15 }, payback_months: { min: 2, max: 10 }, gross_margin_pct: 30, note: 'FoodTech genérico' },
+    default: { cac_usd: { min: 20, max: 200 }, ltv_usd: { min: 80, max: 2000 }, monthly_churn_pct: { min: 4, max: 15 }, payback_months: { min: 2, max: 10 }, gross_margin_pct: 30, note: 'FoodTech genÃ©rico' },
   },
   proptech: {
-    b2b: { cac_usd: { min: 400, max: 1500 }, ltv_usd: { min: 3000, max: 20000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 10, max: 30 }, gross_margin_pct: 60, note: 'PropTech B2B — ciclos largos, alta retención' },
-    default: { cac_usd: { min: 100, max: 800 }, ltv_usd: { min: 500, max: 8000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'PropTech genérico' },
+    b2b: { cac_usd: { min: 400, max: 1500 }, ltv_usd: { min: 3000, max: 20000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 10, max: 30 }, gross_margin_pct: 60, note: 'PropTech B2B â€” ciclos largos, alta retenciÃ³n' },
+    default: { cac_usd: { min: 100, max: 800 }, ltv_usd: { min: 500, max: 8000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'PropTech genÃ©rico' },
   },
   social: {
-    b2c: { cac_usd: { min: 1, max: 15 }, ltv_usd: { min: 5, max: 80 }, monthly_churn_pct: { min: 10, max: 25 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 70, note: 'Social B2C — monetización por ads o freemium' },
-    default: { cac_usd: { min: 2, max: 20 }, ltv_usd: { min: 10, max: 100 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 65, note: 'Social genérico' },
+    b2c: { cac_usd: { min: 1, max: 15 }, ltv_usd: { min: 5, max: 80 }, monthly_churn_pct: { min: 10, max: 25 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 70, note: 'Social B2C â€” monetizaciÃ³n por ads o freemium' },
+    default: { cac_usd: { min: 2, max: 20 }, ltv_usd: { min: 10, max: 100 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 65, note: 'Social genÃ©rico' },
   },
   other: {
-    b2b: { cac_usd: { min: 200, max: 700 }, ltv_usd: { min: 1200, max: 6000 }, monthly_churn_pct: { min: 1.5, max: 5 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 55, note: 'B2B genérico — ajustar por sector específico' },
-    b2c: { cac_usd: { min: 15, max: 80 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 50, note: 'B2C genérico — ajustar por producto y precio' },
-    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 2000 }, monthly_churn_pct: { min: 2, max: 8 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 52, note: 'Benchmarks genéricos 2024' },
+    b2b: { cac_usd: { min: 200, max: 700 }, ltv_usd: { min: 1200, max: 6000 }, monthly_churn_pct: { min: 1.5, max: 5 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 55, note: 'B2B genÃ©rico â€” ajustar por sector especÃ­fico' },
+    b2c: { cac_usd: { min: 15, max: 80 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 50, note: 'B2C genÃ©rico â€” ajustar por producto y precio' },
+    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 2000 }, monthly_churn_pct: { min: 2, max: 8 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 52, note: 'Benchmarks genÃ©ricos 2024' },
   },
 };
 
-// ── Handler HTTP ──────────────────────────────────────────────────────────────
-// ── Prompt type whitelist ──────────────────────────────────────────────────────
+// â”€â”€ Handler HTTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Prompt type whitelist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const VALID_PROMPT_TYPES = new Set<PromptType>(Object.keys(SYSTEM_PROMPTS) as PromptType[]);
 
 serve(async (req) => {
@@ -1333,7 +1333,7 @@ serve(async (req) => {
       });
     }
 
-    // ── Middleware Ley 21.719 (Consentimiento) ──────────────────────────────────
+    // â”€â”€ Middleware Ley 21.719 (Consentimiento) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { data: consent } = await supabase
       .from('consent_logs')
       .select('id')
@@ -1345,15 +1345,15 @@ serve(async (req) => {
     if (!consent) {
       return new Response(JSON.stringify({ 
         error: 'consent_required', 
-        message: 'Debe aceptar los términos de la Ley 21.719 para continuar.' 
+        message: 'Debe aceptar los tÃ©rminos de la Ley 21.719 para continuar.' 
       }), {
         status: 403, headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
-    // ── Tier + Rate limiting ──────────────────────────────────────────────────
+    // â”€â”€ Tier + Rate limiting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { data: profile } = await supabase
       .from('profiles')
       .select('tier')
@@ -1376,7 +1376,7 @@ serve(async (req) => {
     if (EXPENSIVE_TYPES.has(prompt_type) && limits.expensive === 0) {
       return new Response(JSON.stringify({
         error: 'rate_limit_tier',
-        message: 'Este análisis requiere plan Basic o superior.',
+        message: 'Este anÃ¡lisis requiere plan Basic o superior.',
         tier: userTier,
       }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
@@ -1393,7 +1393,7 @@ serve(async (req) => {
     if ((totalThisMonth ?? 0) >= limits.total) {
       return new Response(JSON.stringify({
         error: 'rate_limit_monthly',
-        message: `Límite mensual de ${limits.total} análisis para el plan ${userTier} alcanzado.`,
+        message: `LÃ­mite mensual de ${limits.total} anÃ¡lisis para el plan ${userTier} alcanzado.`,
         tier: userTier,
         limit: limits.total,
       }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -1410,12 +1410,12 @@ serve(async (req) => {
       if ((expThisMonth ?? 0) >= limits.expensive) {
         return new Response(JSON.stringify({
           error: 'rate_limit_expensive',
-          message: `Límite de ${limits.expensive} análisis de mercado para el plan ${userTier} alcanzado.`,
+          message: `LÃ­mite de ${limits.expensive} anÃ¡lisis de mercado para el plan ${userTier} alcanzado.`,
           tier: userTier,
         }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
       }
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     // Haiku pre-pass: enriquece el contexto con idea estructurada
     let enrichedContext = context;
@@ -1436,14 +1436,14 @@ serve(async (req) => {
       }
     }
 
-    // RAG: inyectar playbooks metodológicos según el tipo de prompt
+    // RAG: inyectar playbooks metodolÃ³gicos segÃºn el tipo de prompt
     let ragSystemOverride: string | undefined;
     const ragQueryText = rawDescription
       ? `${rawDescription} ${context.target_country ?? ''} ${context.business_model ?? ''}`.trim()
       : '';
 
     if (ragQueryText && RAG_TAGS_BY_PROMPT[prompt_type]) {
-      // playbook_analysis usa el motor híbrido GraphRAG (grafo + vector)
+      // playbook_analysis usa el motor hÃ­brido GraphRAG (grafo + vector)
       // El resto de prompts sigue usando search_rag_playbooks (tenant_vectors)
       const ragChunks = prompt_type === 'playbook_analysis'
         ? await retrieveHybridGraphRAG(supabase, ragQueryText)
@@ -1454,10 +1454,10 @@ serve(async (req) => {
           ragSystemOverride = PLAYBOOK_MASTER_PROMPT(ragChunks);
         } else {
           const basePrompt = SYSTEM_PROMPTS[prompt_type];
-          ragSystemOverride = `${basePrompt}\n\n# CONTEXTO METODOLÓGICO ADICIONAL (RAG)\n${ragChunks}`;
+          ragSystemOverride = `${basePrompt}\n\n# CONTEXTO METODOLÃ“GICO ADICIONAL (RAG)\n${ragChunks}`;
         }
       } else if (prompt_type === 'playbook_analysis') {
-        // Ningún chunk superó el umbral 0.75 — degradación elegante sin llamar al LLM
+        // NingÃºn chunk superÃ³ el umbral 0.75 â€” degradaciÃ³n elegante sin llamar al LLM
         const fallback = { _fallo_elegante: true };
         if (validation_id) {
           await supabase.from('validations').update({ playbook_analysis: fallback }).eq('id', validation_id);
@@ -1481,7 +1481,7 @@ serve(async (req) => {
       }
     }
 
-    // BCCh macro: inyectar últimas series IPC para market_sizing
+    // BCCh macro: inyectar Ãºltimas series IPC para market_sizing
     if (prompt_type === 'market_sizing') {
       const { data: bdeRows } = await supabase
         .from('market_bde_data')
@@ -1511,7 +1511,7 @@ serve(async (req) => {
       }
     }
 
-    // Caché: verificar si existe un análisis similar reciente
+    // CachÃ©: verificar si existe un anÃ¡lisis similar reciente
     const cacheableTypes = ['summary', 'risk_analysis', 'unit_economics', 'market_sizing'];
     const ideaCacheKey = rawDescription
       ? `${rawDescription} ${context.target_country ?? ''} ${context.business_model ?? ''}`.trim()
@@ -1532,7 +1532,7 @@ serve(async (req) => {
     const tierForAI = (userTier === 'premium' ? 'pro' : userTier) as 'free' | 'basic' | 'pro';
     const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride, tierForAI);
 
-    // Guardar en caché (no bloqueante)
+    // Guardar en cachÃ© (no bloqueante)
     if (ideaCacheKey && cacheableTypes.includes(prompt_type)) {
       saveAnalysisCache(
         supabase, ideaCacheKey, prompt_type, parsed,
@@ -1588,7 +1588,7 @@ serve(async (req) => {
       }
     }
 
-    // Log de interacción (no bloqueante)
+    // Log de interacciÃ³n (no bloqueante)
     supabase.from('ai_interactions').insert({
       user_id: user.id,
       validation_id,

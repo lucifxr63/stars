@@ -1,24 +1,24 @@
-// Edge Function: survey-datalake
-// Sirve consultas analíticas del data lake anonimizado con Privacidad Diferencial.
+﻿// Edge Function: survey-datalake
+// Sirve consultas analÃ­ticas del data lake anonimizado con Privacidad Diferencial.
 //
 // Mecanismo: Laplace noise injection.
-// ε (epsilon) controla el trade-off privacidad/utilidad:
-//   ε pequeño (0.1–0.5) → más ruido, mayor privacidad
-//   ε grande (1–5)       → menos ruido, mayor utilidad
+// Îµ (epsilon) controla el trade-off privacidad/utilidad:
+//   Îµ pequeÃ±o (0.1â€“0.5) â†’ mÃ¡s ruido, mayor privacidad
+//   Îµ grande (1â€“5)       â†’ menos ruido, mayor utilidad
 //
-// La garantía formal: la presencia o ausencia de CUALQUIER registro individual
-// no puede afectar el resultado de una consulta en más de 1/ε con probabilidad
-// significativa → "negación plausible" a nivel individual.
+// La garantÃ­a formal: la presencia o ausencia de CUALQUIER registro individual
+// no puede afectar el resultado de una consulta en mÃ¡s de 1/Îµ con probabilidad
+// significativa â†’ "negaciÃ³n plausible" a nivel individual.
 //
 // GET /survey-datalake?form_id=&query=<aggregate_type>&epsilon=<float>
 //
 // query types:
-//   severity_distribution   — distribución de severity con ruido
-//   friction_avg            — promedio de friction_bucket con ruido
-//   wtp_rate                — tasa de willingness_to_pay con ruido
-//   industry_breakdown      — distribución por industria con ruido
-//   solutions_frequency     — frecuencia de soluciones actuales con ruido
-//   mom_test_signals        — señales Mom Test % con ruido
+//   severity_distribution   â€” distribuciÃ³n de severity con ruido
+//   friction_avg            â€” promedio de friction_bucket con ruido
+//   wtp_rate                â€” tasa de willingness_to_pay con ruido
+//   industry_breakdown      â€” distribuciÃ³n por industria con ruido
+//   solutions_frequency     â€” frecuencia de soluciones actuales con ruido
+//   mom_test_signals        â€” seÃ±ales Mom Test % con ruido
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -26,7 +26,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'https://validateai.cl',
   'http://localhost:5173',
   'http://localhost:4173',
@@ -48,8 +48,8 @@ function json(data: unknown, status = 200, req: Request) {
   });
 }
 
-// ── Mecanismo de Laplace ─────────────────────────────────
-// Genera una muestra de la distribución de Laplace con media 0 y escala b=sensitivity/ε.
+// â”€â”€ Mecanismo de Laplace â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Genera una muestra de la distribuciÃ³n de Laplace con media 0 y escala b=sensitivity/Îµ.
 // Usa la transformada inversa: X = -b * sign(U) * ln(1 - 2|U|), donde U ~ Uniform[-0.5, 0.5]
 function laplaceSample(sensitivity: number, epsilon: number): number {
   const b = sensitivity / epsilon;
@@ -57,14 +57,14 @@ function laplaceSample(sensitivity: number, epsilon: number): number {
   return -b * Math.sign(u) * Math.log(1 - 2 * Math.abs(u));
 }
 
-// Aplica ruido de Laplace a un valor numérico (conteo o proporción)
-// Clampea al rango [min, max] para preservar semántica
+// Aplica ruido de Laplace a un valor numÃ©rico (conteo o proporciÃ³n)
+// Clampea al rango [min, max] para preservar semÃ¡ntica
 function addLaplaceNoise(value: number, sensitivity: number, epsilon: number, min = 0, max = Infinity): number {
   const noisy = value + laplaceSample(sensitivity, epsilon);
   return Math.max(min, Math.min(max, Math.round(noisy * 100) / 100));
 }
 
-// ── Tipos ─────────────────────────────────────────────────
+// â”€â”€ Tipos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type QueryType =
   | 'severity_distribution'
   | 'friction_avg'
@@ -82,7 +82,7 @@ interface AnonRow {
   mom_test_signals: Record<string, boolean>;
 }
 
-// ── Constructores de respuesta DP ─────────────────────────
+// â”€â”€ Constructores de respuesta DP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function querySeverityDistribution(rows: AnonRow[], epsilon: number) {
   const counts = { tolerable: 0, critico: 0, paralizante: 0 } as Record<string, number>;
   for (const r of rows) counts[r.severity] = (counts[r.severity] ?? 0) + 1;
@@ -95,11 +95,11 @@ function querySeverityDistribution(rows: AnonRow[], epsilon: number) {
 }
 
 function queryFrictionAvg(rows: AnonRow[], epsilon: number) {
-  // Bucket → valor numérico medio para el promedio
+  // Bucket â†’ valor numÃ©rico medio para el promedio
   const bucketValues: Record<string, number> = { baja: 2, media: 5, alta: 8.5 };
   const values = rows.map(r => bucketValues[r.friction_bucket] ?? 5);
   const avg = values.reduce((a, b) => a + b, 0) / (values.length || 1);
-  // Sensitivity = rango/(n) = (8.5-2)/n ≈ 6.5/n
+  // Sensitivity = rango/(n) = (8.5-2)/n â‰ˆ 6.5/n
   const sensitivity = 6.5 / (rows.length || 1);
   const noisy = addLaplaceNoise(avg, sensitivity, epsilon, 1, 10);
   return { avg_friction: noisy, n: rows.length };
@@ -121,7 +121,7 @@ function queryIndustryBreakdown(rows: AnonRow[], epsilon: number) {
     counts[k] = (counts[k] ?? 0) + 1;
   }
   // Privacidad diferencial por conteo con sensitivity=1
-  // Dividir ε entre categorías con composición paralela (safe porque son disjuntas)
+  // Dividir Îµ entre categorÃ­as con composiciÃ³n paralela (safe porque son disjuntas)
   const noisy: Record<string, number> = {};
   for (const [k, v] of Object.entries(counts)) {
     noisy[k] = addLaplaceNoise(v, 1, epsilon, 0, rows.length);
@@ -141,7 +141,7 @@ function querySolutionsFrequency(rows: AnonRow[], epsilon: number) {
   const noisy: Record<string, number> = {};
   for (const [k, v] of Object.entries(counts)) {
     const n = addLaplaceNoise(v, sensitivity, epsilon, 0, rows.length * 3);
-    if (n >= 1) noisy[k] = n; // Suprimir categorías con ruido negativo
+    if (n >= 1) noisy[k] = n; // Suprimir categorÃ­as con ruido negativo
   }
   // Ordenar por frecuencia (descendente)
   const sorted = Object.entries(noisy)
@@ -171,7 +171,7 @@ function queryMomTestSignals(rows: AnonRow[], epsilon: number) {
   };
 }
 
-// ── Handler ────────────────────────────────────────────────
+// â”€â”€ Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(req) });
   if (req.method !== 'GET') return json({ error: 'Method not allowed' }, 405, req);
@@ -255,7 +255,7 @@ Deno.serve(async (req: Request) => {
       ok: true,
       query,
       epsilon,
-      privacy_guarantee: `ε-differential privacy con ε=${epsilon}. Presencia/ausencia de cualquier individuo no afecta el resultado en más de e^${epsilon}≈${Math.exp(epsilon).toFixed(2)} con alta probabilidad.`,
+      privacy_guarantee: `Îµ-differential privacy con Îµ=${epsilon}. Presencia/ausencia de cualquier individuo no afecta el resultado en mÃ¡s de e^${epsilon}â‰ˆ${Math.exp(epsilon).toFixed(2)} con alta probabilidad.`,
       data: result!,
     }, 200, req);
 

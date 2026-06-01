@@ -1,15 +1,15 @@
-// Edge Function: survey-crud
+﻿// Edge Function: survey-crud
 // CRUD autenticado para formularios de Customer Development (survey_forms)
-// GET  /survey-crud?id=<uuid>          — obtiene un formulario del usuario
-// GET  /survey-crud                    — lista formularios del usuario
-// POST /survey-crud                    — crea un formulario nuevo
-// PUT  /survey-crud?id=<uuid>          — actualiza un formulario existente
-// DELETE /survey-crud?id=<uuid>        — elimina un formulario
+// GET  /survey-crud?id=<uuid>          â€” obtiene un formulario del usuario
+// GET  /survey-crud                    â€” lista formularios del usuario
+// POST /survey-crud                    â€” crea un formulario nuevo
+// PUT  /survey-crud?id=<uuid>          â€” actualiza un formulario existente
+// DELETE /survey-crud?id=<uuid>        â€” elimina un formulario
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const ALLOWED_ORIGINS = [
-  'https://validateai-mu.vercel.app',
+  'https://validus.scouttech.lat',
   'https://validateai.cl',
   'http://localhost:5173',
   'http://localhost:4173',
@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
   const formId = url.searchParams.get('id');
 
   try {
-    // ── GET ──────────────────────────────────────────────────
+    // â”€â”€ GET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (req.method === 'GET') {
       if (formId) {
         const { data, error } = await supabaseAdmin
@@ -84,14 +84,14 @@ Deno.serve(async (req: Request) => {
       return json({ forms: data }, 200, req);
     }
 
-    // ── POST ─────────────────────────────────────────────────
+    // â”€â”€ POST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (req.method === 'POST') {
       const body = await req.json();
       const { title, description, schema_json, ui_schema, consent_text } = body;
 
       if (!title?.trim()) return json({ error: 'title is required' }, 400, req);
 
-      // Generar slug único con reintento en caso de colisión
+      // Generar slug Ãºnico con reintento en caso de colisiÃ³n
       let slug = generateSlug();
       let attempts = 0;
       while (attempts < 5) {
@@ -123,7 +123,7 @@ Deno.serve(async (req: Request) => {
       return json({ form: data }, 201, req);
     }
 
-    // ── PUT ──────────────────────────────────────────────────
+    // â”€â”€ PUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (req.method === 'PUT') {
       if (!formId) return json({ error: 'id param required' }, 400, req);
 
@@ -148,7 +148,7 @@ Deno.serve(async (req: Request) => {
       return json({ form: data }, 200, req);
     }
 
-    // ── DELETE ───────────────────────────────────────────────
+    // â”€â”€ DELETE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (req.method === 'DELETE') {
       if (!formId) return json({ error: 'id param required' }, 400, req);
 
