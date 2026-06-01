@@ -36,6 +36,7 @@ function getCorsHeaders(req: Request) {
 // â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type PromptType =
   | 'questions' | 'customer_analysis' | 'value_prop' | 'mvp_generation' | 'summary'
+  | 'summary_quick'
   | 'competitive_analysis' | 'market_sizing' | 'risk_analysis' | 'unit_economics'
   | 'founder_fit' | 'market_signals'
   | 'validation_kit' | 'landing_generator' | 'interview_script' | 'tech_viability'
@@ -64,8 +65,8 @@ interface AIResult {
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function buildMarketContext(ctx: Record<string, unknown>): string {
   return `Contexto de mercado:
-- PaÃ­s objetivo: ${ctx.target_country ?? 'No especificado'}
-- RegiÃ³n: ${ctx.target_region ?? 'No especificada'}
+- País objetivo: ${ctx.target_country ?? 'No especificado'}
+- Región: ${ctx.target_region ?? 'No especificada'}
 - Modelo de negocio: ${ctx.business_model ?? 'No especificado'}
 - Etapa: ${ctx.business_stage ?? 'No especificada'}
 - Rango de precio: ${ctx.pricing_range ?? 'No especificado'}
@@ -73,7 +74,12 @@ function buildMarketContext(ctx: Record<string, unknown>): string {
     Array.isArray(ctx.known_competitors) && ctx.known_competitors.length
       ? (ctx.known_competitors as string[]).join(', ')
       : 'Ninguno'
-  }`;
+  }
+- PROBLEMA DECLARADO (usar como fuente primaria para evaluar dimensión problem): ${ctx.idea_problem ?? 'No especificado'}
+- SOLUCIÓN ACTUAL DE INCUMBENTES (herramientas/métodos que usa el cliente hoy): ${ctx.current_solution ?? 'No especificado'}
+- Canal de adquisición principal: ${ctx.acquisition_channel ?? 'No especificado'}
+- Composición del equipo fundador: ${ctx.team_composition ?? 'No especificado'}
+- Estado de tracción actual: ${ctx.traction_status ?? 'No especificado'}`;
 }
 
 function extractJSON(text: string): string {
@@ -155,15 +161,28 @@ Si se incluyen datos de market_sizing, Ãºsalos para ajustar el score:
 - Confianza "low" en los datos â†’ no subas el score por ese motivo.
 - Proyecciones sin evidencia de tracciÃ³n â†’ penaliza el score de execution.
 
-Desglose del score en 5 categorÃ­as (0-100 cada una):
-- problem: Â¿El problema es real, frecuente y urgente? Â¿Hay evidencia de usuarios sufriendo activamente?
-- market: Â¿El mercado es grande y accesible para esta etapa? Â¿O es proyectado sin validar?
-- competition: Â¿Hay espacio diferenciado? (100 = nicho claro, 0 = saturado sin diferenciaciÃ³n)
-- solution: Â¿La soluciÃ³n es 10x mejor que la alternativa actual o solo marginalmente mejor?
-- execution: Â¿El MVP es realista? Â¿El equipo tiene capacidad de ejecutar?
+Desglose del score en 5 categorías (0-100 cada una):
 
-Score final = problemÃ—25% + marketÃ—20% + competitionÃ—15% + solutionÃ—25% + executionÃ—15%.
-IMPORTANTE: Responde siempre en espaÃ±ol. SÃ© especÃ­fico, no genÃ©rico.
+- problem (25%): USA el campo "PROBLEMA DECLARADO" como fuente primaria.
+  • Score alto (>70): el problema es específico, frecuente, urgente y describe comportamiento real del cliente con consecuencias cuantificables (tiempo, dinero, errores).
+  • Score medio (40-70): el problema es plausible pero genérico o sin evidencia validada con clientes reales.
+  • Score bajo (<40): el problema es vago, aspiracional o describe una solución disfrazada de problema. PENALIZA FUERTEMENTE si no hay urgencia real demostrable.
+
+- market (20%): ¿El mercado es grande y accesible para esta etapa? ¿O es proyectado sin validar?
+
+- competition (15%): Evalúa usando "SOLUCIÓN ACTUAL DE INCUMBENTES". Si el usuario nombró herramientas específicas (Excel, WhatsApp, procesos manuales), evalúa si existe un espacio diferenciado real frente a esas alternativas. Si el campo está vacío o es genérico, penaliza — indica que el fundador no investigó el mercado.
+
+- solution (25%): ¿La solución es 10x mejor que la alternativa actual nombrada en "SOLUCIÓN ACTUAL DE INCUMBENTES"? ¿O es solo marginalmente mejor?
+
+- execution (15%): Evalúa capacidad de ejecución usando "Estado de tracción actual" y "Composición del equipo fundador".
+  • traction_status="first_paying_customers" → evidencia sólida de ejecución → tiende a score alto (70-90).
+  • traction_status="mvp_launched_no_sales" → sabe construir pero no vender → score medio-alto (50-70).
+  • traction_status="mvp_in_development" → en progreso → score medio (30-55).
+  • traction_status="idea_on_paper" sin experiencia → penaliza fuertemente (0-35).
+  • team_composition="solo_founder" agrava el riesgo. "team_with_employees" lo mitiga.
+
+Score final = problem×25% + market×20% + competition×15% + solution×25% + execution×15%.
+IMPORTANTE: Responde siempre en español. Sé específico, no genérico.
 
 Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
@@ -173,6 +192,35 @@ Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
   "strengths": ["...", "..."],
   "weaknesses": ["...", "..."],
   "next_steps": ["...", "...", "..."]
+}`,
+
+  summary_quick: `Eres un analista de Venture Capital implacable evaluando un "Elevator Pitch". Solo tienes acceso a la visión superficial de la startup. Tu objetivo es desglosar la viabilidad del Problema y la Solución con extrema precisión, pero debes negarte a evaluar la Competencia, el Mercado y la Ejecución, ya que careces de datos empíricos.
+
+REGLAS DE EVALUACIÓN (obligatorias y no negociables):
+
+1. PROBLEMA (máx 25 pts): Evalúa la urgencia y claridad del problema implícito en la descripción de la idea, cruzándolo con el segmento de cliente (campo quick_icp). Si el segmento es demasiado genérico (ej: "empresas", "personas", "todos"), penaliza con puntaje bajo (<10).
+
+2. SOLUCIÓN (máx 25 pts): Analiza si la solución propuesta (idea_description) hace sentido lógico para el modelo de negocio seleccionado (business_model). Evalúa coherencia y diferenciación potencial.
+
+3. DIMENSIONES BLOQUEADAS — PROHIBICIÓN ESTRICTA: Bajo ninguna circunstancia intentes adivinar, estimar o calcular el Mercado, la Competencia o la Ejecución. Asigna SIEMPRE score: 0 y feedback: "INSUFFICIENT_DATA" a las tres. Ignorar esta regla invalida el análisis.
+
+PUNTUACIÓN GLOBAL: score = problem.score + solution.score únicamente (máximo posible: 50/100).
+NUNCA sumes los valores de competition, market ni execution al score global.
+
+El feedback de las dimensiones evaluadas debe mencionar explícitamente el quick_icp y business_model recibidos para que el usuario sienta que el análisis es personalizado para su idea concreta.
+IMPORTANTE: Responde siempre en español. Sé específico y directo — este es un análisis de superficie, no un informe completo.
+
+Responde SOLO con JSON válido, sin texto adicional, sin markdown:
+{
+  "score": 42,
+  "score_breakdown": {
+    "problem": { "score": 22, "feedback": "El dolor del cliente es claro, pero el segmento [quick_icp] es aún muy amplio. Necesitas nicharlo para validar la urgencia real." },
+    "solution": { "score": 20, "feedback": "La mecánica del modelo [business_model] es coherente con la solución, pero falta claridad en cómo se integrará en el día a día del usuario." },
+    "competition": { "score": 0, "feedback": "INSUFFICIENT_DATA" },
+    "market": { "score": 0, "feedback": "INSUFFICIENT_DATA" },
+    "execution": { "score": 0, "feedback": "INSUFFICIENT_DATA" }
+  },
+  "next_steps": ["Define métricas de mercado.", "Identifica a tus incumbentes.", "Mapea la capacidad técnica de tu equipo."]
 }`,
 
   market_sizing: `Eres un analista de mercado especializado en sizing de mercados para startups.
@@ -245,10 +293,23 @@ IMPORTANTE: Responde siempre en espaÃ±ol.
 Usa rangos (min-max) cuando la incertidumbre sea alta. Basa los cÃ¡lculos en el pricing y mercado objetivo indicados.
 Siempre en la moneda del mercado objetivo (CLP si es Chile, USD si es mercado global).
 
-Si el contexto incluye "industry_benchmarks", Ãºsalos como punto de partida para calibrar los rangos:
+Si el contexto incluye "industry_benchmarks", úsalos como punto de partida para calibrar los rangos:
 - Los benchmarks son promedios de mercado para esa industria y modelo de negocio.
-- AjÃºstalos segÃºn el precio especÃ­fico, paÃ­s y etapa de la idea.
+- Ajústalos según el precio específico, país y etapa de la idea.
 - Menciona en assumptions si te basaste en los benchmarks provistos.
+
+Si el contexto incluye "channel_cac_benchmark", úsalo para ajustar el CAC según el canal de adquisición declarado:
+- El campo contiene el multiplicador respecto al benchmark sectorial (multiplier_vs_benchmark) y el CAC típico para ese canal.
+- OBLIGATORIO: menciona en assumptions el canal seleccionado y el ajuste aplicado.
+- Ejemplo de razonamiento: "Canal outbound_linkedin (×1.4 vs benchmark) → CAC sectorial B2B SaaS $500 USD ajustado a ~$700 USD estimado para este canal."
+- Referencia de multiplicadores por canal de adquisición:
+  • outbound_linkedin / cold email: ×1.4 — CAC alto, leads calificados, ciclos de 30-90 días
+  • ads_meta / TikTok / Google: ×1.1 — CAC moderado, escalable, sensible al CPM
+  • comunidades_organico (Discord, Reddit): ×0.4 — CAC muy bajo, lento, difícil de escalar
+  • referidos / boca a boca: ×0.3 — CAC más bajo del mercado, requiere NPS>50
+  • alianzas / canales existentes: ×0.7 — CAC compartido con el socio
+  • contenido / SEO: ×0.5 — CAC bajo a largo plazo, ramp-up de 6-18 meses
+  • eventos presenciales / ferias: ×1.2 — efectivo para B2B complejo, CAC moderado-alto
 
 - CAC: costo estimado para conseguir 1 cliente de pago
 - LTV: ingreso total esperado por cliente durante su vida Ãºtil
@@ -273,15 +334,30 @@ Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 IMPORTANTE: Responde siempre en espaÃ±ol.
 Score de 0-100 donde 100 = fit perfecto.
 
-EvalÃºa estas 5 dimensiones (score 0-100 cada una):
-- problemKnowledge: Â¿lo ha vivido en carne propia? Â¿entiende profundamente el problema?
-- industryExperience: aÃ±os de experiencia en la industria del problema
-- technicalCapability: capacidad tÃ©cnica propia o acceso a co-fundador tÃ©cnico
-- networkStrength: red de contactos en el mercado objetivo
-- trackRecord: historial emprendedor previo
+Evalúa estas 5 dimensiones (score 0-100 cada una):
 
-SÃ© honesto. Un score bajo no mata la idea, pero seÃ±ala riesgos de ejecuciÃ³n.
-El score general es el promedio ponderado: problemKnowledgeÃ—30% + industryExperienceÃ—20% + technicalCapabilityÃ—20% + networkStrengthÃ—15% + trackRecordÃ—15%.
+- problemKnowledge (30%): ¿lo ha vivido en carne propia? ¿entiende profundamente el problema?
+  Usa el campo "personallyFacedProblem" (true/false) y el "PROBLEMA DECLARADO" como evidencia.
+
+- industryExperience (20%): años de experiencia en la industria del problema.
+  Usa el campo "yearsInIndustry": 0-1 años → score bajo (0-25), 2-4 → medio (25-55), 5-9 → alto (55-80), 10+ → muy alto (80-95).
+
+- technicalCapability (20%): capacidad del equipo de construir el producto. USA team_composition + tech_level. NO uses hasTechnicalCofounder (campo obsoleto).
+  • team_composition="team_with_employees" + tech_level="developers" → score alto (75-95).
+  • team_composition="founding_team" + tech_level="some_code" → score medio (45-70).
+  • team_composition="solo_founder" + tech_level="non_technical" → score bajo (0-35): riesgo de ejecución técnica alto.
+
+- networkStrength (15%): red de contactos en el mercado objetivo.
+  Infiere del país objetivo, industria y años de experiencia — no hay campo directo para esto.
+
+- trackRecord (15%): capacidad de ejecución demostrada. USA traction_status como indicador primario.
+  • traction_status="first_paying_customers" → score alto (75-95): evidencia de ejecución y venta real.
+  • traction_status="mvp_launched_no_sales" → score medio-alto (50-70): sabe construir, no vender aún.
+  • traction_status="mvp_in_development" → score medio (30-50): en progreso.
+  • traction_status="idea_on_paper" → score bajo (0-30): solo visión, sin ejecución demostrada.
+
+Sé honesto. Un score bajo no mata la idea, pero señala riesgos de ejecución.
+El score general es el promedio ponderado: problemKnowledge×30% + industryExperience×20% + technicalCapability×20% + networkStrength×15% + trackRecord×15%.
 
 Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
@@ -1078,7 +1154,10 @@ async function callAnthropic(
 
   const useWebSearch = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
 
-  const selectedModel = tier === 'free' ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-20250514';
+  // summary_quick siempre usa Haiku — estrategia de coste definida por Mesa Directiva.
+  const selectedModel = (tier === 'free' || promptType === 'summary_quick')
+    ? 'claude-haiku-4-5-20251001'
+    : 'claude-sonnet-4-20250514';
 
   const body: Record<string, unknown> = {
     model: selectedModel,
@@ -1231,7 +1310,23 @@ async function callAI(
   throw new Error('No hay ningÃºn AI provider configurado. Agrega ANTHROPIC_API_KEY o OPENAI_API_KEY a los secrets de Supabase.');
 }
 
-// â”€â”€ Sector benchmarks (CAC / LTV / churn medians by industry + model) â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CAC multipliers by acquisition channel ────────────────────────────────────
+// Source: internal analysis + HubSpot State of Marketing 2024, OpenView PLG 2024.
+// multiplier_vs_benchmark: factor applied on top of the sector CAC baseline.
+const CAC_MULTIPLIERS_BY_CHANNEL: Record<string, {
+  multiplier_vs_benchmark: number;
+  note: string;
+}> = {
+  outbound_linkedin: { multiplier_vs_benchmark: 1.4, note: 'Outbound B2B — CAC alto, leads calificados, ciclos 30-90 días' },
+  ads_meta:          { multiplier_vs_benchmark: 1.1, note: 'Publicidad pagada — CAC moderado, escalable, sensible al CPM' },
+  comunidades_organico: { multiplier_vs_benchmark: 0.4, note: 'Comunidades orgánicas — CAC muy bajo, lento, difícil de escalar' },
+  referidos:         { multiplier_vs_benchmark: 0.3, note: 'Referidos/WOM — CAC más bajo, requiere NPS>50' },
+  alianzas:          { multiplier_vs_benchmark: 0.7, note: 'Alianzas — CAC compartido con el socio, margen reducido' },
+  contenido_seo:     { multiplier_vs_benchmark: 0.5, note: 'Contenido/SEO — CAC bajo a largo plazo, ramp-up 6-18 meses' },
+  eventos_presencial: { multiplier_vs_benchmark: 1.2, note: 'Eventos presenciales — efectivo B2B complejo, CAC moderado-alto' },
+};
+
+// ── Sector benchmarks (CAC / LTV / churn medians by industry + model) ────────
 // Source: Profitwell 2024, ChartMogul Benchmarks 2024, OpenView SaaS 2024
 // All values in USD unless noted. Updated: 2026-05.
 const SECTOR_BENCHMARKS: Record<string, Record<string, {
@@ -1499,7 +1594,7 @@ serve(async (req) => {
       }
     }
 
-    // Benchmarks sectoriales: inyectar para unit_economics
+    // Benchmarks sectoriales + CAC por canal: inyectar para unit_economics
     if (prompt_type === 'unit_economics') {
       const industry = (context.idea_industry ?? context.industry ?? '') as string;
       const model    = (context.business_model ?? '') as string;
@@ -1508,6 +1603,12 @@ serve(async (req) => {
         ?? null;
       if (benchmark) {
         enrichedContext = { ...enrichedContext, industry_benchmarks: benchmark };
+      }
+
+      const channel = (context.acquisition_channel ?? '') as string;
+      const channelBenchmark = CAC_MULTIPLIERS_BY_CHANNEL[channel] ?? null;
+      if (channelBenchmark) {
+        enrichedContext = { ...enrichedContext, channel_cac_benchmark: channelBenchmark };
       }
     }
 

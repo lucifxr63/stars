@@ -1,5 +1,8 @@
 import type { FC } from 'react';
 
+// Sprint P-D: EvidenceWall auditado para resiliencia total ante fallos parciales.
+// Cualquier combinación de reddit_data/trends_data null es manejada sin white screen.
+
 interface RedditPost {
   subreddit: string;
   title: string;
@@ -12,16 +15,16 @@ interface RedditPost {
 interface RedditData {
   status: string;
   source: string;
-  top_discussions: RedditPost[];
+  top_discussions?: RedditPost[];
 }
 
 interface TrendsData {
   status: string;
   source: string;
-  keyword: string;
-  average_interest_last_12_months: number;
-  trend_trajectory: string;
-  related_breakout_queries: string[];
+  keyword?: string;
+  average_interest_last_12_months?: number;
+  trend_trajectory?: string;
+  related_breakout_queries?: string[];
 }
 
 interface AgentLog {
@@ -40,6 +43,10 @@ const SENTIMENT_CONFIG: Record<string, { label: string; className: string }> = {
   curiosity:   { label: 'Curiosidad',   className: 'bg-blue-100   text-blue-700   dark:bg-blue-900/30  dark:text-blue-400' },
   excitement:  { label: 'Entusiasmo',   className: 'bg-green-100  text-green-700  dark:bg-green-900/30 dark:text-green-400' },
   concern:     { label: 'Preocupación', className: 'bg-amber-100  text-amber-700  dark:bg-amber-900/30 dark:text-amber-400' },
+  question:    { label: 'Consulta',     className: 'bg-blue-100   text-blue-700   dark:bg-blue-900/30  dark:text-blue-400' },
+  high_interest: { label: 'Alto interés', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+  positive:    { label: 'Positivo',     className: 'bg-green-100  text-green-700  dark:bg-green-900/30 dark:text-green-400' },
+  discussion:  { label: 'Debate',       className: 'bg-gray-100   text-gray-600   dark:bg-white/5      dark:text-gray-400' },
 };
 
 function SentimentBadge({ sentiment }: { sentiment: string }) {
@@ -54,13 +61,35 @@ function SentimentBadge({ sentiment }: { sentiment: string }) {
   );
 }
 
-function TrajectoryIcon({ trajectory }: { trajectory: string }) {
+function TrajectoryIcon({ trajectory }: { trajectory?: string }) {
   if (trajectory === 'upward')   return <span className="text-emerald-500 font-bold">↑ Al alza</span>;
   if (trajectory === 'downward') return <span className="text-red-500    font-bold">↓ A la baja</span>;
   return <span className="text-gray-400 font-bold">→ Estable</span>;
 }
 
-function ComingSoonCard({ label, description }: { label: string; description: string }) {
+// Tarjeta para cuando la API externa falló — transparente, no alarmante.
+function PartialFailureCard({ source }: { source: string }) {
+  return (
+    <div className="flex items-start gap-4 p-5 rounded-xl border border-dashed border-amber-200 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-900/5">
+      <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
+        <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 mb-0.5">
+          {source} — No disponible temporalmente
+        </p>
+        <p className="text-xs text-amber-600/80 dark:text-amber-500/70 leading-relaxed">
+          El análisis en tiempo real de esta fuente no está disponible en este momento.
+          El resto del reporte no se ha visto afectado.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PendingCard({ label, description }: { label: string; description: string }) {
   return (
     <div className="flex items-center gap-4 p-5 rounded-xl border border-dashed border-gray-200 dark:border-white/8 bg-gradient-to-br from-gray-50 to-white dark:from-white/[0.02] dark:to-transparent">
       <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
@@ -73,20 +102,24 @@ function ComingSoonCard({ label, description }: { label: string; description: st
         <p className="text-xs text-gray-400 dark:text-[#8B8AA0] mt-0.5">{description}</p>
       </div>
       <span className="ml-auto shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 uppercase tracking-wide">
-        Próximamente
+        Procesando
       </span>
     </div>
   );
 }
 
-// Flip a true cuando Reddit API y SerpAPI estén conectadas a producción.
-const APIS_CONNECTED = { reddit: false, trends: true } as const;
-
 export const EvidenceWall: FC<Props> = ({ agentLog }) => {
-  const { reddit_data, trends_data, reddit_status, trends_status } = agentLog;
+  const { reddit_data, trends_data, reddit_status, trends_status } = agentLog ?? {};
+
+  // Determine render state per source
+  const showRedditData   = reddit_status === 'success' && reddit_data != null && (reddit_data.top_discussions?.length ?? 0) > 0;
+  const showRedditError  = reddit_status === 'error' || (reddit_status === 'success' && !reddit_data);
+  const showTrendsData   = trends_status === 'success' && trends_data != null;
+  const showTrendsError  = trends_status === 'error' || (trends_status === 'success' && !trends_data);
 
   return (
     <div className="space-y-6">
+
       {/* Reddit */}
       <div>
         <div className="flex items-center gap-2 mb-3">
@@ -94,49 +127,56 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
             <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
           </svg>
           <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Señal Social — Reddit</h3>
-          {APIS_CONNECTED.reddit && reddit_status === 'success' && (
-            <span className="ml-auto text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Conectado</span>
+          {showRedditData && (
+            <span className="ml-auto text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+              Conectado
+            </span>
           )}
         </div>
 
-        {!APIS_CONNECTED.reddit || reddit_status !== 'success' || !reddit_data ? (
-          <ComingSoonCard
-            label="Señal Social — Reddit"
-            description="Integración con Reddit API en desarrollo. Mostrará discusiones reales relacionadas con tu mercado y producto."
-          />
-        ) : (
+        {showRedditData ? (
           <div className="space-y-3">
-            {reddit_data.top_discussions.map((post, i) => (
+            {(reddit_data?.top_discussions ?? []).map((post, i) => (
               <a
                 key={i}
-                href={post.url}
+                href={post?.url ?? '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block p-4 rounded-xl border border-gray-100 dark:border-white/6 bg-white dark:bg-[#12121A] hover:border-[#7C6FF7]/40 transition-colors group"
               >
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <div>
-                    <span className="text-[11px] font-bold text-orange-500">{post.subreddit}</span>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mt-0.5 group-hover:text-[#7C6FF7] transition-colors">
-                      {post.title}
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-bold text-orange-500">{post?.subreddit ?? ''}</span>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mt-0.5 group-hover:text-[#7C6FF7] transition-colors truncate">
+                      {post?.title ?? ''}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <SentimentBadge sentiment={post.sentiment} />
+                    <SentimentBadge sentiment={post?.sentiment ?? 'discussion'} />
                     <div className="flex items-center gap-1 text-xs text-gray-400">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
                       </svg>
-                      <span className="font-medium">{post.upvotes.toLocaleString()}</span>
+                      <span className="font-medium">{(post?.upvotes ?? 0).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-[#8B8AA0] italic leading-relaxed line-clamp-2">
-                  {post.snippet}
-                </p>
+                {post?.snippet && (
+                  <p className="text-xs text-gray-500 dark:text-[#8B8AA0] italic leading-relaxed line-clamp-2">
+                    {post.snippet}
+                  </p>
+                )}
               </a>
             ))}
           </div>
+        ) : showRedditError ? (
+          <PartialFailureCard source="Análisis de comunidad Reddit" />
+        ) : (
+          <PendingCard
+            label="Señal Social — Reddit"
+            description="Buscando discusiones relevantes en comunidades de emprendedores..."
+          />
         )}
       </div>
 
@@ -150,55 +190,54 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
           <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Tendencias de Búsqueda</h3>
-          {APIS_CONNECTED.trends && trends_status === 'success' && (
-            <span className="ml-auto text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Conectado</span>
+          {showTrendsData && (
+            <span className="ml-auto text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+              Conectado
+            </span>
           )}
         </div>
 
-        {!APIS_CONNECTED.trends || trends_status !== 'success' || !trends_data ? (
-          <ComingSoonCard
-            label="Tendencias de Búsqueda — Google Trends"
-            description="Integración con SerpAPI en desarrollo. Mostrará volumen e interés histórico de búsquedas para tu keyword de mercado."
-          />
-        ) : (
+        {showTrendsData ? (
           <div className="p-4 rounded-xl border border-gray-100 dark:border-white/6 bg-white dark:bg-[#12121A] space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">Keyword analizada</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">"{trends_data.keyword}"</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">
+                  "{trends_data?.keyword ?? '—'}"
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">Tendencia</p>
                 <p className="text-sm font-semibold mt-0.5">
-                  <TrajectoryIcon trajectory={trends_data.trend_trajectory} />
+                  <TrajectoryIcon trajectory={trends_data?.trend_trajectory} />
                 </p>
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-xs text-gray-500 dark:text-[#8B8AA0] mb-1.5">
-                <span>Interés promedio últimos 12 meses</span>
-                <span className="font-bold text-gray-900 dark:text-[#F0EFF8]">
-                  {trends_data.average_interest_last_12_months}/100
-                </span>
+            {(trends_data?.average_interest_last_12_months ?? 0) > 0 && (
+              <div>
+                <div className="flex justify-between text-xs text-gray-500 dark:text-[#8B8AA0] mb-1.5">
+                  <span>Interés promedio últimos 12 meses</span>
+                  <span className="font-bold text-gray-900 dark:text-[#F0EFF8]">
+                    {trends_data?.average_interest_last_12_months ?? 0}/100
+                  </span>
+                </div>
+                <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#7C6FF7] rounded-full transition-all duration-700"
+                    style={{ width: `${trends_data?.average_interest_last_12_months ?? 0}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#7C6FF7] rounded-full transition-all duration-700"
-                  style={{ width: `${trends_data.average_interest_last_12_months}%` }}
-                />
-              </div>
-            </div>
+            )}
 
-            {trends_data.related_breakout_queries.length > 0 && (
+            {(trends_data?.related_breakout_queries?.length ?? 0) > 0 && (
               <div>
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-2">Queries en auge</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {trends_data.related_breakout_queries.map((q, i) => (
-                    <span
-                      key={i}
-                      className="px-2.5 py-1 bg-[#7C6FF7]/10 text-[#7C6FF7] text-xs font-medium rounded-full"
-                    >
+                  {(trends_data?.related_breakout_queries ?? []).map((q, i) => (
+                    <span key={i} className="px-2.5 py-1 bg-[#7C6FF7]/10 text-[#7C6FF7] text-xs font-medium rounded-full">
                       {q}
                     </span>
                   ))}
@@ -206,8 +245,16 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
               </div>
             )}
           </div>
+        ) : showTrendsError ? (
+          <PartialFailureCard source="Google Trends (SerpAPI)" />
+        ) : (
+          <PendingCard
+            label="Tendencias de Búsqueda — Google Trends"
+            description="Consultando volumen e interés histórico de búsquedas para tu keyword..."
+          />
         )}
       </div>
+
     </div>
   );
 };

@@ -31,7 +31,7 @@ function json(body: unknown, status = 200, req: Request) {
   });
 }
 
-// â”€â”€ Reddit API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Reddit API ────────────────────────────────────────────────────────────────
 
 interface RedditPost {
   subreddit: string;
@@ -42,14 +42,39 @@ interface RedditPost {
   url: string;
 }
 
-async function getRedditToken(): Promise<string> {
+// Deno KV para cachear el token OAuth de Reddit.
+// TTL = 55 min (60 min oficial -5 min de margen de seguridad).
+const KV_REDDIT_TOKEN_KEY = ['reddit_oauth_token'];
+const REDDIT_TOKEN_TTL_MS = 55 * 60 * 1000;
+
+async function getRedditTokenCached(): Promise<string> {
+  if (!REDDIT_CLIENT_ID || !REDDIT_CLIENT_SECRET) {
+    throw new Error('Reddit credentials not configured — set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET');
+  }
+  try {
+    const kv = await Deno.openKv();
+    const cached = await kv.get<string>(KV_REDDIT_TOKEN_KEY);
+    if (cached.value) return cached.value;
+
+    // Token expirado o no existe — obtener uno nuevo
+    const token = await fetchFreshRedditToken();
+    await kv.set(KV_REDDIT_TOKEN_KEY, token, { expireIn: REDDIT_TOKEN_TTL_MS });
+    return token;
+  } catch (kvErr) {
+    // Deno KV no disponible en este entorno → fetch directo sin caché
+    console.warn('[premium-validate] Deno KV unavailable, fetching token without cache:', kvErr);
+    return fetchFreshRedditToken();
+  }
+}
+
+async function fetchFreshRedditToken(): Promise<string> {
   const credentials = btoa(`${REDDIT_CLIENT_ID}:${REDDIT_CLIENT_SECRET}`);
   const res = await fetch('https://www.reddit.com/api/v1/access_token', {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'ValidateAI/1.0 by Luciano',
+      'User-Agent': 'ValidateAI/1.0',
     },
     body: 'grant_type=client_credentials',
   });
@@ -68,7 +93,7 @@ function inferSentiment(title: string, score: number): string {
 }
 
 async function fetchRedditReal(idea: string): Promise<unknown> {
-  const token = await getRedditToken();
+  const token = await getRedditTokenCached();
   const query = encodeURIComponent(idea.slice(0, 120));
   const subreddits = 'entrepreneur+startups+SaaS+smallbusiness+business';
 
@@ -104,37 +129,15 @@ async function fetchRedditReal(idea: string): Promise<unknown> {
   };
 }
 
-async function fetchRedditMockFallback(_idea: string): Promise<unknown> {
-  return {
-    status: 'mock',
-    source: 'Reddit (mock â€” agrega REDDIT_CLIENT_ID y REDDIT_CLIENT_SECRET para datos reales)',
-    top_discussions: [
-      {
-        subreddit: 'r/entrepreneur',
-        title: "I can't find a good tool to validate my startup ideas quickly.",
-        upvotes: 342,
-        sentiment: 'frustration',
-        snippet: '...I spend weeks doing market research. I wish there was an AI that just pulled Reddit and Trends data for me in 10 seconds...',
-        url: 'https://reddit.com/r/entrepreneur/example-post',
-      },
-      {
-        subreddit: 'r/SaaS',
-        title: 'How much do you pay for market research?',
-        upvotes: 128,
-        sentiment: 'curiosity',
-        snippet: '...agencies charge $5k+ for a basic market report. Has anyone tried automated solutions?',
-        url: 'https://reddit.com/r/SaaS/example-post-2',
-      },
-    ],
-  };
-}
-
+// Mocks eliminados por directiva de Mesa Directiva (01-Jun-2026).
+// Si las credenciales no están configuradas, la función lanza un error
+// que Promise.allSettled captura como null — el reporte se genera con
+// un aviso de “datos no disponibles” en lugar de datos ficticios.
 async function fetchReddit(idea: string): Promise<unknown> {
-  if (REDDIT_CLIENT_ID && REDDIT_CLIENT_SECRET) {
-    return fetchRedditReal(idea);
+  if (!REDDIT_CLIENT_ID || !REDDIT_CLIENT_SECRET) {
+    throw new Error('Reddit credentials not configured — set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in Supabase secrets');
   }
-  console.warn('[premium-validate] Sin credenciales Reddit â€” usando mock. Agrega REDDIT_CLIENT_ID y REDDIT_CLIENT_SECRET.');
-  return fetchRedditMockFallback(idea);
+  return fetchRedditReal(idea);
 }
 
 // â”€â”€ Google Trends (SerpApi) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -173,51 +176,62 @@ async function fetchTrendsReal(idea: string): Promise<unknown> {
   };
 }
 
-async function fetchTrendsMockFallback(_idea: string): Promise<unknown> {
-  return {
-    status: 'mock',
-    source: 'Google Trends (mock â€” agrega SERPAPI_KEY para datos reales)',
-    keyword: _idea.slice(0, 100),
-    average_interest_last_12_months: 78,
-    trend_trajectory: 'upward',
-    related_breakout_queries: ['automated startup validation', 'ai business plan generator'],
-  };
-}
-
 async function fetchTrends(idea: string): Promise<unknown> {
-  if (SERPAPI_KEY) {
-    return fetchTrendsReal(idea);
+  if (!SERPAPI_KEY) {
+    throw new Error('SERPAPI_KEY not configured — set SERPAPI_KEY in Supabase secrets');
   }
-  console.warn('[premium-validate] Sin SERPAPI_KEY â€” usando mock.');
-  return fetchTrendsMockFallback(idea);
+  return fetchTrendsReal(idea);
 }
 
-// â”€â”€ AI Synthesizer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── AI Synthesizer — Claude Sonnet (Sprint P-C) ────────────────────────────────
+
+interface ValidationContext {
+  idea_name?:          string | null;
+  idea_description?:   string | null;
+  idea_problem?:       string | null;
+  current_solution?:   string | null;
+  customer_segment?:   string | null;
+  target_country?:     string | null;
+  business_model?:     string | null;
+  traction_status?:    string | null;
+  team_composition?:   string | null;
+}
+
+const SYNTHESIS_SYSTEM_PROMPT = `Eres un analista senior de Venture Capital con acceso a señales de mercado en tiempo real. Tu misión es redactar el “Executive Summary Investor-Ready” más preciso y accionable posible sobre la viabilidad de este negocio.
+
+DIRECTRICES:
+- Integra activamente las señales de Reddit y Google Trends con el contexto del negocio.
+- Conecta el sentimiento de la comunidad con el dolor del cliente declarado.
+- Cruza la tracción actual del equipo con la complejidad del mercado objetivo.
+- Si los datos de mercado no están disponibles, indícalo con precisión y ajusta tu nivel de confianza.
+- Sé directo, sin adulaciones. Señala fortalezas reales Y debilidades concretas.
+- Máximo 1200 caracteres. Responde SOLO con el texto del resumen, sin títulos ni markdown.`;
 
 async function synthesize(
-  idea: string,
+  ctx: ValidationContext,
   redditData: unknown | null,
   trendsData: unknown | null,
 ): Promise<string> {
-  const redditSection = redditData
-    ? `## Reddit Signal\n${JSON.stringify(redditData, null, 2)}`
-    : '## Reddit Signal\n(datos no disponibles)';
+  const userPrompt = `# CONTEXTO DEL NEGOCIO
 
-  const trendsSection = trendsData
-    ? `## Google Trends Signal\n${JSON.stringify(trendsData, null, 2)}`
-    : '## Google Trends Signal\n(datos no disponibles)';
+IDEA: ${ctx.idea_name ?? 'Sin nombre'} — ${ctx.idea_description ?? 'Sin descripción'}
+PROBLEMA DECLARADO: ${ctx.idea_problem ?? 'No especificado'}
+SOLUCIÓN ACTUAL INCUMBENTES: ${ctx.current_solution ?? 'No especificado'}
+SEGMENTO OBJETIVO (ICP): ${ctx.customer_segment ?? 'No especificado'}
+PAÍS OBJETIVO: ${ctx.target_country ?? 'No especificado'}
+MODELO DE NEGOCIO: ${ctx.business_model?.toUpperCase() ?? 'No especificado'}
+TRACCIÓN ACTUAL: ${ctx.traction_status ?? 'No especificada'}
+COMPOSICIÓN DEL EQUIPO: ${ctx.team_composition ?? 'No especificada'}
 
-  const prompt = `Eres un analista de startups experto. BasÃ¡ndote en los datos de mercado a continuaciÃ³n,
-redacta un "Executive Summary" de mÃ¡ximo 1000 caracteres evaluando la viabilidad de la siguiente idea:
+# SEÑALES DE MERCADO EN TIEMPO REAL
 
-IDEA: ${idea}
+## Reddit Signal (sentimiento de comunidad emprendedora)
+${redditData ? JSON.stringify(redditData, null, 2) : '(No disponible — credenciales de API no configuradas)'}
 
-${redditSection}
+## Google Trends Signal (demanda de búsqueda, últimos 12 meses)
+${trendsData ? JSON.stringify(trendsData, null, 2) : '(No disponible — SERPAPI_KEY no configurada)'}
 
-${trendsSection}
-
-El resumen debe mencionar: demanda detectada, sentimiento de la comunidad, tendencia de bÃºsqueda
-y una recomendaciÃ³n concisa. Responde SOLO con el texto del resumen, sin tÃ­tulos ni markdown adicional.`;
+Basándote en TODO el contexto anterior, redacta el Executive Summary investor-ready.`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -227,9 +241,10 @@ y una recomendaciÃ³n concisa. Responde SOLO con el texto del resumen, sin tÃ�
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
-      messages: [{ role: 'user', content: prompt }],
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 800,
+      system: SYNTHESIS_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
     }),
   });
 
@@ -239,7 +254,7 @@ y una recomendaciÃ³n concisa. Responde SOLO con el texto del resumen, sin tÃ�
 
   const result = await response.json();
   const text: string = result.content?.[0]?.text ?? '';
-  return text.slice(0, 1000);
+  return text.slice(0, 1200);
 }
 
 // â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -285,15 +300,27 @@ serve(async (req: Request) => {
     return json({ error: 'validation_id and idea_description are required' }, 400, req);
   }
 
-  // Verificar que la validaciÃ³n pertenece al usuario
+  // Obtener el contexto completo de la validación para la síntesis enriquecida
   const { data: validation } = await supabase
     .from('validations')
-    .select('id, user_id')
+    .select('id, user_id, idea_name, idea_description, idea_problem, current_solution, customer_segment, target_country, business_model, traction_status, team_composition')
     .eq('id', validation_id)
     .eq('user_id', user.id)
     .single();
 
   if (!validation) return json({ error: 'Validation not found' }, 404, req);
+
+  const validationCtx: ValidationContext = {
+    idea_name:        validation.idea_name,
+    idea_description: validation.idea_description ?? idea_description,
+    idea_problem:     validation.idea_problem,
+    current_solution: validation.current_solution,
+    customer_segment: validation.customer_segment,
+    target_country:   validation.target_country,
+    business_model:   validation.business_model,
+    traction_status:  validation.traction_status,
+    team_composition: validation.team_composition,
+  };
 
   // Crear log inicial en estado 'pending'
   const { data: logRow, error: logInsertError } = await supabase
@@ -344,13 +371,14 @@ serve(async (req: Request) => {
   // â”€â”€ Sintetizador IA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let executiveSummary: string | null = null;
   try {
-    executiveSummary = await synthesize(idea_description, redditData, trendsData);
+    executiveSummary = await synthesize(validationCtx, redditData, trendsData);
   } catch (err) {
-    // El reporte se genera igualmente, sin resumen
+    // El reporte se genera igualmente, sin resumen ejecutivo
     errorDetails.synthesis = String(err);
+    console.error('[premium-validate] Synthesis failed:', err);
   }
 
-  // Guardar resumen y marcar validaciÃ³n como completada
+  // Guardar resumen y marcar validación como completada
   await supabase
     .from('validation_agents_log')
     .update({
@@ -360,9 +388,10 @@ serve(async (req: Request) => {
     })
     .eq('id', logId);
 
+  // Fix: validation_mode permanece 'premium' — no sobreescribir con 'quick'
   await supabase
     .from('validations')
-    .update({ status: 'completed', validation_mode: 'quick' })
+    .update({ status: 'completed' })
     .eq('id', validation_id);
 
   return json({

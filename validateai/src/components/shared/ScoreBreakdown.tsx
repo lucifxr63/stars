@@ -9,10 +9,28 @@ const LABELS: Record<keyof ScoreBreakdownType, string> = {
   execution: 'Ejecución',
 };
 
-export function ScoreBreakdown({ data }: { data: ScoreBreakdownType }) {
+// Normaliza el valor de cada dimensión: acepta tanto el formato plano (número)
+// del flujo Detallado como el formato objeto { score, feedback } del flujo Rápido.
+type RawDimension = number | { score: number; feedback: string };
+type RawBreakdown = Record<keyof ScoreBreakdownType, RawDimension>;
+
+function extractScore(val: RawDimension): number {
+  if (typeof val === 'number') return val;
+  return val?.score ?? 0;
+}
+
+function isInsufficient(val: RawDimension): boolean {
+  if (typeof val === 'object' && val !== null) {
+    return val.feedback === 'INSUFFICIENT_DATA';
+  }
+  return false;
+}
+
+export function ScoreBreakdown({ data }: { data: ScoreBreakdownType | RawBreakdown }) {
+  const rawData = data as RawBreakdown;
   const chartData = (Object.keys(LABELS) as (keyof ScoreBreakdownType)[]).map((key) => ({
     subject: LABELS[key],
-    value: data[key],
+    value: extractScore(rawData[key]),
     fullMark: 100,
   }));
 
@@ -58,18 +76,27 @@ export function ScoreBreakdown({ data }: { data: ScoreBreakdownType }) {
           <div className="w-full sm:w-40 shrink-0">
             <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-2.5">
               {(Object.keys(LABELS) as (keyof ScoreBreakdownType)[]).map((key) => {
-                const val = data[key];
-                const color = val >= 70 ? '#10b981' : val >= 40 ? '#f59e0b' : '#ef4444';
+                const raw = rawData[key];
+                const val = extractScore(raw);
+                const insufficient = isInsufficient(raw);
+                const color = insufficient ? '#6b7280'
+                  : val >= 70 ? '#10b981'
+                  : val >= 40 ? '#f59e0b'
+                  : '#ef4444';
                 return (
                   <div key={key}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0]">{LABELS[key]}</span>
-                      <span className="text-xs font-black" style={{ color }}>{val}</span>
+                      {insufficient ? (
+                        <span className="text-[10px] font-bold text-gray-400">—</span>
+                      ) : (
+                        <span className="text-xs font-black" style={{ color }}>{val}</span>
+                      )}
                     </div>
                     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${val}%`, background: color }}
+                        className={`h-full rounded-full transition-all duration-500 ${insufficient ? 'opacity-20' : ''}`}
+                        style={{ width: insufficient ? '100%' : `${val}%`, background: insufficient ? '#374151' : color }}
                       />
                     </div>
                   </div>

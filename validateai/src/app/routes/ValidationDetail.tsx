@@ -112,8 +112,50 @@ interface ValidationFull {
   financial_projection: FinancialProjection | null;
   compliance_roadmap: ComplianceRoadmap | null;
   rut: string | null;
+  validation_mode: 'quick' | 'detailed' | 'premium' | null;
+  quick_icp: string | null;
 }
 
+
+// ── Paywall visual para el flujo rápido ───────────────────────────────────────
+// Aplica blur + candado + CTA independientemente del tier (aprobado Mesa Directiva 01-Jun-2026).
+function QuickDimensionPaywall({ dimension, description }: { dimension: string; description: string }) {
+  return (
+    <div className="relative rounded-2xl overflow-hidden border border-white/8 bg-[#12121A] h-full min-h-[180px]">
+      {/* Contenido difuminado de fondo */}
+      <div className="blur-sm pointer-events-none select-none p-5 space-y-3 opacity-40">
+        <div className="h-4 bg-white/10 rounded-lg w-1/2" />
+        <div className="h-3 bg-white/8 rounded w-full" />
+        <div className="h-3 bg-white/8 rounded w-4/5" />
+        <div className="h-3 bg-white/8 rounded w-3/5" />
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <div className="h-16 bg-white/5 rounded-xl" />
+          <div className="h-16 bg-white/5 rounded-xl" />
+          <div className="h-16 bg-white/5 rounded-xl" />
+        </div>
+      </div>
+      {/* Overlay con lock */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0F]/55 backdrop-blur-[3px] p-5 text-center">
+        <div className="w-11 h-11 rounded-full bg-[#7C6FF7]/15 border border-[#7C6FF7]/30 flex items-center justify-center mb-3">
+          <svg className="w-5 h-5 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <p className="text-sm font-bold text-[#F0EFF8] mb-1">{dimension} — Sin datos suficientes</p>
+        <p className="text-xs text-[#8B8AA0] mb-4 max-w-[220px] leading-relaxed">{description}</p>
+        <a
+          href="/validate"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#7C6FF7] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition-colors"
+        >
+          Completa el análisis Detallado en 5 minutos
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  );
+}
 
 const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión', 'Due Diligence'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
@@ -165,6 +207,8 @@ export function ValidationDetail() {
   const { callAI } = useAI();
   const { tier, isPro: isPremium } = useUserTier();
   const isProLocked = tier === 'free' || tier === 'basic';
+  // Agnóstico al tier — depende solo del modo de análisis, no del plan de suscripción.
+  const isQuickMode = data?.validation_mode === 'quick';
   const founderProfile = useValidationStore((s) => s.founderProfile);
   const [reportFeedback, setReportFeedback] = useState<string | null>(null);
   const sections = getUserSections(tier);
@@ -1261,24 +1305,49 @@ export function ValidationDetail() {
                     )}
                     
                     {data.score_breakdown && (
-                      <div>
+                      <div className="space-y-3">
                         <ScoreBreakdown data={data.score_breakdown} />
+                        {isQuickMode && (
+                          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#7C6FF7]/8 border border-[#7C6FF7]/20">
+                            <svg className="w-4 h-4 text-[#A78BFA] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-[#A78BFA] leading-relaxed">
+                                <strong className="text-[#C4BCFC]">Score parcial ({data.validation_score}/100).</strong>{' '}
+                                Mercado, Competencia y Ejecución requieren más datos.{' '}
+                                <a href="/validate" className="underline font-semibold hover:text-[#C4BCFC] transition-colors">
+                                  Completa el análisis Detallado para desbloquear tu score real →
+                                </a>
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {/* Widgets adicionales para rellenar y complementar la columna */}
                     <div className="flex flex-col gap-4 mt-2">
                       {summary && <VerdictProsCons summary={summary} />}
-                      <VerdictFounderFit
-                        data={data.founder_fit}
-                        onGenerate={handleGenerateAdvanced}
-                        generating={generatingAdvanced}
-                      />
-                      <VerdictMarketTiming
-                        data={data.market_signals}
-                        onGenerate={handleGenerateAdvanced}
-                        generating={generatingAdvanced}
-                      />
+                      {isQuickMode ? (
+                        <QuickDimensionPaywall
+                          dimension="Ejecución (15%)"
+                          description="El Founder Fit y el análisis de equipo requieren los datos de tracción y composición del equipo fundador."
+                        />
+                      ) : (
+                        <>
+                          <VerdictFounderFit
+                            data={data.founder_fit}
+                            onGenerate={handleGenerateAdvanced}
+                            generating={generatingAdvanced}
+                          />
+                          <VerdictMarketTiming
+                            data={data.market_signals}
+                            onGenerate={handleGenerateAdvanced}
+                            generating={generatingAdvanced}
+                          />
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -1543,11 +1612,18 @@ export function ValidationDetail() {
               )}
 
               {/* Market Sizing */}
-              {data.market_sizing && (
+              {isQuickMode ? (
+                <div className="md:col-span-6 h-full">
+                  <QuickDimensionPaywall
+                    dimension="Mercado (20%)"
+                    description="El tamaño de mercado (TAM/SAM/SOM) requiere datos de país, precio y segmento detallado."
+                  />
+                </div>
+              ) : data.market_sizing ? (
                 <div className="md:col-span-6 h-full">
                   <MarketFunnel data={data.market_sizing} />
                 </div>
-              )}
+              ) : null}
 
               {/* SWOT */}
               {(summary?.strengths?.length || summary?.weaknesses?.length) ? (
@@ -1567,11 +1643,18 @@ export function ValidationDetail() {
               ) : null}
 
               {/* Competitive Analysis */}
-              {data.competitive_analysis && (
+              {isQuickMode ? (
+                <div className="md:col-span-12">
+                  <QuickDimensionPaywall
+                    dimension="Competencia (15%)"
+                    description="El mapeo de competidores requiere la solución actual de incumbentes y el canal de adquisición."
+                  />
+                </div>
+              ) : data.competitive_analysis ? (
                 <div className="md:col-span-12 h-full">
                   <CompetitiveAnalysis data={data.competitive_analysis} />
                 </div>
-              )}
+              ) : null}
 
               {/* Señales de Mercado */}
               <div className="md:col-span-12">

@@ -1,13 +1,88 @@
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepFounderSchema, type StepFounder } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 import { supabase } from '@/lib/supabase';
 
+const INDUSTRY_LABELS: Record<string, string> = {
+  fintech: 'Fintech', edtech: 'Educación', healthtech: 'Salud',
+  ecommerce: 'E-Commerce', saas: 'SaaS', marketplace: 'Marketplace',
+  social: 'Social', logistics: 'Logística', foodtech: 'FoodTech',
+  proptech: 'PropTech', other: 'otra industria',
+};
+
+const BUSINESS_MODEL_LABELS_SHORT: Record<string, string> = {
+  b2b: 'B2B', b2c: 'B2C', b2b2c: 'B2B2C', marketplace: 'Marketplace',
+};
+
+function buildGamificationMessage(industry?: string, model?: string, country?: string): string {
+  const ind = industry ? INDUSTRY_LABELS[industry] ?? industry : null;
+  const mod = model ? BUSINESS_MODEL_LABELS_SHORT[model] ?? model.toUpperCase() : null;
+  const cnt = country ?? null;
+
+  if (!ind && !mod && !cnt) return 'Último paso: cuéntanos sobre el equipo para calcular tu Score de Ejecución.';
+
+  const parts = [ind, mod].filter(Boolean).join(' ');
+  const loc = cnt ? ` en ${cnt}` : '';
+  return `Interesante combinación${parts ? ` de ${parts}` : ''}${loc}. Ahora cuéntanos sobre el equipo para calcular tu Score de Ejecución.`;
+}
+
+function GamificationBanner() {
+  const { stepIdea, stepMarket } = useValidationStore();
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(false), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!visible) return null;
+
+  const msg = buildGamificationMessage(
+    stepIdea.idea_industry,
+    stepMarket.business_model,
+    stepMarket.target_country,
+  );
+
+  return (
+    <div className={`transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#7C6FF7]/8 border border-[#7C6FF7]/20 mb-6">
+        <span className="text-lg shrink-0" aria-hidden>✦</span>
+        <p className="text-sm text-[#7C6FF7] dark:text-[#A78BFA] font-medium leading-relaxed">
+          {msg}
+        </p>
+        <button
+          onClick={() => setVisible(false)}
+          aria-label="Cerrar"
+          className="ml-auto shrink-0 text-[#7C6FF7]/40 hover:text-[#7C6FF7] transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const TECH_LEVELS = [
   { value: 'non_technical', label: 'Nada técnico', desc: 'Usaríamos No-Code o contrataríamos' },
   { value: 'some_code', label: 'Algo de código', desc: 'Podemos armar un MVP básico' },
   { value: 'developers', label: 'Somos devs', desc: 'Equipo técnico completo' },
+] as const;
+
+const TEAM_COMPOSITION_OPTIONS = [
+  { value: 'solo_founder', label: 'Solo Founder', desc: 'Arranco solo, sin cofundadores' },
+  { value: 'founding_team', label: 'Equipo Fundador', desc: '2–3 cofundadores, sin empleados aún' },
+  { value: 'team_with_employees', label: 'Equipo + Empleados', desc: 'Cofundadores y al menos 1 contratado' },
+] as const;
+
+const TRACTION_STATUS_OPTIONS = [
+  { value: 'idea_on_paper', label: 'Idea en papel', desc: 'Aún no he construido nada' },
+  { value: 'mvp_in_development', label: 'MVP en desarrollo', desc: 'Construyendo el primer prototipo' },
+  { value: 'mvp_launched_no_sales', label: 'MVP lanzado', desc: 'Live, pero sin ventas aún' },
+  { value: 'first_paying_customers', label: 'Primeros clientes pagos', desc: 'Ya tengo ingresos reales' },
 ] as const;
 
 function ErrorMsg({ message }: { message?: string }) {
@@ -25,10 +100,9 @@ function ErrorMsg({ message }: { message?: string }) {
 export function StepFounder() {
   const { stepFounder, updateStepFounder, nextStep, prevStep } = useValidationStore();
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<StepFounder>({
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<StepFounder>({
     resolver: zodResolver(StepFounderSchema),
     defaultValues: {
-      hasTechnicalCofounder: false,
       personallyFacedProblem: false,
       yearsInIndustry: 0,
       ...stepFounder,
@@ -43,30 +117,36 @@ export function StepFounder() {
       supabase.from('validations').update({
         founder_context: {
           yearsInIndustry:        data.yearsInIndustry,
-          hasTechnicalCofounder:  data.hasTechnicalCofounder,
           personallyFacedProblem: data.personallyFacedProblem,
         },
-        tech_level:   data.tech_level,
-        current_step: 4,
+        tech_level:       data.tech_level,
+        team_composition: data.team_composition,
+        traction_status:  data.traction_status,
+        current_step:     4,
       }).eq('id', validationId).then(() => {});
     }
 
     nextStep();
   };
 
-  const hasTech = watch('hasTechnicalCofounder');
-  const facedProblem = watch('personallyFacedProblem');
-  const techLevel = watch('tech_level');
+  const facedProblem   = watch('personallyFacedProblem');
+  const techLevel      = watch('tech_level');
+  const teamComp       = watch('team_composition');
+  const tractionStatus = watch('traction_status');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      
+
+      <GamificationBanner />
+
       <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-sm text-indigo-700 leading-relaxed mb-6">
-        <strong className="font-semibold block mb-1">Último paso!</strong>
-        Entender tu experiencia nos permite dar un puntaje de "Founder Fit" y evaluar tu capacidad de ejecución.
+        <strong className="font-semibold block mb-1">Fundador y Tracción</strong>
+        Entender tu experiencia y estado actual nos permite calcular tu Score de Ejecución y darte un análisis de Founder Fit real.
       </div>
 
       <div className="space-y-5">
+
+        {/* Años de experiencia */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-2">
             Años de experiencia en esta industria
@@ -84,21 +164,57 @@ export function StepFounder() {
           <ErrorMsg message={errors.yearsInIndustry?.message} />
         </div>
 
+        {/* Composición del equipo */}
         <div>
-           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
-            Equipo Técnico
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
+            Composición del equipo <span className="text-red-400">*</span>
           </label>
-          <label className={`flex items-center gap-3 p-4 border-2 rounded-2xl cursor-pointer transition
-                            ${hasTech ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 dark:border-white/8 hover:bg-white dark:bg-[#12121A]/3'}`}>
-            <input
-              type="checkbox"
-              {...register('hasTechnicalCofounder')}
-              className="w-5 h-5 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500"
-            />
-            <span className="text-sm font-medium text-gray-900 dark:text-[#F0EFF8]">Tengo un Co-founder técnico o un equipo de desarrollo interno</span>
-          </label>
+          <input type="hidden" {...register('team_composition')} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {TEAM_COMPOSITION_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setValue('team_composition', opt.value, { shouldValidate: true })}
+                className={`p-3 border-2 rounded-2xl text-left transition-all
+                  ${teamComp === opt.value
+                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
+                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+              >
+                <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+          <ErrorMsg message={errors.team_composition?.message} />
         </div>
 
+        {/* Estado de tracción */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
+            Estado de tracción <span className="text-red-400">*</span>
+          </label>
+          <input type="hidden" {...register('traction_status')} />
+          <div className="grid grid-cols-2 gap-2">
+            {TRACTION_STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setValue('traction_status', opt.value, { shouldValidate: true })}
+                className={`p-3 border-2 rounded-2xl text-left transition-all
+                  ${tractionStatus === opt.value
+                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
+                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+              >
+                <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+          <ErrorMsg message={errors.traction_status?.message} />
+        </div>
+
+        {/* Nivel técnico del equipo */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
             Nivel técnico del equipo fundador
@@ -119,8 +235,9 @@ export function StepFounder() {
           </div>
         </div>
 
+        {/* Vivió el problema personalmente */}
         <div>
-           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
             Contexto del Problema
           </label>
           <label className={`flex items-center gap-3 p-4 border-2 rounded-2xl cursor-pointer transition
@@ -156,4 +273,3 @@ export function StepFounder() {
     </form>
   );
 }
-

@@ -25,11 +25,16 @@ export const TARGET_COUNTRIES = [
 
 export const StepIdeaSchema = z.object({
   idea_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
+  idea_problem: z.string()
+    .min(20, 'Describe el problema con al menos 20 caracteres.')
+    .max(500),
   idea_description: z.string()
     .min(100, 'Necesitamos al menos 100 caracteres para generar un análisis de calidad. Describe el problema, la solución y para quién es.')
     .max(2000),
   idea_industry: IndustryEnum,
-  current_solution: z.string().max(300).optional(),
+  current_solution: z.string()
+    .min(10, 'Nombra al menos 2 herramientas o métodos que usa tu cliente hoy (mínimo 10 caracteres).')
+    .max(300),
 });
 
 export const StepMarketSchema = z.object({
@@ -45,11 +50,27 @@ export const StepMarketSchema = z.object({
 
 export const TechLevelEnum = z.enum(['non_technical', 'some_code', 'developers']);
 
+export const TeamCompositionEnum = z.enum([
+  'solo_founder',
+  'founding_team',
+  'team_with_employees',
+]);
+
+export const TractionStatusEnum = z.enum([
+  'idea_on_paper',
+  'mvp_in_development',
+  'mvp_launched_no_sales',
+  'first_paying_customers',
+]);
+
 export const StepFounderSchema = z.object({
   yearsInIndustry: z.number().min(0).max(50),
-  hasTechnicalCofounder: z.boolean(),
+  /** @deprecated Eliminado de la UI en Sprint B. Se remueve del schema en Sprint C. */
+  hasTechnicalCofounder: z.boolean().optional(),
   personallyFacedProblem: z.boolean(),
   tech_level: TechLevelEnum.optional(),
+  team_composition: TeamCompositionEnum,
+  traction_status: TractionStatusEnum,
 });
 
 export const ValidationSchema = z.object({
@@ -149,10 +170,13 @@ export interface UnitEconomics {
 
 export interface FounderContext {
   yearsInIndustry: number;
+  /** @deprecated Reemplazado por team_composition. Se elimina en Sprint C. */
   hasTechnicalCofounder: boolean;
   personallyFacedProblem: boolean;
   hasBuiltBefore?: boolean;
   networkInTargetMarket?: 'none' | 'some' | 'strong';
+  team_composition?: 'solo_founder' | 'founding_team' | 'team_with_employees';
+  traction_status?: 'idea_on_paper' | 'mvp_in_development' | 'mvp_launched_no_sales' | 'first_paying_customers';
 }
 
 export interface FounderFit {
@@ -346,6 +370,11 @@ export interface ExtractedProjectData {
   // Market
   tam?: string;
   targetMarket?: string;
+  // Sprint P-A — nuevos campos para Human-in-the-Loop pre-filling
+  team_composition?: 'solo_founder' | 'founding_team' | 'team_with_employees';
+  traction_status?: 'idea_on_paper' | 'mvp_in_development' | 'mvp_launched_no_sales' | 'first_paying_customers';
+  target_country?: string;
+  target_region?: string;
   // Meta
   extractionConfidence: ExtractionConfidence;
   sourceFileName?: string;
@@ -528,3 +557,41 @@ export type StepIdea = z.infer<typeof StepIdeaSchema>;
 export type StepMarket = z.infer<typeof StepMarketSchema>;
 export type StepFounder = z.infer<typeof StepFounderSchema>;
 export type Validation = z.infer<typeof ValidationSchema>;
+
+// ─── FLUJO RÁPIDO ─────────────────────────────────────────────────────────────
+
+export const StepIdeaQuickSchema = z.object({
+  idea_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
+  idea_description: z.string()
+    .min(100, 'Necesitamos al menos 100 caracteres para generar un análisis de calidad.')
+    .max(2000),
+  idea_industry: IndustryEnum,
+  quick_icp: z.string()
+    .min(5, '¿A quién le vas a vender? Ej: Clínicas dentales, Estudiantes universitarios')
+    .max(150),
+  business_model: z.enum(BUSINESS_MODELS),
+});
+
+export type StepIdeaQuick = z.infer<typeof StepIdeaQuickSchema>;
+
+// Score breakdown extendido — formato de summary_quick.
+// El flujo detallado devuelve dimensiones como números planos (ScoreBreakdown).
+// El flujo rápido devuelve dimensiones con score + feedback textual.
+export interface ScoreBreakdownDimension {
+  score: number;
+  feedback: string;
+}
+
+export interface ScoreBreakdownQuick {
+  problem: ScoreBreakdownDimension;
+  solution: ScoreBreakdownDimension;
+  competition: ScoreBreakdownDimension; // score: 0, feedback: "INSUFFICIENT_DATA"
+  market: ScoreBreakdownDimension;      // score: 0, feedback: "INSUFFICIENT_DATA"
+  execution: ScoreBreakdownDimension;   // score: 0, feedback: "INSUFFICIENT_DATA"
+}
+
+export interface SummaryQuickResult {
+  score: number;
+  score_breakdown: ScoreBreakdownQuick;
+  next_steps: string[];
+}

@@ -62,6 +62,7 @@ export function StepUpload() {
     setPendingQuestions,
     setDueDiligenceScore,
     setUploadStatus,
+    applyExtractedData,
     nextStep,
   } = useValidationStore();
 
@@ -165,6 +166,9 @@ export function StepUpload() {
       setExtractedData(extractedData);
       setPendingQuestions(pendingQuestions);
       setDueDiligenceScore(dueDiligenceScore);
+      // Sprint P-A: pre-llenar stepIdea + stepMarket + stepFounder para el
+      // flujo Human-in-the-Loop. El usuario revisará y confirmará en el siguiente paso.
+      applyExtractedData(extractedData);
     }
 
     // After 2.5s of success micro-copy, advance to next wizard step
@@ -374,6 +378,18 @@ export function StepUpload() {
             <span className="font-medium">{mime === 'application/pdf' ? 'Pitch Deck PDF' : 'JSON estructurado'}</span>
           </div>
         ))}
+      </div>
+
+      {/* Disclosure de privacidad — Ley 21.719 / Sprint P-A */}
+      <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-gray-50 dark:bg-white/3 border border-gray-200 dark:border-white/8">
+        <svg className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <p className="text-xs text-gray-400 dark:text-[#4A495E] leading-relaxed">
+          <strong className="text-gray-500 dark:text-[#8B8AA0]">Privacidad del documento:</strong>{' '}
+          Tu archivo se procesa en memoria y se destruye inmediatamente tras la extracción semántica.
+          No se almacena en ningún servidor ni se utiliza para entrenar modelos de IA.
+        </p>
       </div>
     </div>
   );

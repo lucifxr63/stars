@@ -8,7 +8,10 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { StepTransition } from '@/components/wizard/StepTransition';
 import { StepIdea } from '@/components/wizard/StepIdea';
+import { StepIdeaQuick } from '@/components/wizard/StepIdeaQuick';
+import { StepIdeaPremium } from '@/components/wizard/StepIdeaPremium';
 import { StepMarket } from '@/components/wizard/StepMarket';
+import { StepMarketPremium } from '@/components/wizard/StepMarketPremium';
 import { StepFounder } from '@/components/wizard/StepFounder';
 import { StepGenerating } from '@/components/wizard/StepGenerating';
 import { StepUpload } from '@/components/wizard/StepUpload';
@@ -52,16 +55,17 @@ const STEP_COMPONENTS_DETAILED: Record<number, React.FC> = {
   4: StepGenerating,
 };
 
-// Flujo premium (premium): Upload → Idea → Generando
+// Flujo premium: Upload → IdeaPremium (revisión) → MarketPremium (revisión) → Generando
 const STEP_COMPONENTS_PREMIUM: Record<number, React.FC> = {
   1: StepUpload,
-  2: StepIdea,
-  3: StepGenerating,
+  2: StepIdeaPremium,
+  3: StepMarketPremium,
+  4: StepGenerating,
 };
 
-// Flujo rápido manual (quick): Idea → Generando
+// Flujo rápido manual (quick): IdeaQuick → Generando
 const STEP_COMPONENTS_QUICK: Record<number, React.FC> = {
-  1: StepIdea,
+  1: StepIdeaQuick,
   2: StepGenerating,
 };
 
@@ -74,8 +78,9 @@ const STEP_TITLES_DETAILED: Record<number, { title: string; hint: string }> = {
 
 const STEP_TITLES_PREMIUM: Record<number, { title: string; hint: string }> = {
   1: { title: 'Sube tu documento', hint: 'La IA extrae todo de tu Pitch Deck automáticamente' },
-  2: { title: 'Tu idea', hint: 'Confirma o completa los datos extraídos' },
-  3: { title: 'Analizando...', hint: 'Generando tu Due Diligence Score' },
+  2: { title: 'Revisa tu idea', hint: 'Confirma o ajusta los datos extraídos por la IA' },
+  3: { title: 'Revisa tu mercado', hint: 'Confirma el ICP, modelo de negocio y precio' },
+  4: { title: 'Analizando...', hint: 'Generando tu análisis Premium con datos en tiempo real' },
 };
 
 const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
@@ -86,11 +91,14 @@ const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
 export function Validate() {
   const navigate = useNavigate();
   const { currentStep, validationId, reset, setValidationMode, validationMode,
-          stepIdea, updateStepIdea, updateStepMarket, setStep } = useValidationStore();
+          stepIdea, updateStepIdea, updateStepMarket, updateStepIdeaQuick, setStep } = useValidationStore();
   const { isPro: isPremium, loading: tierLoading, tier } = useUserTier();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const exitShownRef = useRef(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const isPremiumMode = validationMode === 'premium';
   const isQuickMode = validationMode === 'quick';
@@ -102,7 +110,7 @@ export function Validate() {
 
   // Track step completions
   useEffect(() => {
-    const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+    const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
     if (currentStep > prevStep.current && currentStep < lastStep) {
       const name = titleMap[prevStep.current]?.title ?? `Step ${prevStep.current}`;
       trackWizardStep(prevStep.current, name, validationMode);
@@ -114,7 +122,7 @@ export function Validate() {
   useEffect(() => {
     return () => {
       const step = prevStep.current;
-      const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+      const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
       if (step < lastStep) {
         const name = titleMap[step]?.title ?? `Step ${step}`;
         trackWizardAbandoned(step, name);
@@ -137,7 +145,7 @@ export function Validate() {
 
     supabase
       .from('validations')
-      .select('id, status, current_step, idea_name, idea_description, idea_industry, current_solution, customer_segment, target_country, target_region, business_model, pricing_range, acquisition_channel')
+      .select('id, status, current_step, idea_name, idea_description, idea_industry, current_solution, quick_icp, customer_segment, target_country, target_region, business_model, pricing_range, acquisition_channel, validation_mode')
       .eq('id', validationId)
       .single()
       .then(({ data, error }) => {
@@ -155,6 +163,16 @@ export function Validate() {
             idea_description: data.idea_description ?? '',
             idea_industry:    data.idea_industry ?? '',
             current_solution: data.current_solution ?? '',
+          });
+        }
+        // Rehidratar stepIdeaQuick si era un análisis rápido
+        if ((data as any).validation_mode === 'quick' && (data as any).quick_icp) {
+          updateStepIdeaQuick({
+            idea_name:        data.idea_name ?? '',
+            idea_description: data.idea_description ?? '',
+            idea_industry:    data.idea_industry ?? '',
+            quick_icp:        (data as any).quick_icp ?? '',
+            business_model:   data.business_model ?? '',
           });
         }
         if (!useValidationStore.getState().stepMarket.target_country && data.target_country) {
@@ -176,7 +194,7 @@ export function Validate() {
   }, [validationId]);
   // Exit-intent: mouseleave viewport → show 1-click dialog (once per wizard session)
   useEffect(() => {
-    const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+    const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY > 0) return;
       if (currentStep >= lastStep) return;
@@ -196,7 +214,7 @@ export function Validate() {
     const sendAbandonBeacon = () => {
       if (beaconSent.value) return;
       const { currentStep: step } = useValidationStore.getState();
-      const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+      const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
       if (step >= lastStep) return;
       beaconSent.value = true;
       trackTelemetryBeacon('wizard_abandoned', {
@@ -235,7 +253,7 @@ export function Validate() {
 
       if (dt > 0) {
         const velocity = (y - lastY) / dt;   // negative = scrolling up
-        const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+        const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
         const { currentStep: step } = useValidationStore.getState();
         if (
           velocity < -MIN_VELOCITY &&
@@ -263,7 +281,7 @@ export function Validate() {
 
     const onPopState = () => {
       const { currentStep: step } = useValidationStore.getState();
-      const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
+      const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
       if (step >= lastStep) return;
 
       // Re-inject guard so repeated back-button presses are caught
@@ -300,6 +318,32 @@ export function Validate() {
     });
   };
 
+  const handleEmailLead = async () => {
+    const email = emailInput.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    setEmailLoading(true);
+    try {
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-quick-lead`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, validation_id: validationId ?? undefined }),
+      });
+    } catch {
+      // Silent fail — UX siempre muestra confirmación
+    } finally {
+      setEmailSent(true);
+      setEmailLoading(false);
+      trackTelemetryEvent({
+        event_name: 'wizard_abandoned',
+        context: {
+          tier: (tier ?? 'free') as 'free' | 'basic' | 'pro' | 'premium',
+          action_taken: 'email_lead_captured',
+          step_reached: currentStep,
+        },
+      });
+    }
+  };
+
   const meta = titleMap[currentStep];
 
   return (
@@ -307,14 +351,19 @@ export function Validate() {
       {showOnboarding && <OnboardingOverlay onDone={dismissOnboarding} />}
       <Header />
 
+      {/* Sticky progress bar — solo mobile. En desktop queda relativa dentro del content. */}
+      <div className="sm:hidden sticky top-0 z-30 bg-gray-50/95 dark:bg-[#0A0A0F]/95 backdrop-blur-sm border-b border-gray-200/50 dark:border-white/5 px-4 py-2.5">
+        <ProgressBar current={currentStep} mode={validationMode} />
+      </div>
+
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 md:py-10">
-        {/* Progress */}
-        <div className="mb-8">
+        {/* Progress desktop (oculto en mobile — ya está sticky arriba) */}
+        <div className="hidden sm:block mb-8">
           <ProgressBar current={currentStep} mode={validationMode} />
         </div>
 
         {/* Step header */}
-        {((isPremiumMode && currentStep < 3) || (isQuickMode && currentStep < 2) || (!isPremiumMode && !isQuickMode && currentStep < 4)) && (
+        {((isPremiumMode && currentStep < 4) || (isQuickMode && currentStep < 2) || (!isPremiumMode && !isQuickMode && currentStep < 4)) && (
           <div className="mb-5 px-1">
             <div className="flex items-center justify-between mb-1">
               {!isPremiumMode && (
@@ -324,7 +373,7 @@ export function Validate() {
               )}
               {isPremiumMode && (
                 <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">
-                  ✦ Validación Premium · Paso {currentStep} de 2
+                  ✦ Validación Premium · Paso {currentStep} de 3
                 </p>
               )}
               {!tierLoading && <ValidationPlanBadge tier={tier} />}
@@ -344,28 +393,100 @@ export function Validate() {
 
       <Footer />
 
-      {/* Exit-intent dialog */}
+      {/* Exit-intent dialog — quick mode: captura email / detailed: opciones clásicas */}
       {showExitDialog && (
         <div className="fixed inset-x-0 top-3 z-50 flex justify-center px-4 pointer-events-none">
-          <div className="bg-white dark:bg-[#12121A] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 p-4 max-w-sm w-full pointer-events-auto">
-            <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
-              Guardamos tu progreso. ¿Te faltó información para continuar?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleExitChoice('Faltó información para continuar')}
-                className="flex-1 px-3 py-2 text-xs font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors"
-              >
-                Sí, me faltan datos
-              </button>
-              <button
-                onClick={() => handleExitChoice('Solo estaba explorando')}
-                className="flex-1 px-3 py-2 text-xs font-bold bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-              >
-                Solo estaba explorando
-              </button>
+          {validationMode === 'quick' ? (
+            // ── Dialog de captura de email (flujo rápido) ──────────────────────
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl shadow-2xl border border-[#7C6FF7]/30 p-5 max-w-sm w-full pointer-events-auto">
+              {emailSent ? (
+                <div className="text-center py-2">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">¡Listo! Revisa tu correo.</p>
+                  <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-3">Te enviaremos tu Score Rápido en segundos.</p>
+                  <button
+                    onClick={() => setShowExitDialog(false)}
+                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">No pierdas tu análisis</p>
+                    </div>
+                    <button
+                      onClick={() => handleExitChoice('cerró sin captura email')}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-3 leading-relaxed">
+                    Déjanos tu email y te enviamos tu Score Rápido para que lo revises luego.
+                  </p>
+
+                  <div className="space-y-2">
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleEmailLead()}
+                      placeholder="tu@email.com"
+                      autoFocus
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-[#F0EFF8] placeholder:text-gray-400 focus:outline-none focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20 transition-all"
+                    />
+                    <button
+                      onClick={handleEmailLead}
+                      disabled={emailLoading || !emailInput.includes('@')}
+                      className="w-full py-2.5 bg-[#7C6FF7] hover:bg-[#6B5EE6] disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      {emailLoading ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>Enviar mi análisis →</>
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
+          ) : (
+            // ── Dialog clásico (flujo detallado / premium) ─────────────────────
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 p-4 max-w-sm w-full pointer-events-auto">
+              <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-3">
+                Guardamos tu progreso. ¿Te faltó información para continuar?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleExitChoice('Faltó información para continuar')}
+                  className="flex-1 px-3 py-2 text-xs font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors"
+                >
+                  Sí, me faltan datos
+                </button>
+                <button
+                  onClick={() => handleExitChoice('Solo estaba explorando')}
+                  className="flex-1 px-3 py-2 text-xs font-bold bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                >
+                  Solo estaba explorando
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

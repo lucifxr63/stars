@@ -33,29 +33,35 @@ function json(body: unknown, status = 200, req: Request) {
   });
 }
 
-// â”€â”€ Types (mirrors src/types/validation.ts â€” kept in sync manually) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Types (mirrors src/types/validation.ts — kept in sync manually) ──────────
+// Sprint P-A: añadidos team_composition, traction_status, target_country, target_region
 type DDDimension = 'financiero' | 'legal' | 'mercado' | 'equipo' | 'traccion';
 
 interface ExtractedProjectData {
-  projectName?:      string;
-  problem?:          string;
-  solution?:         string;
-  revenueModel?:     string;
-  ltv?:              number;
-  cac?:              number;
-  paybackPeriod?:    number;
-  mrr?:              number;
-  arr?:              number;
-  hasPaidCustomers?: boolean;
-  customerCount?:    number;
-  teamSize?:         number;
+  projectName?:       string;
+  problem?:           string;
+  solution?:          string;
+  revenueModel?:      string;
+  ltv?:               number;
+  cac?:               number;
+  paybackPeriod?:     number;
+  mrr?:               number;
+  arr?:               number;
+  hasPaidCustomers?:  boolean;
+  customerCount?:     number;
+  teamSize?:          number;
   founderBackground?: string;
-  legalCompliance?: { ley21719?: boolean; ley21521?: boolean };
-  tam?:              string;
-  targetMarket?:     string;
+  legalCompliance?:   { ley21719?: boolean; ley21521?: boolean };
+  tam?:               string;
+  targetMarket?:      string;
+  // Sprint P-A — nuevos campos para Human-in-the-Loop pre-filling
+  team_composition?:  'solo_founder' | 'founding_team' | 'team_with_employees';
+  traction_status?:   'idea_on_paper' | 'mvp_in_development' | 'mvp_launched_no_sales' | 'first_paying_customers';
+  target_country?:    string;
+  target_region?:     string;
   extractionConfidence: Record<string, number>;
-  sourceFileName?:   string;
-  sourceMimeType?:   'application/pdf' | 'application/json';
+  sourceFileName?:    string;
+  sourceMimeType?:    'application/pdf' | 'application/json';
 }
 
 interface PendingQuestion {
@@ -130,6 +136,10 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
   },
   "tam":           "string (e.g. '$2B') | omit if absent",
   "targetMarket":  "string | omit if absent",
+  "team_composition": "Infer team structure. 'solo_founder' = single founder, no co-founders or employees. 'founding_team' = multiple founders/co-founders but no hired employees beyond them. 'team_with_employees' = hired staff beyond the founding team exist. Omit if team structure is ambiguous or not mentioned.",
+  "traction_status": "Infer the current stage from explicit evidence only. 'first_paying_customers' = revenue, MRR, ARR, or paying customers explicitly mentioned. 'mvp_launched_no_sales' = product/MVP is live or launched but no revenue. 'mvp_in_development' = product actively being built, beta, or development stage. 'idea_on_paper' = concept stage only, nothing built yet. Omit if stage cannot be determined from the document.",
+  "target_country": "Primary country the startup targets. Extract as a country name string (e.g. 'Chile', 'México', 'United States'). Omit if not mentioned.",
+  "target_region":  "Specific region, city, or state within the target country (e.g. 'Santiago', 'CDMX', 'California'). Omit if not mentioned.",
   "extractionConfidence": {
     "projectName":       0.0,
     "problem":           0.0,
@@ -145,7 +155,11 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
     "teamSize":          0.0,
     "founderBackground": 0.0,
     "tam":               0.0,
-    "targetMarket":      0.0
+    "targetMarket":      0.0,
+    "team_composition":  0.0,
+    "traction_status":   0.0,
+    "target_country":    0.0,
+    "target_region":     0.0
   }
 }`;
 
@@ -182,6 +196,20 @@ function parseJSONDocument(raw: unknown): ExtractedProjectData {
   result.founderBackground = pick<string>('founderBackground', ['founderBackground','founder_background','founder']);
   result.tam               = pick<string>('tam', ['tam','TAM','total_addressable_market']);
   result.targetMarket      = pick<string>('targetMarket', ['targetMarket','target_market','market']);
+  result.target_country    = pick<string>('target_country', ['target_country','targetCountry','country','pais','país']);
+  result.target_region     = pick<string>('target_region', ['target_region','targetRegion','region','ciudad','city']);
+
+  const validTeamComp = ['solo_founder', 'founding_team', 'team_with_employees'];
+  const rawTeam = pick<string>('team_composition', ['team_composition','teamComposition','team_structure']);
+  if (rawTeam && validTeamComp.includes(rawTeam)) {
+    result.team_composition = rawTeam as ExtractedProjectData['team_composition'];
+  }
+
+  const validTraction = ['idea_on_paper', 'mvp_in_development', 'mvp_launched_no_sales', 'first_paying_customers'];
+  const rawTraction = pick<string>('traction_status', ['traction_status','tractionStatus','stage','traction']);
+  if (rawTraction && validTraction.includes(rawTraction)) {
+    result.traction_status = rawTraction as ExtractedProjectData['traction_status'];
+  }
 
   const lc = d['legalCompliance'] as Record<string,boolean> | undefined;
   if (lc) result.legalCompliance = { ley21719: !!lc.ley21719, ley21521: !!lc.ley21521 };
@@ -491,7 +519,20 @@ serve(async (req: Request) => {
       });
   }
 
-  // â”€â”€ Log interaction (non-blocking) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Consent log (Ley 21.719) — Sprint P-D ────────────────────────────────────
+  // El usuario vio el aviso de privacidad en StepUpload y procedió con la subida.
+  // Registramos el consentimiento implícito para cumplimiento normativo.
+  // Non-blocking — el reporte se devuelve independientemente del resultado.
+  supabase.from('consent_logs').insert({
+    user_id:      user.id,
+    consent_type: 'document_processing',
+    flagged:      true,
+    ip_address:   (req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '').split(',')[0].trim() || null,
+  }).then(({ error: consentErr }) => {
+    if (consentErr) console.warn('[parse-project] Consent log error:', consentErr.message);
+  });
+
+  // ── Log interaction (non-blocking) ───────────────────────────────────────────
   supabase.from('ai_interactions').insert({
     user_id:        user.id,
     validation_id:  validation_id ?? null,

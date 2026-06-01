@@ -1,10 +1,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { StepIdeaSchema, type StepIdea } from '@/types/validation';
+import { StepIdeaQuickSchema, type StepIdeaQuick, BUSINESS_MODELS } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 import { FlowSelector } from './FlowSelector';
 import { INDUSTRIES } from '@/utils/constants';
 import { supabase } from '@/lib/supabase';
+
+const BUSINESS_MODEL_LABELS: Record<string, string> = {
+  b2b: 'B2B', b2c: 'B2C', b2b2c: 'B2B2C', marketplace: 'Marketplace',
+};
 
 function ErrorMsg({ message }: { message?: string }) {
   if (!message) return null;
@@ -24,16 +28,13 @@ const inputCls = (hasError: boolean) =>
    focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20
    ${hasError ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200 dark:border-white/8 hover:border-gray-300 dark:hover:border-white/15'}`;
 
-// Indicador de calidad para idea_description basado en longitud.
-// Los umbrales alinean con el mínimo Zod (100) y los rangos donde Claude
-// produce análisis notablemente mejores (200+ chars).
 function DescriptionQuality({ length }: { length: number }) {
   if (length === 0) return null;
   const config =
     length < 100
-      ? { label: `${length}/100 mín — añade problema, solución y público objetivo`, color: 'text-red-500 dark:text-red-400', bar: 'bg-red-400', pct: (length / 100) * 50 }
+      ? { label: `${length}/100 mín — describe la solución con más detalle`, color: 'text-red-500 dark:text-red-400', bar: 'bg-red-400', pct: (length / 100) * 50 }
       : length < 200
-      ? { label: `${length} — añade más contexto para análisis premium`, color: 'text-amber-500 dark:text-amber-400', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
+      ? { label: `${length} — añade más contexto para un análisis más preciso`, color: 'text-amber-500 dark:text-amber-400', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
       : length < 400
       ? { label: `${length} — buen nivel de detalle ✓`, color: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
       : { label: `${length} — análisis de máxima calidad ✓`, color: 'text-[#7C6FF7]', bar: 'bg-[#7C6FF7]', pct: 95 };
@@ -47,53 +48,49 @@ function DescriptionQuality({ length }: { length: number }) {
   );
 }
 
-export function StepIdea() {
-  const { stepIdea, updateStepIdea, nextStep, setStep, validationMode, setValidationMode } = useValidationStore();
+export function StepIdeaQuick() {
+  const { stepIdeaQuick, updateStepIdeaQuick, updateStepMarket, nextStep,
+          setStep, validationMode, setValidationMode } = useValidationStore();
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<StepIdea>({
-    resolver: zodResolver(StepIdeaSchema),
-    defaultValues: stepIdea as StepIdea,
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<StepIdeaQuick>({
+    resolver: zodResolver(StepIdeaQuickSchema),
+    defaultValues: stepIdeaQuick as StepIdeaQuick,
   });
 
   const descriptionLen = (watch('idea_description') ?? '').length;
+  const selectedModel  = watch('business_model');
 
-  const onSubmit = (data: StepIdea) => {
-    updateStepIdea(data);
+  const onSubmit = (data: StepIdeaQuick) => {
+    updateStepIdeaQuick(data);
+    // Espeja business_model en stepMarket para que el context builder de StepGenerating
+    // lo encuentre si accede al store directamente.
+    updateStepMarket({ business_model: data.business_model });
 
-    // Persistir a Supabase si ya existe el row (best-effort, no bloquea la UI)
     const { validationId } = useValidationStore.getState();
     if (validationId) {
-      const nextStepNum = validationMode === 'premium' ? 3 : 2;
       supabase.from('validations').update({
         idea_name:        data.idea_name,
-        idea_problem:     data.idea_problem,
         idea_description: data.idea_description,
         idea_industry:    data.idea_industry,
-        current_solution: data.current_solution,
-        current_step:     nextStepNum,
+        quick_icp:        data.quick_icp,
+        business_model:   data.business_model,
+        current_step:     2,
       }).eq('id', validationId).then(() => {});
     }
 
-    if (validationMode === 'quick') {
-      setStep(2);
-    } else {
-      // Premium y detailed avanzan secuencialmente:
-      // detailed: Idea (1) → Market (2) → Founder (3) → Generating (4)
-      // premium:  Upload (1) → IdeaPremium (2) → MarketPremium (3) → Generating (4)
-      nextStep();
-    }
+    nextStep();
   };
 
   return (
     <div className="space-y-6">
-      {validationMode !== 'premium' && (
-        <FlowSelector value={validationMode as 'quick' | 'detailed'} onChange={(mode) => {
-          setValidationMode(mode);
-          setStep(1); // Always stay on step 1 when switching between manual modes
-        }} />
-      )}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-5">
+      <FlowSelector value={validationMode as 'quick' | 'detailed'} onChange={(mode) => {
+        setValidationMode(mode);
+        setStep(1);
+      }} />
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+        {/* Nombre */}
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
             Nombre de tu idea
@@ -106,53 +103,65 @@ export function StepIdea() {
           <ErrorMsg message={errors.idea_name?.message} />
         </div>
 
+        {/* Descripción + quality indicator */}
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
-            ¿Qué problema resuelves? <span className="text-red-400">*</span>
-          </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
-            Describe el dolor del cliente, no la solución. ¿Qué le cuesta tiempo, dinero o frustración?
-          </p>
-          <textarea
-            {...register('idea_problem')}
-            rows={2}
-            placeholder={`Ej: "Los gerentes de clínicas medianas pierden 3h/día consolidando turnos manualmente en Excel, lo que genera errores y horas extra no pagadas."`}
-            className={`${inputCls(!!errors.idea_problem)} resize-none leading-relaxed`}
-          />
-          <ErrorMsg message={errors.idea_problem?.message} />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
-            Describe tu solución <span className="text-red-400">*</span>
+            Describe tu idea y solución <span className="text-red-400">*</span>
           </label>
           <textarea
             {...register('idea_description')}
             rows={4}
-            placeholder={`Ej: "Automatizamos la programación de turnos con IA integrada al sistema HIS existente. Dirigido a clínicas de 20–80 camas en Chile y Perú."`}
+            placeholder={`Ej: "Una app que conecta a pacientes con médicos disponibles en menos de 1 hora, eliminando las largas listas de espera en clínicas medianas de Chile."`}
             className={`${inputCls(!!errors.idea_description)} resize-none leading-relaxed`}
           />
           <DescriptionQuality length={descriptionLen} />
           {errors.idea_description && <ErrorMsg message={errors.idea_description.message} />}
         </div>
 
+        {/* ICP rápido */}
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-1.5">
-            ¿Cómo lo resuelven tus clientes hoy? <span className="text-red-400">*</span>
+            ¿A quién le vas a vender? <span className="text-red-400">*</span>
           </label>
           <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
-            Nombra 2 herramientas o métodos concretos que usa tu cliente actualmente.
+            Sé específico: tipo de empresa, cargo o perfil del usuario final.
           </p>
           <input
-            {...register('current_solution')}
-            placeholder="Ej: Excel + WhatsApp para coordinarse, o contratan un asistente administrativo"
-            className={inputCls(!!errors.current_solution)}
+            {...register('quick_icp')}
+            placeholder="Ej: Clínicas dentales medianas, Gerentes de operaciones en retail, Estudiantes universitarios"
+            className={inputCls(!!errors.quick_icp)}
           />
-          <ErrorMsg message={errors.current_solution?.message} />
+          <ErrorMsg message={errors.quick_icp?.message} />
         </div>
 
+        {/* Modelo de negocio */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-3">
+          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2.5">
+            Modelo de negocio <span className="text-red-400">*</span>
+          </label>
+          <input type="hidden" {...register('business_model')} />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {BUSINESS_MODELS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setValue('business_model', m, { shouldValidate: true })}
+                className={`px-3 py-2.5 text-center text-xs border rounded-xl font-medium transition-all duration-150
+                  ${selectedModel === m
+                    ? 'bg-[#7C6FF7]/15 text-[#7C6FF7] dark:text-[#A78BFA] border-[#7C6FF7]/40'
+                    : 'text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/8 bg-white dark:bg-transparent hover:border-gray-300 dark:hover:border-white/20'
+                  }`}
+              >
+                {BUSINESS_MODEL_LABELS[m]}
+              </button>
+            ))}
+          </div>
+          {errors.business_model && <ErrorMsg message="Selecciona un modelo de negocio" />}
+        </div>
+
+        {/* Industria */}
+        <div>
+          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2.5">
             Industria
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
@@ -170,16 +179,15 @@ export function StepIdea() {
           </div>
           {errors.idea_industry && <ErrorMsg message="Selecciona una industria" />}
         </div>
-      </div>
 
-      <button
-        type="submit"
-        className="w-full py-3.5 bg-[#7C6FF7] text-white font-semibold rounded-xl
-                   hover:bg-[#6B5EE6] active:scale-[0.98] transition-all duration-150
-                   shadow-lg shadow-[#7C6FF7]/25 text-sm font-heading"
-      >
-        Continuar →
-      </button>
+        <button
+          type="submit"
+          className="w-full py-3.5 bg-[#7C6FF7] text-white font-semibold rounded-xl
+                     hover:bg-[#6B5EE6] active:scale-[0.98] transition-all duration-150
+                     shadow-lg shadow-[#7C6FF7]/25 text-sm font-heading"
+        >
+          Analizar Idea →
+        </button>
       </form>
     </div>
   );

@@ -3,7 +3,8 @@ import { STEPS } from '@/utils/constants';
 const STEPS_PREMIUM = [
   { num: 1, label: 'Documento' },
   { num: 2, label: 'Tu idea' },
-  { num: 3, label: 'Analizando' },
+  { num: 3, label: 'Mercado' },
+  { num: 4, label: 'Analizando' },
 ] as const;
 
 const STEPS_QUICK = [

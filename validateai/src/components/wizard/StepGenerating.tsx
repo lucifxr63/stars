@@ -14,7 +14,7 @@ interface GenerationTask {
   id: string;
   label: string;
   status: GenerationStatus;
-  type: 'summary' | 'market_sizing' | 'competitive_analysis' | 'risk_analysis' | 'unit_economics' | 'founder_fit' | 'market_signals';
+  type: 'summary' | 'summary_quick' | 'market_sizing' | 'competitive_analysis' | 'risk_analysis' | 'unit_economics' | 'founder_fit' | 'market_signals';
 }
 
 // ── Tier-based task chunking ──────────────────────────────────────────────────
@@ -43,32 +43,53 @@ const TASK_DEFINITIONS: Record<string, Omit<GenerationTask, 'status'>[]> = {
   ],
 };
 
-function getTasksForTier(tier: UserTier): GenerationTask[] {
+function getTasksForTier(tier: UserTier, mode?: string): GenerationTask[] {
+  if (mode === 'quick') {
+    return [{ id: 'summary', label: 'Procesando viabilidad inicial...', type: 'summary_quick', status: 'pending' }];
+  }
   const defs = TASK_DEFINITIONS[tier] ?? TASK_DEFINITIONS.free;
   return defs.map(d => ({ ...d, status: 'pending' as const }));
 }
 
-// ── Terminal Hacker UI (Premium) ──────────────────────────────────────────────
+// ── Terminal Premium Paramétrica (Sprint P-D) ─────────────────────────────────
+// Los mensajes se ciclan dinámicamente con setInterval hasta que el servidor
+// responde. Sin timers fijos — la terminal no termina su animación antes que
+// el análisis (Reddit + SerpAPI + Claude Sonnet puede tomar 20-45 segundos).
 
-const PREMIUM_STEPS = [
-  { label: 'Iniciando motor de validación premium...',   delay: 0 },
-  { label: 'Conectando con fuentes de datos externas...', delay: 900 },
-  { label: 'Escaneando conversaciones en r/entrepreneur...', delay: 2000 },
-  { label: 'Analizando r/SaaS y comunidades afines...', delay: 3100 },
-  { label: 'Consultando tendencias de búsqueda globales...', delay: 4200 },
-  { label: 'Calculando trayectoria de demanda...', delay: 5100 },
-  { label: 'Sintetizando evidencia con IA...', delay: 6200 },
-  { label: 'Generando resumen ejecutivo...', delay: 7400 },
+const PREMIUM_CYCLING_MESSAGES = [
+  'Iniciando motor de inteligencia de mercado premium...',
+  'Autenticando con Reddit API — buscando señales de la comunidad...',
+  'Escaneando conversaciones en r/entrepreneur, r/SaaS y r/startups...',
+  'Filtrando discusiones con más de 5 puntos de relevancia...',
+  'Extrayendo sentimiento y frustración del mercado objetivo...',
+  'Consultando Google Trends — últimos 12 meses de demanda...',
+  'Calculando trayectoria de búsqueda y queries en auge...',
+  'Cruzando ICP declarado con señales externas detectadas...',
+  'Enviando contexto de 9 dimensiones a Claude Sonnet...',
+  'Sintetizando evidencia de mercado con criterios VC implacables...',
+  'Analizando coherencia entre tracción y tamaño de mercado...',
+  'Validando modelo de negocio contra señales de comunidad...',
+  'Redactando Executive Summary investor-ready...',
+  'Procesando señales de demanda en tiempo real...',
+  'Preparando reporte con estándares de due diligence...',
 ] as const;
 
+const MAX_VISIBLE_LINES = 8; // altura máxima de la terminal
+
 function PremiumTerminal() {
-  const [visibleLines, setVisibleLines] = useState<number[]>([]);
+  const [lines, setLines] = useState<string[]>([PREMIUM_CYCLING_MESSAGES[0]]);
 
   useEffect(() => {
-    const timers = PREMIUM_STEPS.map((s, i) =>
-      setTimeout(() => setVisibleLines((prev) => [...prev, i]), s.delay),
-    );
-    return () => timers.forEach(clearTimeout);
+    let idx = 1;
+    const interval = setInterval(() => {
+      const msg = PREMIUM_CYCLING_MESSAGES[idx % PREMIUM_CYCLING_MESSAGES.length];
+      setLines((prev) => {
+        const next = [...prev, msg];
+        return next.length > MAX_VISIBLE_LINES ? next.slice(-MAX_VISIBLE_LINES) : next;
+      });
+      idx++;
+    }, 2600);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -81,25 +102,28 @@ function PremiumTerminal() {
         Análisis Premium en curso
       </h2>
       <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-8 text-center max-w-sm">
-        Agentes de datos recopilando señales de mercado en tiempo real.
+        Orquestando Reddit, Google Trends y Claude Sonnet en paralelo.
+        Esto puede tomar entre 20 y 45 segundos.
       </p>
 
       <div className="w-full font-mono text-xs bg-[#0A0A0F] border border-white/8 rounded-2xl p-5 space-y-1.5 min-h-[200px]">
-        {PREMIUM_STEPS.map((s, i) => (
-          <div
-            key={i}
-            className={`flex items-start gap-2 transition-all duration-300 ${
-              visibleLines.includes(i) ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <span className="text-[#7C6FF7] shrink-0">›</span>
-            <span className="text-emerald-400">{s.label}</span>
-            {visibleLines.includes(i) && i === visibleLines[visibleLines.length - 1] && (
-              <span className="inline-block w-2 h-3 bg-emerald-400 animate-pulse ml-0.5" />
-            )}
-          </div>
-        ))}
+        {lines.map((line, i) => {
+          const isLast = i === lines.length - 1;
+          return (
+            <div key={`${i}-${line}`} className="flex items-start gap-2 animate-in fade-in duration-300">
+              <span className="text-[#7C6FF7] shrink-0">›</span>
+              <span className={isLast ? 'text-amber-400' : 'text-emerald-400'}>{line}</span>
+              {isLast && (
+                <span className="inline-block w-2 h-3 bg-amber-400 animate-pulse ml-0.5 shrink-0" />
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      <p className="text-[11px] text-gray-400 dark:text-[#4A495E] text-center mt-4">
+        No cierres esta pestaña. El análisis continúa en segundo plano.
+      </p>
     </div>
   );
 }
@@ -167,6 +191,148 @@ function MicroFeedbackPanel({ tier }: { tier: string }) {
   );
 }
 
+// ── Radar mini-preview (Opción C aprobada por Mesa Directiva 01-Jun-2026) ────
+// Muestra las 5 dimensiones de score "calculándose" durante la generación.
+// No inventa números — solo anima el estado de carga para retener al usuario.
+
+const SCORE_DIMENSIONS = [
+  { key: 'problem',     label: 'Problema',     icon: '🔍', weight: 25 },
+  { key: 'market',      label: 'Mercado',       icon: '📊', weight: 20 },
+  { key: 'competition', label: 'Competencia',   icon: '⚔️',  weight: 15 },
+  { key: 'solution',    label: 'Solución',      icon: '💡', weight: 25 },
+  { key: 'execution',   label: 'Ejecución',     icon: '⚡', weight: 15 },
+] as const;
+
+function RadarPreview({ visible }: { visible: boolean }) {
+  const [scanLine, setScanLine] = useState(0);
+
+  useEffect(() => {
+    if (!visible) return;
+    const interval = setInterval(() => {
+      setScanLine(prev => (prev + 1) % SCORE_DIMENSIONS.length);
+    }, 900);
+    return () => clearInterval(interval);
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <div className="rounded-2xl border border-[#7C6FF7]/20 bg-[#7C6FF7]/4 dark:bg-[#7C6FF7]/5 p-5 space-y-3">
+      <div className="flex items-center gap-2.5 mb-1">
+        <div className="relative w-5 h-5 shrink-0">
+          <div className="absolute inset-0 rounded-full border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] animate-spin" />
+        </div>
+        <p className="text-sm font-bold text-[#7C6FF7] dark:text-[#A78BFA] tracking-wide">
+          Calculando dimensiones...
+        </p>
+        <span className="ml-auto text-[10px] font-semibold text-[#7C6FF7]/60 tabular-nums">5/5</span>
+      </div>
+
+      <div className="space-y-2">
+        {SCORE_DIMENSIONS.map((dim, i) => {
+          const isActive = i === scanLine;
+          const isScanned = i < scanLine;
+          return (
+            <div key={dim.key} className="flex items-center gap-2.5">
+              <span className="text-sm w-5 text-center shrink-0">{dim.icon}</span>
+              <span className={`text-xs font-medium w-20 shrink-0 transition-colors ${
+                isActive ? 'text-[#7C6FF7] dark:text-[#A78BFA]' : 'text-gray-500 dark:text-[#8B8AA0]'
+              }`}>
+                {dim.label}
+              </span>
+              <div className="flex-1 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${
+                    isActive
+                      ? 'bg-[#7C6FF7] animate-pulse'
+                      : isScanned
+                      ? 'bg-[#7C6FF7]/40'
+                      : 'bg-transparent'
+                  }`}
+                  style={{ width: isActive ? '65%' : isScanned ? `${30 + i * 8}%` : '0%' }}
+                />
+              </div>
+              <span className={`text-[10px] font-bold w-8 text-right shrink-0 transition-colors ${
+                isActive ? 'text-[#7C6FF7]' : 'text-gray-300 dark:text-white/15'
+              }`}>
+                {dim.weight}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[10px] text-gray-400 dark:text-[#4A495E] text-center pt-1">
+        La IA está evaluando cada dimensión con criterios VC. Esto toma entre 8–15 segundos.
+      </p>
+    </div>
+  );
+}
+
+// ── QuickTerminal: animación 5-8s para el flujo rápido con Claude Haiku ───────
+
+const QUICK_STEPS = [
+  { label: 'Iniciando análisis de viabilidad...', delay: 0 },
+  { label: 'Evaluando claridad del problema declarado...', delay: 750 },
+  { label: 'Cruzando ICP con modelo de negocio...', delay: 1600 },
+  { label: 'Analizando coherencia de la solución...', delay: 2550 },
+  { label: 'Calculando puntaje Problema + Solución...', delay: 3500 },
+  { label: 'Marcando dimensiones sin datos suficientes...', delay: 4500 },
+  { label: 'Generando veredicto inicial y próximos pasos...', delay: 5600 },
+] as const;
+
+function QuickTerminal() {
+  const [visibleLines, setVisibleLines] = useState<number[]>([]);
+
+  useEffect(() => {
+    const timers = QUICK_STEPS.map((s, i) =>
+      setTimeout(() => setVisibleLines((prev) => [...prev, i]), s.delay),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center py-4">
+      <div className="w-12 h-12 rounded-full bg-[#7C6FF7]/10 border border-[#7C6FF7]/30 flex items-center justify-center mb-5">
+        <div className="w-6 h-6 border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] rounded-full animate-spin" />
+      </div>
+
+      <h2 className="text-lg font-black text-gray-900 dark:text-[#F0EFF8] mb-0.5">
+        Procesando viabilidad inicial
+      </h2>
+      <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-6 text-center max-w-xs">
+        Claude Haiku evalúa tu Problema y Solución. Listo en segundos.
+      </p>
+
+      <div className="w-full font-mono text-xs bg-[#0A0A0F] border border-white/8 rounded-2xl p-4 space-y-1.5 min-h-[160px]">
+        {QUICK_STEPS.map((s, i) => (
+          <div
+            key={i}
+            className={`flex items-start gap-2 transition-all duration-200 ${
+              visibleLines.includes(i) ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <span className="text-[#7C6FF7] shrink-0">›</span>
+            <span className={visibleLines.includes(i) && i === visibleLines[visibleLines.length - 1]
+              ? 'text-amber-400'
+              : 'text-emerald-400'
+            }>
+              {s.label}
+            </span>
+            {visibleLines.includes(i) && i === visibleLines[visibleLines.length - 1] && (
+              <span className="inline-block w-1.5 h-3 bg-amber-400 animate-pulse ml-0.5" />
+            )}
+          </div>
+        ))}
+      </div>
+
+      <p className="text-[10px] text-gray-400 dark:text-[#4A495E] text-center mt-4">
+        Análisis de superficie — completa el flujo Detallado para desbloquear todas las dimensiones.
+      </p>
+    </div>
+  );
+}
+
 // ── Tier label pill ───────────────────────────────────────────────────────────
 
 const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
@@ -180,8 +346,8 @@ const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
 
 export function StepGenerating() {
   const navigate = useNavigate();
-  const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, validationMode,
-          setPremiumResult, setAgentLogId } = useValidationStore();
+  const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, stepIdeaQuick,
+          validationMode, setPremiumResult, setAgentLogId } = useValidationStore();
   const { isPro: isPremium, tier, loading: tierLoading } = useUserTier();
 
   // Tasks start empty — populated once tier is known to avoid running with wrong tier
@@ -195,7 +361,7 @@ export function StepGenerating() {
     startedRef.current = true;
 
     // Initialize tasks for this tier before starting
-    setTasks(getTasksForTier(tier));
+    setTasks(getTasksForTier(tier, useValidationStore.getState().validationMode));
     startGeneration();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tierLoading]);
@@ -251,7 +417,14 @@ export function StepGenerating() {
           },
         );
 
-        if (!res.ok) throw new Error(`premium-validate error: ${res.status}`);
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({})) as { error?: string };
+          if (errBody?.error?.includes('premium_limit_exceeded')) {
+            toast.error('Alcanzaste el límite de 999 análisis premium este mes. Tu cuota se renueva el próximo ciclo.');
+            return;
+          }
+          throw new Error(`premium-validate error: ${res.status}`);
+        }
         const premiumData = await res.json();
 
         setAgentLogId(premiumData.log_id);
@@ -292,21 +465,15 @@ export function StepGenerating() {
           tech_level: stepFounder?.tech_level ?? null,
         };
       } else {
-        const inferRes = await supabase.functions.invoke('ai-validate', {
-          body: {
-            prompt_type: 'customer_analysis',
-            context: { stepIdea },
-          },
-        });
-        const inferred = inferRes.data;
+        // Flujo rápido: usar directamente los campos capturados en StepIdeaQuick.
+        // No se llama a customer_analysis — el usuario ya proveyó quick_icp y business_model.
         context = {
-          ...stepIdea,
-          customer_segment: inferred?.customer_segment ?? '',
-          target_country: 'Chile',
-          target_region: '',
-          business_model: inferred?.business_model ?? '',
-          pricing_range: '',
-          founder_context: null,
+          idea_name:        stepIdeaQuick.idea_name        ?? stepIdea.idea_name,
+          idea_description: stepIdeaQuick.idea_description ?? stepIdea.idea_description,
+          idea_industry:    stepIdeaQuick.idea_industry    ?? stepIdea.idea_industry,
+          quick_icp:        stepIdeaQuick.quick_icp        ?? '',
+          business_model:   stepIdeaQuick.business_model   ?? '',
+          validation_mode:  'quick',
         };
       }
 
@@ -344,7 +511,7 @@ export function StepGenerating() {
         .single();
       const prevProgress = (existing?.generation_progress ?? {}) as Record<string, string>;
 
-      const tierTasks = getTasksForTier(tier);
+      const tierTasks = getTasksForTier(tier, validationMode);
 
       // Restaurar estado visual de tasks ya completados
       setTasks(tierTasks.map(t => ({
@@ -411,6 +578,7 @@ export function StepGenerating() {
 
   const TASK_DESCRIPTIONS: Record<string, string> = {
     summary:              'Analizando viabilidad con criterios de inversor VC',
+    summary_quick:        'Evaluando Problema y Solución con Claude Haiku',
     market_sizing:        'Estimando TAM/SAM/SOM con datos del mercado objetivo',
     competitive_analysis: 'Mapeando competidores e identificando gaps de mercado',
     risk_analysis:        'Evaluando riesgos de mercado, técnicos y regulatorios',
@@ -420,6 +588,10 @@ export function StepGenerating() {
 
   if (isPremium) {
     return <PremiumTerminal />;
+  }
+
+  if (validationMode === 'quick') {
+    return <QuickTerminal />;
   }
 
   // Loading tier — show minimal spinner before starting
@@ -457,6 +629,9 @@ export function StepGenerating() {
             : 'Nuestros agentes analizan viabilidad, mercado y competencia en paralelo.'}
         </p>
       </div>
+
+      {/* Radar mini-preview — visible durante la generación */}
+      <RadarPreview visible={progressPct < 100} />
 
       {/* Barra de progreso global */}
       <div className="space-y-2">
