@@ -27,11 +27,11 @@ function Logo({ className = 'w-8 h-10' }: { className?: string }) {
 /* ─── Product Mockup ─── */
 function ProductMockup() {
   return (
-    <div className="relative w-full select-none">
+    <div className="relative w-full select-none pt-8 pb-10 pl-6 pr-4 sm:pt-8 sm:pb-12 sm:pl-8 sm:pr-6">
       {/* Floating badge — top-left */}
-      <div className="absolute -top-5 -left-5 z-20 bg-white dark:bg-[#1A1A26] rounded-2xl border border-gray-100 dark:border-white/10 shadow-xl px-3 py-2.5 flex items-center gap-2.5 animate-float">
-        <div className="w-8 h-8 rounded-full bg-[#34D399] flex items-center justify-center shrink-0">
-          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+      <div className="absolute top-0 left-0 z-20 bg-white dark:bg-[#1A1A26] rounded-2xl border border-gray-100 dark:border-white/10 shadow-xl px-3 py-2.5 flex items-center gap-2.5 animate-float">
+        <div className="w-7 h-7 rounded-full bg-[#34D399] flex items-center justify-center shrink-0">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
         </div>
         <div>
           <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8] leading-none">Score 78/100</p>
@@ -40,7 +40,7 @@ function ProductMockup() {
       </div>
 
       {/* Floating economics — bottom-right */}
-      <div className="absolute -bottom-5 -right-3 z-20 w-44 bg-white dark:bg-[#1A1A26] rounded-2xl border border-gray-100 dark:border-white/10 shadow-xl p-3" style={{ animationDelay: '1s' }}>
+      <div className="absolute bottom-0 right-0 z-20 w-40 sm:w-44 bg-white dark:bg-[#1A1A26] rounded-2xl border border-gray-100 dark:border-white/10 shadow-xl p-3" style={{ animationDelay: '1s' }}>
         <p className="text-[9px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest mb-2">Unit Economics</p>
         <div className="grid grid-cols-2 gap-1.5">
           {[
@@ -459,7 +459,7 @@ export function Landing() {
       <main className="flex-1">
 
         {/* ══ HERO ══ */}
-        <section ref={heroRef} className="relative overflow-hidden pt-16 sm:pt-20 pb-12 sm:pb-20">
+        <section ref={heroRef} className="relative overflow-hidden pt-10 sm:pt-16 lg:pt-20 pb-8 sm:pb-16 lg:pb-20">
           {/* Background layers */}
           <div className="absolute inset-0 grid-pattern opacity-60"/>
           <div className="absolute top-0 right-0 w-[70%] h-full bg-gradient-to-l from-[#7C6FF7]/6 dark:from-[#7C6FF7]/8 to-transparent pointer-events-none"/>
@@ -467,7 +467,7 @@ export function Landing() {
           <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-[#F7C56C]/8 rounded-full blur-[80px] pointer-events-none"/>
 
           <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-16 items-center">
 
               {/* Left — text */}
               <div className="order-2 lg:order-1 text-center lg:text-left">
@@ -476,12 +476,12 @@ export function Landing() {
                   IA entrenada para startups · Chile y LatAm
                 </div>
 
-                <h1 className="font-heading text-[clamp(2.2rem,4.5vw,4rem)] font-extrabold text-gray-900 dark:text-[#F0EFF8] leading-[1.07] tracking-[-0.025em] mb-6">
+                <h1 className="font-heading text-[clamp(1.85rem,5vw,3.75rem)] font-extrabold text-gray-900 dark:text-[#F0EFF8] leading-[1.08] tracking-[-0.02em] mb-4 sm:mb-6">
                   Valida tu idea de startup{' '}
                   <span className="gradient-text">antes de construirla</span>
                 </h1>
 
-                <p className="text-base sm:text-lg text-gray-500 dark:text-[#8B8AA0] leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
+                <p className="text-sm sm:text-base lg:text-lg text-gray-500 dark:text-[#8B8AA0] leading-relaxed mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0">
                   Un mentor de IA te guía en 3 pasos para descubrir si tu idea tiene
                   potencial real. Score, mercado, competencia y finanzas — en 10 minutos.
                 </p>
@@ -519,7 +519,7 @@ export function Landing() {
                 </div>
 
                 {/* Trust row */}
-                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/[0.06] flex flex-wrap items-center gap-4 justify-center lg:justify-start">
+                <div className="hidden sm:flex mt-6 pt-5 border-t border-gray-200 dark:border-white/[0.06] flex-wrap items-center gap-4 justify-center lg:justify-start">
                   {[
                     { icon:'🔒', label:'Datos cifrados' },
                     { icon:'🇨🇱', label:'Hecho en Chile' },
@@ -534,11 +534,9 @@ export function Landing() {
               </div>
 
               {/* Right — product mockup */}
-              <div className="order-1 lg:order-2 flex justify-center lg:justify-end pt-8 lg:pt-0">
-                <div className="w-full max-w-sm sm:max-w-md lg:max-w-full lg:w-[440px] px-8 sm:px-12 lg:px-0 lg:pr-0">
-                  <div className="lg:translate-x-4">
-                    <ProductMockup/>
-                  </div>
+              <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
+                <div className="w-full max-w-[360px] sm:max-w-[420px] lg:max-w-full lg:w-[460px]">
+                  <ProductMockup/>
                 </div>
               </div>
             </div>
@@ -574,7 +572,7 @@ export function Landing() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="py-20 sm:py-28 border-t border-black/[0.05] dark:border-white/[0.06]">
+        <section id="how" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-14">
               <p className="text-[11px] font-bold uppercase tracking-widest text-[#7C6FF7] mb-3">El proceso</p>
@@ -641,10 +639,8 @@ export function Landing() {
                 <div key={step.num} className="relative">
                   {/* Connector line */}
                   {i < 2 && (
-                    <div className="hidden md:block absolute top-10 left-full w-full h-px z-10" style={{ width:'calc(100% - 1rem)', transform:'translateX(0.5rem)' }}>
-                      <svg className="w-full h-4" viewBox="0 0 100 8" preserveAspectRatio="none">
-                        <path d="M0 4 Q50 0 100 4" stroke={step.color} strokeWidth="1.5" fill="none" strokeDasharray="4 3" opacity="0.4"/>
-                      </svg>
+                    <div className="hidden md:flex absolute top-[1.375rem] left-full items-center z-10 px-2" style={{ width: 'calc(100% - 2.75rem)', marginLeft: '1.375rem' }}>
+                      <div className="w-full border-t-2 border-dashed opacity-20" style={{ borderColor: step.color }}/>
                     </div>
                   )}
                   <div className="bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-6 hover:shadow-lg dark:hover:shadow-none hover:border-gray-200 dark:hover:border-white/10 transition-all duration-200 h-full">
@@ -669,7 +665,7 @@ export function Landing() {
         </section>
 
         {/* ══ FEATURES BENTO ══ */}
-        <section id="features" className="py-20 sm:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-white dark:bg-[#12121A]">
+        <section id="features" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-white dark:bg-[#12121A]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-16">
               <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#34D399]/10 border border-[#34D399]/20 rounded-full text-[11px] font-semibold text-[#34D399] mb-5 uppercase tracking-wider">
@@ -703,7 +699,7 @@ export function Landing() {
                     </div>
                   </div>
                   {/* Mini-mockup inline */}
-                  <div className="sm:w-48 shrink-0 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-200 dark:border-white/[0.06] p-4 space-y-2.5">
+                  <div className="hidden sm:block w-48 shrink-0 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-200 dark:border-white/[0.06] p-4 space-y-2.5">
                     <p className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-wide">Competidores</p>
                     {[
                       { name:'CompA', val:72, color:'#F87171' },
@@ -776,7 +772,7 @@ export function Landing() {
                     </div>
                   </div>
                   {/* Radar visual */}
-                  <div className="sm:w-44 shrink-0 flex items-center justify-center">
+                  <div className="hidden sm:flex w-44 shrink-0 items-center justify-center">
                     <svg viewBox="0 0 120 120" className="w-36 h-36 opacity-80">
                       <polygon points="60,10 100,35 100,85 60,110 20,85 20,35" fill="none" stroke="currentColor" className="text-gray-200 dark:text-white/10" strokeWidth="1"/>
                       <polygon points="60,25 85,40 85,80 60,95 35,80 35,40" fill="none" stroke="currentColor" className="text-gray-200 dark:text-white/10" strokeWidth="1"/>
@@ -818,9 +814,9 @@ export function Landing() {
         </section>
 
         {/* ══ TESTIMONIALS ══ */}
-        <section className="py-20 sm:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-white dark:bg-[#12121A]">
+        <section className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-white dark:bg-[#12121A]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 sm:mb-14">
               <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
                 Lo que dicen los{' '}
                 <span className="gradient-text">founders</span>
@@ -871,7 +867,7 @@ export function Landing() {
         </section>
 
         {/* ══ PRICING ══ */}
-        <section id="pricing" className="py-20 sm:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-[#F8F7FF] dark:bg-[#0A0A0F]">
+        <section id="pricing" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-[#F8F7FF] dark:bg-[#0A0A0F]">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-14">
               <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-[11px] font-semibold text-[#7C6FF7] dark:text-[#A78BFA] mb-5 uppercase tracking-wider">
@@ -910,7 +906,7 @@ export function Landing() {
               </div>
 
               {/* Pro — destacado */}
-              <div className="relative flex flex-col p-7 rounded-3xl bg-white dark:bg-[#12121A] border-2 border-[#7C6FF7] shadow-2xl shadow-[#7C6FF7]/12 overflow-hidden scale-[1.02]">
+              <div className="relative flex flex-col p-7 rounded-3xl bg-white dark:bg-[#12121A] border-2 border-[#7C6FF7] shadow-2xl shadow-[#7C6FF7]/12 overflow-hidden md:scale-[1.02] md:-my-1">
                 <div className="absolute top-0 right-0 bg-[#7C6FF7] text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl tracking-wide">POPULAR</div>
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#7C6FF7]/10 blur-2xl rounded-full pointer-events-none"/>
                 <div className="mb-6 relative z-10">
