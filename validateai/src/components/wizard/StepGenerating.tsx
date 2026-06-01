@@ -370,7 +370,52 @@ export function StepGenerating() {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
   };
 
+  // Reintenta una tarea específica sin re-ejecutar las que ya completaron.
+  // Incluye retry_task en el payload para que el backend pueda loguear el reintento
+  // y potencialmente optimizar el pipeline en el futuro.
+  const handleRetryTask = async (task: GenerationTask) => {
+    const currentId = useValidationStore.getState().validationId;
+    if (!currentId) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { stepIdea, stepMarket, stepFounder } = useValidationStore.getState();
+    const context = { ...stepIdea, ...stepMarket, founder_context: stepFounder };
+
+    updateTaskStatus(task.id, 'loading');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          validation_id: currentId,
+          step: 4,
+          prompt_type: task.type,
+          context,
+          retry_task: task.id,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      await res.json();
+      await supabase.rpc('merge_generation_progress', { p_id: currentId, p_key: task.id, p_status: 'success' });
+      updateTaskStatus(task.id, 'success');
+      // Si todas las tasks ya están completas, marcar la validación y navegar.
+      const updatedTasks = tasks.map(t => t.id === task.id ? { ...t, status: 'success' as const } : t);
+      if (updatedTasks.every(t => t.status === 'success')) {
+        await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId);
+        navigate(`/results/${currentId}`);
+      }
+    } catch {
+      await supabase.rpc('merge_generation_progress', { p_id: currentId, p_key: task.id, p_status: 'error' });
+      updateTaskStatus(task.id, 'error');
+      toast.error(`No se pudo reintentar "${task.label}". Intenta de nuevo.`);
+    }
+  };
+
   const startGeneration = async () => {
+    // Read validationMode from the store at execution time, not from the closure,
+    // to avoid stale-closure bugs when the user switches flows before reaching this step.
+    const currentMode = useValidationStore.getState().validationMode;
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
@@ -457,7 +502,7 @@ export function StepGenerating() {
       }
 
       let context: any = {};
-      if (validationMode === 'detailed') {
+      if (currentMode === 'detailed') {
         context = {
           ...stepIdea,
           ...stepMarket,
@@ -489,7 +534,7 @@ export function StepGenerating() {
           user_id: session.user.id,
           status: 'in_progress',
           current_step: 4,
-          validation_mode: validationMode,
+          validation_mode: currentMode,
           ...context,
         }).select('id').single();
         if (error || !data?.id) throw error ?? new Error('No id returned');
@@ -498,7 +543,7 @@ export function StepGenerating() {
       } else {
         await supabase.from('validations').update({
           ...context,
-          validation_mode: validationMode,
+          validation_mode: currentMode,
           current_step: 4,
         }).eq('id', currentId);
       }
@@ -511,7 +556,7 @@ export function StepGenerating() {
         .single();
       const prevProgress = (existing?.generation_progress ?? {}) as Record<string, string>;
 
-      const tierTasks = getTasksForTier(tier, validationMode);
+      const tierTasks = getTasksForTier(tier, currentMode);
 
       // Restaurar estado visual de tasks ya completados
       setTasks(tierTasks.map(t => ({
@@ -707,12 +752,22 @@ export function StepGenerating() {
               )}
             </div>
 
-            {/* Badge */}
+            {/* Badge / Retry */}
             <div className="shrink-0">
               {task.status === 'pending' && <span className="text-xs text-gray-300 dark:text-[#4A495E] font-medium">En espera</span>}
               {task.status === 'loading' && <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold animate-pulse">Analizando...</span>}
               {task.status === 'success' && <span className="text-xs text-emerald-600 font-black">Listo</span>}
-              {task.status === 'error'   && <span className="text-xs text-red-500 font-bold">Parcial</span>}
+              {task.status === 'error' && (
+                <button
+                  onClick={() => handleRetryTask(task)}
+                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reintentar
+                </button>
+              )}
             </div>
           </div>
         ))}

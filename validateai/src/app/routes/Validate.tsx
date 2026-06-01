@@ -18,8 +18,11 @@ import { StepUpload } from '@/components/wizard/StepUpload';
 import { trackWizardStep, trackWizardAbandoned } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent, trackTelemetryBeacon } from '@/lib/telemetry';
 import { OnboardingOverlay, useOnboarding } from '@/components/shared/OnboardingOverlay';
+import posthog from 'posthog-js';
+import type { FlowCopy } from '@/components/wizard/FlowSelector';
+import type { StepAutoSaveRef } from '@/components/wizard/StepMarket';
 
-const TIER_BADGE_CONFIG: Record<'free' | 'pro' | 'premium', {
+const TIER_BADGE_CONFIG: Record<'free' | 'basic' | 'pro' | 'premium', {
   label: string;
   includes: string;
   cls: string;
@@ -27,12 +30,14 @@ const TIER_BADGE_CONFIG: Record<'free' | 'pro' | 'premium', {
   upgrade: boolean;
 }> = {
   free:    { label: 'Free',    includes: 'Veredicto + Validación base',            cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:border-gray-500/40',  dot: 'bg-gray-400',   upgrade: true  },
+  basic:   { label: 'Basic',   includes: 'Score + Competencia',                   cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:border-blue-500/40',   dot: 'bg-blue-400',   upgrade: true  },
   pro:     { label: 'Pro',     includes: 'Completo · Estrategia y Finanzas',       cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',                      dot: 'bg-indigo-400', upgrade: false },
   premium: { label: 'Premium', includes: 'Due Diligence completo — todo incluido', cls: 'bg-violet-500/10 text-violet-400 border-violet-500/20',                      dot: 'bg-violet-400', upgrade: false },
 };
 
 function ValidationPlanBadge({ tier }: { tier: UserTier }) {
-  const key = (tier === 'pro' || tier === 'premium') ? tier : 'free';
+  const key: keyof typeof TIER_BADGE_CONFIG =
+    tier === 'pro' || tier === 'premium' ? tier : tier === 'basic' ? 'basic' : 'free';
   const cfg = TIER_BADGE_CONFIG[key];
   const inner = (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold transition-colors ${cfg.cls}`}>
@@ -97,21 +102,37 @@ export function Validate() {
   const [showExitDialog, setShowExitDialog] = useState(false);
   const exitShownRef = useRef(false);
   const mountedAtRef = useRef(Date.now());
+  // Garantiza que history.pushState se inyecta una única vez por montaje del componente,
+  // evitando acumulación de entradas vacías al re-ejecutarse el efecto por cambio de deps.
+  const hasInjectedHistoryRef = useRef(false);
   const [emailInput, setEmailInput] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
+  // Email del usuario autenticado cargado en mount — disponible de forma síncrona
+  // cuando el Exit Dialog se dispara, sin spinners ni fetches on-demand.
+  const prefillEmailRef = useRef<string>('');
+  // Ref al step activo con formulario — permite al intervalo de auto-guardado
+  // extraer los valores parciales sin provocar re-renders del componente.
+  const stepAutoSaveRef = useRef<StepAutoSaveRef | null>(null);
+  // Copies del FlowSelector — defaults seguros; sobreescritos por PostHog si el flag resuelve.
+  const [flowCopy, setFlowCopy] = useState<FlowCopy>({
+    quick:    'Análisis rápido',
+    detailed: 'Análisis completo',
+  });
 
   const isPremiumMode = validationMode === 'premium';
   const isQuickMode = validationMode === 'quick';
-  
+
   const stepMap = isPremiumMode ? STEP_COMPONENTS_PREMIUM : (isQuickMode ? STEP_COMPONENTS_QUICK : STEP_COMPONENTS_DETAILED);
   const titleMap = isPremiumMode ? STEP_TITLES_PREMIUM : (isQuickMode ? STEP_TITLES_QUICK : STEP_TITLES_DETAILED);
   const StepComponent = stepMap[currentStep] ?? STEP_COMPONENTS_DETAILED[currentStep];
+  // Último step del flujo activo. Úsalo en efectos cuyas deps incluyan isPremiumMode/isQuickMode.
+  // Los efectos de beacon y scroll leen el estado de forma imperativa vía getState() — no usar aquí.
+  const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
   const prevStep = useRef(currentStep);
 
   // Track step completions
   useEffect(() => {
-    const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
     if (currentStep > prevStep.current && currentStep < lastStep) {
       const name = titleMap[prevStep.current]?.title ?? `Step ${prevStep.current}`;
       trackWizardStep(prevStep.current, name, validationMode);
@@ -123,7 +144,6 @@ export function Validate() {
   useEffect(() => {
     return () => {
       const step = prevStep.current;
-      const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
       if (step < lastStep) {
         const name = titleMap[step]?.title ?? `Step ${step}`;
         trackWizardAbandoned(step, name);
@@ -132,14 +152,31 @@ export function Validate() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sincronizar validationMode con el tier del usuario en cada mount
+  // Sincronizar validationMode con el tier del usuario en cada mount.
   useEffect(() => {
     if (tierLoading) return;
     const targetMode = isPremium ? 'premium' : 'detailed';
-    if (validationMode !== targetMode && validationMode !== 'quick') {
+    const currentMode = useValidationStore.getState().validationMode;
+    const hasActiveSession = !!useValidationStore.getState().validationId;
+    // Resetear 'quick' persistido de una sesión anterior cuando no hay sesión activa,
+    // para que el FlowSelector arranque en 'detailed' por defecto en sesiones nuevas.
+    if (currentMode !== targetMode && (currentMode !== 'quick' || !hasActiveSession)) {
       setValidationMode(targetMode);
     }
   }, [tierLoading, isPremium]);
+
+  // Deep linking: si la URL contiene ?resume=<id>, inyecta el ID en el store antes
+  // de que el efecto de hidratación dispare su fetch a Supabase. El parámetro se
+  // elimina inmediatamente via replaceState para que un F5 posterior no reutilice
+  // un ID viejo que podría ya no existir o pertenecer a otra sesión.
+  useEffect(() => {
+    const resumeId = new URLSearchParams(window.location.search).get('resume');
+    if (resumeId) {
+      setValidationId(resumeId);
+      window.history.replaceState({}, '', '/validate');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!validationId) return;
@@ -186,6 +223,15 @@ export function Validate() {
             acquisition_channel: data.acquisition_channel ?? '',
           });
         }
+        // Sincronizar validation_mode desde DB solo si el usuario aún está en step 1
+        // (no ha tomado decisiones basadas en el modo actual).
+        // Guardia contra race condition: si el usuario ya cambió el modo manualmente
+        // via FlowSelector y luego llega el fetch async, no sobreescribimos.
+        const freshStep = useValidationStore.getState().currentStep;
+        if (data.validation_mode && freshStep === 1) {
+          setValidationMode(data.validation_mode as 'quick' | 'detailed' | 'premium');
+        }
+
         // Posicionar en el step correcto si el store está en step 1
         if (currentStep === 1 && data.current_step > 1 && data.current_step < 4) {
           setStep(data.current_step as number);
@@ -196,13 +242,15 @@ export function Validate() {
   // Exit-intent: mouseleave viewport → show 1-click dialog (once per wizard session)
   // 400 ms delay prevents accidental triggers from fast mouse movements
   useEffect(() => {
-    const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
     let leaveTimer: ReturnType<typeof setTimeout> | null = null;
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY > 0) return;
       if (currentStep >= lastStep) return;
       if (exitShownRef.current) return;
       if (Date.now() - mountedAtRef.current < 20000) return;
+      // Proxy isDirty: solo disparar si el usuario ya interactuó con algún campo.
+      const { stepIdea, stepIdeaQuick } = useValidationStore.getState();
+      if (!stepIdea.idea_name && !stepIdeaQuick.idea_name) return;
       leaveTimer = setTimeout(() => {
         if (exitShownRef.current) return;
         exitShownRef.current = true;
@@ -269,11 +317,13 @@ export function Validate() {
       if (dt > 0) {
         const velocity = (y - lastY) / dt;   // negative = scrolling up
         const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
-        const { currentStep: step } = useValidationStore.getState();
+        const { currentStep: step, stepIdea, stepIdeaQuick } = useValidationStore.getState();
+        const hasInteracted = !!stepIdea.idea_name || !!stepIdeaQuick.idea_name;
         if (
           velocity < -MIN_VELOCITY &&
           maxDepth > MIN_DEPTH &&
           step < lastStep &&
+          hasInteracted &&
           !exitShownRef.current &&
           Date.now() - mountedAtRef.current >= 20000
         ) {
@@ -292,18 +342,24 @@ export function Validate() {
 
   // Rem 3b: mobile exit-intent — back-button intercept via history.pushState + popstate.
   // Injects a silent guard entry; popstate fires when the user navigates back through it.
+  // hasInjectedHistoryRef evita acumular entradas en el historial cuando el efecto
+  // se re-ejecuta por cambio de deps (isPremiumMode / isQuickMode / tier).
   useEffect(() => {
-    window.history.pushState({ validateai_guard: true }, '');
+    if (!hasInjectedHistoryRef.current) {
+      window.history.pushState({ validateai_guard: true }, '');
+      hasInjectedHistoryRef.current = true;
+    }
 
     const onPopState = () => {
       const { currentStep: step } = useValidationStore.getState();
-      const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
       if (step >= lastStep) return;
 
       // Re-inject guard so repeated back-button presses are caught
       window.history.pushState({ validateai_guard: true }, '');
 
-      if (!exitShownRef.current && Date.now() - mountedAtRef.current >= 20000) {
+      const { stepIdea, stepIdeaQuick } = useValidationStore.getState();
+      const hasInteracted = !!stepIdea.idea_name || !!stepIdeaQuick.idea_name;
+      if (hasInteracted && !exitShownRef.current && Date.now() - mountedAtRef.current >= 20000) {
         exitShownRef.current = true;
         setShowExitDialog(true);
       }
@@ -322,6 +378,63 @@ export function Validate() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremiumMode, isQuickMode, tier]);
 
+  // Pre-carga el email del usuario autenticado en mount para que el Exit Dialog
+  // lo tenga disponible de forma síncrona al dispararse.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) prefillEmailRef.current = session.user.email;
+    });
+  }, []);
+
+  // Auto-guardado silencioso cada 30s para proteger datos de formularios intermedios.
+  // Regla de negocio: solo dispara si ya existe validationId (paso 2+ o sesión reanudada).
+  // No crea filas — únicamente actualiza. Usa getPartialData() del step activo sin re-renders.
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const currentId = useValidationStore.getState().validationId;
+      if (!currentId) return;
+      const data = stepAutoSaveRef.current?.getPartialData();
+      if (!data) return;
+      const payload = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined && v !== null && v !== '')
+      );
+      if (Object.keys(payload).length === 0) return;
+      await supabase.from('validations').update(payload).eq('id', currentId);
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // A/B test del FlowSelector: lee el feature flag de PostHog.
+  // Si el flag no resuelve (adblocker, timeout de red, flag no definido), el
+  // estado flowCopy ya tiene los copies originales como fallback — sin bloqueo de UI.
+  // Variante 'treatment': "Score inmediato" / "Validación profunda".
+  useEffect(() => {
+    const applyFlag = () => {
+      const variant = posthog.getFeatureFlag('validate-flow-copy-test');
+      if (variant === 'treatment') {
+        setFlowCopy({ quick: 'Score inmediato', detailed: 'Validación profunda' });
+      }
+      // 'control' o undefined → se mantiene el default ya inicializado.
+    };
+    // onFeatureFlags dispara el callback en cuanto los flags estén disponibles.
+    // Si ya lo están (cacheados), el callback es síncrono.
+    posthog.onFeatureFlags(applyFlag);
+  }, []);
+
+  // Ciclo de vida del Exit Dialog:
+  // — Al abrir: pre-llena el input con el email cacheado (si existe).
+  // — Al cerrar: resetea estados para que la próxima apertura comience limpia.
+  //   El reset se ancla al cierre para no eliminar la pantalla "¡Listo!" que el
+  //   usuario aún está leyendo en la última fracción de segundo antes del unmount.
+  useEffect(() => {
+    if (showExitDialog) {
+      if (prefillEmailRef.current) setEmailInput(prefillEmailRef.current);
+    } else {
+      setEmailInput('');
+      setEmailSent(false);
+    }
+  }, [showExitDialog]);
+
   const handleExitChoice = (reason: string) => {
     setShowExitDialog(false);
     trackTelemetryEvent({
@@ -339,13 +452,18 @@ export function Validate() {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
     setEmailLoading(true);
     try {
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-quick-lead`, {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-quick-lead`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ email, validation_id: validationId ?? undefined }),
       });
-    } catch {
-      // Silent fail — UX siempre muestra confirmación
+      if (!res.ok) console.warn('[send-quick-lead] status:', res.status);
+    } catch (err) {
+      console.warn('[send-quick-lead] network error:', err);
     } finally {
       setEmailSent(true);
       setEmailLoading(false);
@@ -379,7 +497,7 @@ export function Validate() {
         </div>
 
         {/* Step header */}
-        {((isPremiumMode && currentStep < 4) || (isQuickMode && currentStep < 2) || (!isPremiumMode && !isQuickMode && currentStep < 4)) && (
+        {currentStep < lastStep && (
           <div className="mb-5 px-1">
             <div className="flex items-center justify-between mb-1">
               {!isPremiumMode && (
@@ -389,7 +507,7 @@ export function Validate() {
               )}
               {isPremiumMode && (
                 <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">
-                  ✦ Validación Premium · Paso {currentStep} de 3
+                  ✦ Validación Premium · Paso {currentStep} de {Object.keys(STEP_COMPONENTS_PREMIUM).length - 1}
                 </p>
               )}
               {!tierLoading && <ValidationPlanBadge tier={tier} />}
@@ -401,8 +519,21 @@ export function Validate() {
 
         {/* Card */}
         <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-white/[0.06] p-6 md:p-10 overflow-hidden">
-          <StepTransition stepKey={currentStep}>
-            <StepComponent />
+          <StepTransition key={currentStep} stepKey={currentStep}>
+            {/* Step 1 — recibe flowCopy para el A/B test.
+                Steps 2-3 (flujo detallado) — reciben ref para el auto-guardado de 30s.
+                El resto (premium, StepGenerating) se despachan via stepMap. */}
+            {currentStep === 1 && !isPremiumMode ? (
+              isQuickMode
+                ? <StepIdeaQuick flowCopy={flowCopy} />
+                : <StepIdea flowCopy={flowCopy} />
+            ) : currentStep === 2 && !isPremiumMode && !isQuickMode ? (
+              <StepMarket ref={stepAutoSaveRef} />
+            ) : currentStep === 3 && !isPremiumMode ? (
+              <StepFounder ref={stepAutoSaveRef} />
+            ) : (
+              <StepComponent />
+            )}
           </StepTransition>
         </div>
       </div>

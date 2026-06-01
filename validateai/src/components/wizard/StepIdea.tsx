@@ -2,8 +2,24 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepIdeaSchema, type StepIdea } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
-import { FlowSelector } from './FlowSelector';
+import { FlowSelector, type FlowCopy } from './FlowSelector';
 import { INDUSTRIES } from '@/utils/constants';
+import { useIdeaQuality, type IdeaQuality } from '@/hooks/useIdeaQuality';
+
+function IdeaQualityIndicator({ quality, visible }: { quality: IdeaQuality; visible: boolean }) {
+  if (!visible) return null;
+  const cfg = {
+    poor:       { dot: 'bg-red-400',    text: 'text-red-500 dark:text-red-400',    label: 'Descripción vaga — añade números o palabras clave de dolor' },
+    acceptable: { dot: 'bg-amber-400',  text: 'text-amber-500 dark:text-amber-400', label: 'Aceptable — puedes añadir más contexto específico' },
+    good:       { dot: 'bg-emerald-500',text: 'text-emerald-600 dark:text-emerald-400', label: 'Específico — buen input para el análisis IA ✓' },
+  }[quality];
+  return (
+    <div className="flex items-center gap-1.5 mt-1.5">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+      <p className={`text-[11px] ${cfg.text}`}>{cfg.label}</p>
+    </div>
+  );
+}
 import { supabase } from '@/lib/supabase';
 
 function ErrorMsg({ message }: { message?: string }) {
@@ -47,7 +63,7 @@ function DescriptionQuality({ length }: { length: number }) {
   );
 }
 
-export function StepIdea() {
+export function StepIdea({ flowCopy }: { flowCopy?: FlowCopy }) {
   const { stepIdea, updateStepIdea, nextStep, setStep, validationMode, setValidationMode } = useValidationStore();
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<StepIdea>({
@@ -56,6 +72,11 @@ export function StepIdea() {
   });
 
   const descriptionLen = (watch('idea_description') ?? '').length;
+  const problemText    = watch('idea_problem') ?? '';
+  const problemQuality = useIdeaQuality(problemText);
+  // Upsell contextual: si el usuario escribe > 200 chars en "¿Qué problema resuelves?"
+  // y está en modo rápido, sugerimos cambiar al análisis completo.
+  const showUpsellBanner = validationMode === 'quick' && problemText.length > 200;
 
   const onSubmit = (data: StepIdea) => {
     updateStepIdea(data);
@@ -87,10 +108,11 @@ export function StepIdea() {
   return (
     <div className="space-y-6">
       {validationMode !== 'premium' && (
-        <FlowSelector value={validationMode as 'quick' | 'detailed'} onChange={(mode) => {
-          setValidationMode(mode);
-          setStep(1); // Always stay on step 1 when switching between manual modes
-        }} />
+        <FlowSelector
+          value={validationMode as 'quick' | 'detailed'}
+          onChange={(mode) => { setValidationMode(mode); setStep(1); }}
+          flowCopy={flowCopy}
+        />
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-5">
@@ -120,6 +142,7 @@ export function StepIdea() {
             className={`${inputCls(!!errors.idea_problem)} resize-none leading-relaxed`}
           />
           <ErrorMsg message={errors.idea_problem?.message} />
+          <IdeaQualityIndicator quality={problemQuality} visible={problemText.length > 0} />
         </div>
 
         <div>
@@ -171,6 +194,29 @@ export function StepIdea() {
           {errors.idea_industry && <ErrorMsg message="Selecciona una industria" />}
         </div>
       </div>
+
+      {/* Upsell contextual: aparece al detectar contexto rico en modo Rápido */}
+      {showUpsellBanner && (
+        <button
+          type="button"
+          onClick={() => { setValidationMode('detailed'); setStep(1); }}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl
+                     bg-[#7C6FF7]/10 border border-[#7C6FF7]/30 text-left
+                     hover:bg-[#7C6FF7]/15 transition-all duration-200 animate-in fade-in slide-in-from-bottom-1"
+        >
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <p className="text-xs font-semibold text-[#A78BFA] leading-snug">
+              Tienes buen contexto → el Análisis completo te dará un score más preciso
+            </p>
+          </div>
+          <span className="shrink-0 text-[10px] font-bold text-[#7C6FF7] bg-[#7C6FF7]/20 px-2 py-0.5 rounded-full">
+            Cambiar →
+          </span>
+        </button>
+      )}
 
       <button
         type="submit"

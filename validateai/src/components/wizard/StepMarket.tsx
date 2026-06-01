@@ -1,8 +1,15 @@
+import { forwardRef, useImperativeHandle } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepMarketSchema, type StepMarket, TARGET_COUNTRIES, BUSINESS_MODELS, PRICING_RANGES } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
 import { supabase } from '@/lib/supabase';
+
+// Interfaz compartida para el auto-guardado. Exportada para que Validate.tsx
+// pueda tipar el ref sin duplicar la definición.
+export interface StepAutoSaveRef {
+  getPartialData: () => Record<string, unknown>;
+}
 
 const BUSINESS_MODEL_LABELS: Record<string, string> = {
   b2b: 'B2B (Empresas)',
@@ -42,17 +49,26 @@ function ErrorMsg({ message }: { message?: string }) {
   );
 }
 
-export function StepMarket() {
+export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref) {
   const { stepMarket, updateStepMarket, nextStep, prevStep } = useValidationStore();
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<StepMarket>({
+  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<StepMarket>({
     resolver: zodResolver(StepMarketSchema),
     defaultValues: stepMarket as StepMarket,
   });
 
+  // Expone getPartialData() al padre (Validate.tsx) para el auto-guardado de 30s.
+  useImperativeHandle(ref, () => ({
+    getPartialData: () => getValues() as Record<string, unknown>,
+  }));
+
   const selectedModel   = watch('business_model');
   const selectedPricing = watch('pricing_range');
   const selectedCountry = watch('target_country');
+
+  // Barra de progreso: campos clave que el usuario debe completar en este paso.
+  const MARKET_FIELDS = ['customer_segment', 'target_country', 'business_model', 'pricing_range'] as const;
+  const filledMarket = MARKET_FIELDS.filter((f) => !!watch(f)).length;
 
   // B2B + free: combinación que casi nunca es intencional y contamina el unit economics.
   // Se muestra como warning no bloqueante — el usuario puede continuar, pero no lo ignorará.
@@ -227,6 +243,20 @@ export function StepMarket() {
 
       </div>
 
+      {/* Progreso de campos del paso */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-[#4A495E]">
+          <span>Completitud del paso</span>
+          <span className="font-bold tabular-nums">{filledMarket}/{MARKET_FIELDS.length}</span>
+        </div>
+        <div className="h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500 ease-out bg-indigo-500"
+            style={{ width: `${(filledMarket / MARKET_FIELDS.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
       <div className="flex gap-4">
         <button
           type="button"
@@ -246,5 +276,5 @@ export function StepMarket() {
       </div>
     </form>
   );
-}
+});
 
