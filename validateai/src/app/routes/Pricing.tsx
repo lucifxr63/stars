@@ -2,63 +2,82 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
-type Tier = 'basic' | 'pro' | 'premium';
+type Tier = 'free' | 'pro' | 'premium';
+
+function Logo({ className = 'w-6 h-8' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
+      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
+      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
+      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
+      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
+      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
+      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    </svg>
+  );
+}
+
+function CheckIcon({ color = '#34D399' }: { color?: string }) {
+  return (
+    <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2.5} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+    </svg>
+  );
+}
 
 const PLANS = [
   {
-    tier: 'basic' as Tier,
-    name: 'Basic',
-    price: '$9.990',
+    tier: 'free' as Tier,
+    name: 'Free',
+    price: '$0',
     period: '/mes',
-    description: 'Para explorar tu idea con análisis completo.',
-    color: '#7C6FF7',
+    description: 'Para explorar el potencial de tu idea.',
+    color: '#8B8AA0',
     highlight: false,
     features: [
-      'Score + breakdown 5 dimensiones',
-      'Análisis de cliente objetivo',
-      'Propuesta de valor generada por IA',
-      'Preguntas clave de validación',
-      'Análisis de riesgos',
-      '20 análisis / día',
+      '1 idea gratis',
+      'Score general 0–100',
+      'Resumen ejecutivo + feedback IA',
+      'Análisis básico de competidores',
+      'Export PDF estándar',
     ],
-    cta: 'Empezar con Basic',
+    cta: 'Comenzar gratis',
   },
   {
     tier: 'pro' as Tier,
     name: 'Pro',
-    price: '$19.990',
-    period: '/mes',
-    description: 'Para fundadores que van en serio.',
-    color: '#F7C56C',
+    price: '$20.000',
+    period: ' CLP/mes',
+    description: 'Para founders que deciden con datos.',
+    color: '#7C6FF7',
     highlight: true,
     features: [
-      'Todo lo de Basic',
-      'MVP Roadmap con Kanban',
-      'SWOT automático',
-      'Unit Economics (CAC / LTV / Churn)',
-      'Founder-Market Fit',
-      'Gobernanza y Cap Table',
-      '50 análisis / día',
+      'Ideas y pivotes ilimitados',
+      'TAM/SAM/SOM dimensionado',
+      'Unit Economics (CAC, LTV, Payback)',
+      'Matriz de Riesgos y Mitigaciones',
+      'Founder Fit + recomendación de equipo',
+      'PDF multitema investor-ready',
     ],
     cta: 'Empezar con Pro',
   },
   {
     tier: 'premium' as Tier,
     name: 'Premium',
-    price: '$29.990',
-    period: '/mes',
-    description: 'Análisis completo para levantar capital.',
-    color: '#34D399',
+    price: '$50.000',
+    period: ' CLP/mes',
+    description: 'Para startups en seed y growth.',
+    color: '#F7C56C',
     highlight: false,
     features: [
-      'Todo lo de Pro',
-      'TAM / SAM / SOM con datos reales',
-      'Análisis competitivo con web search',
-      'Market signals (Reddit + Trends)',
-      'Fundraising Roadmap',
-      'Evidence Wall de mercado',
-      '200 análisis / día',
+      'Todo lo del plan Pro',
+      'Due Diligence (SII + INAPI + CMF)',
+      'Encuestas Mom Test + análisis de sesgos',
+      'Data Room PDF para inversores',
+      'API acceso completo',
+      'Soporte prioritario en español',
     ],
     cta: 'Empezar con Premium',
   },
@@ -69,33 +88,25 @@ export function Pricing() {
   const [loading, setLoading] = useState<Tier | null>(null);
 
   const handleCheckout = async (tier: Tier) => {
+    if (tier === 'free') { navigate('/login'); return; }
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/login', { state: { redirectAfter: `/pricing?tier=${tier}` } });
       return;
     }
-
     setLoading(tier);
     try {
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            tier,
-            success_url: `${window.location.origin}/checkout/success`,
-            cancel_url:  `${window.location.origin}/pricing`,
-          }),
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ tier, success_url: `${window.location.origin}/checkout/success`, cancel_url: `${window.location.origin}/pricing` }),
         }
       );
-
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? 'Error al crear sesión de pago');
-
       window.location.href = data.url;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error al iniciar el pago');
@@ -104,102 +115,85 @@ export function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
+    <div className="min-h-screen bg-[#F8F7FF] dark:bg-[#0A0A0F] flex flex-col">
 
       {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-gray-50/80 dark:bg-[#0A0A0F]/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#7C6FF7] flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">ValidateAI</span>
+      <header className="sticky top-0 z-50 border-b border-black/[0.07] dark:border-white/[0.06] bg-[#F8F7FF]/85 dark:bg-[#0A0A0F]/85 backdrop-blur-xl">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <Logo/>
+            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
           </Link>
-          <Link
-            to="/login"
-            className="text-sm font-semibold bg-[#7C6FF7] text-white px-4 py-2 rounded-lg hover:bg-[#6B5EE6] transition-all"
-          >
-            Iniciar sesión
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle/>
+            <Link to="/login"
+              className="text-sm font-semibold bg-[#7C6FF7] text-white px-4 py-2.5 rounded-xl hover:bg-[#6B5EE6] transition-all shadow-md shadow-[#7C6FF7]/20">
+              Iniciar sesión
+            </Link>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-16">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-12 sm:py-16">
 
         {/* Header */}
-        <div className="text-center mb-14">
-          <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-xs font-semibold text-[#A78BFA] mb-5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] animate-pulse" />
+        <div className="text-center mb-12 sm:mb-16">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-[11px] font-semibold text-[#7C6FF7] dark:text-[#A78BFA] mb-5 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] animate-pulse"/>
             Planes y precios
           </span>
-          <h1 className="font-heading text-4xl sm:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
-            Valida más rápido.<br />Construye con confianza.
+          <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
+            Valida más rápido.<br className="hidden sm:block"/>
+            <span className="bg-gradient-to-r from-[#7C6FF7] to-[#A78BFA] bg-clip-text text-transparent"> Construye con confianza.</span>
           </h1>
-          <p className="text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto">
-            Empieza gratis. Upgradea cuando necesites el análisis completo para tomar decisiones reales.
+          <p className="text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto text-base">
+            Empieza gratis. Pásate a Pro o Premium cuando necesites datos duros para tomar decisiones reales.
           </p>
+          <p className="text-xs text-gray-400 dark:text-[#4A495E] mt-2">Todos los planes incluyen Ley 21.719 de Privacidad</p>
         </div>
 
         {/* Plans */}
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
           {PLANS.map((plan) => (
-            <div
-              key={plan.tier}
-              className={`relative rounded-2xl border overflow-hidden flex flex-col
+            <div key={plan.tier}
+              className={`relative rounded-3xl border flex flex-col transition-all duration-200
                 ${plan.highlight
-                  ? 'border-[#F7C56C]/40 bg-white dark:bg-[#12121A] shadow-xl shadow-[#F7C56C]/10'
-                  : 'border-white/[0.06] bg-white dark:bg-[#12121A]'}`}
-            >
+                  ? 'border-[#7C6FF7] bg-white dark:bg-[#12121A] shadow-2xl shadow-[#7C6FF7]/12 md:scale-[1.02] md:-my-1'
+                  : 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#12121A] hover:border-gray-300 dark:hover:border-white/10 hover:shadow-lg dark:hover:shadow-none'}`}>
               {plan.highlight && (
-                <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#F7C56C] to-transparent" />
-              )}
-              {plan.highlight && (
-                <div className="absolute top-3 right-3">
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-[#F7C56C]/15 text-[#F7C56C] rounded-full border border-[#F7C56C]/20">
-                    Más popular
-                  </span>
-                </div>
+                <>
+                  <div className="absolute top-0 right-0 bg-[#7C6FF7] text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl rounded-tr-3xl tracking-wide z-10">POPULAR</div>
+                  <div className="absolute -top-8 -right-8 w-32 h-32 bg-[#7C6FF7]/8 blur-2xl rounded-full pointer-events-none"/>
+                </>
               )}
 
-              <div className="p-6 flex-1">
-                <div className="mb-5">
-                  <span className="text-xs font-bold uppercase tracking-widest mb-2 block" style={{ color: plan.color }}>
-                    {plan.name}
-                  </span>
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="font-heading text-3xl font-bold text-gray-900 dark:text-[#F0EFF8]">
-                      {plan.price}
-                    </span>
+              <div className="p-7 flex-1">
+                <div className="mb-6">
+                  <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: plan.color }}>{plan.name}</p>
+                  <div className="flex items-baseline gap-0.5 mb-1">
+                    <span className="font-heading text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-[#F0EFF8]">{plan.price}</span>
                     <span className="text-sm text-gray-500 dark:text-[#8B8AA0]">{plan.period}</span>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">{plan.description}</p>
                 </div>
 
-                <ul className="space-y-2.5 mb-6">
+                <ul className="space-y-3">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-gray-700 dark:text-[#C4C4D4]">
-                      <svg className="w-4 h-4 shrink-0 mt-0.5" style={{ color: plan.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-[#C4C4D4]">
+                      <CheckIcon color={plan.highlight ? '#7C6FF7' : plan.color}/>
                       {f}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="px-6 pb-6">
-                <button
-                  onClick={() => handleCheckout(plan.tier)}
-                  disabled={loading !== null}
-                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-150 disabled:opacity-60"
-                  style={{
-                    background: plan.highlight ? plan.color : 'transparent',
-                    color: plan.highlight ? '#0A0A0F' : plan.color,
-                    border: `1.5px solid ${plan.color}`,
-                  }}
-                >
+              <div className="px-7 pb-7">
+                <button onClick={() => handleCheckout(plan.tier)} disabled={loading !== null}
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-150 disabled:opacity-60 cursor-pointer"
+                  style={plan.highlight
+                    ? { background: '#7C6FF7', color: '#fff' }
+                    : { background: 'transparent', color: plan.color, border: `1.5px solid ${plan.color}` }
+                  }>
                   {loading === plan.tier ? 'Redirigiendo...' : plan.cta}
                 </button>
               </div>
@@ -210,23 +204,27 @@ export function Pricing() {
         {/* Free note */}
         <div className="mt-10 text-center">
           <p className="text-sm text-gray-500 dark:text-[#8B8AA0]">
-            ¿No estás listo?{' '}
-            <Link to="/login" className="text-[#A78BFA] hover:underline font-medium">
-              El plan Free siempre está disponible
+            ¿Quieres explorar primero?{' '}
+            <Link to="/login" className="text-[#7C6FF7] dark:text-[#A78BFA] hover:underline font-semibold">
+              El plan Free es siempre gratis
             </Link>
-            {' '}— score básico + preguntas de validación, sin tarjeta.
+            {' '}— score básico + feedback IA, sin tarjeta.
           </p>
         </div>
 
         {/* Trust */}
-        <div className="mt-12 grid sm:grid-cols-3 gap-4">
+        <div className="mt-10 grid sm:grid-cols-3 gap-4">
           {[
-            { icon: '🔒', label: 'Pago seguro', sub: 'Procesado por Stripe' },
-            { icon: '↩️', label: 'Cancela cuando quieras', sub: 'Sin penalidades ni contratos' },
-            { icon: '🇨🇱', label: 'Precios en CLP', sub: 'Sin conversión ni sorpresas' },
+            { label: 'Pago seguro',           sub: 'Procesado por Stripe' },
+            { label: 'Cancela cuando quieras', sub: 'Sin penalidades ni contratos' },
+            { label: 'Precios en CLP',         sub: 'Sin conversión ni sorpresas' },
           ].map((t) => (
-            <div key={t.label} className="flex items-center gap-3 p-4 bg-white dark:bg-[#12121A] rounded-xl border border-white/[0.06]">
-              <span className="text-xl">{t.icon}</span>
+            <div key={t.label} className="flex items-center gap-3 p-4 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] shadow-sm dark:shadow-none">
+              <div className="w-8 h-8 rounded-xl bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                </svg>
+              </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">{t.label}</p>
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">{t.sub}</p>
@@ -235,13 +233,12 @@ export function Pricing() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-gray-500 dark:text-[#8B8AA0] mt-10">
+        <p className="text-center text-xs text-gray-400 dark:text-[#4A495E] mt-10">
           ¿Tienes preguntas?{' '}
-          <a href="mailto:lucianoalonso2000@gmail.com" className="text-[#7C6FF7] hover:underline">
-            lucianoalonso2000@gmail.com
+          <a href="mailto:contacto@validus.scouttech.lat" className="text-[#7C6FF7] hover:underline">
+            contacto@validus.scouttech.lat
           </a>
         </p>
-
       </main>
     </div>
   );

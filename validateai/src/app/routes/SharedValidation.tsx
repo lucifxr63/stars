@@ -1,5 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+
+function Logo({ className = 'w-5 h-7' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
+      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
+      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
+      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
+      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
+      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
+      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    </svg>
+  );
+}
 import { supabase } from '@/lib/supabase';
 import { ScoreGauge } from '@/components/shared/ScoreGauge';
 import { MarketFunnel } from '@/components/shared/MarketFunnel';
@@ -51,22 +64,22 @@ export function SharedValidation() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#F8F7FF] dark:bg-[#0A0A0F] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (notFound || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col items-center justify-center gap-4 text-center px-4">
+      <div className="min-h-screen bg-[#F8F7FF] dark:bg-[#0A0A0F] flex flex-col items-center justify-center gap-4 text-center px-4">
         <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center">
           <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <p className="font-bold text-gray-700 dark:text-[#C4C4D4]">Esta validación no existe o ya no está disponible.</p>
-        <Link to="/" className="text-sm text-teal-600 hover:underline">Ir a ValidateAI →</Link>
+        <Link to="/" className="text-sm text-[#7C6FF7] hover:underline font-medium">Ir a Validus →</Link>
       </div>
     );
   }
@@ -74,22 +87,22 @@ export function SharedValidation() {
   const summary = data.summary_json;
   const isGood = (data.validation_score ?? 0) >= 70;
   const isMid = (data.validation_score ?? 0) >= 40;
-  const scoreBg = isGood ? 'bg-green-50 border-green-200' : isMid ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
+  const scoreBg = isGood
+    ? 'bg-[#34D399]/8 border-[#34D399]/20'
+    : isMid
+    ? 'bg-[#F7C56C]/8 border-[#F7C56C]/20'
+    : 'bg-[#F87171]/8 border-[#F87171]/20';
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
+    <div className="min-h-screen bg-[#F8F7FF] dark:bg-[#0A0A0F] flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/5 px-4 py-4">
+      <div className="bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/[0.06] px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <span className="font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">ValidateAI</span>
-          </div>
-          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-white/5 px-2.5 py-1 rounded-full">Reporte compartido</span>
+          <Link to="/" className="flex items-center gap-2">
+            <Logo/>
+            <span className="font-heading font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">Validus</span>
+          </Link>
+          <span className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-gray-100 dark:bg-white/[0.05] px-2.5 py-1 rounded-full">Reporte compartido</span>
         </div>
       </div>
 
@@ -99,9 +112,9 @@ export function SharedValidation() {
           <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">{data.idea_name ?? 'Sin nombre'}</h1>
           <div className="flex flex-wrap gap-2 mt-2">
             {data.idea_industry && <span className="text-xs px-2.5 py-1 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-[#8B8AA0] rounded-full">{data.idea_industry}</span>}
-            {data.target_country && <span className="text-xs px-2.5 py-1 bg-teal-50 text-teal-600 rounded-full">{data.target_country}</span>}
-            {data.business_model && <span className="text-xs px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full uppercase">{data.business_model}</span>}
-            {data.business_stage && <span className="text-xs px-2.5 py-1 bg-violet-50 text-violet-600 rounded-full">{data.business_stage}</span>}
+            {data.target_country && <span className="text-xs px-2.5 py-1 bg-[#34D399]/10 text-[#34D399] rounded-full border border-[#34D399]/20">{data.target_country}</span>}
+            {data.business_model && <span className="text-xs px-2.5 py-1 bg-[#7C6FF7]/10 text-[#7C6FF7] dark:text-[#A78BFA] rounded-full border border-[#7C6FF7]/20 uppercase">{data.business_model}</span>}
+            {data.business_stage && <span className="text-xs px-2.5 py-1 bg-[#F7C56C]/10 text-[#F7C56C] rounded-full border border-[#F7C56C]/20">{data.business_stage}</span>}
           </div>
           {data.idea_description && (
             <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mt-3 leading-relaxed">{data.idea_description}</p>
@@ -133,29 +146,29 @@ export function SharedValidation() {
         {/* Fortalezas y debilidades */}
         {summary && (summary.strengths?.length > 0 || summary.weaknesses?.length > 0) && (
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="bg-green-50 border-2 border-green-100 rounded-2xl p-5">
+            <div className="bg-[#34D399]/8 border border-[#34D399]/20 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-black">✓</div>
-                <h3 className="text-sm font-bold text-green-800">Fortalezas</h3>
+                <div className="w-6 h-6 rounded-full bg-[#34D399] flex items-center justify-center text-white text-xs font-black">✓</div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Fortalezas</h3>
               </div>
               <ul className="space-y-2">
                 {summary.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-[#C4C4D4]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-[#C4C4D4]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#34D399] mt-1.5 shrink-0" />
                     <span className="leading-snug">{s}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="bg-amber-50 border-2 border-amber-100 rounded-2xl p-5">
+            <div className="bg-[#F7C56C]/8 border border-[#F7C56C]/20 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-black">!</div>
-                <h3 className="text-sm font-bold text-amber-800">Áreas de mejora</h3>
+                <div className="w-6 h-6 rounded-full bg-[#F7C56C] flex items-center justify-center text-white text-xs font-black">!</div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Áreas de mejora</h3>
               </div>
               <ul className="space-y-2">
                 {summary.weaknesses.map((w, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-[#C4C4D4]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-[#C4C4D4]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#F7C56C] mt-1.5 shrink-0" />
                     <span className="leading-snug">{w}</span>
                   </li>
                 ))}
@@ -171,7 +184,7 @@ export function SharedValidation() {
             <ol className="space-y-3">
               {summary.next_steps.map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+                  <span className="w-6 h-6 rounded-full bg-[#7C6FF7] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
                     {i + 1}
                   </span>
                   <p className="text-sm text-gray-600 dark:text-[#8B8AA0] leading-relaxed">{step}</p>
