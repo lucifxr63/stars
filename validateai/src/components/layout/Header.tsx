@@ -51,8 +51,8 @@ export function Header() {
   const linkCls = (active: boolean) =>
     `block px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
       active
-        ? 'text-[#F0EFF8] bg-white/8'
-        : 'text-[#8B8AA0] hover:text-[#F0EFF8] hover:bg-white/5'
+        ? 'text-gray-900 dark:text-[#F0EFF8] bg-black/5 dark:bg-white/8'
+        : 'text-gray-600 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] hover:bg-black/5 dark:hover:bg-white/5'
     }`;
 
   return (
@@ -71,12 +71,15 @@ export function Header() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-[#7C6FF7] flex items-center justify-center group-hover:scale-105 transition-transform glow-brand-sm">
-            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">ValidateAI</span>
+          <svg viewBox="0 0 338 426" className="w-6 h-8 group-hover:scale-105 transition-transform" aria-hidden="true">
+            <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
+            <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
+            <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
+            <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
+            <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
+            <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+          </svg>
+          <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validus</span>
         </Link>
 
         {/* Desktop nav */}
@@ -128,7 +131,7 @@ export function Header() {
 
       {/* Mobile drawer */}
       {menuOpen && (
-        <div className="sm:hidden border-t border-white/[0.06] bg-white dark:bg-[#12121A] px-4 py-3 space-y-1">
+        <div className="sm:hidden border-t border-black/[0.07] dark:border-white/[0.06] bg-white dark:bg-[#12121A] px-4 py-3 space-y-1">
           <Link to="/results" className={linkCls(isActive('/results'))}>
             Mis validaciones
           </Link>

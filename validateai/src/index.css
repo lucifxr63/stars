@@ -103,12 +103,17 @@ body {
   box-shadow: 0 0 20px rgba(124, 111, 247, 0.25);
 }
 
-/* Grid pattern decorativo (oscuro) */
+/* Grid pattern decorativo — dual mode */
 .grid-pattern {
+  background-image:
+    linear-gradient(rgba(124,111,247,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,111,247,0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.dark .grid-pattern {
   background-image:
     linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
 }
 
 /* Noise overlay sutil */
@@ -121,11 +126,17 @@ body {
   border-radius: inherit;
 }
 
-/* Glassmorphism card */
+/* Glassmorphism card — dual mode */
 .glass-card {
-  background: rgba(18, 18, 26, 0.8);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(124, 111, 247, 0.14);
   backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(124, 111, 247, 0.08);
+}
+.dark .glass-card {
+  background: rgba(18, 18, 26, 0.80);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: none;
 }
 
 /* Animations */
