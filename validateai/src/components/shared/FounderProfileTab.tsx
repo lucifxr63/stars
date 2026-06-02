@@ -272,60 +272,238 @@ function ExperienceTimeline({
 }
 
 // ── Empty State ───────────────────────────────────────────────────────────────
-function EmptyState({ onSubmit }: { onSubmit: (url: string) => void }) {
-  const [url, setUrl] = useState('');
-  const [error, setError] = useState('');
+function EmptyState({
+  onSubmit,
+  onManualSave,
+}: {
+  onSubmit: (url: string) => void;
+  onManualSave: (data: FounderProfileData) => Promise<void>;
+}) {
+  const [mode, setMode] = useState<'linkedin' | 'manual'>('manual');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ── LinkedIn tab ──────────────────────────────────────────────────────────
+  const [url, setUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
+
+  const handleLinkedIn = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = url.trim();
     if (!trimmed.includes('linkedin.com/in/')) {
-      setError('Ingresa una URL válida de LinkedIn (ej: linkedin.com/in/tu-perfil)');
+      setUrlError('Ingresa una URL válida de LinkedIn (ej: linkedin.com/in/tu-perfil)');
       return;
     }
-    setError('');
+    setUrlError('');
     onSubmit(trimmed);
   };
 
+  // ── Manual tab ────────────────────────────────────────────────────────────
+  const [fullName, setFullName]       = useState('');
+  const [headline, setHeadline]       = useState('');
+  const [bio, setBio]                 = useState('');
+  const [years, setYears]             = useState(0);
+  const [skillInput, setSkillInput]   = useState('');
+  const [skills, setSkills]           = useState<string[]>([]);
+  const [saving, setSaving]           = useState(false);
+  const [manualError, setManualError] = useState('');
+
+  const addSkill = (tag: string) => {
+    const clean = tag.trim();
+    if (clean && !skills.includes(clean)) setSkills(prev => [...prev, clean]);
+    setSkillInput('');
+  };
+
+  const handleManual = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim()) { setManualError('Ingresa tu nombre completo.'); return; }
+    if (!bio.trim() || bio.trim().length < 30) { setManualError('La bio debe tener al menos 30 caracteres.'); return; }
+    setManualError('');
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sin sesión');
+      const profile: FounderProfileData = {
+        id:                       session.user.id,
+        linkedin_url:             null,
+        full_name:                fullName.trim(),
+        headline:                 headline.trim() || null,
+        summary_bio:              bio.trim(),
+        industry_expertise_years: years,
+        skills,
+        work_experience:          [],
+        education:                [],
+        competency_scores:        null,
+        extraction_status:        'done',
+        updated_at:               new Date().toISOString(),
+      };
+      await onManualSave(profile);
+    } catch (err) {
+      setManualError(err instanceof Error ? err.message : 'Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const SKILL_SUGGESTIONS = ['SaaS', 'B2B', 'Growth', 'Producto', 'Data', 'ML/IA', 'Ventas', 'Marketing', 'Finanzas', 'Legal', 'Ops', 'Hardware'];
+
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-4">
-        <svg className="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
+    <div className="py-8 px-6 max-w-lg mx-auto">
+      <div className="text-center mb-6">
+        <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mx-auto mb-3">
+          <svg className="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <h3 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Perfil del Fundador</h3>
+        <p className="text-sm text-gray-500 dark:text-[#8B8AA0] leading-relaxed">
+          Completa tu perfil para que la IA evalúe tu Founder-Market Fit.
+        </p>
       </div>
-      <h3 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">
-        Enriquece tu Perfil de Fundador
-      </h3>
-      <p className="text-sm text-gray-500 dark:text-[#8B8AA0] max-w-xs leading-relaxed mb-6">
-        Conecta tu LinkedIn para que la IA evalúe tu Founder-Market Fit con mayor precisión.
-        Los inversores y CORFO ponderan críticamente este factor.
-      </p>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-3">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://linkedin.com/in/tu-perfil"
-          className={`w-full px-4 py-3 text-sm border-2 rounded-2xl outline-none transition bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500
-            ${error ? 'border-red-300' : 'border-gray-200 dark:border-white/8'}`}
-        />
-        {error && <p className="text-xs text-red-500 text-left">{error}</p>}
+      {/* Mode toggle */}
+      <div className="flex rounded-xl border border-gray-200 dark:border-white/8 p-1 mb-6">
+        {(['manual', 'linkedin'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+              mode === m
+                ? 'bg-indigo-600 text-white shadow'
+                : 'text-gray-500 dark:text-[#8B8AA0] hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {m === 'manual' ? 'Completar manualmente' : 'Conectar LinkedIn'}
+          </button>
+        ))}
+      </div>
 
-        <button
-          type="submit"
-          className="w-full py-3 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-600/25"
-        >
-          Analizar Perfil con IA
-        </button>
-      </form>
+      {mode === 'linkedin' ? (
+        <form onSubmit={handleLinkedIn} className="space-y-3">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://linkedin.com/in/tu-perfil"
+            className={`w-full px-4 py-3 text-sm border-2 rounded-2xl outline-none transition bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500
+              ${urlError ? 'border-red-300' : 'border-gray-200 dark:border-white/8'}`}
+          />
+          {urlError && <p className="text-xs text-red-500">{urlError}</p>}
+          <button type="submit" className="w-full py-3 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/25">
+            Analizar Perfil con IA
+          </button>
+          <p className="text-[10px] text-gray-400 text-center">
+            Integración disponible próximamente — usá "Completar manualmente" mientras tanto.
+          </p>
+        </form>
+      ) : (
+        <form onSubmit={handleManual} className="space-y-4">
+          {/* Nombre */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide block mb-1.5">
+              Nombre completo *
+            </label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Ej: Luciano Alonso"
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 dark:border-white/8 rounded-xl outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500 transition"
+            />
+          </div>
 
-      <p className="text-[10px] text-gray-400 mt-4 max-w-xs">
-        Tu información se trata de acuerdo a la Ley 21.719 de protección de datos personales de Chile.
-        Solo tú puedes ver y editar estos datos.
-      </p>
+          {/* Título */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide block mb-1.5">
+              Rol actual
+            </label>
+            <input
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+              placeholder="Ej: CEO & Co-fundador en EcoRuta · SaaS B2B"
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 dark:border-white/8 rounded-xl outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500 transition"
+            />
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide block mb-1.5">
+              Experiencia relevante * <span className="font-normal normal-case">(¿por qué sos el fundador correcto para esta idea?)</span>
+            </label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={4}
+              placeholder="Ej: 3 años gestionando rutas de reparto en empresa logística. Identifiqué el problema de optimización en carne propia. Desarrollé 2 productos SaaS anteriores. Contactos en el sector de transporte de Santiago."
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 dark:border-white/8 rounded-xl outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500 transition resize-none"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">{bio.length} / 500 chars mín. 30</p>
+          </div>
+
+          {/* Años */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide block mb-1.5">
+              Años de experiencia en esta industria
+            </label>
+            <input
+              type="number"
+              min={0} max={40}
+              value={years}
+              onChange={(e) => setYears(Number(e.target.value))}
+              className="w-24 px-4 py-2.5 text-sm border-2 border-gray-200 dark:border-white/8 rounded-xl outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500 transition"
+            />
+          </div>
+
+          {/* Skills */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide block mb-1.5">
+              Skills principales
+            </label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {SKILL_SUGGESTIONS.filter(s => !skills.includes(s)).map(s => (
+                <button key={s} type="button" onClick={() => addSkill(s)}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-[#8B8AA0] hover:border-indigo-400 hover:text-indigo-600 transition">
+                  + {s}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {skills.map(s => (
+                <span key={s} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full border border-indigo-200 dark:border-indigo-500/20">
+                  {s}
+                  <button type="button" onClick={() => setSkills(prev => prev.filter(x => x !== s))} className="ml-0.5 text-indigo-400 hover:text-red-500">×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill(skillInput))}
+                placeholder="Ej: Python, Logística, Lean Startup"
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-white/8 rounded-xl outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-400 transition"
+              />
+              <button type="button" onClick={() => addSkill(skillInput)}
+                className="px-3 py-2 text-xs font-semibold text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition">
+                Agregar
+              </button>
+            </div>
+          </div>
+
+          {manualError && <p className="text-xs text-red-500">{manualError}</p>}
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full py-3 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-60"
+          >
+            {saving ? 'Guardando...' : 'Guardar perfil y analizar Founder Fit'}
+          </button>
+
+          <p className="text-[10px] text-gray-400 text-center">
+            Datos tratados según Ley 21.719 de Chile. Solo vos podés ver y editar este perfil.
+          </p>
+        </form>
+      )}
     </div>
   );
 }
@@ -551,7 +729,7 @@ export function FounderProfileTab() {
   if (!founderProfile) {
     return (
       <div>
-        <EmptyState onSubmit={handleExtract} />
+        <EmptyState onSubmit={handleExtract} onManualSave={handleSave} />
         {extractError && (
           <p className="text-center text-xs text-red-500 mt-2 px-4">{extractError}</p>
         )}
