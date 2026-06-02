@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { ScoreGauge } from '@/components/shared/ScoreGauge';
 import { MarketFunnel } from '@/components/shared/MarketFunnel';
 import { CompetitiveAnalysis } from '@/components/shared/CompetitiveAnalysis';
@@ -28,7 +26,6 @@ import { SwotMatrix } from '@/components/shared/SwotMatrix';
 import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
-import { runThrottled } from '@/lib/throttle';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, trackDueDiligenceCompleted, trackEncuestasCTAClicked } from '@/hooks/useAnalytics';
@@ -218,6 +215,7 @@ export function ValidationDetail() {
   const [showPivotModal, setShowPivotModal] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [generatingAdvanced, setGeneratingAdvanced] = useState(false);
+  const [advancedProgress, setAdvancedProgress] = useState<string>('');
   const [generatingVerdict, setGeneratingVerdict] = useState(false);
   // Persiste en sessionStorage por validationId para sobrevivir navegaciones dentro de la sesión
   const verdictSessionKey = `verdict_generated_${id}`;
@@ -647,34 +645,41 @@ export function ValidationDetail() {
         founderCtx.founder_competency_scores   = founderProfile.competency_scores;
       }
 
-      const advancedTasks = [
-        missingAdvanced.risk        ? () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx)               : null,
-        missingAdvanced.unit        ? () => callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx)              : null,
-        missingAdvanced.founder     ? () => callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx)             : null,
-        missingAdvanced.signals     ? () => callAI<MarketSignals>(data.id, 6, 'market_signals', ctx)              : null,
-        missingAdvanced.governance  ? () => callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) : null,
-        missingAdvanced.fundraising ? () => callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx)    : null,
-      ];
+      const advancedTaskDefs: { flag: boolean; label: string; fn: () => Promise<unknown> }[] = [
+        { flag: missingAdvanced.risk,        label: 'Análisis de Riesgos',   fn: () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx) },
+        { flag: missingAdvanced.unit,        label: 'Unit Economics',         fn: () => callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx) },
+        { flag: missingAdvanced.founder,     label: 'Founder Fit',            fn: () => callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx) },
+        { flag: missingAdvanced.signals,     label: 'Señales de Mercado',     fn: () => callAI<MarketSignals>(data.id, 6, 'market_signals', ctx) },
+        { flag: missingAdvanced.governance,  label: 'Gobernanza',             fn: () => callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) },
+        { flag: missingAdvanced.fundraising, label: 'Fundraising',            fn: () => callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx) },
+      ].filter(t => t.flag);
 
-      // Ejecutar secuencialmente con 700ms entre llamadas para evitar 429
-      const settled = await runThrottled(
-        advancedTasks.filter((t): t is NonNullable<typeof t> => t !== null) as Array<() => Promise<unknown>>,
-        700,
-      );
+      const total = advancedTaskDefs.length;
+      // Ejecutar secuencialmente con progreso visible y 700ms entre llamadas para evitar 429
+      const settled: PromiseSettledResult<unknown>[] = [];
+      for (let i = 0; i < advancedTaskDefs.length; i++) {
+        const def = advancedTaskDefs[i];
+        setAdvancedProgress(`${def.label} (${i + 1}/${total})`);
+        const result = await def.fn().then(v => ({ status: 'fulfilled' as const, value: v }))
+          .catch(e => ({ status: 'rejected' as const, reason: e }));
+        settled.push(result);
+        if (i < advancedTaskDefs.length - 1) await new Promise(r => setTimeout(r, 700));
+      }
+      setAdvancedProgress('');
 
-      // Mapear resultados de vuelta a los slots originales (conserva null para skipped)
+      // Mapear resultados al orden de advancedTaskDefs
       let si = 0;
-      const pick = <T,>(flag: boolean): T | null => {
+      const pickFromSettled = <T,>(flag: boolean): T | null => {
         if (!flag) return null;
         const r = settled[si++];
         return r.status === 'fulfilled' ? (r.value as T) : null;
       };
-      const riskResult       = pick<RiskAnalysis>(missingAdvanced.risk);
-      const unitResult       = pick<UnitEconomics>(missingAdvanced.unit);
-      const founderResult    = pick<FounderFit>(missingAdvanced.founder);
-      const signalsResult    = pick<MarketSignals>(missingAdvanced.signals);
-      const governanceResult = pick<GovernanceAssessment>(missingAdvanced.governance);
-      const fundraisingResult= pick<FundraisingRoadmap>(missingAdvanced.fundraising);
+      const riskResult       = pickFromSettled<RiskAnalysis>(missingAdvanced.risk);
+      const unitResult       = pickFromSettled<UnitEconomics>(missingAdvanced.unit);
+      const founderResult    = pickFromSettled<FounderFit>(missingAdvanced.founder);
+      const signalsResult    = pickFromSettled<MarketSignals>(missingAdvanced.signals);
+      const governanceResult = pickFromSettled<GovernanceAssessment>(missingAdvanced.governance);
+      const fundraisingResult= pickFromSettled<FundraisingRoadmap>(missingAdvanced.fundraising);
 
       // La edge function ya persistió cada resultado en la DB.
       // Actualizamos solo el estado local para refrescar la UI sin reload.
@@ -695,6 +700,7 @@ export function ValidationDetail() {
       toast.error('No se pudieron generar los análisis avanzados.');
     } finally {
       setGeneratingAdvanced(false);
+      setAdvancedProgress('');
     }
   };
 
@@ -907,7 +913,6 @@ export function ValidationDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-        <Header />
         <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-10 space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-[#12121A] rounded-2xl border border-white/[0.06] p-6 animate-pulse">
@@ -916,7 +921,6 @@ export function ValidationDetail() {
             </div>
           ))}
         </div>
-        <Footer />
       </div>
     );
   }
@@ -924,9 +928,13 @@ export function ValidationDetail() {
   if (!data) return null;
 
   const summary = data.summary_json;
-  const isGood = (data.validation_score ?? 0) >= 70;
-  const isMid = (data.validation_score ?? 0) >= 40;
-  const scoreBg = isGood
+  // Premium validations don't have summary_json/validation_score; use playbook viability_score as fallback
+  const displayScore = data.validation_score ?? data.playbook_analysis?.viability_score ?? null;
+  const isGood = (displayScore ?? 0) >= 70;
+  const isMid = (displayScore ?? 0) >= 40;
+  const scoreBg = displayScore == null
+    ? 'bg-white/5 border-white/10'
+    : isGood
     ? 'bg-[#34D399]/10 border-[#34D399]/30 shadow-sm shadow-[#34D399]/10'
     : isMid
     ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30 shadow-sm shadow-[#F7C56C]/10'
@@ -935,8 +943,6 @@ export function ValidationDetail() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-      <Header />
-
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
@@ -1350,14 +1356,18 @@ export function ValidationDetail() {
 
                   {/* Left Column: Score & Breakdown */}
                   <div className="md:col-span-7 flex flex-col gap-4">
-                    {/* Score */}
-                    {summary && data.validation_score != null && (
+                    {/* Score — visible for both detailed (summary_json) and premium (playbook viability_score) */}
+                    {displayScore != null && (
                       <div className={`rounded-3xl border-2 p-6 flex items-center ${scoreBg}`}>
                         <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
-                          <ScoreGauge score={data.playbook_analysis.viability_score ?? data.validation_score} />
+                          <ScoreGauge score={displayScore} />
                           <div className="flex-1 text-center sm:text-left">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
-                            <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
+                            <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">
+                              {summary?.feedback ??
+                                data.playbook_analysis?.funding_verdict ??
+                                'Análisis Premium completado.'}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1387,7 +1397,7 @@ export function ValidationDetail() {
 
                     {/* Widgets adicionales para rellenar y complementar la columna */}
                     <div className="flex flex-col gap-4 mt-2">
-                      {summary && <VerdictProsCons summary={summary} />}
+                      {summary && summary.strengths && <VerdictProsCons summary={summary} />}
                       {isQuickMode ? (
                         <QuickDimensionPaywall
                           dimension="Ejecución (15%)"
@@ -2200,8 +2210,6 @@ export function ValidationDetail() {
         </div>
       )}
 
-      <Footer />
-
       {/* Modal contexto de mercado */}
       {showReanalyzeModal && data && (
         <ReanalyzeModal
@@ -2266,8 +2274,12 @@ export function ValidationDetail() {
             <div className="w-12 h-12 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
             <div>
               <p className="font-bold text-[#F0EFF8] mb-1">Generando análisis avanzados</p>
-              <p className="text-sm text-[#8B8AA0]">Riesgos · Unit Economics · Founder Fit · Señales · Gobernanza · Fundraising</p>
-              <p className="text-xs text-[#4A495E] mt-1">Puede tomar 15–30 segundos...</p>
+              {advancedProgress ? (
+                <p className="text-sm text-[#7C6FF7] font-semibold">{advancedProgress}</p>
+              ) : (
+                <p className="text-sm text-[#8B8AA0]">Iniciando...</p>
+              )}
+              <p className="text-xs text-[#4A495E] mt-2">No cierres ni recargues esta página.<br/>Puede tomar hasta 90 segundos en total.</p>
             </div>
           </div>
         </div>

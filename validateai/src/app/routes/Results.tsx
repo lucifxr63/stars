@@ -5,8 +5,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useTrainingData } from '@/hooks/useTrainingData';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 
 interface ValidationRow {
   id: string;
@@ -136,8 +134,6 @@ export function Results() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
-      <Header />
-
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
         {/* Page header */}
         <div className="flex items-start justify-between mb-8">
@@ -260,8 +256,6 @@ export function Results() {
           </div>
         )}
       </div>
-
-      <Footer />
 
       {/* Pivot Modal */}
       {pivotTarget && (

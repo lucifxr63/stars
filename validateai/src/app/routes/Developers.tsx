@@ -1,7 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
   Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
@@ -332,8 +330,6 @@ export function Developers() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
-      <Header />
-
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-8">
 
         {/* ── Header ── */}
@@ -859,8 +855,6 @@ export function Developers() {
           )}
         </div>
       </main>
-
-      <Footer />
 
       {/* ── Modal Crear Llave ── */}
       {showModal && (

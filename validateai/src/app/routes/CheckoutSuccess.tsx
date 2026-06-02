@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 
 export function CheckoutSuccess() {
   const [tier, setTier] = useState<string | null>(null);
@@ -38,7 +36,6 @@ export function CheckoutSuccess() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0A0A0F]">
-      <Header />
       <main className="flex-1 flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
           {loading ? (
@@ -97,7 +94,6 @@ export function CheckoutSuccess() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

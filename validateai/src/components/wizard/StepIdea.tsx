@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepIdeaSchema, type StepIdea } from '@/types/validation';
@@ -63,8 +64,9 @@ function DescriptionQuality({ length }: { length: number }) {
   );
 }
 
-export function StepIdea({ flowCopy }: { flowCopy?: FlowCopy }) {
+export function StepIdea({ flowCopy, isPrefilled }: { flowCopy?: FlowCopy; isPrefilled?: boolean }) {
   const { stepIdea, updateStepIdea, nextStep, setStep, validationMode, setValidationMode } = useValidationStore();
+  const [showPrefillBadge, setShowPrefillBadge] = useState(!!isPrefilled);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<StepIdea>({
     resolver: zodResolver(StepIdeaSchema),
@@ -107,6 +109,20 @@ export function StepIdea({ flowCopy }: { flowCopy?: FlowCopy }) {
 
   return (
     <div className="space-y-6">
+      {showPrefillBadge && (
+        <div className="flex items-center justify-between px-3 py-2.5 bg-[#7C6FF7]/8 rounded-xl border border-[#7C6FF7]/20">
+          <span className="text-xs text-[#7C6FF7] dark:text-[#A99FF9]">
+            ✨ Datos pre-llenados desde <strong>Mi Startup</strong> — edita libremente.
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowPrefillBadge(false)}
+            className="ml-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors text-base leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {validationMode !== 'premium' && (
         <FlowSelector
           value={validationMode as 'quick' | 'detailed'}
