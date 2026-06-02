@@ -483,6 +483,7 @@ export function StepGenerating() {
 
         trackWizardStep(4, 'Generación', 'premium');
         toast.success('Análisis Premium completado');
+        useValidationStore.getState().reset();
         navigate(`/results/${currentId}`);
         return;
       }
@@ -496,6 +497,7 @@ export function StepGenerating() {
           .eq('id', validationId)
           .single();
         if (existing?.status === 'completed') {
+          useValidationStore.getState().reset();
           navigate(`/results/${existing.id}`, { replace: true });
           return;
         }
@@ -610,6 +612,7 @@ export function StepGenerating() {
       trackValidationCompleted(currentId!, 0, context.idea_industry as string ?? '', tier);
 
       toast.success('Análisis completado');
+      useValidationStore.getState().reset();
       navigate(`/results/${currentId}`);
 
     } catch (error) {
