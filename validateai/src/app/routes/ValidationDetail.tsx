@@ -58,6 +58,7 @@ import type {
   LeanRoadmap,
   FinancialProjection,
   ComplianceRoadmap,
+  StepIdea,
 } from '@/types/validation';
 
 interface ValidationFull {
@@ -101,6 +102,9 @@ interface ValidationFull {
   current_solution: string | null;
   acquisition_channel: string | null;
   tech_level: string | null;
+  idea_problem: string | null;
+  traction_status: string | null;
+  team_composition: string | null;
   share_token: string | null;
   created_at: string;
   completed_at: string | null;
@@ -119,7 +123,34 @@ interface ValidationFull {
 
 // ── Paywall visual para el flujo rápido ───────────────────────────────────────
 // Aplica blur + candado + CTA independientemente del tier (aprobado Mesa Directiva 01-Jun-2026).
-function QuickDimensionPaywall({ dimension, description }: { dimension: string; description: string }) {
+// El CTA resetea el store (limpiando la validación quick completada) y pre-rellena
+// la idea para que el usuario arranque el flujo detallado sin reescribir su idea.
+function QuickDimensionPaywall({
+  dimension,
+  description,
+  ideaData,
+}: {
+  dimension: string;
+  description: string;
+  ideaData?: { idea_name: string | null; idea_description: string | null; idea_industry: string | null };
+}) {
+  const navigate = useNavigate();
+  const { reset, updateStepIdea, setValidationMode } = useValidationStore();
+
+  const handleUpgrade = () => {
+    reset();
+    if (ideaData?.idea_name) {
+      updateStepIdea({
+        idea_name:        ideaData.idea_name        ?? '',
+        idea_description: ideaData.idea_description ?? '',
+        idea_industry:    (ideaData.idea_industry ?? '') as StepIdea['idea_industry'],
+        current_solution: '',
+      });
+    }
+    setValidationMode('detailed');
+    navigate('/validate');
+  };
+
   return (
     <div className="relative rounded-2xl overflow-hidden border border-white/8 bg-[#12121A] h-full min-h-[180px]">
       {/* Contenido difuminado de fondo */}
@@ -143,15 +174,15 @@ function QuickDimensionPaywall({ dimension, description }: { dimension: string; 
         </div>
         <p className="text-sm font-bold text-[#F0EFF8] mb-1">{dimension} — Sin datos suficientes</p>
         <p className="text-xs text-[#8B8AA0] mb-4 max-w-[220px] leading-relaxed">{description}</p>
-        <a
-          href="/validate"
+        <button
+          onClick={handleUpgrade}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#7C6FF7] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition-colors"
         >
           Completa el análisis Detallado en 5 minutos
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -271,12 +302,17 @@ export function ValidationDetail() {
     fetch();
   }, [id, navigate]);
 
-  // Auto-genera el playbook la primera vez que el usuario ve Veredicto o Validación
+  // Auto-genera el playbook la primera vez que el usuario ve Veredicto o Validación.
+  // _fallo_elegante: true indica que el RAG no tuvo chunks suficientes (vault vacío /
+  // OPENAI_API_KEY ausente) — se trata igual que null para permitir reintentos.
+  const playbookReady = data?.playbook_analysis &&
+    !(data.playbook_analysis as unknown as Record<string, unknown>)._fallo_elegante;
+
   useEffect(() => {
     if (
       (activeTab !== 'Veredicto' && activeTab !== 'Validación') ||
       !data ||
-      data.playbook_analysis ||
+      playbookReady ||
       generatingVerdict ||
       verdictGenerated
     ) return;
@@ -288,20 +324,26 @@ export function ValidationDetail() {
       setVerdictGenerated(true);
       try {
         const ctx: Record<string, unknown> = {
-          idea_name: data.idea_name,
-          idea_description: data.idea_description,
-          idea_industry: data.idea_industry,
-          target_country: data.target_country,
-          business_model: data.business_model,
-          business_stage: data.business_stage,
-          pricing_range: data.pricing_range,
-          customer_segment: data.customer_segment,
-          value_proposition: data.value_proposition,
-          differentiator: data.differentiator,
-          questions_answers: data.questions_answers,
-          current_solution: data.current_solution,
+          idea_name:           data.idea_name,
+          idea_description:    data.idea_description,
+          idea_problem:        data.idea_problem,
+          idea_industry:       data.idea_industry,
+          target_country:      data.target_country,
+          business_model:      data.business_model,
+          business_stage:      data.business_stage,
+          pricing_range:       data.pricing_range,
+          // Para quick mode: quick_icp sustituye a customer_segment
+          customer_segment:    data.customer_segment ?? data.quick_icp,
+          quick_icp:           data.quick_icp,
+          value_proposition:   data.value_proposition,
+          differentiator:      data.differentiator,
+          questions_answers:   data.questions_answers,
+          current_solution:    data.current_solution,
           acquisition_channel: data.acquisition_channel,
-          tech_level: data.tech_level,
+          tech_level:          data.tech_level,
+          traction_status:     data.traction_status,
+          team_composition:    data.team_composition,
+          validation_mode:     data.validation_mode,
         };
         const result = await callAI<PlaybookAnalysis>(data.id, 6, 'playbook_analysis', ctx);
         if (result) {
@@ -322,10 +364,13 @@ export function ValidationDetail() {
       }
     };
     generate();
-  }, [activeTab, data?.id, data?.playbook_analysis]);
+  }, [activeTab, data?.id, playbookReady]);
 
-  const needsContextModal = !data?.target_country || !data?.business_model
-    || !data?.business_stage || !data?.pricing_range;
+  // business_stage no se recolecta en ningún paso del wizard — excluido de la condición
+  const needsContextModal = isQuickMode
+    || !data?.target_country
+    || !data?.business_model
+    || !data?.pricing_range;
 
   const missingAnalyses = {
     competitive: !data?.competitive_analysis,
@@ -651,6 +696,20 @@ export function ValidationDetail() {
     } finally {
       setGeneratingAdvanced(false);
     }
+  };
+
+  const handleUpgradeToDetailed = () => {
+    if (!data) return;
+    const store = useValidationStore.getState();
+    store.reset();
+    store.updateStepIdea({
+      idea_name:        data.idea_name        ?? '',
+      idea_description: data.idea_description ?? '',
+      idea_industry:    (data.idea_industry ?? '') as StepIdea['idea_industry'],
+      current_solution: '',
+    });
+    store.setValidationMode('detailed');
+    navigate('/validate');
   };
 
   const handleShare = async () => {
@@ -1175,7 +1234,7 @@ export function ValidationDetail() {
 
             switch (t) {
               case 'Veredicto':
-                hasData = data.playbook_analysis != null;
+                hasData = !!playbookReady;
                 tabIcon = (
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -1316,9 +1375,9 @@ export function ValidationDetail() {
                               <p className="text-xs text-[#A78BFA] leading-relaxed">
                                 <strong className="text-[#C4BCFC]">Score parcial ({data.validation_score}/100).</strong>{' '}
                                 Mercado, Competencia y Ejecución requieren más datos.{' '}
-                                <a href="/validate" className="underline font-semibold hover:text-[#C4BCFC] transition-colors">
+                                <button onClick={handleUpgradeToDetailed} className="underline font-semibold hover:text-[#C4BCFC] transition-colors">
                                   Completa el análisis Detallado para desbloquear tu score real →
-                                </a>
+                                </button>
                               </p>
                             </div>
                           </div>
@@ -1333,6 +1392,7 @@ export function ValidationDetail() {
                         <QuickDimensionPaywall
                           dimension="Ejecución (15%)"
                           description="El Founder Fit y el análisis de equipo requieren los datos de tracción y composición del equipo fundador."
+                          ideaData={data}
                         />
                       ) : (
                         <>
@@ -1617,6 +1677,7 @@ export function ValidationDetail() {
                   <QuickDimensionPaywall
                     dimension="Mercado (20%)"
                     description="El tamaño de mercado (TAM/SAM/SOM) requiere datos de país, precio y segmento detallado."
+                    ideaData={data}
                   />
                 </div>
               ) : data.market_sizing ? (
@@ -1648,6 +1709,7 @@ export function ValidationDetail() {
                   <QuickDimensionPaywall
                     dimension="Competencia (15%)"
                     description="El mapeo de competidores requiere la solución actual de incumbentes y el canal de adquisición."
+                    ideaData={data}
                   />
                 </div>
               ) : data.competitive_analysis ? (
@@ -1707,6 +1769,7 @@ export function ValidationDetail() {
                   <QuickDimensionPaywall
                     dimension="Unit Economics"
                     description="CAC, LTV y break-even requieren datos de precio, segmento y canal de adquisición del análisis Detallado."
+                    ideaData={data}
                   />
                 </div>
               ) : !sections.includes('unitEconomics') ? (
@@ -1764,6 +1827,7 @@ export function ValidationDetail() {
                   <QuickDimensionPaywall
                     dimension="Análisis de Riesgos"
                     description="El análisis en 4 dimensiones (mercado, técnico, regulatorio y timing) requiere los datos del análisis Detallado."
+                    ideaData={data}
                   />
                 ) : !sections.includes('risks') ? (
                   <LockedSection

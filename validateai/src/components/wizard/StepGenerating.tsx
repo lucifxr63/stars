@@ -435,7 +435,7 @@ export function StepGenerating() {
               user_id: session.user.id,
               status: 'in_progress',
               current_step: 4,
-              validation_mode: 'quick',
+              validation_mode: 'premium',
               idea_name: stepIdea.idea_name,
               idea_description: stepIdea.idea_description,
               idea_industry: stepIdea.idea_industry,
