@@ -403,6 +403,7 @@ export function StepGenerating() {
       const updatedTasks = tasks.map(t => t.id === task.id ? { ...t, status: 'success' as const } : t);
       if (updatedTasks.every(t => t.status === 'success')) {
         await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId);
+        useValidationStore.getState().reset();
         navigate(`/results/${currentId}`);
       }
     } catch {
@@ -573,6 +574,7 @@ export function StepGenerating() {
 
       if (pendingTasks.length === 0) {
         await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId!);
+        useValidationStore.getState().reset();
         navigate(`/results/${currentId}`);
         return;
       }
