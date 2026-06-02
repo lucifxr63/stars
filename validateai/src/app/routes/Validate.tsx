@@ -190,6 +190,7 @@ export function Validate() {
         if (error || !data) { reset(); return; }
 
         if (data.status === 'completed') {
+          reset();
           navigate(`/results/${data.id}`, { replace: true });
           return;
         }
