@@ -38,7 +38,7 @@ export function AuthCallback() {
           .eq('id', session.user.id);
       }
 
-      navigate('/validate', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
 
     handleCallback();

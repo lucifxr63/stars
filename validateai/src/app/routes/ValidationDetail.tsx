@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { ScoreGauge } from '@/components/shared/ScoreGauge';
 import { MarketFunnel } from '@/components/shared/MarketFunnel';
 import { CompetitiveAnalysis } from '@/components/shared/CompetitiveAnalysis';
@@ -915,7 +913,6 @@ export function ValidationDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-        <Header />
         <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-10 space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-[#12121A] rounded-2xl border border-white/[0.06] p-6 animate-pulse">
@@ -924,7 +921,6 @@ export function ValidationDetail() {
             </div>
           ))}
         </div>
-        <Footer />
       </div>
     );
   }
@@ -947,8 +943,6 @@ export function ValidationDetail() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-      <Header />
-
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
@@ -2215,8 +2209,6 @@ export function ValidationDetail() {
           )}
         </div>
       )}
-
-      <Footer />
 
       {/* Modal contexto de mercado */}
       {showReanalyzeModal && data && (

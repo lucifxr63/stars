@@ -119,6 +119,13 @@ export function Validate() {
     quick:    'Análisis rápido',
     detailed: 'Análisis completo',
   });
+  const [isPrefilled, setIsPrefilled] = useState(false);
+  // Inicializa en true si ya hay sesión activa o datos en el store (retomar validación),
+  // para que no mostremos un spinner innecesario en esos casos.
+  const [prefillReady, setPrefillReady] = useState(() => {
+    const s = useValidationStore.getState();
+    return !!s.validationId || !!s.stepIdea.idea_name;
+  });
 
   const isPremiumMode = validationMode === 'premium';
   const isQuickMode = validationMode === 'quick';
@@ -422,6 +429,35 @@ export function Validate() {
     posthog.onFeatureFlags(applyFlag);
   }, []);
 
+  // Pre-llena StepIdea desde el perfil de Mi Startup (solo en validaciones nuevas)
+  useEffect(() => {
+    if (prefillReady) return;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('startup_name, startup_sector, founder_pitch')
+          .eq('id', user.id)
+          .single();
+        if (profile) {
+          const patch: Record<string, string> = {};
+          if (profile.startup_name)   patch.idea_name        = profile.startup_name;
+          if (profile.startup_sector) patch.idea_industry    = profile.startup_sector;
+          if (profile.founder_pitch)  patch.idea_description = profile.founder_pitch;
+          if (Object.keys(patch).length > 0) {
+            updateStepIdea(patch);
+            setIsPrefilled(true);
+          }
+        }
+      } finally {
+        setPrefillReady(true);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Ciclo de vida del Exit Dialog:
   // — Al abrir: pre-llena el input con el email cacheado (si existe).
   // — Al cerrar: resetea estados para que la próxima apertura comience limpia.
@@ -525,9 +561,13 @@ export function Validate() {
                 Steps 2-3 (flujo detallado) — reciben ref para el auto-guardado de 30s.
                 El resto (premium, StepGenerating) se despachan via stepMap. */}
             {currentStep === 1 && !isPremiumMode ? (
-              isQuickMode
+              !prefillReady ? (
+                <div className="h-40 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : isQuickMode
                 ? <StepIdeaQuick flowCopy={flowCopy} />
-                : <StepIdea flowCopy={flowCopy} />
+                : <StepIdea flowCopy={flowCopy} isPrefilled={isPrefilled} />
             ) : currentStep === 2 && !isPremiumMode && !isQuickMode ? (
               <StepMarket ref={stepAutoSaveRef} />
             ) : currentStep === 3 && !isPremiumMode ? (

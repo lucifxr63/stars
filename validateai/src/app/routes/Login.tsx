@@ -35,7 +35,7 @@ export function Login() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate('/validate');
+        navigate('/dashboard');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';

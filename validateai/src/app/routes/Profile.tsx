@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { FounderProfileTab } from '@/components/shared/FounderProfileTab';
 import type { User } from '@supabase/supabase-js';
 
@@ -487,7 +485,6 @@ export function Profile() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0A0A0F]">
-      <Header />
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-10 space-y-4">
 
         <div className="mb-2">
@@ -529,7 +526,6 @@ export function Profile() {
         )}
 
       </main>
-      <Footer />
     </div>
   );
 }
