@@ -222,6 +222,9 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
 
   useValidationStore.subscribe((state) => {
     if (isApplyingRemoteState) return;
-    channel.postMessage({ sender: tabId, state });
+    // Only send serializable data fields — functions can't be cloned by structured clone.
+    const dataKeys = Object.keys(initialState) as (keyof typeof initialState)[];
+    const serializable = Object.fromEntries(dataKeys.map(k => [k, state[k]]));
+    channel.postMessage({ sender: tabId, state: serializable });
   });
 }
