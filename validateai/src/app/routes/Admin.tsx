@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
 const ContentStudio = lazy(() => import('@/components/admin/ContentStudio').then(m => ({ default: m.ContentStudio })));
 const FigmaAdminPanel = lazy(() => import('@/components/figma/FigmaAdminPanel').then(m => ({ default: m.FigmaAdminPanel })));
 const SitemapPanel = lazy(() => import('@/components/admin/SitemapPanel').then(m => ({ default: m.SitemapPanel })));
@@ -74,7 +74,7 @@ function modelBadge(model: string | null) {
 }
 
 function modelLabel(model: string | null) {
-  if (!model) return 'â€”';
+  if (!model) return '—';
   if (model.includes('claude')) return model.replace('claude-', '').replace(/-\d{8}$/, '');
   return model;
 }
@@ -116,7 +116,7 @@ function KPI({ label, value, sub, icon, accent = '#14b8a6', trend }: {
           {sub && <p className="text-xs text-gray-400">{sub}</p>}
           {trend && (
             <span className={`text-xs font-semibold ${trend.value >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
-              {trend.value >= 0 ? 'â†‘' : 'â†“'} {Math.abs(trend.value)} {trend.label}
+              {trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)} {trend.label}
             </span>
           )}
         </div>
@@ -142,7 +142,7 @@ function Card({ title, children, className = '', action }: {
 
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
-    id: 'metrics', label: 'MÃ©tricas',
+    id: 'metrics', label: 'Métricas',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
   },
   {
@@ -182,24 +182,24 @@ function PaginationBar({ page, total, pageSize, onChange }: {
   if (totalPages <= 1) return null;
   return (
     <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100 dark:border-white/5 text-xs text-gray-400">
-      <span>{page * pageSize + 1}â€“{Math.min((page + 1) * pageSize, total)} de {total}</span>
+      <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, total)} de {total}</span>
       <div className="flex gap-1">
         <button
           disabled={page === 0}
           onClick={() => onChange(page - 1)}
           className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition"
-        >â† Prev</button>
+        >← Prev</button>
         <button
           disabled={page >= totalPages - 1}
           onClick={() => onChange(page + 1)}
           className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition"
-        >Next â†’</button>
+        >Next →</button>
       </div>
     </div>
   );
 }
 
-// â”€â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 25;
 
@@ -268,7 +268,7 @@ export function Admin() {
 
   useEffect(() => { load(valPage, aiPage, profPage, valSearch); }, [load, valPage, aiPage, profPage, valSearch]);
 
-  // â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Derived ───────────────────────────────────────────────────────────────
   const completed = validations.filter(v => v.status === 'completed');
   const inProgress = validations.filter(v => v.status === 'in_progress');
   const avgScore = completed.length
@@ -287,7 +287,7 @@ export function Admin() {
   }).length;
   const userTrend = usersThisWeek - usersLastWeek;
 
-  // Validaciones por dÃ­a â€” Ãºltimos 14 dÃ­as
+  // Validaciones por día — últimos 14 días
   const valsByDay = (() => {
     const map: Record<string, number> = {};
     for (let i = 13; i >= 0; i--) {
@@ -298,7 +298,7 @@ export function Admin() {
     return Object.entries(map).map(([date, count]) => ({ date: date.slice(5), count }));
   })();
 
-  // Tokens por dÃ­a â€” Ãºltimos 14 dÃ­as
+  // Tokens por día — últimos 14 días
   const tokensByDay = (() => {
     const map: Record<string, number> = {};
     for (let i = 13; i >= 0; i--) {
@@ -311,18 +311,18 @@ export function Admin() {
 
   // Score dist
   const scoreDist = [
-    { label: '0â€“25', count: completed.filter(v => (v.validation_score ?? 0) <= 25).length },
-    { label: '26â€“50', count: completed.filter(v => (v.validation_score ?? 0) > 25 && (v.validation_score ?? 0) <= 50).length },
-    { label: '51â€“75', count: completed.filter(v => (v.validation_score ?? 0) > 50 && (v.validation_score ?? 0) <= 75).length },
-    { label: '76â€“100', count: completed.filter(v => (v.validation_score ?? 0) > 75).length },
+    { label: '0–25', count: completed.filter(v => (v.validation_score ?? 0) <= 25).length },
+    { label: '26–50', count: completed.filter(v => (v.validation_score ?? 0) > 25 && (v.validation_score ?? 0) <= 50).length },
+    { label: '51–75', count: completed.filter(v => (v.validation_score ?? 0) > 50 && (v.validation_score ?? 0) <= 75).length },
+    { label: '76–100', count: completed.filter(v => (v.validation_score ?? 0) > 75).length },
   ];
 
   // Industrias
   const indMap: Record<string, number> = {};
-  validations.forEach(v => { const k = v.idea_industry ?? 'Sin categorÃ­a'; indMap[k] = (indMap[k] ?? 0) + 1; });
+  validations.forEach(v => { const k = v.idea_industry ?? 'Sin categoría'; indMap[k] = (indMap[k] ?? 0) + 1; });
   const industries = Object.entries(indMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, value]) => ({ name, value }));
 
-  // PaÃ­ses
+  // Países
   const countryMap: Record<string, number> = {};
   validations.forEach(v => { if (v.target_country) { countryMap[v.target_country] = (countryMap[v.target_country] ?? 0) + 1; } });
   const countries = Object.entries(countryMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
@@ -337,14 +337,14 @@ export function Admin() {
   aiInteractions.forEach(a => { stepMap[a.step] = (stepMap[a.step] ?? 0) + 1; });
   const byStep = Object.entries(stepMap).sort((a, b) => +a[0] - +b[0]).map(([step, count]) => ({ step: `S${step}`, count }));
 
-  // PredicciÃ³n
+  // Predicción
   const avg7 = valsByDay.slice(-7).reduce((s, d) => s + d.count, 0) / 7;
   const projected30 = Math.round(avg7 * 30);
 
   // Filtro de validaciones
   const filteredValidations = statusFilter === 'all' ? validations : validations.filter(v => v.status === statusFilter);
 
-  // â”€â”€ Sistema / Health â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sistema / Health ──────────────────────────────────────────────────────
 
   // Funnel de wizard
   const wizardFunnel = [
@@ -355,7 +355,7 @@ export function Admin() {
     { step: 'Completaron', count: completed.length },
   ];
 
-  // DistribuciÃ³n de tiers
+  // Distribución de tiers
   const tierCounts = { free: 0, basic: 0, pro: 0 };
   profiles.forEach(p => {
     const t = (p.tier ?? 'free') as keyof typeof tierCounts;
@@ -368,7 +368,7 @@ export function Admin() {
     { name: 'Pro', value: tierCounts.pro, color: '#8b5cf6' },
   ];
 
-  // Prompt types mÃ¡s usados
+  // Prompt types más usados
   const promptMap: Record<string, { count: number; tokens: number }> = {};
   aiInteractions.forEach(a => {
     const k = a.prompt_type ?? 'unknown';
@@ -381,7 +381,7 @@ export function Admin() {
     .slice(0, 10)
     .map(([type, { count, tokens }]) => ({ type, count, tokens }));
 
-  // DistribuciÃ³n de modelos
+  // Distribución de modelos
   const modelMap: Record<string, number> = {};
   aiInteractions.forEach(a => {
     const k = modelLabel(a.model) || 'unknown';
@@ -408,10 +408,10 @@ export function Admin() {
 
   // Paso de mayor abandono
   const abandonStep = (() => {
-    let maxDrop = 0; let dropStep = 'â€”';
+    let maxDrop = 0; let dropStep = '—';
     for (let i = 0; i < wizardFunnel.length - 1; i++) {
       const drop = wizardFunnel[i].count - wizardFunnel[i + 1].count;
-      if (drop > maxDrop) { maxDrop = drop; dropStep = `${wizardFunnel[i].step} â†’ ${wizardFunnel[i + 1].step}`; }
+      if (drop > maxDrop) { maxDrop = drop; dropStep = `${wizardFunnel[i].step} → ${wizardFunnel[i + 1].step}`; }
     }
     return dropStep;
   })();
@@ -429,7 +429,7 @@ export function Admin() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex">
-      {/* â”€â”€ Sidebar â€” hidden en mÃ³vil â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Sidebar — hidden en móvil ─────────────────────────────────── */}
       <aside className="hidden lg:flex w-56 bg-gray-900 flex-shrink-0 flex-col min-h-screen sticky top-0 h-screen">
         <div className="px-5 py-6 border-b border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-2.5">
@@ -493,7 +493,7 @@ export function Admin() {
         </div>
       </aside>
 
-      {/* â”€â”€ Main content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Main content ─────────────────────────────────────────────────── */}
       <main className="flex-1 overflow-auto min-w-0">
         <div className="bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/5 px-4 md:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sticky top-0 z-10">
           <div>
@@ -501,21 +501,21 @@ export function Admin() {
               {NAV_ITEMS.find(n => n.id === tab)?.label}
             </h1>
             <p className="text-xs text-gray-400 mt-0.5">
-              {tab === 'metrics' && `${validations.length} validaciones Â· ${profiles.length} usuarios`}
-              {tab === 'users' && `${profiles.length} usuarios Â· ${usersThisWeek} esta semana`}
-              {tab === 'validations' && `${completed.length} completadas Â· ${inProgress.length} en progreso`}
-              {tab === 'ai' && `${aiInteractions.length} interacciones Â· ${totalTokens.toLocaleString()} tokens`}
-              {tab === 'health' && `Funnel Â· Tiers Â· Prompts Â· Modelos`}
-              {tab === 'content' && 'Genera imÃ¡genes + copy para LinkedIn'}
-              {tab === 'figma' && 'Conecta tu cuenta y escanea el mapa de navegaciÃ³n de tus prototipos'}
-              {tab === 'sitemap' && `Ãrbol de navegaciÃ³n de validus.scouttech.lat Â· ${16} rutas`}
+              {tab === 'metrics' && `${validations.length} validaciones · ${profiles.length} usuarios`}
+              {tab === 'users' && `${profiles.length} usuarios · ${usersThisWeek} esta semana`}
+              {tab === 'validations' && `${completed.length} completadas · ${inProgress.length} en progreso`}
+              {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
+              {tab === 'health' && `Funnel · Tiers · Prompts · Modelos`}
+              {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
+              {tab === 'figma' && 'Conecta tu cuenta y escanea el mapa de navegación de tus prototipos'}
+              {tab === 'sitemap' && `Árbol de navegación de validus.scouttech.lat · ${16} rutas`}
             </p>
           </div>
         </div>
 
         <div className="px-4 md:px-8 py-4 md:py-6 space-y-4 md:space-y-6 pb-24 lg:pb-6">
 
-          {/* â•â• MÃ‰TRICAS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+          {/* ══ MÉTRICAS ═══════════════════════════════════════════════════ */}
           {tab === 'metrics' && (
             <>
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
@@ -536,8 +536,8 @@ export function Admin() {
                 />
                 <KPI
                   label="Score promedio"
-                  value={completed.length ? `${avgScore} pts` : 'â€”'}
-                  sub={completed.length ? 'en completadas' : 'Sin completadas aÃºn'}
+                  value={completed.length ? `${avgScore} pts` : '—'}
+                  sub={completed.length ? 'en completadas' : 'Sin completadas aún'}
                   accent="#f59e0b"
                   icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}
                 />
@@ -550,9 +550,9 @@ export function Admin() {
                 />
               </div>
 
-              {/* PredicciÃ³n */}
+              {/* Predicción */}
               <div className="bg-gray-900 rounded-2xl p-4 md:p-6">
-                <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-widest mb-4">PredicciÃ³n â€” prÃ³ximos 30 dÃ­as</p>
+                <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-widest mb-4">Predicción — próximos 30 días</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                   <div>
                     <p className="text-3xl md:text-4xl font-black text-teal-400">{projected30}</p>
@@ -564,14 +564,14 @@ export function Admin() {
                   </div>
                   <div>
                     <p className="text-3xl md:text-4xl font-black text-amber-400">{avg7.toFixed(1)}</p>
-                    <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1.5">validaciones/dÃ­a (prom. 7d)</p>
+                    <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1.5">validaciones/día (prom. 7d)</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-700 dark:text-[#C4C4D4] mt-5">Basado en promedio Ãºltimos 7 dÃ­as Ã— 30.</p>
+                <p className="text-xs text-gray-700 dark:text-[#C4C4D4] mt-5">Basado en promedio últimos 7 días × 30.</p>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                <Card title="Validaciones por dÃ­a â€” Ãºltimos 14 dÃ­as">
+                <Card title="Validaciones por día — últimos 14 días">
                   <ResponsiveContainer width="100%" height={210}>
                     <LineChart data={valsByDay}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -583,9 +583,9 @@ export function Admin() {
                   </ResponsiveContainer>
                 </Card>
 
-                <Card title="DistribuciÃ³n de scores">
+                <Card title="Distribución de scores">
                   {completed.length === 0 ? (
-                    <div className="h-[210px] flex items-center justify-center text-sm text-gray-300">Sin validaciones completadas aÃºn</div>
+                    <div className="h-[210px] flex items-center justify-center text-sm text-gray-300">Sin validaciones completadas aún</div>
                   ) : (
                     <ResponsiveContainer width="100%" height={210}>
                       <BarChart data={scoreDist} barCategoryGap="35%">
@@ -599,9 +599,9 @@ export function Admin() {
                   )}
                 </Card>
 
-                <Card title="Industrias mÃ¡s validadas">
+                <Card title="Industrias más validadas">
                   {industries.length === 0 ? (
-                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aÃºn</div>
+                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
                   ) : (
                     <div className="flex items-center gap-6">
                       <ResponsiveContainer width="45%" height={180}>
@@ -625,9 +625,9 @@ export function Admin() {
                   )}
                 </Card>
 
-                <Card title="Validaciones por paÃ­s">
+                <Card title="Validaciones por país">
                   {countries.length === 0 ? (
-                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aÃºn</div>
+                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
                   ) : (
                     <div className="space-y-2.5">
                       {countries.map((c, i) => (
@@ -648,7 +648,7 @@ export function Admin() {
 
                 <Card title="Validaciones por etapa">
                   {stages.length === 0 ? (
-                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aÃºn</div>
+                    <div className="h-[180px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
                   ) : (
                     <ResponsiveContainer width="100%" height={180}>
                       <BarChart data={stages} barCategoryGap="35%">
@@ -677,21 +677,21 @@ export function Admin() {
             </>
           )}
 
-          {/* â•â• USUARIOS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+          {/* ══ USUARIOS ═══════════════════════════════════════════════════ */}
           {tab === 'users' && (
             <>
               <div className="grid grid-cols-3 gap-3 md:gap-4">
                 {tierDist.map(t => (
                   <KPI key={t.name} label={`Plan ${t.name}`} value={t.value}
-                    sub={profiles.length ? `${Math.round((t.value / profiles.length) * 100)}% del total` : 'â€”'}
+                    sub={profiles.length ? `${Math.round((t.value / profiles.length) * 100)}% del total` : '—'}
                     accent={t.color}
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>}
                   />
                 ))}
               </div>
 
-              {/* â”€â”€ Preview de tier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-              <Card title="Preview de Tier â€” vista como usuario">
+              {/* ── Preview de tier ─────────────────────────────────────────── */}
+              <Card title="Preview de Tier — vista como usuario">
                 <div className="flex flex-wrap gap-2 items-center">
                   {(['free', 'pro', 'premium'] as UserTier[]).map(t => {
                     const isActive = activePreview === t;
@@ -711,7 +711,7 @@ export function Admin() {
                         }}
                         className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${cls}`}
                       >
-                        {isActive ? 'âœ“ ' : ''}{t.charAt(0).toUpperCase() + t.slice(1)}
+                        {isActive ? '✓ ' : ''}{t.charAt(0).toUpperCase() + t.slice(1)}
                       </button>
                     );
                   })}
@@ -729,7 +729,7 @@ export function Admin() {
                 </div>
               </Card>
 
-              {/* â”€â”€ Tabla de usuarios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+              {/* ── Tabla de usuarios ───────────────────────────────────────── */}
               <Card title={`${profiles.length} usuarios`}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -790,7 +790,7 @@ export function Admin() {
                               {userValsThisWeek > 0 ? (
                                 <span className="text-xs font-semibold text-emerald-600">+{userValsThisWeek}</span>
                               ) : (
-                                <span className="text-xs text-gray-300">â€”</span>
+                                <span className="text-xs text-gray-300">—</span>
                               )}
                             </td>
                             <td className="py-3.5 text-xs text-gray-400">{fmt(p.created_at)}</td>
@@ -800,7 +800,7 @@ export function Admin() {
                     </tbody>
                   </table>
                   {profiles.length === 0 && (
-                    <p className="text-sm text-gray-300 text-center py-12">Sin usuarios registrados aÃºn</p>
+                    <p className="text-sm text-gray-300 text-center py-12">Sin usuarios registrados aún</p>
                   )}
                 </div>
                 <PaginationBar
@@ -811,7 +811,7 @@ export function Admin() {
             </>
           )}
 
-          {/* â•â• VALIDACIONES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+          {/* ══ VALIDACIONES ═══════════════════════════════════════════════ */}
           {tab === 'validations' && (
             <Card
               title={`${valTotal} validaciones`}
@@ -851,7 +851,7 @@ export function Admin() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-white/5">
-                      {['Idea', 'Usuario', 'Industria', 'PaÃ­s', 'Etapa', 'Estado', 'Score', 'Progreso', 'Fecha', ''].map(h => (
+                      {['Idea', 'Usuario', 'Industria', 'País', 'Etapa', 'Estado', 'Score', 'Progreso', 'Fecha', ''].map(h => (
                         <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-4 whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
@@ -860,7 +860,7 @@ export function Admin() {
                     {filteredValidations.map(v => {
                       const prof = v.profile as { full_name: string | null; avatar_url: string | null } | null;
                       const displayName = v.idea_name
-                        ?? (v.idea_description ? v.idea_description.slice(0, 40) + 'â€¦' : null);
+                        ?? (v.idea_description ? v.idea_description.slice(0, 40) + '…' : null);
                       const isExpanded = expandedRow === v.id;
                       return (
                         <>
@@ -876,22 +876,22 @@ export function Admin() {
                               <div className="flex items-center gap-2">
                                 <Avatar name={prof?.full_name ?? null} url={prof?.avatar_url ?? null} size={6} />
                                 <span className="text-gray-500 dark:text-[#8B8AA0] text-xs truncate max-w-[90px]">
-                                  {prof?.full_name ?? <span className="text-gray-300">â€”</span>}
+                                  {prof?.full_name ?? <span className="text-gray-300">—</span>}
                                 </span>
                               </div>
                             </td>
                             <td className="py-3.5 pr-4 text-gray-400 text-xs max-w-[110px] truncate">
-                              {v.idea_industry ?? 'â€”'}
+                              {v.idea_industry ?? '—'}
                             </td>
                             <td className="py-3.5 pr-4 text-gray-400 text-xs whitespace-nowrap">
-                              {v.target_country ?? 'â€”'}
+                              {v.target_country ?? '—'}
                             </td>
                             <td className="py-3.5 pr-4">
                               {v.business_stage ? (
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium whitespace-nowrap">
                                   {v.business_stage}
                                 </span>
-                              ) : <span className="text-gray-300 text-xs">â€”</span>}
+                              ) : <span className="text-gray-300 text-xs">—</span>}
                             </td>
                             <td className="py-3.5 pr-4">
                               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
@@ -907,7 +907,7 @@ export function Admin() {
                                 <span className={`text-sm font-black px-2 py-0.5 rounded-lg ${scoreBg(v.validation_score)}`}>
                                   {v.validation_score}
                                 </span>
-                              ) : <span className="text-gray-300 text-xs">â€”</span>}
+                              ) : <span className="text-gray-300 text-xs">—</span>}
                             </td>
                             <td className="py-3.5 pr-4">
                               <div className="flex items-center gap-2">
@@ -944,7 +944,7 @@ export function Admin() {
                                   )}
                                   {v.competitive_analysis && (
                                     <div className="col-span-2">
-                                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">AnÃ¡lisis competitivo</p>
+                                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Análisis competitivo</p>
                                       <pre className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-white dark:bg-[#12121A] rounded-xl p-3 overflow-auto max-h-48 border border-gray-100 dark:border-white/5">
                                         {JSON.stringify(v.competitive_analysis, null, 2)}
                                       </pre>
@@ -973,7 +973,7 @@ export function Admin() {
             </Card>
           )}
 
-          {/* â•â• AI USAGE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+          {/* ══ AI USAGE ═══════════════════════════════════════════════════ */}
           {tab === 'ai' && (
             <>
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
@@ -986,12 +986,12 @@ export function Admin() {
                 <KPI label="Costo estimado" value={`$${estimateCost(aiInteractions)}`} sub="por modelo real" accent="#f59e0b"
                   icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 />
-                <KPI label="Prom. tokens" value={aiInteractions.length ? Math.round(totalTokens / aiInteractions.length).toLocaleString() : 0} sub="por interacciÃ³n" accent="#ef4444"
+                <KPI label="Prom. tokens" value={aiInteractions.length ? Math.round(totalTokens / aiInteractions.length).toLocaleString() : 0} sub="por interacción" accent="#ef4444"
                   icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
                 />
               </div>
 
-              <Card title="Tokens por dÃ­a â€” Ãºltimos 14 dÃ­as">
+              <Card title="Tokens por día — últimos 14 días">
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={tokensByDay}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -1003,9 +1003,9 @@ export function Admin() {
                 </ResponsiveContainer>
               </Card>
 
-              <Card title="Top prompt types â€” tokens acumulados">
+              <Card title="Top prompt types — tokens acumulados">
                 {topPrompts.length === 0 ? (
-                  <div className="h-[200px] flex items-center justify-center text-sm text-gray-300">Sin datos aÃºn</div>
+                  <div className="h-[200px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
                 ) : (
                   <ResponsiveContainer width="100%" height={Math.max(200, topPrompts.length * 32)}>
                     <BarChart data={topPrompts} layout="vertical" barCategoryGap="25%">
@@ -1027,7 +1027,7 @@ export function Admin() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-white/5">
-                        {['ValidaciÃ³n', 'Tipo de prompt', 'Modelo', 'Tokens', 'Fecha'].map(h => (
+                        {['Validación', 'Tipo de prompt', 'Modelo', 'Tokens', 'Fecha'].map(h => (
                           <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-6">{h}</th>
                         ))}
                       </tr>
@@ -1035,7 +1035,7 @@ export function Admin() {
                     <tbody className="divide-y divide-gray-50">
                       {aiInteractions.map(a => (
                         <tr key={a.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
-                          <td className="py-3.5 pr-6 font-mono text-xs text-gray-300">{a.validation_id.slice(0, 8)}â€¦</td>
+                          <td className="py-3.5 pr-6 font-mono text-xs text-gray-300">{a.validation_id.slice(0, 8)}…</td>
                           <td className="py-3.5 pr-6">
                             <span className="text-xs px-2 py-1 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] font-mono">
                               {a.prompt_type ?? `step ${a.step}`}
@@ -1046,14 +1046,14 @@ export function Admin() {
                               {modelLabel(a.model)}
                             </span>
                           </td>
-                          <td className="py-3.5 pr-6 font-semibold text-gray-800 dark:text-[#F0EFF8]">{a.tokens_used?.toLocaleString() ?? 'â€”'}</td>
+                          <td className="py-3.5 pr-6 font-semibold text-gray-800 dark:text-[#F0EFF8]">{a.tokens_used?.toLocaleString() ?? '—'}</td>
                           <td className="py-3.5 text-xs text-gray-400 whitespace-nowrap">{fmt(a.created_at)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                   {aiInteractions.length === 0 && (
-                    <p className="text-sm text-gray-300 text-center py-12">Sin interacciones AI aÃºn</p>
+                    <p className="text-sm text-gray-300 text-center py-12">Sin interacciones AI aún</p>
                   )}
                 </div>
                 <PaginationBar
@@ -1063,7 +1063,7 @@ export function Admin() {
               </Card>
             </>
           )}
-          {/* â•â• SISTEMA / HEALTH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+          {/* ══ SISTEMA / HEALTH ══════════════════════════════════════════════ */}
           {tab === 'health' && (
             <>
               {/* KPIs */}
@@ -1078,20 +1078,20 @@ export function Admin() {
                 <KPI
                   label="Mayor abandono"
                   value={abandonStep}
-                  sub="punto de drop mÃ¡s alto"
+                  sub="punto de drop más alto"
                   accent="#ef4444"
                   icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>}
                 />
                 <KPI
                   label="Modelo dominante"
-                  value={modelDist[0]?.name ?? 'â€”'}
+                  value={modelDist[0]?.name ?? '—'}
                   sub={modelDist[0] ? `${modelDist[0].value} llamadas` : 'Sin datos'}
                   accent="#8b5cf6"
                   icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
                 />
                 <KPI
-                  label="Prompt mÃ¡s llamado"
-                  value={topPrompts[0]?.type ?? 'â€”'}
+                  label="Prompt más llamado"
+                  value={topPrompts[0]?.type ?? '—'}
                   sub={topPrompts[0] ? `${topPrompts[0].count} veces` : 'Sin datos'}
                   accent="#f59e0b"
                   icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>}
@@ -1102,7 +1102,7 @@ export function Admin() {
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                 <Card title="Funnel de wizard">
                   {validations.length === 0 ? (
-                    <div className="h-[220px] flex items-center justify-center text-sm text-gray-300">Sin validaciones aÃºn</div>
+                    <div className="h-[220px] flex items-center justify-center text-sm text-gray-300">Sin validaciones aún</div>
                   ) : (
                     <div className="space-y-3 py-2">
                       {wizardFunnel.map((f, i) => {
@@ -1116,7 +1116,7 @@ export function Admin() {
                               <span className="text-xs font-semibold text-gray-600 dark:text-[#C4C4D4]">{f.step}</span>
                               <div className="flex items-center gap-3">
                                 {dropPct !== null && dropPct > 0 && (
-                                  <span className="text-xs text-red-400 font-medium">â†“ {dropPct}% abandono</span>
+                                  <span className="text-xs text-red-400 font-medium">↓ {dropPct}% abandono</span>
                                 )}
                                 <span className="text-xs font-black text-gray-900 dark:text-[#F0EFF8] w-16 text-right">
                                   {f.count} <span className="font-normal text-gray-400">({pct}%)</span>
@@ -1139,9 +1139,9 @@ export function Admin() {
                   )}
                 </Card>
 
-                <Card title="DistribuciÃ³n de tiers">
+                <Card title="Distribución de tiers">
                   {profiles.length === 0 ? (
-                    <div className="h-[220px] flex items-center justify-center text-sm text-gray-300">Sin usuarios aÃºn</div>
+                    <div className="h-[220px] flex items-center justify-center text-sm text-gray-300">Sin usuarios aún</div>
                   ) : (
                     <div className="flex items-center gap-6">
                       <ResponsiveContainer width="55%" height={200}>
@@ -1175,9 +1175,9 @@ export function Admin() {
 
               {/* Prompts ranking + Modelos + Top usuarios */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                <Card title="Ranking de prompt types â€” llamadas">
+                <Card title="Ranking de prompt types — llamadas">
                   {topPrompts.length === 0 ? (
-                    <div className="h-[240px] flex items-center justify-center text-sm text-gray-300">Sin interacciones AI aÃºn</div>
+                    <div className="h-[240px] flex items-center justify-center text-sm text-gray-300">Sin interacciones AI aún</div>
                   ) : (
                     <div className="space-y-2.5">
                       {topPrompts.map((p, i) => (
@@ -1196,9 +1196,9 @@ export function Admin() {
                   )}
                 </Card>
 
-                <Card title="DistribuciÃ³n de modelos AI">
+                <Card title="Distribución de modelos AI">
                   {modelDist.length === 0 ? (
-                    <div className="h-[200px] flex items-center justify-center text-sm text-gray-300">Sin interacciones AI aÃºn</div>
+                    <div className="h-[200px] flex items-center justify-center text-sm text-gray-300">Sin interacciones AI aún</div>
                   ) : (
                     <div className="flex items-center gap-6">
                       <ResponsiveContainer width="50%" height={180}>
@@ -1224,7 +1224,7 @@ export function Admin() {
 
                 <Card title="Top usuarios por tokens consumidos" className="xl:col-span-2">
                   {topUsers.length === 0 ? (
-                    <div className="h-[120px] flex items-center justify-center text-sm text-gray-300">Sin datos aÃºn</div>
+                    <div className="h-[120px] flex items-center justify-center text-sm text-gray-300">Sin datos aún</div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
@@ -1238,7 +1238,7 @@ export function Admin() {
                         <tbody className="divide-y divide-gray-50">
                           {topUsers.map((u, i) => {
                             const costEst = ((u.tokens / 1_000_000) * 3).toFixed(4);
-                            const tokPerCall = u.calls > 0 ? Math.round(u.tokens / u.calls).toLocaleString() : 'â€”';
+                            const tokPerCall = u.calls > 0 ? Math.round(u.tokens / u.calls).toLocaleString() : '—';
                             return (
                               <tr key={u.name} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition">
                                 <td className="py-3.5 pr-8 text-xs font-black text-gray-300">{i + 1}</td>
@@ -1296,7 +1296,7 @@ export function Admin() {
         </div>
       </main>
 
-      {/* â”€â”€ Bottom Nav mÃ³vil â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Bottom Nav móvil ───────────────────────────────────────────────── */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-900 border-t border-gray-200 dark:border-white/10 flex">
         {NAV_ITEMS.map(item => (
           <button

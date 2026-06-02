@@ -403,6 +403,7 @@ export function StepGenerating() {
       const updatedTasks = tasks.map(t => t.id === task.id ? { ...t, status: 'success' as const } : t);
       if (updatedTasks.every(t => t.status === 'success')) {
         await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId);
+        useValidationStore.getState().reset();
         navigate(`/results/${currentId}`);
       }
     } catch {
@@ -435,7 +436,7 @@ export function StepGenerating() {
               user_id: session.user.id,
               status: 'in_progress',
               current_step: 4,
-              validation_mode: 'quick',
+              validation_mode: 'premium',
               idea_name: stepIdea.idea_name,
               idea_description: stepIdea.idea_description,
               idea_industry: stepIdea.idea_industry,
@@ -481,8 +482,9 @@ export function StepGenerating() {
           errors: premiumData.errors,
         });
 
-        trackWizardStep(4, 'Generación', 'quick');
+        trackWizardStep(4, 'Generación', 'premium');
         toast.success('Análisis Premium completado');
+        useValidationStore.getState().reset();
         navigate(`/results/${currentId}`);
         return;
       }
@@ -496,6 +498,7 @@ export function StepGenerating() {
           .eq('id', validationId)
           .single();
         if (existing?.status === 'completed') {
+          useValidationStore.getState().reset();
           navigate(`/results/${existing.id}`, { replace: true });
           return;
         }
@@ -571,6 +574,7 @@ export function StepGenerating() {
 
       if (pendingTasks.length === 0) {
         await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId!);
+        useValidationStore.getState().reset();
         navigate(`/results/${currentId}`);
         return;
       }
@@ -610,6 +614,7 @@ export function StepGenerating() {
       trackValidationCompleted(currentId!, 0, context.idea_industry as string ?? '', tier);
 
       toast.success('Análisis completado');
+      useValidationStore.getState().reset();
       navigate(`/results/${currentId}`);
 
     } catch (error) {

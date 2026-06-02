@@ -97,8 +97,10 @@ export function Results() {
   };
 
   const handleContinue = (v: ValidationRow) => {
+    store.reset();
     store.setValidationId(v.id);
     store.setStep(v.current_step);
+    if (v.validation_mode) store.setValidationMode(v.validation_mode);
     navigate('/validate');
   };
 
