@@ -185,7 +185,7 @@ export const useValidationStore = create<ValidationState>()(
           set((s) => ({
             founderProfile: s.founderProfile
               ? { ...s.founderProfile, [field]: value }
-              : null,
+              : { [field]: value } as FounderProfileData,
           })),
       }),
       {

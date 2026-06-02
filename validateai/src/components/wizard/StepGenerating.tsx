@@ -481,7 +481,7 @@ export function StepGenerating() {
           errors: premiumData.errors,
         });
 
-        trackWizardStep(4, 'Generación', 'quick');
+        trackWizardStep(4, 'Generación', 'premium');
         toast.success('Análisis Premium completado');
         navigate(`/results/${currentId}`);
         return;
