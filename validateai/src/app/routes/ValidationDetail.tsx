@@ -28,7 +28,6 @@ import { SwotMatrix } from '@/components/shared/SwotMatrix';
 import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
-import { runThrottled } from '@/lib/throttle';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, trackDueDiligenceCompleted, trackEncuestasCTAClicked } from '@/hooks/useAnalytics';
@@ -218,6 +217,7 @@ export function ValidationDetail() {
   const [showPivotModal, setShowPivotModal] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [generatingAdvanced, setGeneratingAdvanced] = useState(false);
+  const [advancedProgress, setAdvancedProgress] = useState<string>('');
   const [generatingVerdict, setGeneratingVerdict] = useState(false);
   // Persiste en sessionStorage por validationId para sobrevivir navegaciones dentro de la sesión
   const verdictSessionKey = `verdict_generated_${id}`;
@@ -647,34 +647,41 @@ export function ValidationDetail() {
         founderCtx.founder_competency_scores   = founderProfile.competency_scores;
       }
 
-      const advancedTasks = [
-        missingAdvanced.risk        ? () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx)               : null,
-        missingAdvanced.unit        ? () => callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx)              : null,
-        missingAdvanced.founder     ? () => callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx)             : null,
-        missingAdvanced.signals     ? () => callAI<MarketSignals>(data.id, 6, 'market_signals', ctx)              : null,
-        missingAdvanced.governance  ? () => callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) : null,
-        missingAdvanced.fundraising ? () => callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx)    : null,
-      ];
+      const advancedTaskDefs: { flag: boolean; label: string; fn: () => Promise<unknown> }[] = [
+        { flag: missingAdvanced.risk,        label: 'Análisis de Riesgos',   fn: () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx) },
+        { flag: missingAdvanced.unit,        label: 'Unit Economics',         fn: () => callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx) },
+        { flag: missingAdvanced.founder,     label: 'Founder Fit',            fn: () => callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx) },
+        { flag: missingAdvanced.signals,     label: 'Señales de Mercado',     fn: () => callAI<MarketSignals>(data.id, 6, 'market_signals', ctx) },
+        { flag: missingAdvanced.governance,  label: 'Gobernanza',             fn: () => callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) },
+        { flag: missingAdvanced.fundraising, label: 'Fundraising',            fn: () => callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx) },
+      ].filter(t => t.flag);
 
-      // Ejecutar secuencialmente con 700ms entre llamadas para evitar 429
-      const settled = await runThrottled(
-        advancedTasks.filter((t): t is NonNullable<typeof t> => t !== null) as Array<() => Promise<unknown>>,
-        700,
-      );
+      const total = advancedTaskDefs.length;
+      // Ejecutar secuencialmente con progreso visible y 700ms entre llamadas para evitar 429
+      const settled: PromiseSettledResult<unknown>[] = [];
+      for (let i = 0; i < advancedTaskDefs.length; i++) {
+        const def = advancedTaskDefs[i];
+        setAdvancedProgress(`${def.label} (${i + 1}/${total})`);
+        const result = await def.fn().then(v => ({ status: 'fulfilled' as const, value: v }))
+          .catch(e => ({ status: 'rejected' as const, reason: e }));
+        settled.push(result);
+        if (i < advancedTaskDefs.length - 1) await new Promise(r => setTimeout(r, 700));
+      }
+      setAdvancedProgress('');
 
-      // Mapear resultados de vuelta a los slots originales (conserva null para skipped)
+      // Mapear resultados al orden de advancedTaskDefs
       let si = 0;
-      const pick = <T,>(flag: boolean): T | null => {
+      const pickFromSettled = <T,>(flag: boolean): T | null => {
         if (!flag) return null;
         const r = settled[si++];
         return r.status === 'fulfilled' ? (r.value as T) : null;
       };
-      const riskResult       = pick<RiskAnalysis>(missingAdvanced.risk);
-      const unitResult       = pick<UnitEconomics>(missingAdvanced.unit);
-      const founderResult    = pick<FounderFit>(missingAdvanced.founder);
-      const signalsResult    = pick<MarketSignals>(missingAdvanced.signals);
-      const governanceResult = pick<GovernanceAssessment>(missingAdvanced.governance);
-      const fundraisingResult= pick<FundraisingRoadmap>(missingAdvanced.fundraising);
+      const riskResult       = pickFromSettled<RiskAnalysis>(missingAdvanced.risk);
+      const unitResult       = pickFromSettled<UnitEconomics>(missingAdvanced.unit);
+      const founderResult    = pickFromSettled<FounderFit>(missingAdvanced.founder);
+      const signalsResult    = pickFromSettled<MarketSignals>(missingAdvanced.signals);
+      const governanceResult = pickFromSettled<GovernanceAssessment>(missingAdvanced.governance);
+      const fundraisingResult= pickFromSettled<FundraisingRoadmap>(missingAdvanced.fundraising);
 
       // La edge function ya persistió cada resultado en la DB.
       // Actualizamos solo el estado local para refrescar la UI sin reload.
@@ -695,6 +702,7 @@ export function ValidationDetail() {
       toast.error('No se pudieron generar los análisis avanzados.');
     } finally {
       setGeneratingAdvanced(false);
+      setAdvancedProgress('');
     }
   };
 
@@ -2266,8 +2274,12 @@ export function ValidationDetail() {
             <div className="w-12 h-12 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
             <div>
               <p className="font-bold text-[#F0EFF8] mb-1">Generando análisis avanzados</p>
-              <p className="text-sm text-[#8B8AA0]">Riesgos · Unit Economics · Founder Fit · Señales · Gobernanza · Fundraising</p>
-              <p className="text-xs text-[#4A495E] mt-1">Puede tomar 15–30 segundos...</p>
+              {advancedProgress ? (
+                <p className="text-sm text-[#7C6FF7] font-semibold">{advancedProgress}</p>
+              ) : (
+                <p className="text-sm text-[#8B8AA0]">Iniciando...</p>
+              )}
+              <p className="text-xs text-[#4A495E] mt-2">No cierres ni recargues esta página.<br/>Puede tomar hasta 90 segundos en total.</p>
             </div>
           </div>
         </div>
