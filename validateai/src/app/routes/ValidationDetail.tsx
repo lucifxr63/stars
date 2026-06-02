@@ -932,9 +932,13 @@ export function ValidationDetail() {
   if (!data) return null;
 
   const summary = data.summary_json;
-  const isGood = (data.validation_score ?? 0) >= 70;
-  const isMid = (data.validation_score ?? 0) >= 40;
-  const scoreBg = isGood
+  // Premium validations don't have summary_json/validation_score; use playbook viability_score as fallback
+  const displayScore = data.validation_score ?? data.playbook_analysis?.viability_score ?? null;
+  const isGood = (displayScore ?? 0) >= 70;
+  const isMid = (displayScore ?? 0) >= 40;
+  const scoreBg = displayScore == null
+    ? 'bg-white/5 border-white/10'
+    : isGood
     ? 'bg-[#34D399]/10 border-[#34D399]/30 shadow-sm shadow-[#34D399]/10'
     : isMid
     ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30 shadow-sm shadow-[#F7C56C]/10'
@@ -1358,14 +1362,18 @@ export function ValidationDetail() {
 
                   {/* Left Column: Score & Breakdown */}
                   <div className="md:col-span-7 flex flex-col gap-4">
-                    {/* Score */}
-                    {summary && data.validation_score != null && (
+                    {/* Score — visible for both detailed (summary_json) and premium (playbook viability_score) */}
+                    {displayScore != null && (
                       <div className={`rounded-3xl border-2 p-6 flex items-center ${scoreBg}`}>
                         <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
-                          <ScoreGauge score={data.playbook_analysis.viability_score ?? data.validation_score} />
+                          <ScoreGauge score={displayScore} />
                           <div className="flex-1 text-center sm:text-left">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
-                            <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
+                            <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">
+                              {summary?.feedback ??
+                                data.playbook_analysis?.harsh_truth ??
+                                'Análisis Premium completado.'}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1395,7 +1403,7 @@ export function ValidationDetail() {
 
                     {/* Widgets adicionales para rellenar y complementar la columna */}
                     <div className="flex flex-col gap-4 mt-2">
-                      {summary && <VerdictProsCons summary={summary} />}
+                      {summary && summary.strengths && <VerdictProsCons summary={summary} />}
                       {isQuickMode ? (
                         <QuickDimensionPaywall
                           dimension="Ejecución (15%)"
