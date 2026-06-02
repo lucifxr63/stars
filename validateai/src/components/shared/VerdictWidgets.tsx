@@ -77,6 +77,9 @@ export function VerdictFounderFit({
     { label: 'Track Record', val: data.dimensions.trackRecord },
   ];
 
+  // All zeros = analysis ran but had no founder data (no LinkedIn connected)
+  const noFounderData = dims.every(d => d.val === 0);
+
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-white/5 shadow-sm">
       <div className="flex items-center justify-between mb-5">
@@ -89,20 +92,29 @@ export function VerdictFounderFit({
         </div>
       </div>
 
-      <div className="space-y-2.5">
-        {dims.map((d) => (
-          <div key={d.label} className="flex items-center gap-3">
-            <span className="text-[10px] text-gray-500 dark:text-[#8B8AA0] font-bold uppercase tracking-wider w-24 truncate">{d.label}</span>
-            <div className="flex-1 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full ${scoreColor(d.val)}`}
-                style={{ width: `${d.val}%` }}
-              />
+      {noFounderData ? (
+        <div className="flex flex-col items-center gap-2 py-3 text-center">
+          <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
+            Sin datos del fundador para evaluar. Conecta tu LinkedIn en la pestaña{' '}
+            <strong className="text-[#A78BFA]">Inversión</strong> para obtener un score real.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {dims.map((d) => (
+            <div key={d.label} className="flex items-center gap-3">
+              <span className="text-[10px] text-gray-500 dark:text-[#8B8AA0] font-bold uppercase tracking-wider w-24 truncate">{d.label}</span>
+              <div className="flex-1 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${scoreColor(d.val)}`}
+                  style={{ width: `${d.val}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-black text-gray-400 w-6 text-right">{d.val}</span>
             </div>
-            <span className="text-[10px] font-black text-gray-400 w-6 text-right">{d.val}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

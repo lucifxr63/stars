@@ -1371,7 +1371,7 @@ export function ValidationDetail() {
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
                             <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">
                               {summary?.feedback ??
-                                data.playbook_analysis?.harsh_truth ??
+                                data.playbook_analysis?.funding_verdict ??
                                 'Análisis Premium completado.'}
                             </p>
                           </div>
