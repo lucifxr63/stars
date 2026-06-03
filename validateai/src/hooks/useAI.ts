@@ -77,16 +77,28 @@ export function useAI() {
         const errCode = errBody.error as string | undefined;
 
         // Errores de tier o límite mensual — no tiene sentido reintentar
-        if (errCode === 'rate_limit_tier') {
+        if (errCode === 'tier_blocked' || errCode === 'rate_limit_tier') {
           toast.error('Tu plan no incluye este análisis. Actualiza para continuar.', { duration: 6000 });
           return null;
         }
-        if (errCode === 'rate_limit_monthly') {
-          toast.error(`Límite mensual de ${errBody.limit ?? '?'} análisis alcanzado. Se renueva el 1° del mes.`, { duration: 8000 });
+        if (errCode === 'monthly_limit' || errCode === 'rate_limit_monthly') {
+          const used  = errBody.used  as number | undefined;
+          const limit = errBody.limit as number | undefined;
+          const info  = used != null && limit != null ? ` (${used}/${limit})` : '';
+          toast.error(
+            `Límite mensual alcanzado${info}. Se renueva el 1° del mes.`,
+            { duration: 8000 },
+          );
           return null;
         }
-        if (errCode === 'rate_limit_expensive') {
-          toast.error('Límite de análisis de mercado del mes alcanzado. Actualiza tu plan para más.', { duration: 8000 });
+        if (errCode === 'expensive_limit' || errCode === 'rate_limit_expensive') {
+          const used  = errBody.used  as number | undefined;
+          const limit = errBody.limit as number | undefined;
+          const info  = used != null && limit != null ? ` (${used}/${limit})` : '';
+          toast.error(
+            `Límite de análisis de mercado alcanzado${info}. Actualiza tu plan para más.`,
+            { duration: 8000 },
+          );
           return null;
         }
 

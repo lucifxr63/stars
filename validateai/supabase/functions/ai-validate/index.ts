@@ -1477,71 +1477,60 @@ serve(async (req) => {
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
-    // â”€â”€ Tier + Rate limiting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Tier + Rate limiting ---------------------------------------------------
+    // Usa RPC atomica (check_and_increment_usage) en lugar de COUNT(ai_interactions):
+    //   - Elimina race condition: SELECT FOR UPDATE serializa requests concurrentes
+    //   - O(1) en lugar de O(n): contador dedicado, no tabla de auditoria
+    //   - Verifica tier_expires_at: suscripciones vencidas degradan a free automaticamente
     const { data: profile } = await supabase
       .from('profiles')
-      .select('tier')
+      .select('tier, tier_expires_at')
       .eq('id', user.id)
       .single();
 
-    const userTier = (['free', 'basic', 'pro', 'premium'].includes(profile?.tier ?? ''))
-      ? (profile!.tier as 'free' | 'basic' | 'pro' | 'premium')
-      : 'free';
+    let userTier: 'free' | 'basic' | 'pro' | 'premium' =
+      (['free', 'basic', 'pro', 'premium'].includes(profile?.tier ?? ''))
+        ? (profile!.tier as 'free' | 'basic' | 'pro' | 'premium')
+        : 'free';
+
+    // Downgrade automatico si la suscripcion vencio (Lemon Squeezy cancel)
+    if (profile?.tier_expires_at && new Date(profile.tier_expires_at) < new Date()) {
+      userTier = 'free';
+    }
 
     const EXPENSIVE_TYPES = new Set(['competitive_analysis', 'market_sizing', 'market_signals']);
-    const MONTHLY_LIMITS = {
-      free:    { total: 3,   expensive: 0   },
-      basic:   { total: 15,  expensive: 5   },
-      pro:     { total: 50,  expensive: 50  },
-      premium: { total: 999, expensive: 999 },
-    };
-    const limits = MONTHLY_LIMITS[userTier];
+    const isExpensive = EXPENSIVE_TYPES.has(prompt_type);
 
-    if (EXPENSIVE_TYPES.has(prompt_type) && limits.expensive === 0) {
-      phCapture('paywall_hit', user.id, { prompt_type, tier: userTier, reason: 'tier_blocked' });
+    const { data: rateCheck, error: rateError } = await supabase.rpc(
+      'check_and_increment_usage',
+      { p_user_id: user.id, p_prompt_type: prompt_type, p_is_expensive: isExpensive, p_tier: userTier },
+    );
+
+    if (rateError) {
+      // Fail-open: si el RPC falla (DB issue), loguear y permitir el request.
+      // Disponibilidad > enforcement en este escenario de baja probabilidad.
+      console.warn('rate-limit RPC error (fail-open):', rateError.message);
+    } else if (!rateCheck?.allowed) {
+      const reason: string = rateCheck?.reason ?? 'monthly_limit';
+      phCapture('paywall_hit', user.id, {
+        prompt_type, tier: userTier, reason,
+        used: rateCheck?.used, limit: rateCheck?.limit,
+      });
+      const MSG: Record<string, string> = {
+        tier_blocked:    'Este analisis requiere plan Basic o superior.',
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        monthly_limit:   `Limite mensual de ${rateCheck?.limit} analisis para el plan ${userTier} alcanzado.`,
+        expensive_limit: `Limite de ${rateCheck?.limit} analisis de mercado para el plan ${userTier} alcanzado.`,
+      };
       return new Response(JSON.stringify({
-        error: 'rate_limit_tier',
-        message: 'Este anÃ¡lisis requiere plan Basic o superior.',
-        tier: userTier,
+        error:   reason,
+        message: MSG[reason] ?? 'Limite alcanzado.',
+        used:    rateCheck?.used,
+        limit:   rateCheck?.limit,
+        tier:    userTier,
       }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
-
-    const now = new Date();
-    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-
-    const { count: totalThisMonth } = await supabase
-      .from('ai_interactions')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', monthStart.toISOString());
-
-    if ((totalThisMonth ?? 0) >= limits.total) {
-      phCapture('paywall_hit', user.id, { prompt_type, tier: userTier, reason: 'monthly_limit', limit: limits.total });
-      return new Response(JSON.stringify({
-        error: 'rate_limit_monthly',
-        message: `LÃ­mite mensual de ${limits.total} anÃ¡lisis para el plan ${userTier} alcanzado.`,
-        tier: userTier,
-        limit: limits.total,
-      }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
-    }
-
-    if (EXPENSIVE_TYPES.has(prompt_type)) {
-      const { count: expThisMonth } = await supabase
-        .from('ai_interactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .in('prompt_type', [...EXPENSIVE_TYPES])
-        .gte('created_at', monthStart.toISOString());
-
-      if ((expThisMonth ?? 0) >= limits.expensive) {
-        return new Response(JSON.stringify({
-          error: 'rate_limit_expensive',
-          message: `LÃ­mite de ${limits.expensive} anÃ¡lisis de mercado para el plan ${userTier} alcanzado.`,
-          tier: userTier,
-        }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
-      }
-    }
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ---------------------------------------------------------------------------
 
     // Haiku pre-pass: enriquece el contexto con idea estructurada
     let enrichedContext = context;
