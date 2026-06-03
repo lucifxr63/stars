@@ -52,7 +52,7 @@ export function FigmaAdminPanel() {
             Conecta tu cuenta de Figma
           </h2>
           <p className="text-sm text-gray-400 dark:text-[#8B8AA0] leading-relaxed max-w-sm">
-            ValidateAI leerá la estructura de tus prototipos y generará un mapa
+            Validus leerá la estructura de tus prototipos y generará un mapa
             de navegación interactivo con análisis de IA.
           </p>
           <p className="text-xs text-gray-400/60 mt-2">

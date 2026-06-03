@@ -187,6 +187,16 @@ function QuickDimensionPaywall({
 const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión', 'Due Diligence'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
 
+const TAB_SHORT: Record<DashboardTab, string> = {
+  'Veredicto':     'Veredicto',
+  'Validación':    'Score',
+  'Estrategia':    'Estrategia',
+  'Finanzas':      'Finanzas',
+  'Hoja de Ruta':  'Roadmap',
+  'Inversión':     'Inversión',
+  'Due Diligence': 'Due Dil.',
+};
+
 const TAB_REQUIRED_TIER: Partial<Record<DashboardTab, 'pro' | 'premium'>> = {
   'Estrategia':    'pro',
   'Finanzas':      'pro',
@@ -1275,7 +1285,8 @@ export function ValidationDetail() {
         )}
 
         {/* ── TABS ── */}
-        <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide snap-x">
+        <div className="relative mb-6">
+          <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide snap-x">
           {DASHBOARD_TABS.map((t) => {
             const isActive = activeTab === t;
             let hasData = false;
@@ -1358,7 +1369,10 @@ export function ValidationDetail() {
                 }`}
               >
                 <span className={isActive ? 'text-[#A78BFA]' : 'text-[#8B8AA0]'}>{tabIcon}</span>
-                <span className="whitespace-nowrap">{t}</span>
+                <span className="whitespace-nowrap">
+                  <span className="sm:hidden">{TAB_SHORT[t]}</span>
+                  <span className="hidden sm:inline">{t}</span>
+                </span>
                 {isLocked && requiredTier ? (
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${LOCK_BADGE[requiredTier]}`}>
                     {requiredTier}
@@ -1369,6 +1383,9 @@ export function ValidationDetail() {
               </button>
             );
           })}
+          </div>
+          {/* gradiente derecho — indica scroll disponible */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-[#0A0A0F]/70 to-transparent" />
         </div>
 
         <div className="space-y-5">

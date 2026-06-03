@@ -158,7 +158,7 @@ function RadarChart({ sb }: { sb: ScoreBreakdown }) {
 function Footer({ pageLabel }: { pageLabel: string }) {
   return (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>ValidateAI Â· Investment Dossier</Text>
+      <Text style={styles.footerText}>Validus Â· Investment Dossier</Text>
       <Text style={styles.footerText}>{pageLabel}</Text>
     </View>
   );
@@ -208,7 +208,7 @@ function CoverPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.coverPage}>
       {/* Hero banner */}
       <View style={styles.coverHero}>
-        <Text style={styles.coverBadge}>Investment Dossier Â· ValidateAI</Text>
+        <Text style={styles.coverBadge}>Investment Dossier Â· Validus</Text>
 
         <Text style={styles.coverTitle}>{data.idea_name ?? 'Startup Report'}</Text>
 
@@ -274,7 +274,7 @@ function CoverPage({ data }: { data: PDFData }) {
         </View>
       </View>
 
-      {/* "Audited by ValidateAI Pro" stamp â€” PLG watermark */}
+      {/* "Audited by Validus Pro" stamp â€” PLG watermark */}
       {data.due_diligence && (
         <View style={{
           marginHorizontal: 40,
@@ -749,7 +749,7 @@ export function InvestmentDossier({ data }: { data: PDFData }) {
   return (
     <Document
       title={data.idea_name ?? 'Investment Dossier'}
-      author="ValidateAI"
+      author="Validus"
       subject="Startup Validation Report"
       keywords="startup, investment, validation"
     >

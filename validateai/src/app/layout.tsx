@@ -155,7 +155,7 @@ export function AppLayout() {
 
         <footer className="border-t border-gray-100 dark:border-white/[0.06] py-4 shrink-0">
           <p className="text-center text-xs text-gray-400 dark:text-[#4A495E]">
-            © {new Date().getFullYear()} ValidateAI
+            © {new Date().getFullYear()} Validus
           </p>
         </footer>
       </div>

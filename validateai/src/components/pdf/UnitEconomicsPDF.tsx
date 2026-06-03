@@ -151,7 +151,7 @@ function CashFlowTable({ projection, breakEven }: { projection: FinancialProject
 function PageFooter({ name }: { name: string }) {
   return (
     <View style={[styles.footer, { left: 40, right: 40 }]}>
-      <Text style={styles.footerText}>ValidateAI · Reporte de Viabilidad Financiera — {name}</Text>
+      <Text style={styles.footerText}>Validus · Reporte de Viabilidad Financiera — {name}</Text>
       <Text style={styles.footerText}>Unit Economics & Growth Projection</Text>
     </View>
   );
@@ -167,7 +167,7 @@ export function UnitEconomicsPDF({ data }: Props) {
   const name = data.idea_name ?? 'Mi Startup';
 
   return (
-    <Document title={`Viabilidad Financiera — ${name}`} author="ValidateAI" subject="Unit Economics & Growth">
+    <Document title={`Viabilidad Financiera — ${name}`} author="Validus" subject="Unit Economics & Growth">
       {/* ── Page 1: Cover + Unit Economics ──────────────────────────────────── */}
       <Page size="A4" style={styles.page}>
         <View style={[styles.coverHero, { paddingTop: 44, paddingBottom: 36 }]}>
