@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { dispatchUsageUpdated } from '@/hooks/useUsage';
 import { dispatchPaywallHit } from '@/components/shared/UpgradeModal';
+import { deriveTierNeeded } from '@/lib/rateLimitHelpers';
 import type { UserTier } from '@/hooks/useUserTier';
 
 type PromptType =
@@ -92,8 +93,7 @@ export function useAI() {
           return null;
         }
         if (errCode === 'monthly_limit' || errCode === 'rate_limit_monthly') {
-          // Si ya está en basic, necesita pro; si está en free, necesita basic
-          const tierNeeded: UserTier = tierCurrent === 'free' ? 'basic' : 'pro';
+          const tierNeeded: UserTier = deriveTierNeeded('monthly_limit', tierCurrent);
           dispatchPaywallHit({
             reason:       'monthly_limit',
             prompt_type:  promptType,

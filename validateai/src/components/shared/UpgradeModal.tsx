@@ -20,7 +20,7 @@ export function dispatchPaywallHit(detail: PaywallHitDetail) {
 
 // ── Mapeos ───────────────────────────────────────────────────────────────────
 
-const FEATURE_NAME: Record<string, string> = {
+export const FEATURE_NAME: Record<string, string> = {
   competitive_analysis: 'Análisis Competitivo',
   market_sizing:        'Tamaño de Mercado (TAM/SAM/SOM)',
   market_signals:       'Señales de Mercado',
@@ -40,14 +40,14 @@ const FEATURE_NAME: Record<string, string> = {
   mvp_generation:       'Roadmap MVP',
 };
 
-const TIER_INFO: Record<UserTier, { label: string; price: string; color: string; bg: string }> = {
+export const TIER_INFO: Record<UserTier, { label: string; price: string; color: string; bg: string }> = {
   free:    { label: 'Free',    price: 'Gratis',        color: 'text-gray-600',   bg: 'bg-gray-100 dark:bg-white/8' },
   basic:   { label: 'Basic',   price: '$9.990 CLP/mes', color: 'text-sky-600 dark:text-sky-400',     bg: 'bg-sky-50 dark:bg-sky-500/10' },
   pro:     { label: 'Pro',     price: '$20.000 CLP/mes', color: 'text-[#7C6FF7]', bg: 'bg-[#7C6FF7]/10' },
   premium: { label: 'Premium', price: '$50.000 CLP/mes', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10' },
 };
 
-function reasonText(detail: PaywallHitDetail): string {
+export function reasonText(detail: PaywallHitDetail): string {
   if (detail.reason === 'tier_blocked') {
     return `Este análisis requiere plan ${TIER_INFO[detail.tier_needed]?.label ?? detail.tier_needed}.`;
   }
@@ -57,7 +57,7 @@ function reasonText(detail: PaywallHitDetail): string {
   }
   if (detail.reason === 'expensive_limit') {
     const used = detail.used ?? '?', limit = detail.limit ?? '?';
-    return `Alcanzaste el límite de ${limit} análisis de mercado del mes (${used}/${limit}).`;
+    return `Alcanzaste el límite de ${limit} análisis de mercado del mes (${used}/${limit}). Se renueva el 1° del mes.`;
   }
   return 'Límite de tu plan alcanzado.';
 }

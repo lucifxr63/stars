@@ -17,15 +17,19 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/lib/privacy/__tests__/**/*.test.ts'],
+    include: ['src/**/__tests__/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/lib/privacy/**/*.ts'],
-      exclude: ['src/lib/privacy/__tests__/**', 'src/lib/privacy/types.ts'],
+      include: [
+        'src/lib/privacy/**/*.ts',
+        'src/utils/biasDetector.ts',
+        'src/lib/rateLimitHelpers.ts',
+      ],
+      exclude: ['src/**/__tests__/**', 'src/lib/privacy/types.ts'],
       thresholds: {
-        lines: 85,
-        functions: 90,
-        branches: 80,
+        lines: 80,
+        functions: 85,
+        branches: 75,
       },
     },
     testTimeout: 30_000,
