@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
+import { useLinkedInOAuth } from '@/hooks/useLinkedInOAuth';
 import type { FounderProfileData, WorkEntry } from '@/types/validation';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -280,10 +281,15 @@ function EmptyState({
   onManualSave: (data: FounderProfileData) => Promise<void>;
 }) {
   const [mode, setMode] = useState<'linkedin' | 'manual'>('manual');
+  const { initiateOAuth } = useLinkedInOAuth();
 
   // ── LinkedIn tab ──────────────────────────────────────────────────────────
   const [url, setUrl] = useState('');
   const [urlError, setUrlError] = useState('');
+
+  const handleOAuth = () => {
+    initiateOAuth(window.location.pathname + window.location.search);
+  };
 
   const handleLinkedIn = (e: React.FormEvent) => {
     e.preventDefault();
@@ -379,23 +385,49 @@ function EmptyState({
       </div>
 
       {mode === 'linkedin' ? (
-        <form onSubmit={handleLinkedIn} className="space-y-3">
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://linkedin.com/in/tu-perfil"
-            className={`w-full px-4 py-3 text-sm border-2 rounded-2xl outline-none transition bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500
-              ${urlError ? 'border-red-300' : 'border-gray-200 dark:border-white/8'}`}
-          />
-          {urlError && <p className="text-xs text-red-500">{urlError}</p>}
-          <button type="submit" className="w-full py-3 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/25">
-            Analizar Perfil con IA
+        <div className="space-y-4">
+          {/* OAuth — acción primaria */}
+          <button
+            type="button"
+            onClick={handleOAuth}
+            className="w-full flex items-center justify-center gap-3 py-3 bg-[#0077B5] text-white text-sm font-bold rounded-2xl hover:bg-[#006097] active:scale-[0.98] transition-all shadow-lg shadow-[#0077B5]/30"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+            </svg>
+            Conectar con LinkedIn
           </button>
           <p className="text-[10px] text-gray-400 text-center">
-            Integración disponible próximamente — usá "Completar manualmente" mientras tanto.
+            Importa nombre, foto y experiencia automáticamente vía OAuth seguro.
           </p>
-        </form>
+
+          {/* Divisor */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-200 dark:bg-white/8" />
+            <span className="text-[10px] text-gray-400 uppercase tracking-wide">o ingresa tu URL</span>
+            <div className="flex-1 h-px bg-gray-200 dark:bg-white/8" />
+          </div>
+
+          {/* URL fallback */}
+          <form onSubmit={handleLinkedIn} className="space-y-2">
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://linkedin.com/in/tu-perfil"
+              className={`w-full px-4 py-2.5 text-sm border-2 rounded-2xl outline-none transition bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500
+                ${urlError ? 'border-red-300' : 'border-gray-200 dark:border-white/8'}`}
+            />
+            {urlError && <p className="text-xs text-red-500">{urlError}</p>}
+            <button type="submit" className="w-full py-2.5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-[#8B8AA0] text-sm font-semibold rounded-2xl hover:border-indigo-400 hover:text-indigo-600 transition-all">
+              Analizar URL con IA
+            </button>
+          </form>
+
+          <p className="text-[10px] text-gray-400 text-center">
+            Ley 21.719 · Solo tú accedés a estos datos.
+          </p>
+        </div>
       ) : (
         <form onSubmit={handleManual} className="space-y-4">
           {/* Nombre */}
@@ -549,9 +581,17 @@ function FounderDashboard({
       {/* Header del perfil */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
-            {(draft.full_name ?? '?')[0]?.toUpperCase()}
-          </div>
+          {draft.photo_url ? (
+            <img
+              src={draft.photo_url}
+              alt={draft.full_name ?? 'Perfil'}
+              className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[#0077B5]/30"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
+              {(draft.full_name ?? '?')[0]?.toUpperCase()}
+            </div>
+          )}
           <div className="min-w-0">
             {editing ? (
               <input

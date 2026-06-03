@@ -13,8 +13,9 @@ const SharedValidation = lazy(() => import('@/app/routes/SharedValidation').then
 const SurveyRespond    = lazy(() => import('@/app/routes/SurveyRespond').then((m) => ({ default: m.SurveyRespond })));
 const Pricing          = lazy(() => import('@/app/routes/Pricing').then((m) => ({ default: m.Pricing })));
 const Demo             = lazy(() => import('@/app/routes/Demo').then((m) => ({ default: m.Demo })));
-const FigmaCallback    = lazy(() => import('@/app/routes/FigmaCallback').then((m) => ({ default: m.FigmaCallback })));
-const PrivacyPolicy    = lazy(() => import('@/app/routes/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
+const FigmaCallback      = lazy(() => import('@/app/routes/FigmaCallback').then((m) => ({ default: m.FigmaCallback })));
+const LinkedInCallback   = lazy(() => import('@/app/routes/LinkedInCallback').then((m) => ({ default: m.LinkedInCallback })));
+const PrivacyPolicy      = lazy(() => import('@/app/routes/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
 
 // Protected — standalone (no sidebar)
 const Onboarding = lazy(() => import('@/app/routes/Onboarding').then((m) => ({ default: m.Onboarding })));
@@ -58,8 +59,9 @@ export default function App() {
               <Route path="/s/:slug"        element={<SurveyRespond />} />
               <Route path="/pricing"        element={<Pricing />} />
               <Route path="/demo"           element={<Demo />} />
-              <Route path="/figma/callback"   element={<FigmaCallback />} />
-              <Route path="/privacy-policy"  element={<PrivacyPolicy />} />
+              <Route path="/figma/callback"              element={<FigmaCallback />} />
+              <Route path="/auth/linkedin/callback"      element={<LinkedInCallback />} />
+              <Route path="/privacy-policy"              element={<PrivacyPolicy />} />
 
               {/* Rutas protegidas */}
               <Route element={<ProtectedLayout />}>

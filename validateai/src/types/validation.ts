@@ -547,6 +547,8 @@ export interface FounderCompetencyScores {
 export interface FounderProfileData {
   id: string;
   linkedin_url: string | null;
+  linkedin_member_id?: string | null;
+  photo_url?: string | null;
   full_name: string | null;
   headline: string | null;
   summary_bio: string | null;
