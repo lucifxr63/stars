@@ -233,7 +233,7 @@ export function Pricing() {
         {/* Trust */}
         <div className="mt-10 grid sm:grid-cols-3 gap-4">
           {[
-            { label: 'Pago seguro',           sub: 'Procesado por Stripe' },
+            { label: 'Pago seguro',           sub: 'Procesado por Lemon Squeezy' },
             { label: 'Cancela cuando quieras', sub: 'Sin penalidades ni contratos' },
             { label: 'Precios en CLP',         sub: 'Sin conversión ni sorpresas' },
           ].map((t) => (

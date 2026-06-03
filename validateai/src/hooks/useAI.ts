@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { dispatchUsageUpdated } from '@/hooks/useUsage';
 
 type PromptType =
   | 'questions' | 'customer_analysis' | 'value_prop' | 'mvp_generation' | 'summary'
@@ -116,7 +117,9 @@ export function useAI() {
       }
 
       if (!res.ok) throw new Error(`AI request failed: ${res.status}`);
-      return await res.json() as T;
+      const result = await res.json() as T;
+      dispatchUsageUpdated();
+      return result;
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') {
         console.log('Análisis cancelado por el usuario');

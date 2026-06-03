@@ -11,6 +11,15 @@ export const TIER_LIMITS: Record<UserTier, { total: number; expensive: number }>
   premium: { total: 999, expensive: 999 },
 };
 
+// Evento custom para invalidar el contador sin prop-drilling.
+// useAI.ts lo dispara tras cada call exitoso; useUsage lo escucha para refetch.
+export const USAGE_UPDATED_EVENT = 'validateai:usage-updated';
+
+/** Dispara el evento desde cualquier parte de la app (ej: useAI.ts). */
+export function dispatchUsageUpdated() {
+  window.dispatchEvent(new CustomEvent(USAGE_UPDATED_EVENT));
+}
+
 interface UsageSummary {
   period:    string;
   total:     number;
@@ -22,7 +31,6 @@ export interface UseUsageResult {
   usage:     UsageSummary | null;
   limits:    { total: number; expensive: number };
   remaining: number;
-  refetch:   () => Promise<void>;
 }
 
 export function useUsage(tier: UserTier): UseUsageResult {
@@ -38,7 +46,13 @@ export function useUsage(tier: UserTier): UseUsageResult {
 
   useEffect(() => { refetch(); }, [refetch]);
 
+  // Escucha el evento para refrescar cuando useAI.ts completa un call exitoso
+  useEffect(() => {
+    window.addEventListener(USAGE_UPDATED_EVENT, refetch);
+    return () => window.removeEventListener(USAGE_UPDATED_EVENT, refetch);
+  }, [refetch]);
+
   const remaining = Math.max(0, limits.total - (usage?.total ?? 0));
 
-  return { usage, limits, remaining, refetch };
+  return { usage, limits, remaining };
 }
