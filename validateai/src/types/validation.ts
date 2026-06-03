@@ -63,6 +63,9 @@ export const TractionStatusEnum = z.enum([
   'first_paying_customers',
 ]);
 
+export const CommitmentLevelEnum = z.enum(['full_time', 'part_time', 'weekends']);
+export const CustomerInterviewsEnum = z.enum(['0', '1_5', '6_20', '20_plus']);
+
 export const StepFounderSchema = z.object({
   yearsInIndustry: z.number().min(0).max(50),
   /** @deprecated Eliminado de la UI en Sprint B. Se remueve del schema en Sprint C. */
@@ -71,6 +74,10 @@ export const StepFounderSchema = z.object({
   tech_level: TechLevelEnum.optional(),
   team_composition: TeamCompositionEnum,
   traction_status: TractionStatusEnum,
+  // Nuevos campos de enriquecimiento — opcionales, mejoran el founder_fit score
+  commitment_level:    CommitmentLevelEnum.optional(),
+  customer_interviews: CustomerInterviewsEnum.optional(),
+  unfair_advantage:    z.string().max(500).optional(),
 });
 
 export const ValidationSchema = z.object({

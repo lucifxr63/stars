@@ -86,6 +86,19 @@ const TRACTION_STATUS_OPTIONS = [
   { value: 'first_paying_customers', label: 'Primeros clientes pagos', desc: 'Ya tengo ingresos reales' },
 ] as const;
 
+const COMMITMENT_OPTIONS = [
+  { value: 'full_time', label: 'Full-time',            desc: 'Me dedico 100% a esto',           icon: '🔥' },
+  { value: 'part_time', label: 'Part-time',            desc: 'Tengo otro trabajo en paralelo',   icon: '⚡' },
+  { value: 'weekends',  label: 'Noches y fines de semana', desc: 'Lo arranco en mis ratos libres', icon: '🌙' },
+] as const;
+
+const INTERVIEWS_OPTIONS = [
+  { value: '0',       label: 'Ninguna todavía', desc: 'Aún no hablé con clientes'     },
+  { value: '1_5',     label: '1–5 entrevistas', desc: 'Primeras conversaciones'        },
+  { value: '6_20',    label: '6–20 entrevistas', desc: 'Validación activa del problema' },
+  { value: '20_plus', label: '20+ entrevistas',  desc: 'Investigación profunda'         },
+] as const;
+
 function ErrorMsg({ message }: { message?: string }) {
   if (!message) return null;
   return (
@@ -123,6 +136,9 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
         founder_context: {
           yearsInIndustry:        data.yearsInIndustry,
           personallyFacedProblem: data.personallyFacedProblem,
+          commitment_level:       data.commitment_level   ?? null,
+          customer_interviews:    data.customer_interviews ?? null,
+          unfair_advantage:       data.unfair_advantage   ?? null,
         },
         tech_level:       data.tech_level,
         team_composition: data.team_composition,
@@ -134,14 +150,19 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
     nextStep();
   };
 
-  const facedProblem   = watch('personallyFacedProblem');
-  const techLevel      = watch('tech_level');
-  const teamComp       = watch('team_composition');
-  const tractionStatus = watch('traction_status');
+  const facedProblem      = watch('personallyFacedProblem');
+  const techLevel         = watch('tech_level');
+  const teamComp          = watch('team_composition');
+  const tractionStatus    = watch('traction_status');
+  const commitmentLevel   = watch('commitment_level');
+  const customerInterviews = watch('customer_interviews');
+  const unfairAdvantage   = watch('unfair_advantage') ?? '';
 
-  // Barra de progreso: campos clave del paso fundador.
-  const founderFilled = [teamComp, tractionStatus, techLevel].filter(Boolean).length;
-  const FOUNDER_TOTAL = 3;
+  // Progreso: 3 campos requeridos + 3 opcionales de enriquecimiento
+  const founderFilled   = [teamComp, tractionStatus, techLevel].filter(Boolean).length;
+  const enrichFilled    = [commitmentLevel, customerInterviews, unfairAdvantage.length > 0 ? 'x' : ''].filter(Boolean).length;
+  const FOUNDER_TOTAL   = 3;
+  const ENRICH_TOTAL    = 3;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -260,6 +281,112 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
           </label>
         </div>
 
+      </div>
+
+      {/* ── Enriquecimiento opcional ─────────────────────────────────── */}
+      <div className="border-t border-gray-100 dark:border-white/[0.06] pt-5 space-y-5">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-widest">
+            Análisis más preciso <span className="font-normal normal-case ml-1 text-gray-400">(opcional)</span>
+          </p>
+          {enrichFilled > 0 && (
+            <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
+              +{enrichFilled} campo{enrichFilled > 1 ? 's' : ''} completado{enrichFilled > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+
+        {/* Compromiso de tiempo */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
+            ¿Cuánto tiempo le dedicás a esta startup?
+          </label>
+          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-3">
+            Los inversores ponderan fuertemente el compromiso full-time.
+          </p>
+          <input type="hidden" {...register('commitment_level')} />
+          <div className="grid grid-cols-3 gap-2">
+            {COMMITMENT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setValue('commitment_level', opt.value, { shouldValidate: true })}
+                className={`p-3 border-2 rounded-2xl text-left transition-all
+                  ${commitmentLevel === opt.value
+                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
+                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+              >
+                <p className="text-base mb-0.5">{opt.icon}</p>
+                <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Entrevistas con clientes */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
+            ¿Cuántas entrevistas con clientes reales hiciste?
+          </label>
+          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-3">
+            Las entrevistas son la evidencia más valorada de validación del problema.
+          </p>
+          <input type="hidden" {...register('customer_interviews')} />
+          <div className="grid grid-cols-2 gap-2">
+            {INTERVIEWS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setValue('customer_interviews', opt.value, { shouldValidate: true })}
+                className={`p-3 border-2 rounded-2xl text-left transition-all
+                  ${customerInterviews === opt.value
+                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
+                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+              >
+                <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Ventaja diferencial */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
+            ¿Por qué vos sos la persona indicada para resolver esto?
+          </label>
+          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+            Tu experiencia única, acceso privilegiado al mercado o insight que otros no tienen.
+          </p>
+          <textarea
+            {...register('unfair_advantage')}
+            rows={3}
+            maxLength={500}
+            placeholder="Ej: Fui gerente de operaciones en una naviera durante 8 años. Conozco el dolor desde adentro y tengo relación directa con los tomadores de decisión."
+            className="w-full px-4 py-3 border-2 rounded-2xl text-sm resize-none transition outline-none
+                       bg-gray-50 dark:bg-[#0A0A0F] text-gray-900 dark:text-[#F0EFF8]
+                       placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
+                       border-gray-200 dark:border-white/8 focus:border-indigo-500"
+          />
+          <div className="flex justify-end mt-1">
+            <span className={`text-[10px] ${unfairAdvantage.length >= 80 ? 'text-indigo-500' : 'text-gray-400'}`}>
+              {unfairAdvantage.length}/500
+            </span>
+          </div>
+        </div>
+
+        {/* Indicador de impacto */}
+        {enrichFilled >= 2 && (
+          <div className="flex items-center gap-2 px-3 py-2.5 bg-indigo-50/60 dark:bg-indigo-500/8 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
+            <span className="text-indigo-500 text-base">✦</span>
+            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+              {enrichFilled === ENRICH_TOTAL
+                ? 'Perfil completo — el análisis de Founder Fit será significativamente más preciso.'
+                : 'Estos datos mejorarán el score de Founder Fit y el análisis de Inversión.'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Progreso de campos del paso */}

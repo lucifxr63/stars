@@ -80,7 +80,10 @@ function buildMarketContext(ctx: Record<string, unknown>): string {
 - SOLUCIÓN ACTUAL DE INCUMBENTES (herramientas/métodos que usa el cliente hoy): ${ctx.current_solution ?? 'No especificado'}
 - Canal de adquisición principal: ${ctx.acquisition_channel ?? 'No especificado'}
 - Composición del equipo fundador: ${ctx.team_composition ?? 'No especificado'}
-- Estado de tracción actual: ${ctx.traction_status ?? 'No especificado'}`;
+- Estado de tracción actual: ${ctx.traction_status ?? 'No especificado'}
+- Dedicación del founder al proyecto: ${(ctx.founder_context as Record<string,unknown>)?.commitment_level ?? 'No especificado'}
+- Entrevistas con clientes realizadas: ${(ctx.founder_context as Record<string,unknown>)?.customer_interviews ?? 'No especificado'}
+- Ventaja diferencial del founder (unfair advantage): ${(ctx.founder_context as Record<string,unknown>)?.unfair_advantage ?? 'No especificado'}`;
 }
 
 function extractJSON(text: string): string {
@@ -337,25 +340,33 @@ Score de 0-100 donde 100 = fit perfecto.
 
 Evalúa estas 5 dimensiones (score 0-100 cada una):
 
-- problemKnowledge (30%): ¿lo ha vivido en carne propia? ¿entiende profundamente el problema?
-  Usa el campo "personallyFacedProblem" (true/false) y el "PROBLEMA DECLARADO" como evidencia.
+- problemKnowledge (30%): ¿entiende el problema en profundidad? ¿lo vivió en carne propia?
+  Usa "personallyFacedProblem" (true/false) y el "PROBLEMA DECLARADO" como base.
+  ADEMÁS: si "unfair_advantage" contiene texto específico y relevante al problema → +15 puntos (máximo 95).
+  Si "unfair_advantage" está vacío o es genérico ("me interesa el tema") → score máximo limitado a 65.
+  Si "customer_interviews" es "6_20" o "20_plus" → evidencia de que entiende el problema con datos reales → +10 puntos.
 
 - industryExperience (20%): años de experiencia en la industria del problema.
-  Usa el campo "yearsInIndustry": 0-1 años → score bajo (0-25), 2-4 → medio (25-55), 5-9 → alto (55-80), 10+ → muy alto (80-95).
+  Usa "yearsInIndustry": 0-1 años → score bajo (0-25), 2-4 → medio (25-55), 5-9 → alto (55-80), 10+ → muy alto (80-95).
+  El texto en "unfair_advantage" puede confirmar o ampliar la experiencia declarada.
 
 - technicalCapability (20%): capacidad del equipo de construir el producto. USA team_composition + tech_level. NO uses hasTechnicalCofounder (campo obsoleto).
   • team_composition="team_with_employees" + tech_level="developers" → score alto (75-95).
   • team_composition="founding_team" + tech_level="some_code" → score medio (45-70).
   • team_composition="solo_founder" + tech_level="non_technical" → score bajo (0-35): riesgo de ejecución técnica alto.
+  Si "commitment_level"="full_time" → +5 a este score (founder comprometido puede superar limitaciones técnicas).
 
-- networkStrength (15%): red de contactos en el mercado objetivo.
-  Infiere del país objetivo, industria y años de experiencia — no hay campo directo para esto.
+- networkStrength (15%): capacidad de distribución y red de contactos en el mercado objetivo.
+  USA "commitment_level" como señal primaria: full_time → mayor probabilidad de red activa (base 55-70), part_time/weekends → base 25-45.
+  USA "customer_interviews": "20_plus" → red muy activa (+20), "6_20" → red activa (+10), "1_5" → (+5), "0" → sin evidencia de red (0).
+  Infiere también de país, industria y años de experiencia. Combina todos los factores.
 
-- trackRecord (15%): capacidad de ejecución demostrada. USA traction_status como indicador primario.
+- trackRecord (15%): capacidad de ejecución demostrada. USA traction_status + customer_interviews.
   • traction_status="first_paying_customers" → score alto (75-95): evidencia de ejecución y venta real.
   • traction_status="mvp_launched_no_sales" → score medio-alto (50-70): sabe construir, no vender aún.
   • traction_status="mvp_in_development" → score medio (30-50): en progreso.
   • traction_status="idea_on_paper" → score bajo (0-30): solo visión, sin ejecución demostrada.
+  Ajuste por entrevistas: "20_plus" → +10, "6_20" → +5, "0" con traction="idea_on_paper" → -5 (sin ninguna acción demostrada).
 
 Sé honesto. Un score bajo no mata la idea, pero señala riesgos de ejecución.
 El score general es el promedio ponderado: problemKnowledge×30% + industryExperience×20% + technicalCapability×20% + networkStrength×15% + trackRecord×15%.
