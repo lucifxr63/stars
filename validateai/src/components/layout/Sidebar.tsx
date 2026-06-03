@@ -162,6 +162,14 @@ export function Sidebar({ onClose }: SidebarProps) {
           <LogOut className="w-4 h-4 shrink-0" />
           Cerrar sesión
         </button>
+
+        <Link
+          to="/privacy-policy"
+          onClick={onClose}
+          className="block text-center text-[10px] text-gray-400 dark:text-[#4A495E] hover:text-[#7C6FF7] dark:hover:text-[#7C6FF7] transition-colors py-1"
+        >
+          Política de privacidad
+        </Link>
       </div>
     </div>
   );
