@@ -20,6 +20,13 @@ function getCorsHeaders(req: Request) {
 }
 
 function getSupabase() {
+  // Si KNOWLEDGE_VAULT_URL está configurado, inapi_records vive en el vault separado.
+  // Fallback al proyecto principal durante la transición.
+  const vaultUrl = Deno.env.get('KNOWLEDGE_VAULT_URL');
+  const vaultKey = Deno.env.get('KNOWLEDGE_VAULT_SERVICE_ROLE_KEY');
+  if (vaultUrl && vaultKey) {
+    return createClient(vaultUrl, vaultKey);
+  }
   return createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
