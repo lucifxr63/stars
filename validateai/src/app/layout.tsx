@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useConsentGuard } from '@/hooks/useConsentGuard';
 import { ConsentModal } from '@/components/shared/ConsentModal';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { UpgradeModal } from '@/components/shared/UpgradeModal';
 import { getPreviewTier, setPreviewTier, type UserTier } from '@/hooks/useUserTier';
 import type { User } from '@supabase/supabase-js';
 
@@ -159,6 +160,9 @@ export function AppLayout() {
           </p>
         </footer>
       </div>
+
+      {/* Modal global de upgrade — se activa via evento validateai:paywall-hit desde useAI */}
+      <UpgradeModal />
     </div>
   );
 }

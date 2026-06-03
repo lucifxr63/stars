@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { dispatchUsageUpdated } from '@/hooks/useUsage';
+import { dispatchPaywallHit } from '@/components/shared/UpgradeModal';
+import type { UserTier } from '@/hooks/useUserTier';
 
 type PromptType =
   | 'questions' | 'customer_analysis' | 'value_prop' | 'mvp_generation' | 'summary'
@@ -77,29 +79,40 @@ export function useAI() {
         const errBody = await res.clone().json().catch(() => ({} as Record<string, unknown>));
         const errCode = errBody.error as string | undefined;
 
-        // Errores de tier o límite mensual — no tiene sentido reintentar
+        // Errores de tier o límite mensual — mostrar modal contextual + no reintentar
+        const tierCurrent = (errBody.tier as UserTier | undefined) ?? 'free';
+
         if (errCode === 'tier_blocked' || errCode === 'rate_limit_tier') {
-          toast.error('Tu plan no incluye este análisis. Actualiza para continuar.', { duration: 6000 });
+          dispatchPaywallHit({
+            reason:       'tier_blocked',
+            prompt_type:  promptType,
+            tier_current: tierCurrent,
+            tier_needed:  'basic',
+          });
           return null;
         }
         if (errCode === 'monthly_limit' || errCode === 'rate_limit_monthly') {
-          const used  = errBody.used  as number | undefined;
-          const limit = errBody.limit as number | undefined;
-          const info  = used != null && limit != null ? ` (${used}/${limit})` : '';
-          toast.error(
-            `Límite mensual alcanzado${info}. Se renueva el 1° del mes.`,
-            { duration: 8000 },
-          );
+          // Si ya está en basic, necesita pro; si está en free, necesita basic
+          const tierNeeded: UserTier = tierCurrent === 'free' ? 'basic' : 'pro';
+          dispatchPaywallHit({
+            reason:       'monthly_limit',
+            prompt_type:  promptType,
+            tier_current: tierCurrent,
+            tier_needed:  tierNeeded,
+            used:         errBody.used  as number | undefined,
+            limit:        errBody.limit as number | undefined,
+          });
           return null;
         }
         if (errCode === 'expensive_limit' || errCode === 'rate_limit_expensive') {
-          const used  = errBody.used  as number | undefined;
-          const limit = errBody.limit as number | undefined;
-          const info  = used != null && limit != null ? ` (${used}/${limit})` : '';
-          toast.error(
-            `Límite de análisis de mercado alcanzado${info}. Actualiza tu plan para más.`,
-            { duration: 8000 },
-          );
+          dispatchPaywallHit({
+            reason:       'expensive_limit',
+            prompt_type:  promptType,
+            tier_current: tierCurrent,
+            tier_needed:  'pro',
+            used:         errBody.used  as number | undefined,
+            limit:        errBody.limit as number | undefined,
+          });
           return null;
         }
 
