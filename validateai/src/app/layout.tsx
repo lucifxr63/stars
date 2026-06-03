@@ -119,8 +119,8 @@ export function AppLayout() {
           </div>
         )}
 
-        {/* Top bar mobile */}
-        <header className="lg:hidden sticky top-0 z-20 flex items-center h-14 px-4 gap-3 border-b border-gray-100 dark:border-white/[0.06] bg-white dark:bg-[#12121A] shrink-0">
+        {/* Top bar mobile — oculto en el wizard porque Validate tiene su propio Header */}
+        <header className={`lg:hidden sticky top-0 z-20 flex items-center h-14 px-4 gap-3 border-b border-gray-100 dark:border-white/[0.06] bg-white dark:bg-[#12121A] shrink-0 ${location.pathname === '/validate' ? 'hidden' : ''}`}>
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg text-gray-500 dark:text-[#8B8AA0] hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"

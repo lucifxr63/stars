@@ -63,12 +63,12 @@ export default function App() {
 
               {/* Rutas protegidas */}
               <Route element={<ProtectedLayout />}>
-                {/* Standalone: onboarding + wizard (sin sidebar) */}
+                {/* Standalone: onboarding sin sidebar */}
                 <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/validate"   element={<Validate />} />
 
                 {/* App: todas las rutas con sidebar via AppLayout */}
                 <Route element={<AppLayout />}>
+                  <Route path="/validate" element={<Validate />} />
                   <Route path="/dashboard"              element={<Dashboard />} />
                   <Route path="/results"                element={<Results />} />
                   <Route path="/results/:id"            element={<ValidationDetail />} />

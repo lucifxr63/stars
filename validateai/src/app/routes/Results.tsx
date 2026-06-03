@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BarChart2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useTrainingData } from '@/hooks/useTrainingData';
+import { useUserTier } from '@/hooks/useUserTier';
+import { AggregateRadarChart } from '@/components/shared/AggregateRadarChart';
+import { IdeationTrendLine } from '@/components/shared/IdeationTrendLine';
+import { UsageGauge } from '@/components/shared/UsageGauge';
+
+const TIER_LIMITS: Record<string, number> = {
+  free: 5, basic: 20, pro: 50, premium: 200,
+};
 
 interface ValidationRow {
   id: string;
@@ -19,6 +27,7 @@ interface ValidationRow {
   version: number | null;
   pivot_reason: string | null;
   validation_mode?: 'quick' | 'detailed';
+  score_breakdown?: Record<string, unknown> | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -55,6 +64,7 @@ export function Results() {
   const navigate = useNavigate();
   const store = useValidationStore();
   const { updateConsent } = useTrainingData();
+  const { tier } = useUserTier();
   const [validations, setValidations] = useState<ValidationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [consent, setConsent] = useState(false);
@@ -62,11 +72,21 @@ export function Results() {
   const [pivotReason, setPivotReason] = useState('');
   const [pivoting, setPivoting] = useState(false);
 
+  // Métricas del gauge calculadas sobre los últimos 30 días
+  const usedThisCycle = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    return validations.filter((v) => new Date(v.created_at) >= cutoff).length;
+  }, [validations]);
+
+  const tierLimit = TIER_LIMITS[tier] ?? 5;
+  const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+
   useEffect(() => {
     const fetch = async () => {
       const { data, error } = await supabase
         .from('validations')
-        .select('id, idea_name, idea_industry, status, validation_score, current_step, created_at, completed_at, parent_id, version, pivot_reason, validation_mode')
+        .select('id, idea_name, idea_industry, status, validation_score, current_step, created_at, completed_at, parent_id, version, pivot_reason, validation_mode, score_breakdown')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -134,7 +154,7 @@ export function Results() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
-      <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
+      <div className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
         {/* Page header */}
         <div className="flex items-start justify-between mb-8">
           <div>
@@ -156,6 +176,51 @@ export function Results() {
             Nueva validación
           </Link>
         </div>
+
+        {/* ── Dashboard analítico Bento Box ─────────────────────────────── */}
+        {loading ? (
+          /* Skeleton */
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_172px] gap-3 mb-8">
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 animate-pulse h-64" />
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 animate-pulse h-64" />
+            <div className="sm:col-span-2 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 animate-pulse h-40" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_172px] gap-3 mb-8">
+            {/* Radar — portafolio promedio (siempre visible, muestra empty state si no hay datos) */}
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold text-gray-400 dark:text-[#8B8AA0] uppercase tracking-widest">
+                  Perfil de fundador
+                </p>
+                <BarChart2 className="w-3.5 h-3.5 text-gray-300 dark:text-white/20" />
+              </div>
+              <div className="flex-1 min-h-[220px]">
+                <AggregateRadarChart validations={validations} />
+              </div>
+            </div>
+
+            {/* Gauge — consumo de cuota */}
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-4 flex flex-col gap-2">
+              <p className="text-[10px] font-bold text-gray-400 dark:text-[#8B8AA0] uppercase tracking-widest">
+                Cuota mensual
+              </p>
+              <div className="flex-1 flex items-center justify-center">
+                <UsageGauge used={usedThisCycle} limit={tierLimit} tierLabel={tierLabel} />
+              </div>
+            </div>
+
+            {/* Trend Line — cadencia de ideación */}
+            <div className="sm:col-span-2 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-4 flex flex-col gap-2">
+              <p className="text-[10px] font-bold text-gray-400 dark:text-[#8B8AA0] uppercase tracking-widest">
+                Actividad de ideación
+              </p>
+              <div className="h-40">
+                <IdeationTrendLine validations={validations} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Loading */}
         {loading && (
