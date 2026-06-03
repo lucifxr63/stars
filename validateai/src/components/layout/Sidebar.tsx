@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X } from 'lucide-react';
+import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -22,6 +22,7 @@ const TIER_CLS: Record<string, string> = {
 const NAV_ITEMS = [
   { label: 'Inicio',           path: '/dashboard', Icon: Home },
   { label: 'Mis Validaciones', path: '/results',   Icon: BarChart2 },
+  { label: 'Encuestas',        path: '/surveys',   Icon: ClipboardList },
   { label: 'Mi Startup',       path: '/startup',   Icon: Rocket },
   { label: 'Configuración',    path: '/profile',   Icon: Settings },
 ] as const;

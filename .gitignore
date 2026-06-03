@@ -4,3 +4,5 @@ dist/
 .claude/
 *.env.local
 *.env.*.local
+validateai-knowledge-vault/
+docs/*.exe

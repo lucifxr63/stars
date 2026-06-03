@@ -118,7 +118,7 @@ Implemented via Three.js + R3F (`ChileMarketMap.tsx`), using d3-geo for projecti
 ## Known Issues
 
 - `idea_name` / `idea_industry` can be null if a user abandons Step 1 before saving.
-- Admin tables load all rows into memory (no pagination).
+- Admin tables: paginación implementada (25 filas/página, `.range()` + `PaginationBar` en tabs users/validations/ai).
 - No API rate limiting per tier.
 - Mentors matching (`useMentors`) is currently using a hardcoded similarity threshold and basic querying instead of the full semantic RPC.
 - Generation is fully synchronous, which blocks the UI for long prompts.
@@ -212,3 +212,31 @@ El score de 5 dimensiones (problem/market/competition/solution/execution) NO deb
 ### Pregunta pendiente antes de implementar rate limiting
 Â¿El campo `tier` del usuario vive en `profiles` o solo en Supabase auth metadata?  
 Revisar `useUserTier.ts` y la migraciÃ³n correspondiente antes de escribir cÃ³digo.
+
+---
+
+## Protocolo de Desarrollo Proactivo
+
+Aplicar en toda tarea no trivial (nuevas features, cambios de schema, nuevos Edge Functions, cambios de flujo UX).
+
+### Friction Check (antes de proponer implementacion)
+
+Antes de codificar cualquier feature mediana o grande, identificar explicitamente:
+
+1. **Friccion tecnica** - Introduce deuda, latencia, dependencia fragil o costo de tokens elevado?
+2. **Friccion UX** - Rompe un flujo existente, agrega pasos al wizard, o confunde al fundador?
+3. **Friccion de costo** - Cuanto cuesta por request si se abusa? Esta rate-limited?
+
+Proponer mitigacion para cada friccion identificada antes de empezar a escribir codigo.
+
+### KPI Anchor (por cada feature nueva)
+
+Cada feature debe tener una metrica de negocio asociada explicita. Ejemplos validos:
+
+- Reduccion de abandono en paso X del wizard
+- Aumento de conversion free->Basic
+- Reduccion de latencia en `ai-validate`
+- Ahorro de tokens por sesion (semantic cache hit rate)
+- Nuevos usuarios que completan el wizard end-to-end
+
+Si no se puede articular el KPI, la feature probablemente no es prioritaria ahora.
