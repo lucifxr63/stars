@@ -165,8 +165,7 @@ export function SharedValidation() {
                 {kpis.map((kpi) => (
                   <div key={kpi.label} className="text-center bg-gray-50 dark:bg-white/[0.03] rounded-xl py-3 px-2">
                     <p className="text-[10px] text-gray-400 dark:text-[#4A495E] mb-1">{kpi.label}</p>
-                    <p className="text-sm font-black leading-tight" style={{ color: kpi.color ?? undefined }}
-                       className={!kpi.color ? 'text-gray-800 dark:text-[#E0DFF5]' : ''}>
+                    <p className={`text-sm font-black leading-tight ${!kpi.color ? 'text-gray-800 dark:text-[#E0DFF5]' : ''}`} style={{ color: kpi.color ?? undefined }}>
                       {kpi.value}
                     </p>
                   </div>
@@ -201,9 +200,9 @@ export function SharedValidation() {
                     <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">
                       Instrumento sugerido: <span className="font-bold text-gray-700 dark:text-[#C4C4D4]">{instrLabels[fr.recommended_instrument] ?? fr.recommended_instrument}</span>
                     </p>
-                    {fr.target_raise_usd && (
+                    {fr.suggested_ticket_size && (
                       <p className="text-xs font-bold text-[#7C6FF7]">
-                        USD {fr.target_raise_usd.toLocaleString('en-US')}
+                        USD {fr.suggested_ticket_size.min.toLocaleString('en-US')} – {fr.suggested_ticket_size.max.toLocaleString('en-US')}
                       </p>
                     )}
                   </div>
