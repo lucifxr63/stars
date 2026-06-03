@@ -66,10 +66,13 @@ serve(async (req) => {
       });
     }
 
-    // Actualizar kyc_status a 'verified' y guardar el RUT
+    // Hashear RUT antes de persistir — nunca almacenar plaintext
+    const { data: rutHash } = await supabase
+      .rpc('fn_hash_rut_value', { plain_rut: rut });
+
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ kyc_status: 'verified', rut: rut })
+      .update({ kyc_status: 'verified', rut_hash: rutHash ?? null })
       .eq('id', user.id);
 
     if (updateError) {

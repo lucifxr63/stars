@@ -112,7 +112,6 @@ interface ValidationFull {
   lean_roadmap: LeanRoadmap | null;
   financial_projection: FinancialProjection | null;
   compliance_roadmap: ComplianceRoadmap | null;
-  rut: string | null;
   validation_mode: 'quick' | 'detailed' | 'premium' | null;
   quick_icp: string | null;
 }
@@ -426,7 +425,6 @@ export function ValidationDetail() {
         },
         body: JSON.stringify({
           validation_id: data.id,
-          rut_empresa: data.rut ?? null,
           brand_name: data.idea_name ?? null,
           current_step: data.business_stage === 'funding' ? 'stepFunding'
             : data.business_stage === 'growth' ? 'stepGrowth'
