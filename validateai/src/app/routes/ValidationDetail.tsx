@@ -208,7 +208,7 @@ export function ValidationDetail() {
   const [updatePdfLoading, setUpdatePdfLoading] = useState(false);
   const [pitchDeckLoading, setPitchDeckLoading] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
-  const [, setShareUrl] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [showReanalyzeModal, setShowReanalyzeModal] = useState(false);
   const [showPivotModal, setShowPivotModal] = useState(false);
@@ -742,6 +742,38 @@ export function ValidationDetail() {
     }
   };
 
+  const handleShareLinkedIn = async () => {
+    if (!data) return;
+    let url = shareUrl;
+    if (!url) {
+      setSharing(true);
+      try {
+        let token = data.share_token;
+        if (!token) {
+          token = crypto.randomUUID();
+          const { error } = await supabase.from('validations').update({ share_token: token }).eq('id', data.id);
+          if (error) throw error;
+          setData({ ...data, share_token: token });
+        }
+        url = `${window.location.origin}/shared/${token}`;
+        setShareUrl(url);
+      } catch {
+        toast.error('No se pudo generar el link de compartir.');
+        setSharing(false);
+        return;
+      }
+      setSharing(false);
+    }
+    const score = data.validation_score ?? 0;
+    const name  = data.idea_name ?? 'mi startup';
+    const text  = `Validé "${name}" con IA y obtuve ${score}/100. ¿Tu idea resistiría este análisis?`;
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
+
   /** Actualiza el análisis de IA y luego descarga el PDF con los datos frescos */
   const handleUpdateAndExportPDF = async () => {
     if (!data) return;
@@ -1039,7 +1071,7 @@ export function ValidationDetail() {
                 <span className="hidden xs:inline">Descargar </span>Dossier
               </button>
 
-              {/* Compartir Rápido */}
+              {/* Compartir — copiar link */}
               <button
                 onClick={handleShare}
                 disabled={sharing}
@@ -1053,6 +1085,19 @@ export function ValidationDetail() {
                   </svg>
                 )}
                 Compartir
+              </button>
+
+              {/* Compartir en LinkedIn */}
+              <button
+                onClick={handleShareLinkedIn}
+                disabled={sharing}
+                title="Compartir en LinkedIn"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#0A66C2]/30 text-[#0A66C2] dark:text-[#5BA4F5] bg-[#0A66C2]/5 text-xs font-bold rounded-xl hover:bg-[#0A66C2]/10 active:scale-[0.98] transition disabled:opacity-50"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                LinkedIn
               </button>
 
               {/* Dropdown de Más Opciones */}
