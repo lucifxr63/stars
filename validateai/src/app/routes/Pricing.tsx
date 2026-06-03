@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
-type Tier = 'free' | 'pro' | 'premium';
+type Tier = 'free' | 'basic' | 'pro' | 'premium';
 
 function Logo({ className = 'w-6 h-8' }: { className?: string }) {
   return (
@@ -44,6 +44,24 @@ const PLANS = [
       'Export PDF estándar',
     ],
     cta: 'Comenzar gratis',
+  },
+  {
+    tier: 'basic' as Tier,
+    name: 'Basic',
+    price: '$9.990',
+    period: ' CLP/mes',
+    description: 'Para validar en serio sin gastar de más.',
+    color: '#34D399',
+    highlight: false,
+    features: [
+      '20 validaciones por mes',
+      'Score detallado 5 dimensiones',
+      'Unit Economics básico',
+      'Análisis de competidores completo',
+      'Gobernanza y Fundraising Roadmap',
+      'Export PDF investor-ready',
+    ],
+    cta: 'Empezar con Basic',
   },
   {
     tier: 'pro' as Tier,
@@ -134,7 +152,7 @@ export function Pricing() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-12 sm:py-16">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-12 sm:py-16">
 
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
@@ -153,7 +171,7 @@ export function Pricing() {
         </div>
 
         {/* Plans */}
-        <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-4">
           {PLANS.map((plan) => (
             <div key={plan.tier}
               className={`relative rounded-3xl border flex flex-col transition-all duration-200

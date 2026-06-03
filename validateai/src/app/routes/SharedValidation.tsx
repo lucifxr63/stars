@@ -18,7 +18,7 @@ import { ScoreGauge } from '@/components/shared/ScoreGauge';
 import { MarketFunnel } from '@/components/shared/MarketFunnel';
 import { CompetitiveAnalysis } from '@/components/shared/CompetitiveAnalysis';
 import { ScoreBreakdown } from '@/components/shared/ScoreBreakdown';
-import type { MarketSizing, CompetitiveAnalysis as CompetitiveAnalysisType, ScoreBreakdown as ScoreBreakdownType } from '@/types/validation';
+import type { MarketSizing, CompetitiveAnalysis as CompetitiveAnalysisType, ScoreBreakdown as ScoreBreakdownType, UnitEconomics, FundraisingRoadmap } from '@/types/validation';
 
 interface SharedValidation {
   id: string;
@@ -39,6 +39,8 @@ interface SharedValidation {
   market_sizing: MarketSizing | null;
   competitive_analysis: CompetitiveAnalysisType | null;
   score_breakdown: ScoreBreakdownType | null;
+  unit_economics: UnitEconomics | null;
+  fundraising_roadmap: FundraisingRoadmap | null;
   completed_at: string | null;
 }
 
@@ -143,6 +145,74 @@ export function SharedValidation() {
         {/* Competitive analysis */}
         {data.competitive_analysis && <CompetitiveAnalysis data={data.competitive_analysis} />}
 
+        {/* Unit Economics — KPIs clave para inversores */}
+        {data.unit_economics && (() => {
+          const ue = data.unit_economics!;
+          const fmtCurrency = (n: number, c: 'CLP' | 'USD') =>
+            c === 'CLP' ? `$${n.toLocaleString('es-CL')}` : `USD ${n.toLocaleString('en-US')}`;
+          const ratioVal = ue.ltvCacRatio.value;
+          const ratioColor = ratioVal >= 5 ? '#34D399' : ratioVal >= 3 ? '#F7C56C' : '#F87171';
+          const kpis = [
+            { label: 'CAC', value: `${fmtCurrency(ue.cac.min, ue.cac.currency)}–${fmtCurrency(ue.cac.max, ue.cac.currency)}` },
+            { label: 'LTV', value: `${fmtCurrency(ue.ltv.min, ue.ltv.currency)}–${fmtCurrency(ue.ltv.max, ue.ltv.currency)}` },
+            { label: 'LTV/CAC', value: `${ratioVal.toFixed(1)}x`, color: ratioColor },
+            { label: 'Payback', value: `${ue.paybackMonths.min}–${ue.paybackMonths.max} meses` },
+          ];
+          return (
+            <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
+              <p className="text-xs font-bold text-gray-400 dark:text-[#8B8AA0] uppercase tracking-widest mb-4">Unit Economics</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {kpis.map((kpi) => (
+                  <div key={kpi.label} className="text-center bg-gray-50 dark:bg-white/[0.03] rounded-xl py-3 px-2">
+                    <p className="text-[10px] text-gray-400 dark:text-[#4A495E] mb-1">{kpi.label}</p>
+                    <p className="text-sm font-black leading-tight" style={{ color: kpi.color ?? undefined }}
+                       className={!kpi.color ? 'text-gray-800 dark:text-[#E0DFF5]' : ''}>
+                      {kpi.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Fundraising Readiness */}
+        {data.fundraising_roadmap && (() => {
+          const fr = data.fundraising_roadmap!;
+          const readinessColor = fr.readiness_score >= 70 ? '#34D399' : fr.readiness_score >= 40 ? '#F7C56C' : '#F87171';
+          const instrLabels: Record<string, string> = {
+            SAFE: 'SAFE Note', convertible_note: 'Nota Convertible',
+            priced_round: 'Ronda Valorizada', grant: 'Subsidio / Grant',
+            bootstrapping: 'Bootstrapping', non_dilutive_debt: 'Deuda No Dilutiva',
+          };
+          return (
+            <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5">
+              <p className="text-xs font-bold text-gray-400 dark:text-[#8B8AA0] uppercase tracking-widest mb-4">Fundraising Readiness</p>
+              <div className="flex items-center gap-4">
+                <div className="text-center shrink-0">
+                  <p className="text-3xl font-black" style={{ color: readinessColor }}>{fr.readiness_score}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">/ 100</p>
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="w-full bg-gray-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+                    <div className="h-2 rounded-full transition-all" style={{ width: `${fr.readiness_score}%`, backgroundColor: readinessColor }} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">
+                      Instrumento sugerido: <span className="font-bold text-gray-700 dark:text-[#C4C4D4]">{instrLabels[fr.recommended_instrument] ?? fr.recommended_instrument}</span>
+                    </p>
+                    {fr.target_raise_usd && (
+                      <p className="text-xs font-bold text-[#7C6FF7]">
+                        USD {fr.target_raise_usd.toLocaleString('en-US')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Fortalezas y debilidades */}
         {summary && (summary.strengths?.length > 0 || summary.weaknesses?.length > 0) && (
           <div className="grid sm:grid-cols-2 gap-4">
@@ -221,9 +291,9 @@ export function SharedValidation() {
           <p className="text-xs text-gray-400 mb-3">¿Quieres validar tu propia idea de negocio?</p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-500 text-white font-semibold rounded-2xl hover:bg-teal-600 transition text-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7C6FF7] text-white font-semibold rounded-2xl hover:bg-[#6B5EE6] transition text-sm shadow-md shadow-[#7C6FF7]/20"
           >
-            Probar ValidateAI gratis →
+            Probar Validus gratis →
           </Link>
         </div>
       </div>
