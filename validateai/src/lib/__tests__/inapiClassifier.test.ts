@@ -177,7 +177,7 @@ describe('classifyCollisionRisk — riesgo medium (coincidencia parcial)', () =>
     ];
     const r = classifyCollisionRisk(records, 'VALIDUS');
     expect(r.risk_level).toBe('medium');
-    expect(r.rationale ?? r.risk_rationale).toContain('2');
+    expect(r.risk_rationale).toContain('2');
   });
 });
 
