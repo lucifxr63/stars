@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useAI } from '@/hooks/useAI';
 import {
+  generateValidationPDF,
   generatePremiumPDF,
   generatePitchDeckPDF,
   generateLeanRoadmapPDF,
@@ -73,7 +74,7 @@ interface Props {
   mentors?: { name: string; bio: string | null; expertise: string[]; session_price_clp: number | null }[];
 }
 
-type DocId = 'dossier' | 'pitch_deck' | 'lean_roadmap' | 'financial_projection' | 'compliance_roadmap';
+type DocId = 'data_room' | 'dossier' | 'pitch_deck' | 'lean_roadmap' | 'financial_projection' | 'compliance_roadmap';
 
 interface DocConfig {
   id: DocId;
@@ -88,6 +89,15 @@ interface DocConfig {
 }
 
 const DOCS: DocConfig[] = [
+  {
+    id: 'data_room',
+    icon: '🗂️',
+    label: 'Data Room Completo',
+    sublabel: '25–40 págs · Todas las secciones',
+    description: 'Export unificado investor-ready: score, mercado, competencia, unit economics, gobernanza, fundraising, due diligence y mentores.',
+    accent: 'text-indigo-600 dark:text-indigo-400',
+    accentBg: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/30',
+  },
   {
     id: 'dossier',
     icon: '📋',
@@ -211,6 +221,12 @@ export function PDFExportModal({ data, onClose, onDataUpdate, mentors = [] }: Pr
 
     try {
       const base = buildBasePayload();
+
+      if (doc.id === 'data_room') {
+        await generateValidationPDF(base, 'dark');
+        toast.success('Data Room descargado');
+        return;
+      }
 
       if (doc.id === 'dossier') {
         await generatePremiumPDF(base);

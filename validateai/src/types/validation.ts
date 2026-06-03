@@ -165,6 +165,17 @@ export interface MarketSignals {
   relevantNews: { title: string; impact: 'positive' | 'negative' | 'neutral' }[];
 }
 
+export interface UnitEconomicsBenchmark {
+  sector: string;
+  model: string;
+  sector_cac_usd: { min: number; max: number };
+  sector_ltv_usd: { min: number; max: number };
+  sector_churn_pct: { min: number; max: number };
+  your_cac_vs_benchmark: 'below' | 'in_range' | 'above';
+  your_ltv_vs_benchmark: 'below' | 'in_range' | 'above';
+  benchmark_note: string;
+}
+
 export interface UnitEconomics {
   cac: { min: number; max: number; currency: 'CLP' | 'USD' };
   ltv: { min: number; max: number; currency: 'CLP' | 'USD' };
@@ -173,6 +184,7 @@ export interface UnitEconomics {
   breakEvenUsers: number;
   monthlyChurnEstimate: number;
   assumptions: string[];
+  benchmarkComparison?: UnitEconomicsBenchmark;
 }
 
 export interface FounderContext {

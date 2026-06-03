@@ -1,4 +1,4 @@
-import type { UnitEconomics } from '@/types/validation';
+import type { UnitEconomics, UnitEconomicsBenchmark } from '@/types/validation';
 import { useState } from 'react';
 import {
   BarChart,
@@ -185,7 +185,84 @@ export function UnitEconomicsChart({ data }: Props) {
   );
 }
 
-// Keep the default export backward compatible if needed, but not necessary since we use it in one place.
+// ── Benchmark comparison panel ────────────────────────────────────────────────
+const BENCHMARK_LABELS: Record<string, string> = {
+  saas: 'SaaS', fintech: 'Fintech', edtech: 'EdTech', healthtech: 'HealthTech',
+  ecommerce: 'E-commerce', marketplace: 'Marketplace', logistics: 'Logística',
+  foodtech: 'FoodTech', proptech: 'PropTech', social: 'Social', other: 'General',
+};
+const MODEL_LABELS: Record<string, string> = {
+  b2b: 'B2B', b2c: 'B2C', b2b2c: 'B2B2C', marketplace: 'Marketplace', default: 'General',
+};
+
+function benchmarkBadge(
+  position: 'below' | 'in_range' | 'above',
+  metric: 'cac' | 'ltv',
+): { label: string; className: string } {
+  // CAC: below = bueno, above = malo / LTV: below = malo, above = bueno
+  const good  = metric === 'cac' ? position === 'below'    : position === 'above';
+  const bad   = metric === 'cac' ? position === 'above'    : position === 'below';
+  const label = position === 'below' ? 'Por debajo' : position === 'above' ? 'Por encima' : 'En rango';
+  const className = good
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+    : bad
+    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
+    : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
+  return { label, className };
+}
+
+function BenchmarkPanel({ b }: { b: UnitEconomicsBenchmark }) {
+  const sectorLabel = BENCHMARK_LABELS[b.sector] ?? b.sector;
+  const modelLabel  = MODEL_LABELS[b.model]  ?? b.model;
+  const cacBadge = benchmarkBadge(b.your_cac_vs_benchmark, 'cac');
+  const ltvBadge = benchmarkBadge(b.your_ltv_vs_benchmark, 'ltv');
+
+  return (
+    <div className="rounded-xl border border-dashed border-indigo-200 dark:border-indigo-500/25 bg-indigo-50/40 dark:bg-indigo-500/5 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <svg className="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <p className="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide">
+          Benchmark sectorial · {sectorLabel} / {modelLabel}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {/* CAC */}
+        <div className="flex items-center justify-between gap-2 bg-white/70 dark:bg-white/5 rounded-lg px-3 py-2">
+          <div>
+            <p className="text-[10px] text-gray-400 dark:text-[#8B8AA0]">CAC sectorial</p>
+            <p className="text-xs font-bold text-gray-700 dark:text-[#C4C4D4]">
+              USD {b.sector_cac_usd.min.toLocaleString()}–{b.sector_cac_usd.max.toLocaleString()}
+            </p>
+          </div>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cacBadge.className}`}>
+            {cacBadge.label}
+          </span>
+        </div>
+        {/* LTV */}
+        <div className="flex items-center justify-between gap-2 bg-white/70 dark:bg-white/5 rounded-lg px-3 py-2">
+          <div>
+            <p className="text-[10px] text-gray-400 dark:text-[#8B8AA0]">LTV sectorial</p>
+            <p className="text-xs font-bold text-gray-700 dark:text-[#C4C4D4]">
+              USD {b.sector_ltv_usd.min.toLocaleString()}–{b.sector_ltv_usd.max.toLocaleString()}
+            </p>
+          </div>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${ltvBadge.className}`}>
+            {ltvBadge.label}
+          </span>
+        </div>
+      </div>
+
+      <p className="text-[10px] text-gray-400 dark:text-[#4A495E] leading-relaxed">
+        Churn sectorial: {b.sector_churn_pct.min}–{b.sector_churn_pct.max}% mensual ·{' '}
+        <span className="italic">{b.benchmark_note}</span>
+      </p>
+    </div>
+  );
+}
+
 export function UnitEconomicsCard({ data }: Props) {
   return (
     <div className="space-y-4">
@@ -193,6 +270,9 @@ export function UnitEconomicsCard({ data }: Props) {
         <UnitEconomicsKpis data={data} />
       </div>
       <UnitEconomicsChart data={data} />
+      {data.benchmarkComparison && (
+        <BenchmarkPanel b={data.benchmarkComparison} />
+      )}
     </div>
   );
 }

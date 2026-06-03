@@ -323,6 +323,12 @@ Si el contexto incluye "channel_cac_benchmark", úsalo para ajustar el CAC segú
 - monthlyChurnEstimate: % de usuarios que cancela cada mes (crÃ­tico para SaaS)
 - assumptions: 3-5 supuestos clave que usaste para llegar a estos nÃºmeros
 
+Si el contexto incluye "industry_benchmarks", DEBES además incluir el campo "benchmarkComparison" en tu respuesta:
+- "your_cac_vs_benchmark": compara el promedio de tu CAC estimado contra el rango sectorial.
+  "below" si tu CAC promedio < benchmark.min, "above" si > benchmark.max, "in_range" si está dentro.
+- "your_ltv_vs_benchmark": ídem para LTV.
+- Si NO hay industry_benchmarks en el contexto, omite el campo benchmarkComparison completamente.
+
 Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "cac": { "min": 50000, "max": 120000, "currency": "CLP" },
@@ -331,8 +337,19 @@ Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
   "paybackMonths": { "min": 2, "max": 4 },
   "breakEvenUsers": 150,
   "monthlyChurnEstimate": 5,
-  "assumptions": ["...", "...", "..."]
-}`,
+  "assumptions": ["...", "...", "..."],
+  "benchmarkComparison": {
+    "sector": "saas",
+    "model": "b2b",
+    "sector_cac_usd": { "min": 200, "max": 800 },
+    "sector_ltv_usd": { "min": 1500, "max": 6000 },
+    "sector_churn_pct": { "min": 1, "max": 4 },
+    "your_cac_vs_benchmark": "below",
+    "your_ltv_vs_benchmark": "in_range",
+    "benchmark_note": "SaaS B2B mediana LatAm 2025 – ChartMogul"
+  }
+}
+Valores válidos para your_cac_vs_benchmark / your_ltv_vs_benchmark: "below" | "in_range" | "above"`,
 
   founder_fit: `Eres un evaluador de startups. EvalÃºa quÃ© tan bien posicionado estÃ¡ el fundador para ejecutar esta idea especÃ­fica.
 IMPORTANTE: Responde siempre en espaÃ±ol.
