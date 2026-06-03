@@ -1026,7 +1026,7 @@ export function Landing() {
               <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wide mb-4">Legal</p>
               <ul className="space-y-2.5">
                 <li><span className="text-xs text-gray-500 dark:text-[#8B8AA0]">Términos de uso</span></li>
-                <li><span className="text-xs text-gray-500 dark:text-[#8B8AA0]">Política de privacidad</span></li>
+                <li><Link to="/privacy-policy" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Política de privacidad</Link></li>
                 <li><a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-[#7C6FF7] transition-colors">Contacto</a></li>
               </ul>
             </div>

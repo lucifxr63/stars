@@ -14,6 +14,7 @@ const SurveyRespond    = lazy(() => import('@/app/routes/SurveyRespond').then((m
 const Pricing          = lazy(() => import('@/app/routes/Pricing').then((m) => ({ default: m.Pricing })));
 const Demo             = lazy(() => import('@/app/routes/Demo').then((m) => ({ default: m.Demo })));
 const FigmaCallback    = lazy(() => import('@/app/routes/FigmaCallback').then((m) => ({ default: m.FigmaCallback })));
+const PrivacyPolicy    = lazy(() => import('@/app/routes/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
 
 // Protected — standalone (no sidebar)
 const Onboarding = lazy(() => import('@/app/routes/Onboarding').then((m) => ({ default: m.Onboarding })));
@@ -57,7 +58,8 @@ export default function App() {
               <Route path="/s/:slug"        element={<SurveyRespond />} />
               <Route path="/pricing"        element={<Pricing />} />
               <Route path="/demo"           element={<Demo />} />
-              <Route path="/figma/callback" element={<FigmaCallback />} />
+              <Route path="/figma/callback"   element={<FigmaCallback />} />
+              <Route path="/privacy-policy"  element={<PrivacyPolicy />} />
 
               {/* Rutas protegidas */}
               <Route element={<ProtectedLayout />}>
