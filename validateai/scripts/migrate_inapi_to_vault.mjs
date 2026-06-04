@@ -25,10 +25,10 @@ import pg from 'pg';
 
 const { Client } = pg;
 
-const [,, SOURCE_PASS, VAULT_PASS, VAULT_REF] = process.argv;
+const [,, SOURCE_PASS, VAULT_PASS, VAULT_REF, SOURCE_USER = 'postgres'] = process.argv;
 
 if (!SOURCE_PASS || !VAULT_PASS || !VAULT_REF) {
-  console.error('Uso: node scripts/migrate_inapi_to_vault.mjs <SOURCE_PASS> <VAULT_PASS> <VAULT_REF>');
+  console.error('Uso: node scripts/migrate_inapi_to_vault.mjs <SOURCE_PASS> <VAULT_PASS> <VAULT_REF> [SOURCE_USER]');
   process.exit(1);
 }
 
@@ -51,12 +51,12 @@ const COLUMNS = [
 const COL_LIST = COLUMNS.join(', ');
 const PLACEHOLDERS = (n) => COLUMNS.map((_, i) => `$${i + 1 + n * COLUMNS.length}`).join(', ');
 
-function makeConnConfig(host, password) {
+function makeConnConfig(host, password, user = 'postgres') {
   return {
     host,
     port: 5432,
     database: 'postgres',
-    user: 'postgres',
+    user,
     password,
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: 30_000,
@@ -65,7 +65,7 @@ function makeConnConfig(host, password) {
 }
 
 async function main() {
-  const source = new Client(makeConnConfig(SOURCE_HOST, SOURCE_PASS));
+  const source = new Client(makeConnConfig(SOURCE_HOST, SOURCE_PASS, SOURCE_USER));
   const vault  = new Client(makeConnConfig(VAULT_HOST, VAULT_PASS));
 
   console.log('🔌 Conectando a ambas bases de datos...');
