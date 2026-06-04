@@ -12,8 +12,9 @@ export function useMentors(
   ideaDescription: string | null | undefined,
   founderGaps?: string[],
 ) {
-  const [mentors, setMentors] = useState<MentorMatch[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [mentors, setMentors]   = useState<MentorMatch[]>([]);
+  const [loading, setLoading]   = useState(false);
+  const [failed,  setFailed]    = useState(false);
 
   const gapsKey = founderGaps?.join(',') ?? '';
 
@@ -22,6 +23,7 @@ export function useMentors(
 
     let cancelled = false;
     setLoading(true);
+    setFailed(false);
 
     supabase.functions
       .invoke('match-mentors', {
@@ -31,16 +33,18 @@ export function useMentors(
         if (cancelled) return;
         if (!error && Array.isArray(data) && data.length > 0) {
           setMentors(data as MentorMatch[]);
+        } else if (error) {
+          setFailed(true);
         }
         setLoading(false);
       })
       .catch(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) { setFailed(true); setLoading(false); }
       });
 
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ideaDescription, gapsKey]);
 
-  return { mentors, loading };
+  return { mentors, loading, failed };
 }

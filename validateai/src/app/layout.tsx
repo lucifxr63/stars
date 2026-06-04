@@ -98,7 +98,7 @@ export function AppLayout() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="relative w-60 flex flex-col bg-white dark:bg-[#12121A] shadow-2xl z-10">
+          <aside className="relative w-60 max-w-[75vw] flex flex-col bg-white dark:bg-[#12121A] shadow-2xl z-10">
             <Sidebar onClose={() => setSidebarOpen(false)} />
           </aside>
         </div>

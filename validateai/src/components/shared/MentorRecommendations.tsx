@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function MentorRecommendations({ ideaDescription, founderGaps }: Props) {
-  const { mentors, loading } = useMentors(ideaDescription, founderGaps);
+  const { mentors, loading, failed } = useMentors(ideaDescription, founderGaps);
 
   const displayMentors = mentors;
 
@@ -67,6 +67,14 @@ export function MentorRecommendations({ ideaDescription, founderGaps }: Props) {
               </div>
             </div>
           ))}
+        </div>
+      ) : failed ? (
+        <div className="relative flex flex-col items-center justify-center py-10 text-center gap-3">
+          <AlertCircle className="w-8 h-8 text-amber-400" />
+          <p className="text-sm font-semibold text-gray-600 dark:text-[#C4C4D4]">Mentores no disponibles</p>
+          <p className="text-xs text-gray-400 dark:text-[#8B8AA0] max-w-xs leading-relaxed">
+            No se pudo conectar con el servicio de matching. Intenta recargar la página.
+          </p>
         </div>
       ) : displayMentors.length === 0 ? (
         <div className="relative flex flex-col items-center justify-center py-10 text-center gap-3">

@@ -40,9 +40,11 @@ export function MyStartup() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || cancelled) return;
 
       const { data } = await supabase
         .from('profiles')
@@ -50,6 +52,7 @@ export function MyStartup() {
         .eq('id', user.id)
         .single();
 
+      if (cancelled) return;
       if (data) {
         setForm({
           full_name:      data.full_name ?? '',
@@ -61,7 +64,9 @@ export function MyStartup() {
       }
       setLoading(false);
     }
+
     load();
+    return () => { cancelled = true; };
   }, []);
 
   const set =

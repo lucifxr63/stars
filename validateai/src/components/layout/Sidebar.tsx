@@ -118,10 +118,10 @@ export function Sidebar({ onClose }: SidebarProps) {
         {NAV_ITEMS.map(({ label, path, Icon }) => {
           const active = isActive(path);
           return (
-            <Link key={path} to={path} onClick={onClose} className={navCls(active)}>
+            <Link key={path} to={path} onClick={onClose} className={navCls(active)} aria-current={active ? 'page' : undefined}>
               <Icon className={iconCls(active)} />
               <span className="flex-1">{label}</span>
-              {active && <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] shrink-0" />}
+              {active && <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] shrink-0" aria-hidden="true" />}
             </Link>
           );
         })}

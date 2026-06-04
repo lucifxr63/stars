@@ -35,6 +35,15 @@ export function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validación de formato antes de llamar a Supabase
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      toast.error('Ingresa un email válido (ej: nombre@dominio.com).');
+      return;
+    }
+    if (password.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
     setLoading(true);
     try {
       if (isSignUp) {

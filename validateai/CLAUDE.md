@@ -186,21 +186,23 @@ El score de 5 dimensiones (problem/market/competition/solution/execution) NO deb
 
 ### Prioridades activas (en orden inmediato)
 
-1. **Rate limiting por tier** â€” URGENTE
-   - No existe hoy. Un usuario free puede llamar los 18 prompt types sin lÃ­mite.
-   - `competitive_analysis` y `market_sizing` usan web_search de Anthropic â†’ $0.05â€“0.20 USD por request.
-   - SoluciÃ³n acordada: tabla `usage_logs` con RLS policy + guard al inicio de `ai-validate`.
-   - `useUserTier.ts` ya existe â€” usarlo como base para el enforcement.
+1. **Rate limiting por tier** — IMPLEMENTADO (2026-06-03)
+   - `usage_counters` tabla con RPC atomica `check_and_increment_usage` (SELECT FOR UPDATE).
+   - Limites: free 3/mes (0 costosos), basic 15/mes (5 costosos), pro 50/mes, premium 999/mes.
+   - `useUsage` hook + `UsageBar` en Sidebar muestran el uso en tiempo real.
+   - `ai-validate` verifica tier y cuota antes de cada llamada AI.
 
-2. **Checkout / pagos reales** â€” siguiente
-   - Stripe ya configurado. Falta integraciÃ³n.
-   - El tier resultante del pago debe persistir en `profiles` y ser leÃ­do por `useUserTier.ts`.
+2. **Checkout / pagos — codigo completo, pendiente secrets LS**
+   - `create-checkout` y `lemonsqueezy-webhook` deployados en Supabase.
+   - Falta: crear cuenta LS, productos, webhook URL y setear 6 secrets en Supabase.
+   - Ver `SETUP_LEMONSQUEEZY.md` para el checklist completo.
 
-3. **Gobernanza + Fundraising** â€” Sprint B
-   - Dos categorÃ­as de las 10 que no existen. Agregar como anÃ¡lisis on-demand en nuevo tab "InversiÃ³n".
-   - No cambiar el score de 5 dimensiones.
+3. **Gobernanza + Fundraising** — IMPLEMENTADO
+   - `governance_assessment` y `fundraising_roadmap` son prompt types activos.
+   - `GovernanceCard` renderiza cap table visual, INAPI checklist, Ley Karin y omission warnings.
+   - Ambos gateados a Pro (no Basic — Pricing.tsx ya corregido).
 
-4. **Emails transaccionales (Resend)** â€” bloqueado hasta tener dominio
+4. **Emails transaccionales (Resend)** — bloqueado hasta tener dominio
    - `followup-email` edge function ya existe pero sin cron trigger.
 
 ### Lo que NO es urgente ahora
