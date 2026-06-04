@@ -641,7 +641,7 @@ export function Validate() {
                     <button
                       onClick={handleEmailLead}
                       disabled={emailLoading || !emailInput.includes('@')}
-                      className="w-full py-2.5 bg-[#7C6FF7] hover:bg-[#6B5EE6] disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2.5 bg-[#7C6FF7] hover:bg-[#6B5EE6] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
                     >
                       {emailLoading ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

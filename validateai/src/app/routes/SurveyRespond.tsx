@@ -333,7 +333,7 @@ export function SurveyRespond() {
         <button
           onClick={handleSubmit}
           disabled={submitting || !consentGiven}
-          className="w-full bg-[#7C6FF7] hover:bg-[#6B5FE6] disabled:opacity-40 text-white font-semibold py-3 rounded-2xl text-sm transition-colors"
+          className="w-full bg-[#7C6FF7] hover:bg-[#6B5FE6] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-2xl text-sm transition-colors"
         >
           {submitting ? 'Enviando...' : 'Enviar respuestas'}
         </button>

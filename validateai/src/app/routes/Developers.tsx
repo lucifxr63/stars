@@ -620,7 +620,7 @@ export function Developers() {
                 <button
                   onClick={runPlayground}
                   disabled={playgroundLoading}
-                  className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold rounded-xl transition text-sm"
+                  className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition text-sm"
                 >
                   {playgroundLoading
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Ejecutando...</>

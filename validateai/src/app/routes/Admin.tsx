@@ -187,12 +187,12 @@ function PaginationBar({ page, total, pageSize, onChange }: {
         <button
           disabled={page === 0}
           onClick={() => onChange(page - 1)}
-          className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+          className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/5 transition"
         >← Prev</button>
         <button
           disabled={page >= totalPages - 1}
           onClick={() => onChange(page + 1)}
-          className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+          className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/5 transition"
         >Next →</button>
       </div>
     </div>

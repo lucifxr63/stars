@@ -87,8 +87,9 @@ export default function App() {
 
               {/* Rutas protegidas */}
               <Route element={<ProtectedLayout />}>
-                {/* Standalone: onboarding sin sidebar */}
-                <Route path="/onboarding" element={<Onboarding />} />
+                {/* Standalone: sin sidebar */}
+                <Route path="/onboarding"       element={<Onboarding />} />
+                <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
                 {/* App: todas las rutas con sidebar via AppLayout */}
                 <Route element={<AppLayout />}>
@@ -106,7 +107,6 @@ export default function App() {
                   <Route path="/surveys/new"            element={<SurveyBuilder />} />
                   <Route path="/surveys/:id/edit"       element={<SurveyBuilder />} />
                   <Route path="/surveys/:id/results"    element={<SurveyResults />} />
-                  <Route path="/checkout/success"       element={<CheckoutSuccess />} />
                 </Route>
               </Route>
 

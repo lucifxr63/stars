@@ -106,8 +106,8 @@ function FieldEditor({
         </label>
 
         <div className="flex gap-1">
-          <button onClick={() => onMove('up')} disabled={index === 0} className="w-6 h-6 flex items-center justify-center text-[#C4C4D4] hover:text-white disabled:opacity-20 text-xs">↑</button>
-          <button onClick={() => onMove('down')} disabled={index === total - 1} className="w-6 h-6 flex items-center justify-center text-[#C4C4D4] hover:text-white disabled:opacity-20 text-xs">↓</button>
+          <button onClick={() => onMove('up')} disabled={index === 0} className="w-6 h-6 flex items-center justify-center text-[#C4C4D4] hover:text-white disabled:opacity-20 disabled:cursor-not-allowed text-xs">↑</button>
+          <button onClick={() => onMove('down')} disabled={index === total - 1} className="w-6 h-6 flex items-center justify-center text-[#C4C4D4] hover:text-white disabled:opacity-20 disabled:cursor-not-allowed text-xs">↓</button>
           <button onClick={onDelete} className="w-6 h-6 flex items-center justify-center text-red-400/60 hover:text-red-400 text-xs">✕</button>
         </div>
       </div>

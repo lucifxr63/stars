@@ -10,10 +10,11 @@ export function CheckoutSuccess() {
   // Leemos el tier actualizado directamente desde la DB
   useEffect(() => {
     const poll = async () => {
-      // Esperar hasta 8 segundos para que el webhook de Lemon Squeezy actualice el tier
-      for (let attempt = 0; attempt < 4; attempt++) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) break;
+      // Polling hasta 16 segundos (8 intentos × 2s) — el webhook de LS puede demorar
+      const MAX_ATTEMPTS = 8;
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        const { data: { user }, error: authErr } = await supabase.auth.getUser();
+        if (authErr || !user) break;
         const { data } = await supabase
           .from('profiles')
           .select('tier')
@@ -23,7 +24,7 @@ export function CheckoutSuccess() {
           setTier(data.tier);
           break;
         }
-        if (attempt < 3) await new Promise((r) => setTimeout(r, 2000));
+        if (attempt < MAX_ATTEMPTS - 1) await new Promise((r) => setTimeout(r, 2000));
       }
       setLoading(false);
     };
@@ -86,8 +87,8 @@ export function CheckoutSuccess() {
 
               <p className="text-[11px] text-gray-400 dark:text-[#4A495E]">
                 ¿Problemas?{' '}
-                <a href="mailto:soporte@validateai.cl" className="text-indigo-500 hover:underline">
-                  soporte@validateai.cl
+                <a href="mailto:contacto@validus.scouttech.lat" className="text-indigo-500 hover:underline">
+                  contacto@validus.scouttech.lat
                 </a>
               </p>
             </div>

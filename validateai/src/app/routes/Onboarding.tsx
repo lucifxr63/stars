@@ -107,6 +107,8 @@ export function Onboarding() {
 
   const meta = STEP_META[step - 1];
   const pitchLen = form.founder_pitch.length;
+  // Pitch es opcional; si tiene contenido, requiere mínimo 30 chars para ser útil al pre-fill
+  const pitchValid = pitchLen === 0 || pitchLen >= 30;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
@@ -223,8 +225,9 @@ export function Onboarding() {
                   className={`${inputCls} resize-none`}
                 />
                 <div className="flex justify-end mt-1">
-                  <span className={`text-xs ${pitchLen >= 80 ? 'text-green-500' : 'text-gray-400 dark:text-[#4A495E]'}`}>
-                    {pitchLen} car. {pitchLen >= 80 ? '✓' : '(mín. recomendado: 80)'}
+                  <span className={`text-xs ${pitchLen >= 80 ? 'text-green-500' : !pitchValid ? 'text-red-400' : 'text-gray-400 dark:text-[#4A495E]'}`}>
+                    {pitchLen} car.{' '}
+                    {pitchLen >= 80 ? '✓' : !pitchValid ? 'Mín. 30 caracteres' : '(mín. recomendado: 80)'}
                   </span>
                 </div>
               </div>
@@ -237,8 +240,9 @@ export function Onboarding() {
                   ← Atrás
                 </button>
                 <button
-                  onClick={() => setStep(3)}
-                  className="flex-[2] py-3.5 bg-[#7C6FF7] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#7C6FF7]/25"
+                  onClick={() => pitchValid && setStep(3)}
+                  disabled={!pitchValid}
+                  className="flex-[2] py-3.5 bg-[#7C6FF7] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#7C6FF7]/25 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continuar →
                 </button>

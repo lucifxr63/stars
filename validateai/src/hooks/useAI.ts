@@ -135,10 +135,16 @@ export function useAI() {
       return result;
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') {
-        console.log('Análisis cancelado por el usuario');
         return null;
       }
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      setError(msg);
+      // Errores de red (fetch failed, timeout, etc.) — siempre visibles al usuario
+      if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network') || msg.includes('AI request failed')) {
+        toast.error('No se pudo conectar con el servidor de análisis. Verifica tu conexión e intenta de nuevo.', { duration: 6000 });
+      } else {
+        toast.error('Error en el análisis. Intenta de nuevo.', { duration: 5000 });
+      }
       return null;
     } finally {
       activeControllersRef.current.delete(controller);

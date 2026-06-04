@@ -1919,7 +1919,7 @@ export function ValidationDetail() {
                   <LockedSection
                     title="Análisis de Riesgos"
                     description="Score compuesto de riesgo en 4 dimensiones con mitigaciones concretas."
-                    requiredTier="basic"
+                    requiredTier="pro"
                     hint="Riesgo de mercado, técnico, regulatorio y timing"
                   />
                 ) : null}
@@ -2145,7 +2145,7 @@ export function ValidationDetail() {
                   <button
                     onClick={handleExportPitchDeck}
                     disabled={pitchDeckLoading}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50 shrink-0"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                   >
                     {pitchDeckLoading ? (
                       <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

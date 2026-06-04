@@ -192,7 +192,7 @@ export function MyStartup() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 bg-[#7C6FF7] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm shadow-lg shadow-[#7C6FF7]/20"
+          className="w-full py-3 bg-[#7C6FF7] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:cursor-not-allowed text-sm shadow-lg shadow-[#7C6FF7]/20"
         >
           {saving ? (
             <span className="flex items-center justify-center gap-2">

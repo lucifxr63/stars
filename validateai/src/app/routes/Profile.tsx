@@ -103,7 +103,7 @@ function AccountSection({ user, profile }: { user: User; profile: ProfileRow | n
             <button onClick={() => setEditing(false)} className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/8 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
               Cancelar
             </button>
-            <button onClick={handleSave} disabled={saving} className="text-xs font-semibold px-3 py-1.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-all">
+            <button onClick={handleSave} disabled={saving} className="text-xs font-semibold px-3 py-1.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
               {saving ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
@@ -243,8 +243,8 @@ function SubscriptionSection({ profile }: { profile: ProfileRow | null }) {
             <p className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4] mb-1">Gestionar suscripción</p>
             <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
               Para cambios de plan, cancelación o facturación contacta a{' '}
-              <a href="mailto:soporte@validateai.cl" className="text-indigo-500 hover:underline">
-                soporte@validateai.cl
+              <a href="mailto:contacto@validus.scouttech.lat" className="text-indigo-500 hover:underline">
+                contacto@validus.scouttech.lat
               </a>
             </p>
           </div>
