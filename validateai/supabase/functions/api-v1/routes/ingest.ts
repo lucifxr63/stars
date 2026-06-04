@@ -286,13 +286,22 @@ interface VaultPayload {
  * Called by GitHub Actions from validateai-knowledge-vault on every push to main.
  * Auth: Supabase service role key as Bearer token (no RaaS API key needed).
  */
+const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com'
+
 export const ingestVaultHandler = async (c: any) => {
   const authHeader = c.req.header('Authorization') ?? ''
-  const expectedBearer = VAULT_INGEST_SECRET
-    ? `Bearer ${VAULT_INGEST_SECRET}`
-    : `Bearer ${SUPABASE_SERVICE_KEY}`
-  if (authHeader !== expectedBearer) {
-    return c.json({ error: 'Unauthorized' }, 401)
+  const customKey = c.req.header('x-vault-ingest-key') ?? ''
+  const secret = VAULT_INGEST_SECRET ?? SUPABASE_SERVICE_KEY
+
+  const isServiceAuth = authHeader === `Bearer ${secret}` || customKey === secret
+
+  if (!isServiceAuth) {
+    // Allow authenticated admin users (web upload)
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user } } = await createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY).auth.getUser(token)
+    if (user?.email !== ADMIN_EMAIL) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
   }
 
   if (!OPENAI_API_KEY) {
