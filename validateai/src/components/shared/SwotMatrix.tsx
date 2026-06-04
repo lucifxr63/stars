@@ -8,11 +8,15 @@ interface SwotMatrixProps {
 }
 
 export function SwotMatrix({ strengths, weaknesses, opportunities, threats }: SwotMatrixProps) {
-  // Mock data for UI/UX testing when real data is empty
-  const displayStrengths = strengths?.length ? strengths : ["(Ejemplo) Problema claramente identificado", "(Ejemplo) Equipo con experiencia técnica"];
-  const displayWeaknesses = weaknesses?.length ? weaknesses : ["(Ejemplo) Presupuesto inicial muy limitado", "(Ejemplo) Falta de red de contactos en la industria"];
-  const displayOpportunities = opportunities?.length ? opportunities : ["(Ejemplo) Crecimiento sostenido del mercado objetivo", "(Ejemplo) Competidores actuales tienen UI anticuada"];
-  const displayThreats = threats?.length ? threats : ["(Ejemplo) Entrada de competidores globales", "(Ejemplo) Cambios regulatorios inminentes"];
+  // Si no hay ningún dato real, no renderizar (el caller muestra el botón de generar)
+  if (!strengths?.length && !weaknesses?.length && !opportunities?.length && !threats?.length) {
+    return null;
+  }
+
+  const displayStrengths     = strengths     ?? [];
+  const displayWeaknesses    = weaknesses    ?? [];
+  const displayOpportunities = opportunities ?? [];
+  const displayThreats       = threats       ?? [];
 
   return (
     <div className="grid sm:grid-cols-2 gap-4">
@@ -27,7 +31,7 @@ export function SwotMatrix({ strengths, weaknesses, opportunities, threats }: Sw
         </div>
         <ul className="space-y-3 relative z-10">
           {displayStrengths.map((s, i) => (
-            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed ${!strengths?.length ? 'opacity-60 italic' : ''}`}>
+            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed `}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
               <span>{s}</span>
             </li>
@@ -46,7 +50,7 @@ export function SwotMatrix({ strengths, weaknesses, opportunities, threats }: Sw
         </div>
         <ul className="space-y-3 relative z-10">
           {displayWeaknesses.map((w, i) => (
-            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed ${!weaknesses?.length ? 'opacity-60 italic' : ''}`}>
+            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed `}>
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
               <span>{w}</span>
             </li>
@@ -65,7 +69,7 @@ export function SwotMatrix({ strengths, weaknesses, opportunities, threats }: Sw
         </div>
         <ul className="space-y-3 relative z-10">
           {displayOpportunities.map((o, i) => (
-            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed ${!opportunities?.length ? 'opacity-60 italic' : ''}`}>
+            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed `}>
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
               <span>{o}</span>
             </li>
@@ -84,7 +88,7 @@ export function SwotMatrix({ strengths, weaknesses, opportunities, threats }: Sw
         </div>
         <ul className="space-y-3 relative z-10">
           {displayThreats.map((t, i) => (
-            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed ${!threats?.length ? 'opacity-60 italic' : ''}`}>
+            <li key={i} className={`flex items-start gap-2.5 text-sm text-gray-700 dark:text-[#C4C4D4] leading-relaxed `}>
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
               <span>{t}</span>
             </li>

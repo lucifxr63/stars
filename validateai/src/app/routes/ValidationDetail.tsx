@@ -1807,7 +1807,7 @@ export function ValidationDetail() {
                   <LockedSection
                     title="Señales de Mercado"
                     description="Tendencias, rondas de inversión recientes y análisis de timing."
-                    requiredTier="premium"
+                    requiredTier="pro"
                     hint="¿Es el momento correcto para lanzar?"
                   />
                 ) : null}
@@ -2111,7 +2111,7 @@ export function ValidationDetail() {
                 <LockedSection
                   title="Estrategia de Fundraising"
                   description="Instrumento recomendado, ticket size, fondos LatAm y narrative del pitch."
-                  requiredTier="premium"
+                  requiredTier="pro"
                   hint="SAFE, Notas Convertibles o Ronda Valorizada según tu etapa"
                 />
               ) : (

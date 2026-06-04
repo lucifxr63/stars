@@ -44,6 +44,28 @@ function PageLoader() {
   );
 }
 
+function NotFound() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] px-4">
+      <div className="text-center max-w-sm">
+        <p className="text-7xl font-black text-[#7C6FF7] mb-4">404</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-2">
+          Página no encontrada
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mb-8">
+          La URL que buscás no existe o fue movida.
+        </p>
+        <a
+          href="/dashboard"
+          className="inline-block px-6 py-3 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors"
+        >
+          Volver al inicio
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -87,6 +109,9 @@ export default function App() {
                   <Route path="/checkout/success"       element={<CheckoutSuccess />} />
                 </Route>
               </Route>
+
+              {/* 404 — catch-all para URLs inválidas */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
           <Toaster position="top-right" richColors />

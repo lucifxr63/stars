@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -19,10 +19,19 @@ function Logo({ className = 'w-7 h-9' }: { className?: string }) {
 
 export function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Mostrar error de OAuth si AuthCallback redirigió con ?error=
+  useEffect(() => {
+    const err = searchParams.get('error');
+    if (err === 'auth_failed') {
+      toast.error('No se pudo completar el inicio de sesión con Google. Intenta de nuevo o usa email y contraseña.', { duration: 8000 });
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
