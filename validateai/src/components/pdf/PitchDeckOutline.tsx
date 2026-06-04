@@ -51,7 +51,7 @@ function Slide({
 
       {/* Footer */}
       <View style={[styles.footer, { left: 48, right: 48 }]}>
-        <Text style={styles.footerText}>Validum · Pitch Deck</Text>
+        <Text style={styles.footerText}>Validus · Pitch Deck</Text>
         <Text style={styles.footerText}>Confidencial — Pre-Seed/Seed</Text>
       </View>
     </Page>
@@ -136,7 +136,7 @@ export function PitchDeckOutline({ data }: Props) {
           )}
           {score > 0 && (
             <View>
-              <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1 }}>Score Validum</Text>
+              <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1 }}>Score Validus</Text>
               <Text style={{ fontSize: 12, color: score >= 70 ? colors.green : score >= 40 ? colors.amber : colors.red, fontFamily: 'Helvetica-Bold', marginTop: 3 }}>{score}/100</Text>
             </View>
           )}
@@ -323,7 +323,7 @@ export function PitchDeckOutline({ data }: Props) {
   return (
     <Document
       title={`Pitch Deck — ${name}`}
-      author="Validum"
+      author="Validus"
       subject="Investor Pitch Deck"
     >
       {slides}

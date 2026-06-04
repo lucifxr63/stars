@@ -30,7 +30,7 @@ function OnboardingLogo() {
         <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
         <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
       </svg>
-      <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
+      <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
     </div>
   );
 }

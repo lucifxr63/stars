@@ -416,7 +416,7 @@ function PrivacySection({ userId, initialConsent }: { userId: string; initialCon
               Contribuir al entrenamiento del modelo
             </p>
             <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1 leading-relaxed">
-              Tus validaciones anonimizadas pueden usarse para mejorar Validum.
+              Tus validaciones anonimizadas pueden usarse para mejorar Validus.
               Datos sensibles son removidos antes del procesamiento.
             </p>
           </div>

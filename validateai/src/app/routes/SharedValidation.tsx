@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 
 function Logo({ className = 'w-5 h-7' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validus" role="img">
       <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
       <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
       <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
@@ -78,7 +78,7 @@ export function SharedValidation() {
           </svg>
         </div>
         <p className="font-bold text-gray-700 dark:text-[#C4C4D4]">Esta validación no existe o ya no está disponible.</p>
-        <Link to="/" className="text-sm text-[#0EB5C6] hover:underline font-medium">Ir a Validum →</Link>
+        <Link to="/" className="text-sm text-[#0EB5C6] hover:underline font-medium">Ir a Validus →</Link>
       </div>
     );
   }
@@ -99,7 +99,7 @@ export function SharedValidation() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Logo/>
-            <span className="font-heading font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">Validum</span>
+            <span className="font-heading font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">Validus</span>
           </Link>
           <span className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-gray-100 dark:bg-white/[0.05] px-2.5 py-1 rounded-full">Reporte compartido</span>
         </div>
@@ -307,7 +307,7 @@ export function SharedValidation() {
             to="/"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0EB5C6] text-white font-semibold rounded-2xl hover:bg-[#6B5EE6] transition text-sm shadow-md shadow-[#0EB5C6]/20"
           >
-            Probar Validum gratis →
+            Probar Validus gratis →
           </Link>
         </div>
       </div>

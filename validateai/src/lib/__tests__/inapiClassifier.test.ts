@@ -19,7 +19,7 @@ function makeRecord(
 
 describe('normalizeText', () => {
   it('convierte a mayúsculas', () => {
-    expect(normalizeText('Validum')).toBe('Validum');
+    expect(normalizeText('Validus')).toBe('Validus');
   });
 
   it('elimina tildes', () => {
@@ -74,7 +74,7 @@ describe('ACTIVE_STATUSES', () => {
 
 describe('classifyCollisionRisk — sin registros', () => {
   it('corpus vacío → none', () => {
-    const r = classifyCollisionRisk([], 'Validum');
+    const r = classifyCollisionRisk([], 'Validus');
     expect(r.risk_level).toBe('none');
     expect(r.colisiones).toHaveLength(0);
   });
@@ -83,35 +83,35 @@ describe('classifyCollisionRisk — sin registros', () => {
 describe('classifyCollisionRisk — riesgo none', () => {
   it('marca completamente diferente → none', () => {
     const records = [makeRecord('ZENITH'), makeRecord('AURORA')];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('none');
     expect(r.colisiones).toHaveLength(0);
   });
 
   it('marca similar pero estado inactivo → none', () => {
-    const records = [makeRecord('Validum', 'Caducada')];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const records = [makeRecord('Validus', 'Caducada')];
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('none');
   });
 
   it('marca "Abandonada" no activa → none', () => {
-    const records = [makeRecord('Validum', 'Abandonada')];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const records = [makeRecord('Validus', 'Abandonada')];
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('none');
   });
 });
 
 describe('classifyCollisionRisk — riesgo high (coincidencia exacta)', () => {
   it('coincidencia exacta con marca Registrada → high', () => {
-    const records = [makeRecord('Validum', 'Registrada')];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const records = [makeRecord('Validus', 'Registrada')];
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('high');
     expect(r.colisiones.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('normalización: "Validum" coincide con "Validum" registrada', () => {
-    const records = [makeRecord('Validum', 'Registrada')];
-    const r = classifyCollisionRisk(records, 'Validum');
+  it('normalización: "Validus" coincide con "Validus" registrada', () => {
+    const records = [makeRecord('Validus', 'Registrada')];
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('high');
   });
 
@@ -135,10 +135,10 @@ describe('classifyCollisionRisk — riesgo high (coincidencia exacta)', () => {
 
   it('colisiones incluye las exactas y también las parciales que haya', () => {
     const records = [
-      makeRecord('Validum',    'Registrada'),  // exacta
-      makeRecord('Validum PRO','Registrada'),  // parcial (contiene Validum)
+      makeRecord('Validus',    'Registrada'),  // exacta
+      makeRecord('Validus PRO','Registrada'),  // parcial (contiene Validus)
     ];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('high');
     expect(r.colisiones.length).toBe(2);
   });
@@ -152,8 +152,8 @@ describe('classifyCollisionRisk — riesgo high (coincidencia exacta)', () => {
 
 describe('classifyCollisionRisk — riesgo medium (coincidencia parcial)', () => {
   it('denominación registrada contiene la marca buscada → medium', () => {
-    const records = [makeRecord('Validum PRO', 'Registrada')];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const records = [makeRecord('Validus PRO', 'Registrada')];
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('medium');
     expect(r.colisiones).toHaveLength(1);
   });
@@ -165,17 +165,17 @@ describe('classifyCollisionRisk — riesgo medium (coincidencia parcial)', () =>
   });
 
   it('parcial inactiva no cuenta → none', () => {
-    const records = [makeRecord('Validum PRO', 'Caducada')];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const records = [makeRecord('Validus PRO', 'Caducada')];
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('none');
   });
 
   it('rationale menciona la cantidad de parciales', () => {
     const records = [
-      makeRecord('Validum BASIC',   'Registrada'),
-      makeRecord('Validum PREMIUM', 'En trámite'),
+      makeRecord('Validus BASIC',   'Registrada'),
+      makeRecord('Validus PREMIUM', 'En trámite'),
     ];
-    const r = classifyCollisionRisk(records, 'Validum');
+    const r = classifyCollisionRisk(records, 'Validus');
     expect(r.risk_level).toBe('medium');
     expect(r.risk_rationale).toContain('2');
   });

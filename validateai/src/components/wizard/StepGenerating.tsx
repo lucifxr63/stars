@@ -184,7 +184,7 @@ function MicroFeedbackPanel({ tier }: { tier: string }) {
         </>
       ) : (
         <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium">
-          ¡Gracias! Tu respuesta mejora Validum.
+          ¡Gracias! Tu respuesta mejora Validus.
         </p>
       )}
     </div>

@@ -47,7 +47,7 @@ export function FigmaPanel({ figma }: Props) {
             Vincula tu prototipo de Figma
           </h3>
           <p className="text-sm text-gray-400 dark:text-[#8B8AA0] max-w-sm leading-relaxed">
-            Conecta tu cuenta de Figma para que Validum analice la arquitectura
+            Conecta tu cuenta de Figma para que Validus analice la arquitectura
             de navegación de tu producto y detecte fricciones antes de escribir código.
           </p>
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0]/60 mt-2">
@@ -102,7 +102,7 @@ export function FigmaPanel({ figma }: Props) {
                 Selecciona un archivo de Figma
               </h3>
               <p className="text-sm text-[#8B8AA0] max-w-xs">
-                Validum extraerá las pantallas y flujos de navegación para analizarlos con IA.
+                Validus extraerá las pantallas y flujos de navegación para analizarlos con IA.
               </p>
             </div>
             <button

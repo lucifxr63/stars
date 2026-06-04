@@ -3,7 +3,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function Logo({ className = 'w-6 h-8' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validus" role="img">
       <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
       <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
       <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
@@ -43,7 +43,7 @@ export function PrivacyPolicy() {
           <Link to="/" className="flex items-center gap-2 group">
             <Logo className="w-5 h-7" />
             <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8] group-hover:text-[#0EB5C6] transition-colors">
-              Validum
+              Validus
             </span>
           </Link>
           <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export function PrivacyPolicy() {
             Política de Privacidad
           </h1>
           <p className="text-base text-gray-500 dark:text-[#8B8AA0] max-w-2xl">
-            En Validum valoramos tu privacidad. Esta política explica cómo recopilamos, usamos y protegemos tu información personal conforme a la legislación chilena vigente.
+            En Validus valoramos tu privacidad. Esta política explica cómo recopilamos, usamos y protegemos tu información personal conforme a la legislación chilena vigente.
           </p>
         </div>
 
@@ -235,7 +235,7 @@ export function PrivacyPolicy() {
 
           <Section title="12. Menores de edad">
             <p>
-              Validum está dirigido a personas mayores de 18 años. No recopilamos intencionalmente datos de menores. Si crees que un menor ha proporcionado sus datos, contáctanos para eliminarlos.
+              Validus está dirigido a personas mayores de 18 años. No recopilamos intencionalmente datos de menores. Si crees que un menor ha proporcionado sus datos, contáctanos para eliminarlos.
             </p>
           </Section>
 
@@ -272,7 +272,7 @@ export function PrivacyPolicy() {
       <footer className="border-t border-black/[0.05] dark:border-white/[0.06] py-8 mt-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-400 dark:text-[#4A495E]">
-            © {new Date().getFullYear()} Validum · Hecho en Chile 🇨🇱
+            © {new Date().getFullYear()} Validus · Hecho en Chile 🇨🇱
           </p>
           <div className="flex items-center gap-4">
             <Link to="/" className="text-xs text-gray-400 dark:text-[#4A495E] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">

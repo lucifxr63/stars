@@ -13,7 +13,7 @@ import {
 /* ─── Logo ─── */
 function Logo({ className = 'w-9 h-9' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validus" role="img">
       <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
       <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
       <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
@@ -388,7 +388,7 @@ export function Landing() {
           {/* Brand */}
           <div className="flex items-center gap-2 shrink-0">
             <Logo className="w-6 h-8"/>
-            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validum</span>
+            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validus</span>
           </div>
 
           {/* Desktop nav */}
@@ -701,7 +701,7 @@ export function Landing() {
                     {[
                       { name:'CompA', val:72, color:'#F87171' },
                       { name:'CompB', val:55, color:'#FBBF24' },
-                      { name:'Validum →', val:88, color:'#34D399' },
+                      { name:'Validus →', val:88, color:'#34D399' },
                     ].map(c => (
                       <div key={c.name}>
                         <div className="flex justify-between text-[10px] mb-1">
@@ -823,7 +823,7 @@ export function Landing() {
             <div className="grid md:grid-cols-3 gap-6">
               {[
                 { name:'Valentina M.', role:'Founder · EdTech Santiago', initials:'VM', color:'#0EB5C6',
-                  quote:'Tenía mi idea hace 6 meses y no sabía si tenía sentido. Validum me dio un score de 74 y un roadmap concreto en 10 minutos.', score:74 },
+                  quote:'Tenía mi idea hace 6 meses y no sabía si tenía sentido. Validus me dio un score de 74 y un roadmap concreto en 10 minutos.', score:74 },
                 { name:'Rodrigo C.', role:'Co-founder · FinTech Concepción', initials:'RC', color:'#34D399',
                   quote:'El análisis de competidores con datos del CMF fue lo que más me sorprendió. Algo que habría tomado semanas lo tuve en horas.', score:81 },
                 { name:'Catalina V.', role:'CEO · HealthTech Valparaíso', initials:'CV', color:'#F7C56C',
@@ -995,7 +995,7 @@ export function Landing() {
             <div className="col-span-2 sm:col-span-1">
               <div className="flex items-center gap-2 mb-3">
                 <Logo className="w-5 h-7"/>
-                <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
+                <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
               </div>
               <p className="text-xs text-gray-500 dark:text-[#8B8AA0] leading-relaxed mb-4 max-w-[180px]">Valida tu idea de startup antes de construirla.</p>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#34D399]/10 border border-[#34D399]/20 rounded-lg text-[10px] font-semibold text-[#34D399]">
@@ -1029,7 +1029,7 @@ export function Landing() {
             </div>
           </div>
           <div className="border-t border-black/[0.05] dark:border-white/[0.06] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-gray-400 dark:text-[#4A495E]">© {new Date().getFullYear()} Validum · Hecho en Chile 🇨🇱</p>
+            <p className="text-xs text-gray-400 dark:text-[#4A495E]">© {new Date().getFullYear()} Validus · Hecho en Chile 🇨🇱</p>
             <p className="text-xs text-gray-400 dark:text-[#4A495E]">validus.scouttech.lat</p>
           </div>
         </div>

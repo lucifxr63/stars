@@ -4,7 +4,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function Logo({ className = 'w-5 h-7' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validus" role="img">
       <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
       <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
       <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
@@ -78,7 +78,7 @@ export function Demo() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Logo/>
-            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
+            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
           </Link>
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline text-xs font-semibold text-[#0EB5C6] dark:text-[#38D5E3] px-3 py-1.5 bg-[#0EB5C6]/10 rounded-full border border-[#0EB5C6]/20">

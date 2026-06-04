@@ -349,7 +349,7 @@ export default function DataStoryEngine() {
 
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontFamily: "'JetBrains Mono',monospace", color: '#4b5563', fontSize: 18 }}>SOURCE: VALIDATE_AI_DATA</span>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", color: '#fff', fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em' }}>Validum_</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", color: '#fff', fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em' }}>Validus_</span>
               </div>
             </div>
           </div>

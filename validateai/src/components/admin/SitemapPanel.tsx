@@ -174,7 +174,7 @@ export function SitemapPanel() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8]">
-            Ãrbol de NavegaciÃ³n â€” Validum
+            Ãrbol de NavegaciÃ³n â€” Validus
           </h2>
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0] mt-0.5">
             {PAGES.length} rutas Â· {EDGES_DEF.length} transiciones Â· validus.scouttech.lat

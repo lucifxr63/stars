@@ -20,7 +20,7 @@ function priorityColor(i: number): string {
 function PageFooter({ name }: { name: string }) {
   return (
     <View style={[styles.footer, { left: 40, right: 40 }]}>
-      <Text style={styles.footerText}>Validum · Lean Roadmap — {name}</Text>
+      <Text style={styles.footerText}>Validus · Lean Roadmap — {name}</Text>
       <Text style={styles.footerText}>Documento táctico de ejecución MVP</Text>
     </View>
   );
@@ -124,7 +124,7 @@ export function LeanRoadmapPDF({ data }: Props) {
   const name    = data.idea_name ?? 'Mi Startup';
 
   if (!roadmap) return (
-    <Document title={`Lean Roadmap — ${name}`} author="Validum">
+    <Document title={`Lean Roadmap — ${name}`} author="Validus">
       <Page size="A4" style={styles.contentPage}>
         <Text style={{ color: colors.muted, fontSize: 11 }}>No hay datos de Lean Roadmap disponibles.</Text>
         <PageFooter name={name} />
@@ -135,7 +135,7 @@ export function LeanRoadmapPDF({ data }: Props) {
   const approach = approachLabel(roadmap.architecture_approach);
 
   return (
-    <Document title={`Lean Roadmap — ${name}`} author="Validum" subject="Plan de Ejecución MVP">
+    <Document title={`Lean Roadmap — ${name}`} author="Validus" subject="Plan de Ejecución MVP">
       {/* ── Page 1: Cover + Context ─────────────────────────────────────────── */}
       <Page size="A4" style={styles.page}>
         {/* Hero */}

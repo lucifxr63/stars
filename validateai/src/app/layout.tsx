@@ -143,7 +143,7 @@ export function AppLayout() {
                 <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
                 <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
               </svg>
-              <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
+              <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
             </div>
           </div>
 
@@ -157,7 +157,7 @@ export function AppLayout() {
 
         <footer className="border-t border-gray-100 dark:border-white/[0.06] py-4 shrink-0">
           <p className="text-center text-xs text-gray-400 dark:text-[#4A495E]">
-            © {new Date().getFullYear()} Validum
+            © {new Date().getFullYear()} Validus
           </p>
         </footer>
       </div>

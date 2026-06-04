@@ -439,7 +439,7 @@ export function Admin() {
               </svg>
             </div>
             <div>
-              <p className="text-white text-sm font-bold leading-none">Validum</p>
+              <p className="text-white text-sm font-bold leading-none">Validus</p>
               <p className="text-gray-500 dark:text-[#8B8AA0] text-xs mt-0.5">Admin Panel</p>
             </div>
           </div>

@@ -34,7 +34,7 @@ function priorityLabel(p: 'critical' | 'important' | 'nice_to_have'): string {
 function PageFooter({ name }: { name: string }) {
   return (
     <View style={[styles.footer, { left: 40, right: 40 }]}>
-      <Text style={styles.footerText}>Validum · Roadmap Regulatorio — {name}</Text>
+      <Text style={styles.footerText}>Validus · Roadmap Regulatorio — {name}</Text>
       <Text style={styles.footerText}>Chile · Legal &amp; Compliance</Text>
     </View>
   );
@@ -79,7 +79,7 @@ export function ComplianceRoadmapPDF({ data }: Props) {
   const name    = data.idea_name ?? 'Mi Startup';
 
   if (!roadmap) return (
-    <Document title={`Compliance Roadmap — ${name}`} author="Validum">
+    <Document title={`Compliance Roadmap — ${name}`} author="Validus">
       <Page size="A4" style={styles.contentPage}>
         <Text style={{ color: colors.muted, fontSize: 11 }}>No hay datos de Compliance disponibles.</Text>
         <PageFooter name={name} />
@@ -90,7 +90,7 @@ export function ComplianceRoadmapPDF({ data }: Props) {
   const overallColor = riskColor(roadmap.overall_risk_level);
 
   return (
-    <Document title={`Compliance Roadmap — ${name}`} author="Validum" subject="Legal & Compliance Chile">
+    <Document title={`Compliance Roadmap — ${name}`} author="Validus" subject="Legal & Compliance Chile">
       {/* ── Page 1: Cover + Constitution ────────────────────────────────────── */}
       <Page size="A4" style={styles.page}>
         {/* Hero */}
@@ -239,7 +239,7 @@ export function ComplianceRoadmapPDF({ data }: Props) {
             <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.amber }}>Aviso Legal Importante</Text>
           </View>
           <Text style={{ fontSize: 9, color: '#CBD5E1', lineHeight: 1.6 }}>
-            Este documento es una <Text style={{ fontFamily: 'Helvetica-Bold', color: colors.white }}>recomendación estratégica generada por Inteligencia Artificial</Text> para orientar decisiones de planificación. No constituye asesoría legal formal ni reemplaza la consulta con un abogado especializado en derecho societario y regulatorio chileno. Validum no asume responsabilidad por decisiones tomadas basándose exclusivamente en este reporte.
+            Este documento es una <Text style={{ fontFamily: 'Helvetica-Bold', color: colors.white }}>recomendación estratégica generada por Inteligencia Artificial</Text> para orientar decisiones de planificación. No constituye asesoría legal formal ni reemplaza la consulta con un abogado especializado en derecho societario y regulatorio chileno. Validus no asume responsabilidad por decisiones tomadas basándose exclusivamente en este reporte.
           </Text>
         </View>
 

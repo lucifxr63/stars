@@ -79,7 +79,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
 
       if (error) throw error;
 
-      toast.success('Consentimiento registrado. Bienvenido a Validum.');
+      toast.success('Consentimiento registrado. Bienvenido a Validus.');
       onAccepted();
     } catch (err) {
       console.error('[ConsentModal] Error al registrar consentimiento:', err);
@@ -119,7 +119,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
           <div className="mb-6 rounded-xl bg-amber-500/8 border border-amber-500/20 p-4 flex gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-amber-200/80 leading-relaxed">
-              Validum procesa tus datos personales (información de tu idea, perfil
+              Validus procesa tus datos personales (información de tu idea, perfil
               de fundador y métricas de validación) para generar análisis con IA.
               Conforme a la{' '}
               <strong className="text-amber-300">Ley N° 21.719</strong> de Protección
