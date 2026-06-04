@@ -13,7 +13,7 @@ import { setPreviewTier, getPreviewTier, type UserTier } from '@/hooks/useUserTi
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'health' | 'content' | 'figma' | 'sitemap';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
 type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
 
 interface Profile {
@@ -23,7 +23,31 @@ interface Profile {
   tier: string | null;
   created_at: string;
   validations_count?: number;
+  validations?: { count: number }[];
 }
+
+interface Expense {
+  id: string;
+  name: string;
+  amount: number;
+  category: 'infra' | 'tools' | 'marketing' | 'other';
+  currency: 'USD' | 'CLP';
+}
+
+const TIER_PRICES_USD: Record<string, number> = { free: 0, basic: 11, pro: 25, premium: 50 };
+
+const DEFAULT_EXPENSES: Expense[] = [
+  { id: 'supabase', name: 'Supabase Pro', amount: 25, category: 'infra', currency: 'USD' },
+  { id: 'vercel', name: 'Vercel Pro', amount: 20, category: 'infra', currency: 'USD' },
+  { id: 'serpapi', name: 'SerpAPI', amount: 50, category: 'tools', currency: 'USD' },
+  { id: 'domain', name: 'Dominio (.lat)', amount: 1.25, category: 'infra', currency: 'USD' },
+];
+
+function loadExpenses(): Expense[] {
+  try { return JSON.parse(localStorage.getItem('admin_expenses') ?? 'null') ?? DEFAULT_EXPENSES; }
+  catch { return DEFAULT_EXPENSES; }
+}
+function saveExpenses(e: Expense[]) { localStorage.setItem('admin_expenses', JSON.stringify(e)); }
 
 interface Validation {
   id: string;
@@ -162,6 +186,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>,
   },
   {
+    id: 'finanzas', label: 'Finanzas',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  },
+  {
     id: 'content', label: 'Contenido',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
   },
@@ -224,6 +252,9 @@ export function Admin() {
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [savingTier, setSavingTier] = useState<Record<string, boolean>>({});
   const [activePreview, setActivePreview] = useState<UserTier | null>(() => getPreviewTier());
+  const [expenses, setExpenses] = useState<Expense[]>(loadExpenses);
+  const [newExpense, setNewExpense] = useState<Omit<Expense, 'id'>>({ name: '', amount: 0, category: 'infra', currency: 'USD' });
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -246,7 +277,7 @@ export function Admin() {
 
     const [{ data: profs, count: pCount }, { data: vals, count: vCount }, { data: ais, count: aCount }] = await Promise.all([
       supabase.from('profiles')
-        .select('id, full_name, avatar_url, tier, created_at', { count: 'exact' })
+        .select('id, full_name, avatar_url, tier, created_at, validations(count)', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(pFrom, pFrom + PAGE_SIZE - 1),
       valQuery,
@@ -256,7 +287,10 @@ export function Admin() {
         .range(aFrom, aFrom + PAGE_SIZE - 1),
     ]);
 
-    setProfiles((profs ?? []) as Profile[]);
+    setProfiles((profs ?? []).map(p => ({
+      ...p,
+      validations_count: (p as Profile).validations?.[0]?.count ?? 0,
+    })) as Profile[]);
     setProfTotal(pCount ?? 0);
     setValidations(vals ?? []);
     setValTotal(vCount ?? 0);
@@ -356,7 +390,7 @@ export function Admin() {
   ];
 
   // Distribución de tiers
-  const tierCounts = { free: 0, basic: 0, pro: 0 };
+  const tierCounts = { free: 0, basic: 0, pro: 0, premium: 0 };
   profiles.forEach(p => {
     const t = (p.tier ?? 'free') as keyof typeof tierCounts;
     if (t in tierCounts) tierCounts[t]++;
@@ -366,6 +400,7 @@ export function Admin() {
     { name: 'Free', value: tierCounts.free, color: '#9ca3af' },
     { name: 'Basic', value: tierCounts.basic, color: '#f59e0b' },
     { name: 'Pro', value: tierCounts.pro, color: '#8b5cf6' },
+    { name: 'Premium', value: tierCounts.premium, color: '#14b8a6' },
   ];
 
   // Prompt types más usados
@@ -415,6 +450,30 @@ export function Admin() {
     }
     return dropStep;
   })();
+
+  // ── Finanzas ──────────────────────────────────────────────────────────────
+  const mrr = profiles.reduce((s, p) => s + (TIER_PRICES_USD[p.tier ?? 'free'] ?? 0), 0);
+  const arr = mrr * 12;
+  const aiCostTotal = parseFloat(estimateCost(aiInteractions));
+  // All-time cost, estimate monthly by dividing by months of data
+  const firstInteraction = aiInteractions.length ? new Date(aiInteractions[aiInteractions.length - 1].created_at) : new Date();
+  const monthsOfData = Math.max(1, (Date.now() - firstInteraction.getTime()) / (1000 * 60 * 60 * 24 * 30));
+  const aiCostMonthly = aiCostTotal / monthsOfData;
+  const infraCostMonthly = expenses.filter(e => e.currency === 'USD').reduce((s, e) => s + e.amount, 0)
+    + expenses.filter(e => e.currency === 'CLP').reduce((s, e) => s + e.amount / 1000, 0);
+  const totalCostMonthly = aiCostMonthly + infraCostMonthly;
+  const grossMargin = mrr > 0 ? Math.round(((mrr - totalCostMonthly) / mrr) * 100) : 0;
+  const netResult = mrr - totalCostMonthly;
+
+  const paidUsers = tierCounts.basic + tierCounts.pro + tierCounts.premium;
+  const revenueByTier = [
+    { tier: 'Free', users: tierCounts.free, price: 0, mrr: 0, color: '#9ca3af' },
+    { tier: 'Basic', users: tierCounts.basic, price: TIER_PRICES_USD.basic, mrr: tierCounts.basic * TIER_PRICES_USD.basic, color: '#f59e0b' },
+    { tier: 'Pro', users: tierCounts.pro, price: TIER_PRICES_USD.pro, mrr: tierCounts.pro * TIER_PRICES_USD.pro, color: '#8b5cf6' },
+    { tier: 'Premium', users: tierCounts.premium, price: TIER_PRICES_USD.premium, mrr: tierCounts.premium * TIER_PRICES_USD.premium, color: '#14b8a6' },
+  ];
+
+  const costPerValidation = completed.length > 0 ? (aiCostTotal / completed.length) : 0;
 
   if (loading) {
     return (
@@ -506,6 +565,7 @@ export function Admin() {
               {tab === 'validations' && `${completed.length} completadas · ${inProgress.length} en progreso`}
               {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
               {tab === 'health' && `Funnel · Tiers · Prompts · Modelos`}
+              {tab === 'finanzas' && `MRR $${mrr.toFixed(0)} · Gastos $${totalCostMonthly.toFixed(0)}/mes · Margen ${grossMargin}%`}
               {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
               {tab === 'figma' && 'Conecta tu cuenta y escanea el mapa de navegación de tus prototipos'}
               {tab === 'sitemap' && `Árbol de navegación de validus.scouttech.lat · ${16} rutas`}
@@ -1256,6 +1316,295 @@ export function Admin() {
                   )}
                 </Card>
               </div>
+            </>
+          )}
+
+          {/* ══ FINANZAS ════════════════════════════════════════════════════ */}
+          {tab === 'finanzas' && (
+            <>
+              {/* KPIs */}
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+                <KPI
+                  label="MRR"
+                  value={`$${mrr.toFixed(0)}`}
+                  sub={`${paidUsers} usuarios pagos`}
+                  accent="#14b8a6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+                />
+                <KPI
+                  label="Gastos / mes"
+                  value={`$${totalCostMonthly.toFixed(0)}`}
+                  sub={`AI $${aiCostMonthly.toFixed(2)} + Infra $${infraCostMonthly.toFixed(0)}`}
+                  accent="#ef4444"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>}
+                />
+                <KPI
+                  label="Resultado neto"
+                  value={`${netResult >= 0 ? '+' : ''}$${netResult.toFixed(0)}`}
+                  sub="ingresos − gastos / mes"
+                  accent={netResult >= 0 ? '#10b981' : '#ef4444'}
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+                />
+                <KPI
+                  label="ARR proyectado"
+                  value={`$${arr.toFixed(0)}`}
+                  sub="MRR × 12"
+                  accent="#8b5cf6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}
+                />
+              </div>
+
+              {/* P&L Summary */}
+              <div className="bg-gray-900 rounded-2xl p-5 md:p-6">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Estado de resultados mensual (estimado)</p>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Ingresos (MRR)', value: mrr, color: 'text-emerald-400', sign: '+' },
+                    { label: 'Costo AI (variable)', value: -aiCostMonthly, color: 'text-red-400', sign: '−' },
+                    { label: 'Infraestructura (fija)', value: -infraCostMonthly, color: 'text-red-400', sign: '−' },
+                    { label: 'Resultado neto', value: netResult, color: netResult >= 0 ? 'text-teal-300' : 'text-red-300', sign: netResult >= 0 ? '+' : '' },
+                  ].map((row, i) => (
+                    <div key={row.label} className={`flex items-center justify-between py-2.5 ${i === 3 ? 'border-t border-gray-700 pt-3.5 mt-1' : ''}`}>
+                      <span className="text-sm text-gray-400">{row.label}</span>
+                      <span className={`text-lg font-black ${row.color}`}>
+                        {row.sign !== '−' ? row.sign : '−'}${Math.abs(row.value).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {mrr === 0 && (
+                  <p className="text-xs text-gray-600 mt-4 pt-3 border-t border-gray-800">
+                    Sin usuarios pagos aún — activa LemonSqueezy para empezar a facturar.
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                {/* Revenue por tier */}
+                <Card title="Ingresos por tier">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 dark:border-white/5">
+                          {['Plan', 'Usuarios', 'Precio/mes', 'MRR', '% del total'].map(h => (
+                            <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-4">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-white/5">
+                        {revenueByTier.map(row => (
+                          <tr key={row.tier} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                            <td className="py-3 pr-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ background: row.color }} />
+                                <span className="text-xs font-bold" style={{ color: row.color }}>{row.tier}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-4 text-sm font-semibold text-gray-700 dark:text-[#C4C4D4]">{row.users}</td>
+                            <td className="py-3 pr-4 text-xs text-gray-500">{row.price === 0 ? '—' : `$${row.price}`}</td>
+                            <td className="py-3 pr-4 text-sm font-black text-gray-900 dark:text-[#F0EFF8]">
+                              {row.mrr === 0 ? <span className="text-gray-300 font-normal">$0</span> : `$${row.mrr}`}
+                            </td>
+                            <td className="py-3">
+                              {mrr > 0 && row.mrr > 0 ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-16 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${(row.mrr / mrr) * 100}%`, background: row.color }} />
+                                  </div>
+                                  <span className="text-xs text-gray-500">{Math.round((row.mrr / mrr) * 100)}%</span>
+                                </div>
+                              ) : <span className="text-xs text-gray-300">—</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-gray-200 dark:border-white/10">
+                          <td className="py-3 pr-4 text-xs font-bold text-gray-500 uppercase tracking-wide">Total</td>
+                          <td className="py-3 pr-4 text-sm font-bold text-gray-800 dark:text-[#F0EFF8]">{profiles.length}</td>
+                          <td />
+                          <td className="py-3 pr-4 text-sm font-black text-teal-600">${mrr}</td>
+                          <td />
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </Card>
+
+                {/* Unit economics */}
+                <Card title="Unit economics">
+                  <div className="space-y-4">
+                    {[
+                      {
+                        label: 'CAC objetivo',
+                        value: '< $3 USD',
+                        sub: 'Meta vía Meta/LinkedIn Ads',
+                        accent: '#14b8a6',
+                      },
+                      {
+                        label: 'LTV estimado (Basic)',
+                        value: paidUsers > 0 ? `$${(TIER_PRICES_USD.basic * 12).toFixed(0)}` : '—',
+                        sub: 'Asumiendo 12 meses retención',
+                        accent: '#f59e0b',
+                      },
+                      {
+                        label: 'LTV / CAC ratio',
+                        value: paidUsers > 0 ? `${(TIER_PRICES_USD.basic * 12 / 3).toFixed(1)}x` : '—',
+                        sub: 'Target > 3x para ser venture-backable',
+                        accent: '#8b5cf6',
+                      },
+                      {
+                        label: 'Costo por validación',
+                        value: completed.length ? `$${costPerValidation.toFixed(4)}` : '—',
+                        sub: 'AI cost / validaciones completadas',
+                        accent: '#ef4444',
+                      },
+                      {
+                        label: 'Margen bruto',
+                        value: mrr > 0 ? `${grossMargin}%` : 'N/A',
+                        sub: mrr > 0 ? `(ingresos − costos) / ingresos` : 'Sin ingresos aún',
+                        accent: grossMargin > 70 ? '#10b981' : '#f59e0b',
+                      },
+                    ].map(m => (
+                      <div key={m.label} className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0]">{m.label}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{m.sub}</p>
+                        </div>
+                        <span className="text-base font-black flex-shrink-0" style={{ color: m.accent }}>{m.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Gastos editables */}
+              <Card
+                title="Gastos fijos / mes"
+                action={
+                  <span className="text-xs font-bold text-gray-400">
+                    Total: <span className="text-red-500">${infraCostMonthly.toFixed(2)}/mes</span>
+                  </span>
+                }
+              >
+                <div className="space-y-2 mb-5">
+                  {expenses.map(exp => (
+                    <div key={exp.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-white/[0.03] group">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        exp.category === 'infra' ? 'bg-blue-400' : exp.category === 'tools' ? 'bg-amber-400' : exp.category === 'marketing' ? 'bg-pink-400' : 'bg-gray-400'
+                      }`} />
+                      <span className="text-xs font-medium text-gray-700 dark:text-[#C4C4D4] flex-1">{exp.name}</span>
+                      <span className="text-xs text-gray-400 capitalize">{exp.category}</span>
+                      {editingExpenseId === exp.id ? (
+                        <input
+                          type="number"
+                          step="0.01"
+                          defaultValue={exp.amount}
+                          className="w-20 text-xs text-right px-2 py-1 rounded-lg border border-teal-300 bg-white dark:bg-[#12121A] text-gray-800 dark:text-[#F0EFF8] focus:outline-none"
+                          onBlur={e => {
+                            const val = parseFloat(e.target.value);
+                            if (!isNaN(val)) {
+                              const updated = expenses.map(x => x.id === exp.id ? { ...x, amount: val } : x);
+                              setExpenses(updated);
+                              saveExpenses(updated);
+                            }
+                            setEditingExpenseId(null);
+                          }}
+                          autoFocus
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setEditingExpenseId(exp.id)}
+                          className="text-xs font-bold text-amber-600 hover:text-amber-700 w-20 text-right"
+                        >
+                          ${exp.amount.toFixed(2)} {exp.currency}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          const updated = expenses.filter(x => x.id !== exp.id);
+                          setExpenses(updated);
+                          saveExpenses(updated);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity text-xs px-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add expense */}
+                <div className="border-t border-gray-100 dark:border-white/5 pt-4">
+                  <p className="text-xs font-semibold text-gray-400 mb-3">Agregar gasto</p>
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nombre"
+                      value={newExpense.name}
+                      onChange={e => setNewExpense(n => ({ ...n, name: e.target.value }))}
+                      className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#12121A] text-gray-800 dark:text-[#F0EFF8] placeholder:text-gray-400 focus:outline-none focus:border-teal-400 w-36"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Monto"
+                      step="0.01"
+                      value={newExpense.amount || ''}
+                      onChange={e => setNewExpense(n => ({ ...n, amount: parseFloat(e.target.value) || 0 }))}
+                      className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#12121A] text-gray-800 dark:text-[#F0EFF8] placeholder:text-gray-400 focus:outline-none focus:border-teal-400 w-24"
+                    />
+                    <select
+                      value={newExpense.currency}
+                      onChange={e => setNewExpense(n => ({ ...n, currency: e.target.value as 'USD' | 'CLP' }))}
+                      className="text-xs px-2 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#12121A] text-gray-600 dark:text-gray-300 focus:outline-none"
+                    >
+                      <option>USD</option>
+                      <option>CLP</option>
+                    </select>
+                    <select
+                      value={newExpense.category}
+                      onChange={e => setNewExpense(n => ({ ...n, category: e.target.value as Expense['category'] }))}
+                      className="text-xs px-2 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#12121A] text-gray-600 dark:text-gray-300 focus:outline-none"
+                    >
+                      <option value="infra">Infra</option>
+                      <option value="tools">Tools</option>
+                      <option value="marketing">Marketing</option>
+                      <option value="other">Otro</option>
+                    </select>
+                    <button
+                      disabled={!newExpense.name || newExpense.amount <= 0}
+                      onClick={() => {
+                        const exp: Expense = { ...newExpense, id: Date.now().toString() };
+                        const updated = [...expenses, exp];
+                        setExpenses(updated);
+                        saveExpenses(updated);
+                        setNewExpense({ name: '', amount: 0, category: 'infra', currency: 'USD' });
+                      }}
+                      className="text-xs px-4 py-2 rounded-lg bg-teal-500 text-white font-bold hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      + Agregar
+                    </button>
+                    <button
+                      onClick={() => { setExpenses(DEFAULT_EXPENSES); saveExpenses(DEFAULT_EXPENSES); }}
+                      className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-400 hover:text-gray-600 transition"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Nota sobre pagos */}
+              {paidUsers === 0 && (
+                <div className="rounded-2xl border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/10 p-5">
+                  <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">Sin ingresos reales aún</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-500">
+                    Todos los usuarios están en plan Free. Activa LemonSqueezy completando los 6 secrets en Supabase
+                    (ver <code className="bg-amber-100 dark:bg-amber-800/30 px-1 rounded">SETUP_LEMONSQUEEZY.md</code>).
+                    Los MRR y márgenes de arriba son proyecciones basadas en los tiers actuales.
+                  </p>
+                </div>
+              )}
             </>
           )}
 
