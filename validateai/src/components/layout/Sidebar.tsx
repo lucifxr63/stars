@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X, ClipboardList } from 'lucide-react';
+import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X, ClipboardList, Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -133,6 +133,14 @@ export function Sidebar({ onClose }: SidebarProps) {
             >
               <Shield className={iconCls(isActive('/admin'))} />
               <span className="flex-1">Admin</span>
+            </Link>
+            <Link
+              to="/developers"
+              onClick={onClose}
+              className={navCls(isActive('/developers'))}
+            >
+              <Code2 className={iconCls(isActive('/developers'))} />
+              <span className="flex-1">Developers</span>
             </Link>
           </>
         )}
