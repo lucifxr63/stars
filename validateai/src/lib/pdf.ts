@@ -539,7 +539,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   doc.rect(0, 0, 5, 80, 'F');
   // Logo / Nombre app
   doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.teal);
-  doc.text('Validus', 10, 12);
+  doc.text('Validum', 10, 12);
   doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
   doc.text('Dossier de InversiÃ³n Â· Generado el ' + dateStr, 10, 18);
 
@@ -634,7 +634,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
 
   // Pie de portada
   doc.setFontSize(6); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
-  doc.text('Confidencial Â· Generado por Validus Â· validus.scouttech.lat', PAGE_W / 2 - 40, 202);
+  doc.text('Confidencial Â· Generado por Validum Â· validus.scouttech.lat', PAGE_W / 2 - 40, 202);
 
   // Siguiente pÃ¡gina para el contenido
   doc.addPage();
@@ -1921,13 +1921,13 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       }
     }
 
-    // "Audited by Validus Pro" stamp
+    // "Audited by Validum Pro" stamp
     checkPage(20);
     y += 4;
     doc.setFillColor(124, 111, 247);
     doc.roundedRect(MARGIN, y, CON_W, 12, 2, 2, 'F');
     doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-    const stampText = 'Audited by Validus Pro Â· validus.scouttech.lat';
+    const stampText = 'Audited by Validum Pro Â· validus.scouttech.lat';
     doc.text(stampText, MARGIN + (CON_W - doc.getTextWidth(stampText)) / 2, y + 8);
     y += 18;
   }
@@ -1967,7 +1967,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.setFillColor(...C.teal);
       doc.rect(0, 279, PAGE_W, 0.5, 'F');
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.darkMid);
-      doc.text('Validus Â· valida tu idea antes de construirla', MARGIN, 286);
+      doc.text('Validum Â· valida tu idea antes de construirla', MARGIN, 286);
       doc.text(`PÃ¡gina ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`PÃ¡gina ${i} de ${pageCount}`), 286);
 
     } else if (theme === 'gradient') {
@@ -1976,7 +1976,7 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.setFillColor(...C.teal);
       doc.rect(0, 279, PAGE_W, 0.8, 'F');
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.darkMid);
-      doc.text('Validus Â· valida tu idea antes de construirla', MARGIN, 286);
+      doc.text('Validum Â· valida tu idea antes de construirla', MARGIN, 286);
       doc.text(`PÃ¡gina ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`PÃ¡gina ${i} de ${pageCount}`), 286);
 
     } else {
@@ -1986,12 +1986,12 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
       doc.setDrawColor(...C.lightGray);
       doc.setLineWidth(0.25);
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.gray);
-      doc.text('Validus Â· valida tu idea antes de construirla', MARGIN, 285);
+      doc.text('Validum Â· valida tu idea antes de construirla', MARGIN, 285);
       doc.text(`PÃ¡gina ${i} de ${pageCount}`, PAGE_W - MARGIN - doc.getTextWidth(`PÃ¡gina ${i} de ${pageCount}`), 285);
     }
   }
 
-  doc.save(`Validus_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`);
+  doc.save(`Validum_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`);
 }
 
 // â”€â”€ Premium PDF (react-pdf/renderer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2007,7 +2007,7 @@ export async function generatePremiumPDF(data: PDFData): Promise<void> {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `Validus_Dossier_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`;
+  a.download = `Validum_Dossier_${(data.idea_name ?? 'reporte').replace(/\s+/g, '_')}.pdf`;
   a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
@@ -2026,7 +2026,7 @@ export async function generateLeanRoadmapPDF(data: PDFData): Promise<void> {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `Validus_LeanRoadmap_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.download = `Validum_LeanRoadmap_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
   a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
@@ -2044,7 +2044,7 @@ export async function generateUnitEconomicsPDF(data: PDFData): Promise<void> {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `Validus_UnitEconomics_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.download = `Validum_UnitEconomics_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
   a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
@@ -2062,7 +2062,7 @@ export async function generateCompliancePDF(data: PDFData): Promise<void> {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `Validus_Compliance_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.download = `Validum_Compliance_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
   a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
@@ -2080,7 +2080,7 @@ export async function generatePitchDeckPDF(data: PDFData): Promise<void> {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `Validus_PitchDeck_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
+  a.download = `Validum_PitchDeck_${(data.idea_name ?? 'startup').replace(/\s+/g, '_')}.pdf`;
   a.style.display = 'none';
   document.body.appendChild(a);
   a.click();

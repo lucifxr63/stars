@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -416,7 +416,7 @@ function PrivacySection({ userId, initialConsent }: { userId: string; initialCon
               Contribuir al entrenamiento del modelo
             </p>
             <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1 leading-relaxed">
-              Tus validaciones anonimizadas pueden usarse para mejorar Validus.
+              Tus validaciones anonimizadas pueden usarse para mejorar Validum.
               Datos sensibles son removidos antes del procesamiento.
             </p>
           </div>

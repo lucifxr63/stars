@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+﻿import type { FC } from 'react';
 
 // Sprint P-D: EvidenceWall auditado para resiliencia total ante fallos parciales.
 // Cualquier combinación de reddit_data/trends_data null es manejada sin white screen.
@@ -143,12 +143,12 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
                 href={post?.url ?? '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-4 rounded-xl border border-gray-100 dark:border-white/6 bg-white dark:bg-[#12121A] hover:border-[#7C6FF7]/40 transition-colors group"
+                className="block p-4 rounded-xl border border-gray-100 dark:border-white/6 bg-white dark:bg-[#12121A] hover:border-[#0EB5C6]/40 transition-colors group"
               >
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="min-w-0">
                     <span className="text-[11px] font-bold text-orange-500">{post?.subreddit ?? ''}</span>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mt-0.5 group-hover:text-[#7C6FF7] transition-colors truncate">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mt-0.5 group-hover:text-[#0EB5C6] transition-colors truncate">
                       {post?.title ?? ''}
                     </p>
                   </div>
@@ -225,7 +225,7 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
                 </div>
                 <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#7C6FF7] rounded-full transition-all duration-700"
+                    className="h-full bg-[#0EB5C6] rounded-full transition-all duration-700"
                     style={{ width: `${trends_data?.average_interest_last_12_months ?? 0}%` }}
                   />
                 </div>
@@ -237,7 +237,7 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-2">Queries en auge</p>
                 <div className="flex flex-wrap gap-1.5">
                   {(trends_data?.related_breakout_queries ?? []).map((q, i) => (
-                    <span key={i} className="px-2.5 py-1 bg-[#7C6FF7]/10 text-[#7C6FF7] text-xs font-medium rounded-full">
+                    <span key={i} className="px-2.5 py-1 bg-[#0EB5C6]/10 text-[#0EB5C6] text-xs font-medium rounded-full">
                       {q}
                     </span>
                   ))}

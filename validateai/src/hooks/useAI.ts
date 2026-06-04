@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { dispatchUsageUpdated } from '@/hooks/useUsage';
 import { dispatchPaywallHit } from '@/components/shared/UpgradeModal';
 import { deriveTierNeeded } from '@/lib/rateLimitHelpers';
+import { sentryAIBreadcrumb, captureError } from '@/lib/sentry';
 import type { UserTier } from '@/hooks/useUserTier';
 
 type PromptType =
@@ -58,6 +59,7 @@ export function useAI() {
 
     setLoading(true);
     setError(null);
+    sentryAIBreadcrumb(promptType, 'started', { validationId, step });
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -131,6 +133,7 @@ export function useAI() {
 
       if (!res.ok) throw new Error(`AI request failed: ${res.status}`);
       const result = await res.json() as T;
+      sentryAIBreadcrumb(promptType, 'success', { validationId });
       dispatchUsageUpdated();
       return result;
     } catch (err: unknown) {
@@ -139,6 +142,8 @@ export function useAI() {
       }
       const msg = err instanceof Error ? err.message : 'Error desconocido';
       setError(msg);
+      sentryAIBreadcrumb(promptType, 'error', { message: msg });
+      captureError(err, { promptType, validationId, step });
       // Errores de red (fetch failed, timeout, etc.) — siempre visibles al usuario
       if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network') || msg.includes('AI request failed')) {
         toast.error('No se pudo conectar con el servidor de análisis. Verifica tu conexión e intenta de nuevo.', { duration: 6000 });

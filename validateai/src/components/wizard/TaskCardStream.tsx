@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 
 interface Props {
   cards: string[];
@@ -52,7 +52,7 @@ export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
               ${isDone
                 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30'
                 : isActive
-                ? 'bg-[#7C6FF7]/5 border-[#7C6FF7]/30 dark:bg-[#7C6FF7]/8 dark:border-[#7C6FF7]/25'
+                ? 'bg-[#0EB5C6]/5 border-[#0EB5C6]/30 dark:bg-[#0EB5C6]/8 dark:border-[#0EB5C6]/25'
                 : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
               }`}
             style={{ animationDelay: `${i * 50}ms` }}
@@ -66,8 +66,8 @@ export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
                   </svg>
                 </div>
               ) : isActive ? (
-                <div className="w-7 h-7 rounded-lg bg-[#7C6FF7]/15 flex items-center justify-center">
-                  <div className="w-3.5 h-3.5 border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] rounded-full animate-spin" />
+                <div className="w-7 h-7 rounded-lg bg-[#0EB5C6]/15 flex items-center justify-center">
+                  <div className="w-3.5 h-3.5 border-2 border-[#0EB5C6]/30 border-t-[#0EB5C6] rounded-full animate-spin" />
                 </div>
               ) : (
                 <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center">
@@ -81,7 +81,7 @@ export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
               isDone
                 ? 'text-emerald-700 dark:text-emerald-400'
                 : isActive
-                ? 'text-[#7C6FF7] dark:text-[#A78BFA]'
+                ? 'text-[#0EB5C6] dark:text-[#38D5E3]'
                 : 'text-gray-400 dark:text-[#4A495E]'
             }`}>
               {card}
@@ -90,7 +90,7 @@ export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
             {/* Badge */}
             <span className={`shrink-0 text-xs font-bold ${
               isDone    ? 'text-emerald-600 dark:text-emerald-400' :
-              isActive  ? 'text-[#7C6FF7] dark:text-[#A78BFA] animate-pulse' :
+              isActive  ? 'text-[#0EB5C6] dark:text-[#38D5E3] animate-pulse' :
               'text-gray-300 dark:text-[#4A495E]'
             }`}>
               {isDone ? 'Listo' : isActive ? 'Procesando...' : 'En espera'}

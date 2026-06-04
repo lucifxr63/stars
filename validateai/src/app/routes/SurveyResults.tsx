@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -175,12 +175,12 @@ function SubmissionCard({ sub }: { sub: SurveySubmission }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-[#F0EFF8] mb-1">{r.central_problem}</p>
           <div className="flex flex-wrap gap-3 text-xs text-white/40">
-            <span>Fricción: <strong className="text-[#7C6FF7]">{r.friction_score}/10</strong></span>
+            <span>Fricción: <strong className="text-[#0EB5C6]">{r.friction_score}/10</strong></span>
             <span>WTP: <strong className={r.willingness_to_pay ? 'text-green-400' : 'text-red-400'}>{r.willingness_to_pay ? 'Sí' : 'No'}</strong></span>
             <span>{new Date(sub.created_at).toLocaleDateString('es-CL')}</span>
           </div>
         </div>
-        <button onClick={() => setExpanded(v => !v)} className="shrink-0 text-xs text-[#7C6FF7] hover:underline">
+        <button onClick={() => setExpanded(v => !v)} className="shrink-0 text-xs text-[#0EB5C6] hover:underline">
           {expanded ? 'Menos' : 'Más'}
         </button>
       </div>
@@ -191,7 +191,7 @@ function SubmissionCard({ sub }: { sub: SurveySubmission }) {
             <div>
               <p className="text-xs font-semibold text-[#C4C4D4] mb-1">Citas clave:</p>
               {r.key_quotes.map((q, i) => (
-                <p key={i} className="text-xs text-white/60 italic border-l-2 border-[#7C6FF7]/40 pl-2 mb-1">"{q}"</p>
+                <p key={i} className="text-xs text-white/60 italic border-l-2 border-[#0EB5C6]/40 pl-2 mb-1">"{q}"</p>
               ))}
             </div>
           )}
@@ -232,7 +232,7 @@ function SubmissionCard({ sub }: { sub: SurveySubmission }) {
 function DatalakeInsufficientState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 flex items-center justify-center mb-4">
+      <div className="w-14 h-14 rounded-2xl bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 flex items-center justify-center mb-4">
         <span className="text-2xl">🔒</span>
       </div>
       <h3 className="font-bold text-[#F0EFF8] mb-2">Datos insuficientes para garantías de privacidad</h3>
@@ -272,7 +272,7 @@ function DpMetricCard({
       <p className={`text-2xl font-black ${accent ?? 'text-[#F0EFF8]'}`}>
         {value}{unit}
       </p>
-      <p className="text-xs text-[#7C6FF7]/70 mt-0.5">
+      <p className="text-xs text-[#0EB5C6]/70 mt-0.5">
         rango aprox. {lo}{unit} – {hi}{unit}
       </p>
     </div>
@@ -296,7 +296,7 @@ function DpSeverityBar({
     <div className="bg-[#12121A] border border-white/5 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-bold text-[#C4C4D4]">Distribución de severidad</p>
-        <span className="text-xs text-[#7C6FF7]/60 bg-[#7C6FF7]/10 px-2 py-0.5 rounded-full">±{m} por barra</span>
+        <span className="text-xs text-[#0EB5C6]/60 bg-[#0EB5C6]/10 px-2 py-0.5 rounded-full">±{m} por barra</span>
       </div>
       <div className="space-y-4">
         {severities.map(s => {
@@ -360,7 +360,7 @@ function DpIndustryChart({
     <div className="bg-[#12121A] border border-white/5 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-bold text-[#C4C4D4]">Distribución por industria</p>
-        <span className="text-xs text-[#7C6FF7]/60 bg-[#7C6FF7]/10 px-2 py-0.5 rounded-full">±{m}</span>
+        <span className="text-xs text-[#0EB5C6]/60 bg-[#0EB5C6]/10 px-2 py-0.5 rounded-full">±{m}</span>
       </div>
       <div className="space-y-3">
         {sorted.map(({ k, v }) => (
@@ -371,7 +371,7 @@ function DpIndustryChart({
             </div>
             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#7C6FF7]/50 rounded-full"
+                className="h-full bg-[#0EB5C6]/50 rounded-full"
                 style={{ width: `${(v / maxVal) * 100}%` }}
               />
             </div>
@@ -403,7 +403,7 @@ function DpMomTestSignals({
     <div className="bg-[#12121A] border border-white/5 rounded-2xl p-5 md:col-span-2">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-bold text-[#C4C4D4]">Señales Mom Test (data lake)</p>
-        <span className="text-xs text-[#7C6FF7]/60 bg-[#7C6FF7]/10 px-2 py-0.5 rounded-full">±{m}%</span>
+        <span className="text-xs text-[#0EB5C6]/60 bg-[#0EB5C6]/10 px-2 py-0.5 rounded-full">±{m}%</span>
       </div>
       <div className="grid grid-cols-3 gap-4">
         {signals.map(({ label, pct }) => {
@@ -413,7 +413,7 @@ function DpMomTestSignals({
           return (
             <div key={label} className="text-center">
               <p className={`text-2xl font-black mb-0.5 ${color}`}>{pct}%</p>
-              <p className="text-xs text-[#7C6FF7]/60 mb-1">aprox. {lo}%–{hi}%</p>
+              <p className="text-xs text-[#0EB5C6]/60 mb-1">aprox. {lo}%–{hi}%</p>
               <p className="text-xs text-[#C4C4D4]">{label}</p>
             </div>
           );
@@ -442,14 +442,14 @@ function DpSolutionsChart({
     <div className="bg-[#12121A] border border-white/5 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-bold text-[#C4C4D4]">Soluciones actuales (top 6)</p>
-        <span className="text-xs text-[#7C6FF7]/60 bg-[#7C6FF7]/10 px-2 py-0.5 rounded-full">±{m}</span>
+        <span className="text-xs text-[#0EB5C6]/60 bg-[#0EB5C6]/10 px-2 py-0.5 rounded-full">±{m}</span>
       </div>
       <div className="space-y-3">
         {sorted.map(({ k, v }) => (
           <div key={k} className="flex items-center gap-3">
             <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
               <div
-                className="h-full bg-[#7C6FF7]/40 rounded-full"
+                className="h-full bg-[#0EB5C6]/40 rounded-full"
                 style={{ width: `${(v / maxVal) * 100}%` }}
               />
             </div>
@@ -467,12 +467,12 @@ function DpBadge({ epsilon }: { epsilon: number }) {
   const amplification = Math.exp(epsilon).toFixed(2);
   return (
     <div
-      className="flex items-center gap-2 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-xl px-3 py-2 cursor-help"
+      className="flex items-center gap-2 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-xl px-3 py-2 cursor-help"
       title={`Garantía ε-diferencial: la presencia o ausencia de cualquier individuo no altera el resultado de una consulta en más de e^${epsilon}≈${amplification}x con alta probabilidad.`}
     >
       <span className="text-sm">🔐</span>
       <div>
-        <p className="text-xs font-bold text-[#7C6FF7]">Privacidad Diferencial activa</p>
+        <p className="text-xs font-bold text-[#0EB5C6]">Privacidad Diferencial activa</p>
         <p className="text-xs text-[#C4C4D4]/60">ε={epsilon} · Mecanismo Laplace · Hover para detalles</p>
       </div>
     </div>
@@ -631,7 +631,7 @@ export function SurveyResults() {
 
   if (loading) return (
     <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -650,7 +650,7 @@ export function SurveyResults() {
       <div className="max-w-5xl mx-auto px-4 py-10">
 
         {/* Header */}
-        <Link to="/surveys" className="text-xs text-[#7C6FF7] hover:underline mb-4 block">← Mis encuestas</Link>
+        <Link to="/surveys" className="text-xs text-[#0EB5C6] hover:underline mb-4 block">← Mis encuestas</Link>
         <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold">{form.title}</h1>
@@ -670,7 +670,7 @@ export function SurveyResults() {
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing}
-                className="text-xs bg-[#7C6FF7] hover:bg-[#6B5FE6] text-white font-semibold px-4 py-2 rounded-xl transition-colors disabled:opacity-50"
+                className="text-xs bg-[#0EB5C6] hover:bg-[#6B5FE6] text-white font-semibold px-4 py-2 rounded-xl transition-colors disabled:opacity-50"
               >
                 {analyzing ? 'Analizando...' : `Analizar ${pendingAnalysis} nuevas`}
               </button>
@@ -691,7 +691,7 @@ export function SurveyResults() {
           <button
             onClick={() => setActiveTab('ai')}
             className={`text-xs font-semibold px-4 py-2 rounded-lg transition-colors ${
-              activeTab === 'ai' ? 'bg-[#7C6FF7] text-white' : 'text-[#C4C4D4] hover:text-white'
+              activeTab === 'ai' ? 'bg-[#0EB5C6] text-white' : 'text-[#C4C4D4] hover:text-white'
             }`}
           >
             Análisis IA
@@ -699,7 +699,7 @@ export function SurveyResults() {
           <button
             onClick={() => setActiveTab('datalake')}
             className={`text-xs font-semibold px-4 py-2 rounded-lg transition-colors ${
-              activeTab === 'datalake' ? 'bg-[#7C6FF7] text-white' : 'text-[#C4C4D4] hover:text-white'
+              activeTab === 'datalake' ? 'bg-[#0EB5C6] text-white' : 'text-[#C4C4D4] hover:text-white'
             }`}
           >
             Data Lake 🔐
@@ -730,7 +730,7 @@ export function SurveyResults() {
                       {agg.top_current_solutions.map(({ solution, count }, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <div className="flex-1 bg-[#0A0A0F] rounded-full h-1.5 overflow-hidden">
-                            <div className="h-full bg-[#7C6FF7]/60 rounded-full" style={{ width: `${Math.min(100, (count / agg.analyzed_count) * 100)}%` }} />
+                            <div className="h-full bg-[#0EB5C6]/60 rounded-full" style={{ width: `${Math.min(100, (count / agg.analyzed_count) * 100)}%` }} />
                           </div>
                           <span className="text-xs text-[#C4C4D4] w-40 truncate">{solution}</span>
                           <span className="text-xs text-white/30 w-6 text-right">{count}</span>
@@ -799,7 +799,7 @@ export function SurveyResults() {
             {/* Patrón 4: Loading state */}
             {dlStatus === 'loading' && (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
                 <p className="text-xs text-[#C4C4D4]">Consultando data lake con privacidad diferencial...</p>
               </div>
             )}
@@ -813,7 +813,7 @@ export function SurveyResults() {
                 <p className="text-3xl mb-3">⚠️</p>
                 <p className="text-sm text-[#C4C4D4] mb-4">Error al conectar con el data lake.</p>
                 <button onClick={() => { setDlStatus('idle'); token && loadDatalake(token); }}
-                  className="text-xs text-[#7C6FF7] hover:underline">Reintentar</button>
+                  className="text-xs text-[#0EB5C6] hover:underline">Reintentar</button>
               </div>
             )}
 
@@ -880,7 +880,7 @@ export function SurveyResults() {
                 </div>
 
                 {/* Footer educativo sobre la incertidumbre */}
-                <div className="bg-[#12121A] border border-[#7C6FF7]/10 rounded-xl p-4 text-xs text-[#C4C4D4]/60">
+                <div className="bg-[#12121A] border border-[#0EB5C6]/10 rounded-xl p-4 text-xs text-[#C4C4D4]/60">
                   <strong className="text-[#C4C4D4]/80">¿Por qué los números muestran rangos?</strong>{' '}
                   Esta analítica aplica el Mecanismo de Laplace (ε={EPSILON}) para garantizar que ningún encuestado
                   individual pueda ser identificado por sus respuestas, incluso si alguien accede al data lake.

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -94,8 +94,8 @@ function PremiumTerminal() {
 
   return (
     <div className="flex flex-col items-center justify-center py-6">
-      <div className="w-16 h-16 rounded-full bg-[#7C6FF7]/10 border border-[#7C6FF7]/30 flex items-center justify-center mb-6">
-        <div className="w-8 h-8 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin" />
+      <div className="w-16 h-16 rounded-full bg-[#0EB5C6]/10 border border-[#0EB5C6]/30 flex items-center justify-center mb-6">
+        <div className="w-8 h-8 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin" />
       </div>
 
       <h2 className="text-xl font-black text-gray-900 dark:text-[#F0EFF8] mb-1">
@@ -111,7 +111,7 @@ function PremiumTerminal() {
           const isLast = i === lines.length - 1;
           return (
             <div key={`${i}-${line}`} className="flex items-start gap-2 animate-in fade-in duration-300">
-              <span className="text-[#7C6FF7] shrink-0">›</span>
+              <span className="text-[#0EB5C6] shrink-0">›</span>
               <span className={isLast ? 'text-amber-400' : 'text-emerald-400'}>{line}</span>
               {isLast && (
                 <span className="inline-block w-2 h-3 bg-amber-400 animate-pulse ml-0.5 shrink-0" />
@@ -184,7 +184,7 @@ function MicroFeedbackPanel({ tier }: { tier: string }) {
         </>
       ) : (
         <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium">
-          ¡Gracias! Tu respuesta mejora Validus.
+          ¡Gracias! Tu respuesta mejora Validum.
         </p>
       )}
     </div>
@@ -217,15 +217,15 @@ function RadarPreview({ visible }: { visible: boolean }) {
   if (!visible) return null;
 
   return (
-    <div className="rounded-2xl border border-[#7C6FF7]/20 bg-[#7C6FF7]/4 dark:bg-[#7C6FF7]/5 p-5 space-y-3">
+    <div className="rounded-2xl border border-[#0EB5C6]/20 bg-[#0EB5C6]/4 dark:bg-[#0EB5C6]/5 p-5 space-y-3">
       <div className="flex items-center gap-2.5 mb-1">
         <div className="relative w-5 h-5 shrink-0">
-          <div className="absolute inset-0 rounded-full border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] animate-spin" />
+          <div className="absolute inset-0 rounded-full border-2 border-[#0EB5C6]/30 border-t-[#0EB5C6] animate-spin" />
         </div>
-        <p className="text-sm font-bold text-[#7C6FF7] dark:text-[#A78BFA] tracking-wide">
+        <p className="text-sm font-bold text-[#0EB5C6] dark:text-[#38D5E3] tracking-wide">
           Calculando dimensiones...
         </p>
-        <span className="ml-auto text-[10px] font-semibold text-[#7C6FF7]/60 tabular-nums">5/5</span>
+        <span className="ml-auto text-[10px] font-semibold text-[#0EB5C6]/60 tabular-nums">5/5</span>
       </div>
 
       <div className="space-y-2">
@@ -236,7 +236,7 @@ function RadarPreview({ visible }: { visible: boolean }) {
             <div key={dim.key} className="flex items-center gap-2.5">
               <span className="text-sm w-5 text-center shrink-0">{dim.icon}</span>
               <span className={`text-xs font-medium w-20 shrink-0 transition-colors ${
-                isActive ? 'text-[#7C6FF7] dark:text-[#A78BFA]' : 'text-gray-500 dark:text-[#8B8AA0]'
+                isActive ? 'text-[#0EB5C6] dark:text-[#38D5E3]' : 'text-gray-500 dark:text-[#8B8AA0]'
               }`}>
                 {dim.label}
               </span>
@@ -244,16 +244,16 @@ function RadarPreview({ visible }: { visible: boolean }) {
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${
                     isActive
-                      ? 'bg-[#7C6FF7] animate-pulse'
+                      ? 'bg-[#0EB5C6] animate-pulse'
                       : isScanned
-                      ? 'bg-[#7C6FF7]/40'
+                      ? 'bg-[#0EB5C6]/40'
                       : 'bg-transparent'
                   }`}
                   style={{ width: isActive ? '65%' : isScanned ? `${30 + i * 8}%` : '0%' }}
                 />
               </div>
               <span className={`text-[10px] font-bold w-8 text-right shrink-0 transition-colors ${
-                isActive ? 'text-[#7C6FF7]' : 'text-gray-300 dark:text-white/15'
+                isActive ? 'text-[#0EB5C6]' : 'text-gray-300 dark:text-white/15'
               }`}>
                 {dim.weight}%
               </span>
@@ -293,8 +293,8 @@ function QuickTerminal() {
 
   return (
     <div className="flex flex-col items-center justify-center py-4">
-      <div className="w-12 h-12 rounded-full bg-[#7C6FF7]/10 border border-[#7C6FF7]/30 flex items-center justify-center mb-5">
-        <div className="w-6 h-6 border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] rounded-full animate-spin" />
+      <div className="w-12 h-12 rounded-full bg-[#0EB5C6]/10 border border-[#0EB5C6]/30 flex items-center justify-center mb-5">
+        <div className="w-6 h-6 border-2 border-[#0EB5C6]/30 border-t-[#0EB5C6] rounded-full animate-spin" />
       </div>
 
       <h2 className="text-lg font-black text-gray-900 dark:text-[#F0EFF8] mb-0.5">
@@ -312,7 +312,7 @@ function QuickTerminal() {
               visibleLines.includes(i) ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <span className="text-[#7C6FF7] shrink-0">›</span>
+            <span className="text-[#0EB5C6] shrink-0">›</span>
             <span className={visibleLines.includes(i) && i === visibleLines[visibleLines.length - 1]
               ? 'text-amber-400'
               : 'text-emerald-400'

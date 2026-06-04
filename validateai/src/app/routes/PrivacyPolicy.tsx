@@ -1,15 +1,12 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function Logo({ className = 'w-6 h-8' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
-      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
     </svg>
   );
 }
@@ -29,7 +26,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Pill({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#7C6FF7]/10 text-[#7C6FF7] text-xs font-medium border border-[#7C6FF7]/20">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0EB5C6]/10 text-[#0EB5C6] text-xs font-medium border border-[#0EB5C6]/20">
       {children}
     </span>
   );
@@ -45,8 +42,8 @@ export function PrivacyPolicy() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <Logo className="w-5 h-7" />
-            <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8] group-hover:text-[#7C6FF7] transition-colors">
-              Validus
+            <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8] group-hover:text-[#0EB5C6] transition-colors">
+              Validum
             </span>
           </Link>
           <div className="flex items-center gap-3">
@@ -74,7 +71,7 @@ export function PrivacyPolicy() {
             Política de Privacidad
           </h1>
           <p className="text-base text-gray-500 dark:text-[#8B8AA0] max-w-2xl">
-            En Validus valoramos tu privacidad. Esta política explica cómo recopilamos, usamos y protegemos tu información personal conforme a la legislación chilena vigente.
+            En Validum valoramos tu privacidad. Esta política explica cómo recopilamos, usamos y protegemos tu información personal conforme a la legislación chilena vigente.
           </p>
         </div>
 
@@ -87,7 +84,7 @@ export function PrivacyPolicy() {
             </p>
             <p>
               Puedes contactarnos en cualquier momento a través de:{' '}
-              <a href="mailto:contacto@validus.scouttech.lat" className="text-[#7C6FF7] hover:underline">
+              <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
                 contacto@validus.scouttech.lat
               </a>
             </p>
@@ -213,7 +210,7 @@ export function PrivacyPolicy() {
             </ul>
             <p>
               Para ejercer cualquiera de estos derechos, escríbenos a{' '}
-              <a href="mailto:contacto@validus.scouttech.lat" className="text-[#7C6FF7] hover:underline">
+              <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
                 contacto@validus.scouttech.lat
               </a>{' '}
               indicando tu nombre, el derecho que deseas ejercer y, si aplica, los datos concretos a los que se refiere tu solicitud. Responderemos dentro de los plazos establecidos por la ley.
@@ -238,7 +235,7 @@ export function PrivacyPolicy() {
 
           <Section title="12. Menores de edad">
             <p>
-              Validus está dirigido a personas mayores de 18 años. No recopilamos intencionalmente datos de menores. Si crees que un menor ha proporcionado sus datos, contáctanos para eliminarlos.
+              Validum está dirigido a personas mayores de 18 años. No recopilamos intencionalmente datos de menores. Si crees que un menor ha proporcionado sus datos, contáctanos para eliminarlos.
             </p>
           </Section>
 
@@ -263,7 +260,7 @@ export function PrivacyPolicy() {
             </p>
             <a
               href="mailto:contacto@validus.scouttech.lat"
-              className="text-xs text-[#7C6FF7] hover:underline whitespace-nowrap"
+              className="text-xs text-[#0EB5C6] hover:underline whitespace-nowrap"
             >
               ¿Preguntas? Contáctanos →
             </a>
@@ -275,7 +272,7 @@ export function PrivacyPolicy() {
       <footer className="border-t border-black/[0.05] dark:border-white/[0.06] py-8 mt-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-400 dark:text-[#4A495E]">
-            © {new Date().getFullYear()} Validus · Hecho en Chile 🇨🇱
+            © {new Date().getFullYear()} Validum · Hecho en Chile 🇨🇱
           </p>
           <div className="flex items-center gap-4">
             <Link to="/" className="text-xs text-gray-400 dark:text-[#4A495E] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
@@ -284,7 +281,7 @@ export function PrivacyPolicy() {
             <Link to="/pricing" className="text-xs text-gray-400 dark:text-[#4A495E] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
               Precios
             </Link>
-            <a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-400 dark:text-[#4A495E] hover:text-[#7C6FF7] transition-colors">
+            <a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-400 dark:text-[#4A495E] hover:text-[#0EB5C6] transition-colors">
               Contacto
             </a>
           </div>

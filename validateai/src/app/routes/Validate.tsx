@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -538,12 +538,12 @@ export function Validate() {
           <div className="mb-5 px-1">
             <div className="flex items-center justify-between mb-1">
               {!isPremiumMode && (
-                <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">
+                <p className="text-xs font-bold text-[#0EB5C6] uppercase tracking-widest">
                   Paso {currentStep} de {isQuickMode ? 1 : 3}
                 </p>
               )}
               {isPremiumMode && (
-                <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest">
+                <p className="text-xs font-bold text-[#0EB5C6] uppercase tracking-widest">
                   ✦ Validación Premium · Paso {currentStep} de {Object.keys(STEP_COMPONENTS_PREMIUM).length - 1}
                 </p>
               )}
@@ -563,7 +563,7 @@ export function Validate() {
             {currentStep === 1 && !isPremiumMode ? (
               !prefillReady ? (
                 <div className="h-40 flex items-center justify-center">
-                  <div className="w-6 h-6 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : isQuickMode
                 ? <StepIdeaQuick flowCopy={flowCopy} />
@@ -586,7 +586,7 @@ export function Validate() {
         <div className="fixed inset-x-0 top-3 z-50 flex justify-center px-4 pointer-events-none">
           {validationMode === 'quick' ? (
             // ── Dialog de captura de email (flujo rápido) ──────────────────────
-            <div className="bg-white dark:bg-[#12121A] rounded-2xl shadow-2xl border border-[#7C6FF7]/30 p-5 max-w-sm w-full pointer-events-auto">
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl shadow-2xl border border-[#0EB5C6]/30 p-5 max-w-sm w-full pointer-events-auto">
               {emailSent ? (
                 <div className="text-center py-2">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center mx-auto mb-3">
@@ -607,8 +607,8 @@ export function Validate() {
                 <>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
-                        <svg className="w-4 h-4 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div className="w-8 h-8 rounded-xl bg-[#0EB5C6]/10 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                       </div>
@@ -636,12 +636,12 @@ export function Validate() {
                       onKeyDown={(e) => e.key === 'Enter' && handleEmailLead()}
                       placeholder="tu@email.com"
                       autoFocus
-                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-[#F0EFF8] placeholder:text-gray-400 focus:outline-none focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20 transition-all"
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-[#F0EFF8] placeholder:text-gray-400 focus:outline-none focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20 transition-all"
                     />
                     <button
                       onClick={handleEmailLead}
                       disabled={emailLoading || !emailInput.includes('@')}
-                      className="w-full py-2.5 bg-[#7C6FF7] hover:bg-[#6B5EE6] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2.5 bg-[#0EB5C6] hover:bg-[#6B5EE6] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
                     >
                       {emailLoading ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

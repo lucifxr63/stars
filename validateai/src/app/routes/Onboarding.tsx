@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -13,27 +13,24 @@ const inputCls =
   'w-full px-4 py-3.5 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm ' +
   'text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#12121A] ' +
   'placeholder:text-gray-400 dark:placeholder:text-[#4A495E] ' +
-  'focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20 outline-none transition-all';
+  'focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20 outline-none transition-all';
 
 const selectCls =
   'w-full px-4 py-3.5 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm ' +
   'text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#12121A] ' +
-  'focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20 outline-none transition-all';
+  'focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20 outline-none transition-all';
 
 const labelCls = 'block text-xs font-medium text-gray-600 dark:text-[#8B8AA0] mb-1.5';
 
 function OnboardingLogo() {
   return (
     <div className="flex items-center gap-2.5">
-      <svg viewBox="0 0 338 426" className="w-6 h-8 shrink-0" aria-hidden="true">
-        <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-        <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-        <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-        <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-        <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-        <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+      <svg viewBox="0 0 500 500" className="w-7 h-7 shrink-0" aria-hidden="true">
+        <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+        <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+        <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
       </svg>
-      <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
+      <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
     </div>
   );
 }
@@ -136,9 +133,9 @@ export function Onboarding() {
             key={s}
             className={`h-1.5 rounded-full transition-all duration-500 ${
               s === step
-                ? 'w-6 bg-[#7C6FF7]'
+                ? 'w-6 bg-[#0EB5C6]'
                 : s < step
-                ? 'w-6 bg-[#7C6FF7]/40'
+                ? 'w-6 bg-[#0EB5C6]/40'
                 : 'w-3 bg-gray-200 dark:bg-white/[0.08]'
             }`}
           />
@@ -150,7 +147,7 @@ export function Onboarding() {
         <div className="w-full max-w-md">
           {/* Step header */}
           <div className="mb-7 text-center">
-            <p className="text-xs font-bold text-[#7C6FF7] uppercase tracking-widest mb-2">
+            <p className="text-xs font-bold text-[#0EB5C6] uppercase tracking-widest mb-2">
               Paso {step} de 3
             </p>
             <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8] mb-2">
@@ -184,7 +181,7 @@ export function Onboarding() {
               </div>
               <button
                 onClick={() => setStep(2)}
-                className="w-full mt-2 py-3.5 bg-[#7C6FF7] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#7C6FF7]/25"
+                className="w-full mt-2 py-3.5 bg-[#0EB5C6] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#0EB5C6]/25"
               >
                 Continuar →
               </button>
@@ -242,7 +239,7 @@ export function Onboarding() {
                 <button
                   onClick={() => pitchValid && setStep(3)}
                   disabled={!pitchValid}
-                  className="flex-[2] py-3.5 bg-[#7C6FF7] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#7C6FF7]/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-[2] py-3.5 bg-[#0EB5C6] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#0EB5C6]/25 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continuar →
                 </button>
@@ -254,8 +251,8 @@ export function Onboarding() {
           {step === 3 && (
             <div className="text-center space-y-6">
               {/* Success icon */}
-              <div className="w-20 h-20 rounded-full bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center mx-auto">
-                <svg className="w-10 h-10 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="w-20 h-20 rounded-full bg-[#0EB5C6]/10 border-2 border-[#0EB5C6]/20 flex items-center justify-center mx-auto">
+                <svg className="w-10 h-10 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
               </div>
@@ -297,7 +294,7 @@ export function Onboarding() {
               <button
                 onClick={() => saveAndComplete()}
                 disabled={saving}
-                className="w-full py-3.5 bg-[#7C6FF7] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#7C6FF7]/25 disabled:opacity-40"
+                className="w-full py-3.5 bg-[#0EB5C6] text-white font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all text-sm shadow-lg shadow-[#0EB5C6]/25 disabled:opacity-40"
               >
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">

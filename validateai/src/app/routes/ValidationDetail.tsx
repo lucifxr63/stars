@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -164,8 +164,8 @@ function QuickDimensionPaywall({
       </div>
       {/* Overlay con lock */}
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0F]/55 backdrop-blur-[3px] p-5 text-center">
-        <div className="w-11 h-11 rounded-full bg-[#7C6FF7]/15 border border-[#7C6FF7]/30 flex items-center justify-center mb-3">
-          <svg className="w-5 h-5 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-11 h-11 rounded-full bg-[#0EB5C6]/15 border border-[#0EB5C6]/30 flex items-center justify-center mb-3">
+          <svg className="w-5 h-5 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
@@ -173,7 +173,7 @@ function QuickDimensionPaywall({
         <p className="text-xs text-[#8B8AA0] mb-4 max-w-[220px] leading-relaxed">{description}</p>
         <button
           onClick={handleUpgrade}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#7C6FF7] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0EB5C6] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition-colors"
         >
           Completa el análisis Detallado en 5 minutos
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -988,20 +988,20 @@ export function ValidationDetail() {
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-          <Link to="/results" className="hover:text-[#7C6FF7] transition">Mis validaciones</Link>
+          <Link to="/results" className="hover:text-[#0EB5C6] transition">Mis validaciones</Link>
           <span>›</span>
           <span className="text-gray-700 dark:text-[#C4C4D4] font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
         </div>
 
         {/* Banner: Nuevos módulos disponibles */}
         {hasNewModulesToGenerate && !generatingNewModules && (
-          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#7C6FF7]/10 border border-[#7C6FF7]/25">
+          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#0EB5C6]/10 border border-[#0EB5C6]/25">
             <div className="flex items-start gap-3">
-              <svg className="w-4 h-4 text-[#A78BFA] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4 text-[#38D5E3] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               <div>
-                <p className="text-sm font-bold text-[#A78BFA]">Nuevos módulos disponibles</p>
+                <p className="text-sm font-bold text-[#38D5E3]">Nuevos módulos disponibles</p>
                 <p className="text-xs text-[#8B8AA0] mt-0.5">
                   Haz clic en <strong>Re-analizar Idea</strong> para generar tu Roadmap Legal, Financiero y de MVP con la versión más reciente de la IA.
                 </p>
@@ -1009,16 +1009,16 @@ export function ValidationDetail() {
             </div>
             <button
               onClick={handleGenerateNewModules}
-              className="shrink-0 px-4 py-2 bg-[#7C6FF7] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition"
+              className="shrink-0 px-4 py-2 bg-[#0EB5C6] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition"
             >
               Re-analizar Idea
             </button>
           </div>
         )}
         {generatingNewModules && (
-          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-[#7C6FF7]/10 border border-[#7C6FF7]/25">
-            <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
-            <p className="text-sm font-bold text-[#A78BFA]">Generando nuevos módulos con la IA más reciente...</p>
+          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-[#0EB5C6]/10 border border-[#0EB5C6]/25">
+            <div className="w-4 h-4 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
+            <p className="text-sm font-bold text-[#38D5E3]">Generando nuevos módulos con la IA más reciente...</p>
           </div>
         )}
 
@@ -1050,7 +1050,7 @@ export function ValidationDetail() {
                   </span>
                 )}
                 {data.business_model && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 text-xs font-bold text-[#A78BFA] capitalize">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 text-xs font-bold text-[#38D5E3] capitalize">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
@@ -1087,10 +1087,10 @@ export function ValidationDetail() {
               <button
                 onClick={handleShare}
                 disabled={sharing}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#7C6FF7]/30 text-[#A78BFA] bg-[#7C6FF7]/5 text-xs font-bold rounded-xl hover:bg-[#7C6FF7]/10 active:scale-[0.98] transition disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#0EB5C6]/30 text-[#38D5E3] bg-[#0EB5C6]/5 text-xs font-bold rounded-xl hover:bg-[#0EB5C6]/10 active:scale-[0.98] transition disabled:opacity-50"
               >
                 {sharing ? (
-                  <div className="w-3.5 h-3.5 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin" />
                 ) : (
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -1122,7 +1122,7 @@ export function ValidationDetail() {
                   }
                 }}
               >
-                <summary className="flex items-center justify-center gap-1.5 h-9 px-3 border border-white/[0.06] text-[#8B8AA0] bg-[#12121A] rounded-xl text-xs font-bold hover:bg-white/5 hover:text-[#F0EFF8] transition cursor-pointer list-none [&::-webkit-details-marker]:hidden outline-none focus:ring-2 focus:ring-[#7C6FF7]/50">
+                <summary className="flex items-center justify-center gap-1.5 h-9 px-3 border border-white/[0.06] text-[#8B8AA0] bg-[#12121A] rounded-xl text-xs font-bold hover:bg-white/5 hover:text-[#F0EFF8] transition cursor-pointer list-none [&::-webkit-details-marker]:hidden outline-none focus:ring-2 focus:ring-[#0EB5C6]/50">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1141,7 +1141,7 @@ export function ValidationDetail() {
                         const swatches: Record<string, string> = {
                           dark:     'bg-[#0A0A0F]',
                           clean:    'bg-white border border-white/20',
-                          gradient: 'bg-gradient-to-r from-[#7C6FF7] to-[#34D399]',
+                          gradient: 'bg-gradient-to-r from-[#0EB5C6] to-[#34D399]',
                         };
                         return (
                           <button
@@ -1150,8 +1150,8 @@ export function ValidationDetail() {
                             title={t.label}
                             className={`flex-1 flex justify-center py-1.5 rounded-lg border transition-all ${
                               isActive
-                                ? 'border-[#7C6FF7] bg-[#7C6FF7]/10'
-                                : 'border-white/10 hover:border-[#7C6FF7]/50'
+                                ? 'border-[#0EB5C6] bg-[#0EB5C6]/10'
+                                : 'border-white/10 hover:border-[#0EB5C6]/50'
                             }`}
                           >
                             <span className={`w-3.5 h-3.5 rounded-full ${swatches[t.id]}`} />
@@ -1165,7 +1165,7 @@ export function ValidationDetail() {
                   {hasAnythingToUpdate && (
                     <button onClick={handleReanalyzeClick} disabled={reanalyzing} className="flex items-center gap-2 px-3 py-2 hover:bg-white/5 rounded-xl text-xs font-bold text-[#F0EFF8] text-left transition disabled:opacity-50">
                       {reanalyzing ? (
-                        <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+                        <div className="w-4 h-4 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
                       ) : (
                         <svg className="w-4 h-4 shrink-0 text-[#8B8AA0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1179,11 +1179,11 @@ export function ValidationDetail() {
                     <button
                       onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
                       disabled={generatingAdvanced || remaining === 0}
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-[#7C6FF7]/10 rounded-xl text-xs font-bold text-[#A78BFA] text-left transition disabled:opacity-50"
+                      className="flex items-center gap-2 px-3 py-2 hover:bg-[#0EB5C6]/10 rounded-xl text-xs font-bold text-[#38D5E3] text-left transition disabled:opacity-50"
                       title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
                     >
                       {generatingAdvanced ? (
-                        <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+                        <div className="w-4 h-4 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
                       ) : (
                         <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -1197,9 +1197,9 @@ export function ValidationDetail() {
                     </button>
                   )}
 
-                  <button onClick={handleUpdateAndExportPDF} disabled={updatePdfLoading} className="flex items-center gap-2 px-3 py-2 hover:bg-[#7C6FF7]/10 rounded-xl text-xs font-bold text-[#A78BFA] text-left transition disabled:opacity-50">
+                  <button onClick={handleUpdateAndExportPDF} disabled={updatePdfLoading} className="flex items-center gap-2 px-3 py-2 hover:bg-[#0EB5C6]/10 rounded-xl text-xs font-bold text-[#38D5E3] text-left transition disabled:opacity-50">
                     {updatePdfLoading ? (
-                      <div className="w-4 h-4 border-2 border-[#7C6FF7]/40 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+                      <div className="w-4 h-4 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
                     ) : (
                       <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -1263,7 +1263,7 @@ export function ValidationDetail() {
                 <button
                   onClick={handleExportPitchDeck}
                   disabled={pitchDeckLoading}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-all shadow-lg shadow-[#7C6FF7]/25 cursor-pointer disabled:opacity-60"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-all shadow-lg shadow-[#0EB5C6]/25 cursor-pointer disabled:opacity-60"
                 >
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -1375,11 +1375,11 @@ export function ValidationDetail() {
                 onClick={() => { setActiveTab(t); trackTabView(t); }}
                 className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-150 border shrink-0 snap-start cursor-pointer ${
                   isActive
-                    ? 'bg-[#7C6FF7]/10 text-[#A78BFA] border-[#7C6FF7]/30 shadow-sm shadow-[#7C6FF7]/10'
+                    ? 'bg-[#0EB5C6]/10 text-[#38D5E3] border-[#0EB5C6]/30 shadow-sm shadow-[#0EB5C6]/10'
                     : 'bg-[#12121A] text-[#8B8AA0] border-white/[0.06] hover:bg-white/5 hover:text-[#F0EFF8]'
                 }`}
               >
-                <span className={isActive ? 'text-[#A78BFA]' : 'text-[#8B8AA0]'}>{tabIcon}</span>
+                <span className={isActive ? 'text-[#38D5E3]' : 'text-[#8B8AA0]'}>{tabIcon}</span>
                 <span className="whitespace-nowrap">
                   <span className="sm:hidden">{TAB_SHORT[t]}</span>
                   <span className="hidden sm:inline">{t}</span>
@@ -1389,7 +1389,7 @@ export function ValidationDetail() {
                     {requiredTier}
                   </span>
                 ) : hasData ? (
-                  <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#7C6FF7]' : 'bg-[#7C6FF7]/50'}`} title="Datos disponibles" />
+                  <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#0EB5C6]' : 'bg-[#0EB5C6]/50'}`} title="Datos disponibles" />
                 ) : null}
               </button>
             );
@@ -1406,7 +1406,7 @@ export function ValidationDetail() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {generatingVerdict && (
                 <div className="md:col-span-12 rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
-                  <div className="w-10 h-10 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-10 h-10 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
                   <div>
                     <p className="font-bold text-[#F0EFF8] mb-1">Analizando tu idea con el Playbook VC…</p>
                     <p className="text-sm text-[#8B8AA0]">Mom Test · JTBD · Unit Economics · Legal Chile</p>
@@ -1416,11 +1416,11 @@ export function ValidationDetail() {
 
               {!generatingVerdict && data.playbook_analysis && (
                 <>
-                  <div className="md:col-span-12 rounded-xl border border-[#7C6FF7]/30 bg-[#7C6FF7]/10 px-4 py-3 flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="md:col-span-12 rounded-xl border border-[#0EB5C6]/30 bg-[#0EB5C6]/10 px-4 py-3 flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <p className="text-xs text-[#A78BFA] leading-relaxed">
+                    <p className="text-xs text-[#38D5E3] leading-relaxed">
                       <strong className="text-[#C4BCFC]">Veredicto VC</strong> — Análisis generado con los Playbooks de Validación, Economics, Legal Chile y Tech Stack. Sin filtros de cortesía.
                     </p>
                   </div>
@@ -1448,12 +1448,12 @@ export function ValidationDetail() {
                       <div className="space-y-3">
                         <ScoreBreakdown data={data.score_breakdown} />
                         {isQuickMode && (
-                          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#7C6FF7]/8 border border-[#7C6FF7]/20">
-                            <svg className="w-4 h-4 text-[#A78BFA] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#0EB5C6]/8 border border-[#0EB5C6]/20">
+                            <svg className="w-4 h-4 text-[#38D5E3] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs text-[#A78BFA] leading-relaxed">
+                              <p className="text-xs text-[#38D5E3] leading-relaxed">
                                 <strong className="text-[#C4BCFC]">Score parcial ({data.validation_score}/100).</strong>{' '}
                                 Mercado, Competencia y Ejecución requieren más datos.{' '}
                                 <button onClick={handleUpgradeToDetailed} className="underline font-semibold hover:text-[#C4BCFC] transition-colors">
@@ -1521,7 +1521,7 @@ export function ValidationDetail() {
                   <p className="text-sm text-gray-400">No se pudo generar el veredicto.</p>
                   <button
                     onClick={() => setVerdictGenerated(false)}
-                    className="px-4 py-2 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition"
+                    className="px-4 py-2 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition"
                   >
                     Reintentar
                   </button>
@@ -1537,7 +1537,7 @@ export function ValidationDetail() {
               {/* Loading state */}
               {generatingVerdict && (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
-                  <div className="w-10 h-10 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-10 h-10 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
                   <div>
                     <p className="font-bold text-[#F0EFF8] mb-1">Preparando tu guía de validación…</p>
                     <p className="text-sm text-[#8B8AA0]">Mom Test · Jobs-to-be-Done · Stack Legal Chile</p>
@@ -1551,7 +1551,7 @@ export function ValidationDetail() {
                   {(data.customer_segment || (data.customer_pain_points?.length ?? 0) > 0 || data.value_proposition || data.differentiator) && (
                     <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                       <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-3.5 h-3.5 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Tu Premisa de Validación
@@ -1596,7 +1596,7 @@ export function ValidationDetail() {
                   {data.playbook_analysis?.jtbd_analysis && (
                     <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Jobs-to-be-Done real</p>
@@ -1609,7 +1609,7 @@ export function ValidationDetail() {
                   {(data.playbook_analysis?.validation_playbook?.length ?? 0) > 0 && (
                     <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                       <div className="flex items-center gap-2 mb-4">
-                        <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </svg>
                         <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Mom Test — 3 Pasos de Validación</p>
@@ -1617,7 +1617,7 @@ export function ValidationDetail() {
                       <ol className="space-y-3">
                         {data.playbook_analysis!.validation_playbook.map((step, i) => (
                           <li key={i} className="flex gap-3">
-                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#7C6FF7] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0EB5C6] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
                             <p className="text-sm text-[#C4C4D4] leading-relaxed">{step}</p>
                           </li>
                         ))}
@@ -1639,10 +1639,10 @@ export function ValidationDetail() {
                   )}
 
                   {/* 5 — Encuestas Mom Test */}
-                  <div className="bg-[#12121A] border border-[#7C6FF7]/20 rounded-2xl p-5">
+                  <div className="bg-[#12121A] border border-[#0EB5C6]/20 rounded-2xl p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3">
-                        <svg className="w-5 h-5 text-[#A78BFA] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-5 h-5 text-[#38D5E3] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         <div>
@@ -1660,7 +1660,7 @@ export function ValidationDetail() {
                           hasJtbd: !!data.playbook_analysis?.jtbd_analysis,
                           validationId: data.id,
                         })}
-                        className="flex-shrink-0 inline-flex items-center gap-2 bg-[#7C6FF7] hover:bg-[#6B5EE6] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap"
+                        className="flex-shrink-0 inline-flex items-center gap-2 bg-[#0EB5C6] hover:bg-[#6B5EE6] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -1675,7 +1675,7 @@ export function ValidationDetail() {
                     <div className="flex items-center justify-between mb-4">
                       <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wide">Evidencia de Mercado</p>
                       {isPremium ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7C6FF7]/10 text-[#A78BFA] border border-[#7C6FF7]/20">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0EB5C6]/10 text-[#38D5E3] border border-[#0EB5C6]/20">
                           En Desarrollo — Beta
                         </span>
                       ) : (
@@ -1693,8 +1693,8 @@ export function ValidationDetail() {
                           { label: 'Tendencias de Búsqueda — Google Trends', desc: 'Volumen e interés histórico de búsquedas para tu keyword.' },
                         ].map((item) => (
                           <div key={item.label} className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-white/8 bg-white/[0.02]">
-                            <div className="w-8 h-8 rounded-lg bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
-                              <svg className="w-4 h-4 text-[#A78BFA]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <div className="w-8 h-8 rounded-lg bg-[#0EB5C6]/10 flex items-center justify-center shrink-0">
+                              <svg className="w-4 h-4 text-[#38D5E3]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
                               </svg>
                             </div>
@@ -1702,7 +1702,7 @@ export function ValidationDetail() {
                               <p className="text-sm font-semibold text-[#C4C4D4]">{item.label}</p>
                               <p className="text-xs text-[#8B8AA0] mt-0.5">{item.desc}</p>
                             </div>
-                            <span className="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#7C6FF7]/10 text-[#A78BFA]">Premium</span>
+                            <span className="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#0EB5C6]/10 text-[#38D5E3]">Premium</span>
                           </div>
                         ))}
                       </div>
@@ -1728,7 +1728,7 @@ export function ValidationDetail() {
               {data.playbook_analysis?.gtm_and_growth_plan && (
                 <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
                   <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
                     </svg>
                     <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
@@ -1742,7 +1742,7 @@ export function ValidationDetail() {
               {data.playbook_analysis?.product_ai_strategy && (
                 <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
                   <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
@@ -1771,7 +1771,7 @@ export function ValidationDetail() {
               {(summary?.strengths?.length || summary?.weaknesses?.length) ? (
                 <div className="md:col-span-6 h-full flex flex-col gap-3">
                   <div className="flex items-center gap-2 px-1">
-                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h8m-8 6h16" />
                     </svg>
                     <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Análisis SWOT</p>
@@ -1942,7 +1942,7 @@ export function ValidationDetail() {
               {data.playbook_analysis?.tech_and_legal_stack && (
                 <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
@@ -1955,12 +1955,12 @@ export function ValidationDetail() {
               {/* MVP Kanban */}
               <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                 <h3 className="text-sm font-bold text-[#C4C4D4] mb-4">Plan de MVP</h3>
-                <div className="flex items-center gap-3 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-xl p-3 mb-4">
-                  <svg className="w-5 h-5 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="flex items-center gap-3 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-xl p-3 mb-4">
+                  <svg className="w-5 h-5 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <div>
-                    <p className="text-xs text-[#A78BFA] font-bold uppercase">Tipo</p>
+                    <p className="text-xs text-[#38D5E3] font-bold uppercase">Tipo</p>
                     <p className={`font-bold text-[#F0EFF8] capitalize ${!data.mvp_type ? 'italic opacity-70' : ''}`}>
                       {data.mvp_type ? data.mvp_type.replace(/_/g, ' ') : '(Ejemplo) Concierge MVP'}
                     </p>
@@ -2092,7 +2092,7 @@ export function ValidationDetail() {
                   <button
                     onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
                     disabled={generatingAdvanced || remaining === 0}
-                    className="px-4 py-2 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition disabled:opacity-50"
+                    className="px-4 py-2 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition disabled:opacity-50"
                     title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
                   >
                     {generatingAdvanced
@@ -2132,11 +2132,11 @@ export function ValidationDetail() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <svg className="w-4 h-4 text-[#A78BFA] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                       </svg>
                       <p className="text-sm font-bold text-[#F0EFF8]">Investor Pitch Deck</p>
-                      <span className="px-2 py-0.5 rounded-full bg-[#7C6FF7]/20 text-[#A78BFA] text-[10px] font-bold">8 slides</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#0EB5C6]/20 text-[#38D5E3] text-[10px] font-bold">8 slides</span>
                     </div>
                     <p className="text-xs text-[#8B8AA0]">
                       {data.pitch_deck_content ? 'Narrativa generada · listo para descargar' : 'Genera la narrativa de las 8 slides con IA y descarga el PDF'}
@@ -2191,8 +2191,8 @@ export function ValidationDetail() {
                 />
               ) : generatingDueDiligence ? (
                 <div className="flex flex-col items-center gap-4 py-14 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center animate-pulse">
-                    <div className="w-7 h-7 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-14 h-14 rounded-2xl bg-[#0EB5C6]/10 border-2 border-[#0EB5C6]/20 flex items-center justify-center animate-pulse">
+                    <div className="w-7 h-7 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-gray-800 dark:text-[#F0EFF8] mb-1">
@@ -2223,8 +2223,8 @@ export function ValidationDetail() {
                 </ErrorBoundary>
               ) : (
                 <div className="flex flex-col items-center gap-4 py-14 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center">
-                    <svg className="w-7 h-7 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-14 h-14 rounded-2xl bg-[#0EB5C6]/10 border-2 border-[#0EB5C6]/20 flex items-center justify-center">
+                    <svg className="w-7 h-7 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                   </div>
@@ -2237,7 +2237,7 @@ export function ValidationDetail() {
                     </p>
                     <button
                       onClick={handleGenerateDueDiligence}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#7C6FF7]/25"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#0EB5C6]/25"
                     >
                       Generar Due Diligence (AI RAG)
                     </button>
@@ -2339,7 +2339,7 @@ export function ValidationDetail() {
       {reanalyzing && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[#12121A] border border-white/[0.06] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center">
-            <div className="w-12 h-12 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+            <div className="w-12 h-12 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
             <div>
               <p className="font-bold text-[#F0EFF8] mb-1">Analizando mercado y competencia</p>
               <p className="text-sm text-[#8B8AA0]">Esto puede tomar unos segundos...</p>
@@ -2352,11 +2352,11 @@ export function ValidationDetail() {
       {generatingAdvanced && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[#12121A] border border-white/[0.06] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
-            <div className="w-12 h-12 border-4 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+            <div className="w-12 h-12 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
             <div>
               <p className="font-bold text-[#F0EFF8] mb-1">Generando análisis avanzados</p>
               {advancedProgress ? (
-                <p className="text-sm text-[#7C6FF7] font-semibold">{advancedProgress}</p>
+                <p className="text-sm text-[#0EB5C6] font-semibold">{advancedProgress}</p>
               ) : (
                 <p className="text-sm text-[#8B8AA0]">Iniciando...</p>
               )}

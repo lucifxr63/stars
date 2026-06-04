@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { trackDemoViewed } from '@/hooks/useAnalytics';
 import { supabase } from '@/lib/supabase';
@@ -11,15 +11,12 @@ import {
 } from '@/data/exampleReport';
 
 /* ─── Logo ─── */
-function Logo({ className = 'w-8 h-10' }: { className?: string }) {
+function Logo({ className = 'w-9 h-9' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
-      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
     </svg>
   );
 }
@@ -45,9 +42,9 @@ function ProductMockup() {
         <div className="grid grid-cols-2 gap-1.5">
           {[
             { label: 'LTV/CAC', value: '4.2x', color: '#34D399' },
-            { label: 'Payback', value: '8m',   color: '#7C6FF7' },
+            { label: 'Payback', value: '8m',   color: '#0EB5C6' },
             { label: 'TAM',     value: '$45M',  color: '#F7C56C' },
-            { label: 'Break',   value: '180u',  color: '#A78BFA' },
+            { label: 'Break',   value: '180u',  color: '#38D5E3' },
           ].map(m => (
             <div key={m.label} className="bg-gray-50 dark:bg-[#12121A] rounded-lg p-1.5 text-center">
               <p className="text-xs font-black font-heading" style={{ color: m.color }}>{m.value}</p>
@@ -77,7 +74,7 @@ function ProductMockup() {
           {/* Top row: name + score badge */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#7C6FF7] flex items-center justify-center text-white font-black text-sm font-heading shrink-0">78</div>
+              <div className="w-9 h-9 rounded-xl bg-[#0EB5C6] flex items-center justify-center text-white font-black text-sm font-heading shrink-0">78</div>
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">FreshBox Chile</p>
                 <p className="text-[11px] text-gray-500 dark:text-[#8B8AA0]">Retail D2C · Chile</p>
@@ -89,10 +86,10 @@ function ProductMockup() {
           {/* Score bars */}
           <div className="space-y-2">
             {[
-              { label: 'Problema',    val: 82, color: '#7C6FF7' },
+              { label: 'Problema',    val: 82, color: '#0EB5C6' },
               { label: 'Mercado',     val: 75, color: '#34D399' },
               { label: 'Competencia', val: 68, color: '#F7C56C' },
-              { label: 'Solución',    val: 85, color: '#A78BFA' },
+              { label: 'Solución',    val: 85, color: '#38D5E3' },
               { label: 'Ejecución',   val: 71, color: '#F87171' },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-2">
@@ -106,8 +103,8 @@ function ProductMockup() {
           </div>
 
           {/* AI insight */}
-          <div className="bg-[#7C6FF7]/6 border border-[#7C6FF7]/15 rounded-xl p-3 flex gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-[#7C6FF7] flex items-center justify-center shrink-0 mt-0.5">
+          <div className="bg-[#0EB5C6]/6 border border-[#0EB5C6]/15 rounded-xl p-3 flex gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-[#0EB5C6] flex items-center justify-center shrink-0 mt-0.5">
               <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
             <p className="text-[11px] text-gray-600 dark:text-[#C4C4D4] leading-relaxed">
@@ -122,7 +119,7 @@ function ProductMockup() {
               <span className="text-[10px] font-medium text-gray-600 dark:text-[#8B8AA0]">Investor_FreshBox.pdf</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-[#1A1A26] border border-gray-200 dark:border-white/[0.06] rounded-lg">
-              <svg className="w-3.5 h-3.5 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+              <svg className="w-3.5 h-3.5 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
               <span className="text-[10px] font-medium text-gray-600 dark:text-[#8B8AA0]">Compartir reporte</span>
             </div>
           </div>
@@ -183,8 +180,8 @@ function ExampleReport() {
     <section id="demo" className="py-20 bg-gray-50 dark:bg-[#0A0A0F] border-t border-gray-100 dark:border-white/[0.06]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-10">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-[11px] font-semibold text-[#7C6FF7] dark:text-[#A78BFA] mb-4 uppercase tracking-wide">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] animate-pulse"/>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-4 uppercase tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] animate-pulse"/>
             Análisis real — explóralo en vivo
           </span>
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-3">Esto es lo que obtienes</h2>
@@ -193,7 +190,7 @@ function ExampleReport() {
         <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-200 dark:border-white/[0.06] overflow-hidden shadow-sm">
           <div className="bg-gray-50 dark:bg-[#1A1A26] px-5 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 dark:border-white/[0.06]">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#7C6FF7] flex items-center justify-center text-white font-black text-sm font-heading">{EXAMPLE_SCORE}</div>
+              <div className="w-9 h-9 rounded-xl bg-[#0EB5C6] flex items-center justify-center text-white font-black text-sm font-heading">{EXAMPLE_SCORE}</div>
               <div>
                 <p className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm">{EXAMPLE_IDEA.idea_name}</p>
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">{EXAMPLE_IDEA.target_country} · {EXAMPLE_IDEA.idea_industry}</p>
@@ -205,7 +202,7 @@ function ExampleReport() {
             {TABS.map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 text-xs font-medium rounded-t-lg whitespace-nowrap transition-all duration-150 cursor-pointer
-                  ${activeTab === tab ? 'text-[#7C6FF7] dark:text-[#A78BFA] border-b-2 border-[#7C6FF7] bg-[#7C6FF7]/5' : 'text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8]'}`}>
+                  ${activeTab === tab ? 'text-[#0EB5C6] dark:text-[#38D5E3] border-b-2 border-[#0EB5C6] bg-[#0EB5C6]/5' : 'text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8]'}`}>
                 {tab}
               </button>
             ))}
@@ -223,7 +220,7 @@ function ExampleReport() {
                           <p className="text-[11px] text-gray-500 dark:text-[#8B8AA0] capitalize mb-1.5">{k}</p>
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-1 bg-gray-200 dark:bg-white/8 rounded-full">
-                              <div className="h-full bg-[#7C6FF7] rounded-full" style={{ width: `${v}%` }}/>
+                              <div className="h-full bg-[#0EB5C6] rounded-full" style={{ width: `${v}%` }}/>
                             </div>
                             <span className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8] tabular-nums">{v}</span>
                           </div>
@@ -233,8 +230,8 @@ function ExampleReport() {
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="bg-[#7C6FF7]/8 border border-[#7C6FF7]/15 rounded-xl p-4">
-                    <p className="text-[11px] font-bold text-[#7C6FF7] dark:text-[#A78BFA] uppercase tracking-wide mb-1.5">Segmento objetivo</p>
+                  <div className="bg-[#0EB5C6]/8 border border-[#0EB5C6]/15 rounded-xl p-4">
+                    <p className="text-[11px] font-bold text-[#0EB5C6] dark:text-[#38D5E3] uppercase tracking-wide mb-1.5">Segmento objetivo</p>
                     <p className="text-sm text-gray-900 dark:text-[#F0EFF8]">{EXAMPLE_CUSTOMER.customer_segment}</p>
                   </div>
                   <div className="bg-[#F7C56C]/8 border border-[#F7C56C]/15 rounded-xl p-4">
@@ -249,7 +246,7 @@ function ExampleReport() {
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-3">Estimación TAM/SAM/SOM — {EXAMPLE_IDEA.target_country}</p>
                 {(['tam','sam','som'] as const).map(tier => {
                   const t = EXAMPLE_MARKET_SIZING[tier];
-                  const c = { tam:{bg:'bg-[#34D399]/8 border-[#34D399]/15',label:'text-[#34D399]'}, sam:{bg:'bg-[#7C6FF7]/8 border-[#7C6FF7]/15',label:'text-[#A78BFA]'}, som:{bg:'bg-[#F7C56C]/8 border-[#F7C56C]/15',label:'text-[#F7C56C]'} }[tier];
+                  const c = { tam:{bg:'bg-[#34D399]/8 border-[#34D399]/15',label:'text-[#34D399]'}, sam:{bg:'bg-[#0EB5C6]/8 border-[#0EB5C6]/15',label:'text-[#38D5E3]'}, som:{bg:'bg-[#F7C56C]/8 border-[#F7C56C]/15',label:'text-[#F7C56C]'} }[tier];
                   return (
                     <div key={tier} className={`${c.bg} border rounded-xl p-4`}>
                       <div className="flex items-center justify-between mb-1.5">
@@ -391,7 +388,7 @@ export function Landing() {
           {/* Brand */}
           <div className="flex items-center gap-2 shrink-0">
             <Logo className="w-6 h-8"/>
-            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validus</span>
+            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validum</span>
           </div>
 
           {/* Desktop nav */}
@@ -416,9 +413,9 @@ export function Landing() {
               Iniciar sesión
             </button>
             <button onClick={handleCTA}
-              className="flex items-center gap-1.5 text-sm font-semibold bg-[#7C6FF7] text-white
+              className="flex items-center gap-1.5 text-sm font-semibold bg-[#0EB5C6] text-white
                          px-4 py-2.5 rounded-xl hover:bg-[#6B5EE6] active:scale-[0.97]
-                         transition-all duration-150 shadow-lg shadow-[#7C6FF7]/25 cursor-pointer whitespace-nowrap">
+                         transition-all duration-150 shadow-lg shadow-[#0EB5C6]/25 cursor-pointer whitespace-nowrap">
               Empezar gratis
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
@@ -462,8 +459,8 @@ export function Landing() {
         <section ref={heroRef} className="relative overflow-hidden pt-10 sm:pt-16 lg:pt-20 pb-8 sm:pb-16 lg:pb-20">
           {/* Background layers */}
           <div className="absolute inset-0 grid-pattern opacity-60"/>
-          <div className="absolute top-0 right-0 w-[70%] h-full bg-gradient-to-l from-[#7C6FF7]/6 dark:from-[#7C6FF7]/8 to-transparent pointer-events-none"/>
-          <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[600px] h-[600px] bg-[#7C6FF7]/8 dark:bg-[#7C6FF7]/10 rounded-full blur-[120px] pointer-events-none"/>
+          <div className="absolute top-0 right-0 w-[70%] h-full bg-gradient-to-l from-[#0EB5C6]/6 dark:from-[#0EB5C6]/8 to-transparent pointer-events-none"/>
+          <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[600px] h-[600px] bg-[#0EB5C6]/8 dark:bg-[#0EB5C6]/10 rounded-full blur-[120px] pointer-events-none"/>
           <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-[#F7C56C]/8 rounded-full blur-[80px] pointer-events-none"/>
 
           <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -471,8 +468,8 @@ export function Landing() {
 
               {/* Left — text */}
               <div className="order-2 lg:order-1 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-[11px] font-semibold text-[#7C6FF7] dark:text-[#A78BFA] mb-7 uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] animate-pulse shrink-0"/>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-7 uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] animate-pulse shrink-0"/>
                   IA entrenada para startups · Chile y LatAm
                 </div>
 
@@ -498,9 +495,9 @@ export function Landing() {
                     Continuar con Google
                   </button>
                   <button onClick={handleCTA}
-                    className="flex items-center justify-center gap-2 px-5 py-3.5 bg-[#7C6FF7] text-white
+                    className="flex items-center justify-center gap-2 px-5 py-3.5 bg-[#0EB5C6] text-white
                                font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98]
-                               shadow-lg shadow-[#7C6FF7]/30 text-sm transition-all duration-150 cursor-pointer">
+                               shadow-lg shadow-[#0EB5C6]/30 text-sm transition-all duration-150 cursor-pointer">
                     Entrar con email
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
@@ -513,7 +510,7 @@ export function Landing() {
                     Sin tarjeta · 10 min · Ley 21.719
                   </p>
                   <Link to="/demo" onClick={() => trackDemoViewed('hero')}
-                    className="text-xs text-[#7C6FF7] dark:text-[#A78BFA] hover:underline transition-colors font-medium">
+                    className="text-xs text-[#0EB5C6] dark:text-[#38D5E3] hover:underline transition-colors font-medium">
                     Ver demo en vivo →
                   </Link>
                 </div>
@@ -553,11 +550,11 @@ export function Landing() {
               <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-white/10"/>
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 {[
-                  { label: 'FinTech',   color: '#7C6FF7' },
+                  { label: 'FinTech',   color: '#0EB5C6' },
                   { label: 'EdTech',    color: '#34D399' },
                   { label: 'SaaS B2B',  color: '#F7C56C' },
                   { label: 'Retail',    color: '#F87171' },
-                  { label: 'HealthTech',color: '#A78BFA' },
+                  { label: 'HealthTech',color: '#38D5E3' },
                   { label: 'AgriTech',  color: '#FBBF24' },
                 ].map(i => (
                   <span key={i.label}
@@ -575,7 +572,7 @@ export function Landing() {
         <section id="how" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-14">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#7C6FF7] mb-3">El proceso</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#0EB5C6] mb-3">El proceso</p>
               <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
                 De la idea al análisis{' '}
                 <span className="gradient-text">en 3 pasos</span>
@@ -588,14 +585,14 @@ export function Landing() {
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
               {[
                 {
-                  num: '01', label: 'Tu idea', time: '~3 min', color: '#7C6FF7',
+                  num: '01', label: 'Tu idea', time: '~3 min', color: '#0EB5C6',
                   desc: 'Describe tu problema, solución e industria en lenguaje natural. Sin formularios rígidos.',
                   visual: (
                     <div className="bg-gray-50 dark:bg-[#12121A] rounded-xl p-3 mt-4 space-y-2">
-                      <div className="h-2 bg-[#7C6FF7]/20 rounded-full w-3/4"/>
-                      <div className="h-2 bg-[#7C6FF7]/10 rounded-full w-full"/>
-                      <div className="h-2 bg-[#7C6FF7]/10 rounded-full w-5/6"/>
-                      <div className="h-8 bg-[#7C6FF7] rounded-lg w-28 flex items-center justify-center">
+                      <div className="h-2 bg-[#0EB5C6]/20 rounded-full w-3/4"/>
+                      <div className="h-2 bg-[#0EB5C6]/10 rounded-full w-full"/>
+                      <div className="h-2 bg-[#0EB5C6]/10 rounded-full w-5/6"/>
+                      <div className="h-8 bg-[#0EB5C6] rounded-lg w-28 flex items-center justify-center">
                         <span className="text-white text-[10px] font-semibold">Analizar →</span>
                       </div>
                     </div>
@@ -684,10 +681,10 @@ export function Landing() {
             <div className="grid md:grid-cols-3 gap-5">
 
               {/* Feature grande — col-span-2 */}
-              <div className="md:col-span-2 bg-[#F8F7FF] dark:bg-[#0A0A0F] border border-gray-100 dark:border-white/[0.05] rounded-3xl p-7 sm:p-8 group hover:border-[#7C6FF7]/25 hover:shadow-xl dark:hover:shadow-none transition-all duration-300">
+              <div className="md:col-span-2 bg-[#F8F7FF] dark:bg-[#0A0A0F] border border-gray-100 dark:border-white/[0.05] rounded-3xl p-7 sm:p-8 group hover:border-[#0EB5C6]/25 hover:shadow-xl dark:hover:shadow-none transition-all duration-300">
                 <div className="flex flex-col sm:flex-row gap-6">
                   <div className="flex-1">
-                    <div className="w-12 h-12 rounded-2xl bg-[#7C6FF7]/10 text-[#7C6FF7] flex items-center justify-center mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-[#0EB5C6]/10 text-[#0EB5C6] flex items-center justify-center mb-5">
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-3">Mercado y Competencia</h3>
@@ -704,7 +701,7 @@ export function Landing() {
                     {[
                       { name:'CompA', val:72, color:'#F87171' },
                       { name:'CompB', val:55, color:'#FBBF24' },
-                      { name:'Validus →', val:88, color:'#34D399' },
+                      { name:'Validum →', val:88, color:'#34D399' },
                     ].map(c => (
                       <div key={c.name}>
                         <div className="flex justify-between text-[10px] mb-1">
@@ -728,7 +725,7 @@ export function Landing() {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-3">Unit Economics</h3>
                 <p className="text-sm text-gray-500 dark:text-[#8B8AA0] leading-relaxed mb-4">CAC, LTV, ratio de rentabilidad, payback y punto de churn crítico — los números que los inversores quieren ver.</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {[{v:'4.2x',l:'LTV/CAC',c:'#34D399'},{v:'8m',l:'Payback',c:'#7C6FF7'}].map(m => (
+                  {[{v:'4.2x',l:'LTV/CAC',c:'#34D399'},{v:'8m',l:'Payback',c:'#0EB5C6'}].map(m => (
                     <div key={m.l} className="bg-white dark:bg-[#12121A] border border-gray-200 dark:border-white/[0.06] rounded-xl p-2.5 text-center">
                       <p className="font-black font-heading text-sm" style={{color:m.c}}>{m.v}</p>
                       <p className="text-[10px] text-gray-500 dark:text-[#4A495E]">{m.l}</p>
@@ -757,10 +754,10 @@ export function Landing() {
               </div>
 
               {/* Founder Fit — col-span-2 */}
-              <div className="md:col-span-2 bg-[#F8F7FF] dark:bg-[#0A0A0F] border border-gray-100 dark:border-white/[0.05] rounded-3xl p-7 sm:p-8 hover:border-[#A78BFA]/25 hover:shadow-xl dark:hover:shadow-none transition-all duration-300">
+              <div className="md:col-span-2 bg-[#F8F7FF] dark:bg-[#0A0A0F] border border-gray-100 dark:border-white/[0.05] rounded-3xl p-7 sm:p-8 hover:border-[#38D5E3]/25 hover:shadow-xl dark:hover:shadow-none transition-all duration-300">
                 <div className="flex flex-col sm:flex-row gap-6">
                   <div className="flex-1">
-                    <div className="w-12 h-12 rounded-2xl bg-[#A78BFA]/10 text-[#A78BFA] flex items-center justify-center mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-[#38D5E3]/10 text-[#38D5E3] flex items-center justify-center mb-5">
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-3">Founder Fit y Mentoría</h3>
@@ -777,9 +774,9 @@ export function Landing() {
                       <polygon points="60,10 100,35 100,85 60,110 20,85 20,35" fill="none" stroke="currentColor" className="text-gray-200 dark:text-white/10" strokeWidth="1"/>
                       <polygon points="60,25 85,40 85,80 60,95 35,80 35,40" fill="none" stroke="currentColor" className="text-gray-200 dark:text-white/10" strokeWidth="1"/>
                       <polygon points="60,40 70,47 70,73 60,80 50,73 50,47" fill="none" stroke="currentColor" className="text-gray-200 dark:text-white/10" strokeWidth="1"/>
-                      <polygon points="60,18 92,43 88,84 60,104 32,84 28,43" fill="rgba(167,139,250,0.2)" stroke="#A78BFA" strokeWidth="1.5"/>
+                      <polygon points="60,18 92,43 88,84 60,104 32,84 28,43" fill="rgba(56,213,227,0.2)" stroke="#38D5E3" strokeWidth="1.5"/>
                       {[{x:60,y:18},{x:92,y:43},{x:88,y:84},{x:60,y:104},{x:32,y:84},{x:28,y:43}].map((p,i) => (
-                        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#A78BFA"/>
+                        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#38D5E3"/>
                       ))}
                     </svg>
                   </div>
@@ -804,7 +801,7 @@ export function Landing() {
                 { num:'4',  label:'Planes', sub:'free hasta premium' },
               ].map(item => (
                 <div key={item.label} className="group">
-                  <p className="font-heading text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-[#F0EFF8] mb-1.5 group-hover:text-[#7C6FF7] transition-colors duration-300">{item.num}</p>
+                  <p className="font-heading text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-[#F0EFF8] mb-1.5 group-hover:text-[#0EB5C6] transition-colors duration-300">{item.num}</p>
                   <p className="text-sm font-semibold text-gray-600 dark:text-[#8B8AA0]">{item.label}</p>
                   <p className="text-xs text-gray-400 dark:text-[#4A495E] mt-0.5">{item.sub}</p>
                 </div>
@@ -825,8 +822,8 @@ export function Landing() {
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { name:'Valentina M.', role:'Founder · EdTech Santiago', initials:'VM', color:'#7C6FF7',
-                  quote:'Tenía mi idea hace 6 meses y no sabía si tenía sentido. Validus me dio un score de 74 y un roadmap concreto en 10 minutos.', score:74 },
+                { name:'Valentina M.', role:'Founder · EdTech Santiago', initials:'VM', color:'#0EB5C6',
+                  quote:'Tenía mi idea hace 6 meses y no sabía si tenía sentido. Validum me dio un score de 74 y un roadmap concreto en 10 minutos.', score:74 },
                 { name:'Rodrigo C.', role:'Co-founder · FinTech Concepción', initials:'RC', color:'#34D399',
                   quote:'El análisis de competidores con datos del CMF fue lo que más me sorprendió. Algo que habría tomado semanas lo tuve en horas.', score:81 },
                 { name:'Catalina V.', role:'CEO · HealthTech Valparaíso', initials:'CV', color:'#F7C56C',
@@ -870,7 +867,7 @@ export function Landing() {
         <section id="pricing" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-[#F8F7FF] dark:bg-[#0A0A0F]">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-14">
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-[11px] font-semibold text-[#7C6FF7] dark:text-[#A78BFA] mb-5 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-5 uppercase tracking-wider">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
                 Simple y transparente
               </span>
@@ -906,9 +903,9 @@ export function Landing() {
               </div>
 
               {/* Pro — destacado */}
-              <div className="relative flex flex-col p-7 rounded-3xl bg-white dark:bg-[#12121A] border-2 border-[#7C6FF7] shadow-2xl shadow-[#7C6FF7]/12 overflow-hidden md:scale-[1.02] md:-my-1">
-                <div className="absolute top-0 right-0 bg-[#7C6FF7] text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl tracking-wide">POPULAR</div>
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#7C6FF7]/10 blur-2xl rounded-full pointer-events-none"/>
+              <div className="relative flex flex-col p-7 rounded-3xl bg-white dark:bg-[#12121A] border-2 border-[#0EB5C6] shadow-2xl shadow-[#0EB5C6]/12 overflow-hidden md:scale-[1.02] md:-my-1">
+                <div className="absolute top-0 right-0 bg-[#0EB5C6] text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl tracking-wide">POPULAR</div>
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#0EB5C6]/10 blur-2xl rounded-full pointer-events-none"/>
                 <div className="mb-6 relative z-10">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">Pro</h3>
                   <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">Para founders que deciden con datos.</p>
@@ -918,16 +915,16 @@ export function Landing() {
                   <span className="text-sm text-gray-500 dark:text-[#8B8AA0]"> CLP/mes</span>
                 </div>
                 <button onClick={handleCTA}
-                  className="w-full py-3 bg-[#7C6FF7] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition shadow-lg shadow-[#7C6FF7]/25 text-sm mb-7 relative z-10 cursor-pointer">
+                  className="w-full py-3 bg-[#0EB5C6] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition shadow-lg shadow-[#0EB5C6]/25 text-sm mb-7 relative z-10 cursor-pointer">
                   Crear cuenta Pro
                 </button>
                 <ul className="space-y-3 flex-1 relative z-10">
                   <li className="flex items-start gap-2.5 text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">
-                    <CheckIcon color="#7C6FF7"/>Todo Free, más:
+                    <CheckIcon color="#0EB5C6"/>Todo Free, más:
                   </li>
                   {['Ideas ilimitadas + pivotes','TAM/SAM/SOM completo','Unit Economics (CAC/LTV)','Matriz de Riesgos','Founder Fit + equipo','PDF multitema investor-ready'].map(f => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-[#C4C4D4]">
-                      <CheckIcon color="#7C6FF7"/>{f}
+                      <CheckIcon color="#0EB5C6"/>{f}
                     </li>
                   ))}
                 </ul>
@@ -965,10 +962,10 @@ export function Landing() {
         {/* ══ FINAL CTA ══ */}
         <section className="py-24 px-4 border-t border-black/[0.05] dark:border-white/[0.06] relative overflow-hidden">
           <div className="absolute inset-0 grid-pattern opacity-40"/>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#7C6FF7]/8 blur-[100px] pointer-events-none rounded-full"/>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#0EB5C6]/8 blur-[100px] pointer-events-none rounded-full"/>
           <div className="relative max-w-2xl mx-auto text-center">
             <div className="bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/[0.06] rounded-3xl px-8 py-16 shadow-2xl dark:shadow-none">
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-[11px] font-semibold text-[#7C6FF7] dark:text-[#A78BFA] mb-6 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-6 uppercase tracking-wider">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 Comienza ahora · Es gratis
               </span>
@@ -980,7 +977,7 @@ export function Landing() {
                   <GoogleIcon/>Validar mi idea con Google
                 </button>
                 <button onClick={handleCTA}
-                  className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#7C6FF7] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] shadow-lg shadow-[#7C6FF7]/25 text-sm transition-all cursor-pointer">
+                  className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#0EB5C6] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] shadow-lg shadow-[#0EB5C6]/25 text-sm transition-all cursor-pointer">
                   Entrar con email
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                 </button>
@@ -998,7 +995,7 @@ export function Landing() {
             <div className="col-span-2 sm:col-span-1">
               <div className="flex items-center gap-2 mb-3">
                 <Logo className="w-5 h-7"/>
-                <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
+                <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
               </div>
               <p className="text-xs text-gray-500 dark:text-[#8B8AA0] leading-relaxed mb-4 max-w-[180px]">Valida tu idea de startup antes de construirla.</p>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#34D399]/10 border border-[#34D399]/20 rounded-lg text-[10px] font-semibold text-[#34D399]">
@@ -1027,12 +1024,12 @@ export function Landing() {
               <ul className="space-y-2.5">
                 <li><span className="text-xs text-gray-500 dark:text-[#8B8AA0]">Términos de uso</span></li>
                 <li><Link to="/privacy-policy" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Política de privacidad</Link></li>
-                <li><a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-[#7C6FF7] transition-colors">Contacto</a></li>
+                <li><a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-[#0EB5C6] transition-colors">Contacto</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-black/[0.05] dark:border-white/[0.06] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-gray-400 dark:text-[#4A495E]">© {new Date().getFullYear()} Validus · Hecho en Chile 🇨🇱</p>
+            <p className="text-xs text-gray-400 dark:text-[#4A495E]">© {new Date().getFullYear()} Validum · Hecho en Chile 🇨🇱</p>
             <p className="text-xs text-gray-400 dark:text-[#4A495E]">validus.scouttech.lat</p>
           </div>
         </div>

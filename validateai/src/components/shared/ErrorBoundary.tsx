@@ -1,4 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
+import { captureError } from '@/lib/sentry';
 
 interface Props {
   children: ReactNode;
@@ -24,6 +25,10 @@ export class ErrorBoundary extends Component<Props, State> {
       error.message,
       info.componentStack?.slice(0, 300),
     );
+    captureError(error, {
+      boundary: this.props.label ?? 'unknown',
+      componentStack: info.componentStack?.slice(0, 500),
+    });
     this.props.onError?.(error, info);
   }
 

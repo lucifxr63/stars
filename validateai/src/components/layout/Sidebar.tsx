@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,15 +31,12 @@ const NAV_ITEMS = [
 function SidebarLogo() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5 group">
-      <svg viewBox="0 0 338 426" className="w-6 h-8 shrink-0 group-hover:scale-105 transition-transform" aria-hidden="true">
-        <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-        <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-        <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-        <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-        <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-        <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+      <svg viewBox="0 0 500 500" className="w-7 h-7 shrink-0 group-hover:scale-105 transition-transform" aria-hidden="true">
+        <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+        <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+        <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
       </svg>
-      <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validus</span>
+      <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validum</span>
     </Link>
   );
 }
@@ -86,14 +83,14 @@ export function Sidebar({ onClose }: SidebarProps) {
   const navCls = (active: boolean) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${
       active
-        ? 'bg-[#7C6FF7]/10 text-[#7C6FF7] dark:text-[#A99FF9]'
+        ? 'bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#A99FF9]'
         : 'text-gray-600 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] hover:bg-gray-50 dark:hover:bg-white/[0.04]'
     }`;
 
   const iconCls = (active: boolean) =>
     `w-4 h-4 shrink-0 ${
       active
-        ? 'text-[#7C6FF7]'
+        ? 'text-[#0EB5C6]'
         : 'text-gray-400 dark:text-[#4A495E] group-hover:text-gray-600 dark:group-hover:text-[#8B8AA0]'
     }`;
 
@@ -121,7 +118,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Link key={path} to={path} onClick={onClose} className={navCls(active)} aria-current={active ? 'page' : undefined}>
               <Icon className={iconCls(active)} />
               <span className="flex-1">{label}</span>
-              {active && <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] shrink-0" aria-hidden="true" />}
+              {active && <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] shrink-0" aria-hidden="true" />}
             </Link>
           );
         })}
@@ -144,7 +141,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       {/* User section */}
       <div className="px-3 py-4 border-t border-gray-100 dark:border-white/[0.06] shrink-0 space-y-1">
         <div className="flex items-center gap-2.5 px-2 py-1.5">
-          <div className="w-7 h-7 rounded-full bg-[#7C6FF7] flex items-center justify-center text-white text-xs font-bold shrink-0">
+          <div className="w-7 h-7 rounded-full bg-[#0EB5C6] flex items-center justify-center text-white text-xs font-bold shrink-0">
             {userName ? userName[0].toUpperCase() : '?'}
           </div>
           <div className="min-w-0 flex-1">
@@ -177,7 +174,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                       ? 'bg-red-500'
                       : remaining === 1
                       ? 'bg-amber-500'
-                      : 'bg-[#7C6FF7]'
+                      : 'bg-[#0EB5C6]'
                   }`}
                   style={{ width: `${Math.min(100, ((usage?.total ?? 0) / limits.total) * 100)}%` }}
                 />
@@ -195,7 +192,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                 <Link
                   to="/profile"
                   onClick={onClose}
-                  className="block mt-2 text-center text-[10px] font-bold text-[#7C6FF7] hover:underline"
+                  className="block mt-2 text-center text-[10px] font-bold text-[#0EB5C6] hover:underline"
                 >
                   Actualizar plan →
                 </Link>
@@ -215,7 +212,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         <Link
           to="/privacy-policy"
           onClick={onClose}
-          className="block text-center text-[10px] text-gray-400 dark:text-[#4A495E] hover:text-[#7C6FF7] dark:hover:text-[#7C6FF7] transition-colors py-1"
+          className="block text-center text-[10px] text-gray-400 dark:text-[#4A495E] hover:text-[#0EB5C6] dark:hover:text-[#0EB5C6] transition-colors py-1"
         >
           Política de privacidad
         </Link>

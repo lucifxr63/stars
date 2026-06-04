@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useConsentGuard } from '@/hooks/useConsentGuard';
@@ -6,6 +6,7 @@ import { ConsentModal } from '@/components/shared/ConsentModal';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { UpgradeModal } from '@/components/shared/UpgradeModal';
 import { getPreviewTier, setPreviewTier, type UserTier } from '@/hooks/useUserTier';
+import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import type { User } from '@supabase/supabase-js';
 
 const PREVIEW_COLORS: Record<UserTier, string> = {
@@ -25,7 +26,9 @@ export function ProtectedLayout() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (!u) clearSentryUser();
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -34,12 +37,13 @@ export function ProtectedLayout() {
     if (!user) return;
     supabase
       .from('profiles')
-      .select('onboarding_completed')
+      .select('onboarding_completed, tier')
       .eq('id', user.id)
       .single()
       .then(({ data, error }) => {
-        // On error (e.g. column not yet in prod) default to true so existing users aren't blocked
         setOnboardingDone(error ? true : (data?.onboarding_completed ?? true));
+        // Setear contexto Sentry con ID anónimo + tier (sin PII)
+        setSentryUser(user.id, data?.tier ?? 'free');
       });
   }, [user]);
 
@@ -134,15 +138,12 @@ export function AppLayout() {
 
           <div className="flex-1 flex justify-center">
             <div className="flex items-center gap-2">
-              <svg viewBox="0 0 338 426" className="w-5 h-6" aria-hidden="true">
-                <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-                <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-                <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-                <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-                <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-                <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+              <svg viewBox="0 0 500 500" className="w-6 h-6" aria-hidden="true">
+                <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+                <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+                <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
               </svg>
-              <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
+              <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
             </div>
           </div>
 
@@ -156,7 +157,7 @@ export function AppLayout() {
 
         <footer className="border-t border-gray-100 dark:border-white/[0.06] py-4 shrink-0">
           <p className="text-center text-xs text-gray-400 dark:text-[#4A495E]">
-            © {new Date().getFullYear()} Validus
+            © {new Date().getFullYear()} Validum
           </p>
         </footer>
       </div>

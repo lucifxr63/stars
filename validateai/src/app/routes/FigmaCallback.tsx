@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -76,7 +76,7 @@ export function FigmaCallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0A0A0F]">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 rounded-full border-4 border-[#7C6FF7] border-t-transparent animate-spin" />
+        <div className="w-10 h-10 rounded-full border-4 border-[#0EB5C6] border-t-transparent animate-spin" />
         <p className="text-sm text-[#8B8AA0]">Conectando con Figma...</p>
       </div>
     </div>

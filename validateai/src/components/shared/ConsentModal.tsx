@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
@@ -79,7 +79,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
 
       if (error) throw error;
 
-      toast.success('Consentimiento registrado. Bienvenido a Validus.');
+      toast.success('Consentimiento registrado. Bienvenido a Validum.');
       onAccepted();
     } catch (err) {
       console.error('[ConsentModal] Error al registrar consentimiento:', err);
@@ -99,13 +99,13 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
       <div className="relative w-full max-w-lg mx-4 rounded-2xl border border-white/10 bg-[#0D0D18] shadow-2xl overflow-hidden">
 
         {/* Barra decorativa superior */}
-        <div className="h-1 w-full bg-gradient-to-r from-[#7C6FF7] via-[#A78BFA] to-[#7C6FF7]" />
+        <div className="h-1 w-full bg-gradient-to-r from-[#0EB5C6] via-[#38D5E3] to-[#0EB5C6]" />
 
         <div className="p-8">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C6FF7]/15 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-[#7C6FF7]" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#0EB5C6]/15 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5 text-[#0EB5C6]" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">
@@ -119,7 +119,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
           <div className="mb-6 rounded-xl bg-amber-500/8 border border-amber-500/20 p-4 flex gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-amber-200/80 leading-relaxed">
-              Validus procesa tus datos personales (información de tu idea, perfil
+              Validum procesa tus datos personales (información de tu idea, perfil
               de fundador y métricas de validación) para generar análisis con IA.
               Conforme a la{' '}
               <strong className="text-amber-300">Ley N° 21.719</strong> de Protección
@@ -141,7 +141,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
                 'Conocer con qué fines se usan tus datos (solo análisis de IA)',
               ].map((right) => (
                 <li key={right} className="flex items-start gap-2 text-xs text-white/50">
-                  <span className="text-[#7C6FF7] mt-0.5">✓</span>
+                  <span className="text-[#0EB5C6] mt-0.5">✓</span>
                   {right}
                 </li>
               ))}
@@ -163,7 +163,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
               className={`w-full rounded-lg px-3.5 py-2.5 text-sm bg-white/5 border text-white placeholder-white/20 outline-none transition-colors
                 ${rutError
                   ? 'border-red-500/50 focus:border-red-500'
-                  : 'border-white/10 focus:border-[#7C6FF7]/50'
+                  : 'border-white/10 focus:border-[#0EB5C6]/50'
                 }`}
             />
             {rutError && (
@@ -183,7 +183,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
               <div
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all
                   ${accepted
-                    ? 'bg-[#7C6FF7] border-[#7C6FF7]'
+                    ? 'bg-[#0EB5C6] border-[#0EB5C6]'
                     : 'bg-transparent border-white/20 group-hover:border-white/40'
                   }`}
               >
@@ -208,7 +208,7 @@ export function ConsentModal({ userId, onAccepted }: ConsentModalProps) {
             disabled={!accepted || loading}
             className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2
               ${accepted && !loading
-                ? 'bg-[#7C6FF7] hover:bg-[#6B5EF8] text-white shadow-lg shadow-[#7C6FF7]/25 hover:shadow-[#7C6FF7]/40'
+                ? 'bg-[#0EB5C6] hover:bg-[#6B5EF8] text-white shadow-lg shadow-[#0EB5C6]/25 hover:shadow-[#0EB5C6]/40'
                 : 'bg-white/5 text-white/25 cursor-not-allowed'
               }`}
           >

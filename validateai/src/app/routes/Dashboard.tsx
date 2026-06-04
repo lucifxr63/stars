@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -110,7 +110,7 @@ export function Dashboard() {
       </div>
 
       {/* CTA principal */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#7C6FF7] to-[#5B52C5] rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0EB5C6] to-[#5B52C5] rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-5">
         <div className="absolute right-0 top-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
         <div className="flex-1 relative">
           <h2 className="text-lg font-bold text-white mb-1">Generar nueva validación</h2>
@@ -120,7 +120,7 @@ export function Dashboard() {
         </div>
         <button
           onClick={() => { reset(); navigate('/validate'); }}
-          className="shrink-0 px-6 py-3 bg-white text-[#7C6FF7] font-bold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all text-sm shadow-lg relative"
+          className="shrink-0 px-6 py-3 bg-white text-[#0EB5C6] font-bold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all text-sm shadow-lg relative"
         >
           Comenzar →
         </button>
@@ -132,7 +132,7 @@ export function Dashboard() {
           <h2 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">
             Últimas validaciones
           </h2>
-          <Link to="/results" className="text-xs text-[#7C6FF7] hover:underline font-medium">
+          <Link to="/results" className="text-xs text-[#0EB5C6] hover:underline font-medium">
             Ver todas →
           </Link>
         </div>
@@ -150,8 +150,8 @@ export function Dashboard() {
 
         {!loading && recent.length === 0 && (
           <div className="text-center py-14 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06]">
-            <div className="w-12 h-12 rounded-2xl bg-[#7C6FF7]/10 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="w-12 h-12 rounded-2xl bg-[#0EB5C6]/10 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </div>
@@ -163,7 +163,7 @@ export function Dashboard() {
             </p>
             <button
               onClick={() => { reset(); navigate('/validate'); }}
-              className="px-5 py-2.5 bg-[#7C6FF7] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors"
+              className="px-5 py-2.5 bg-[#0EB5C6] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors"
             >
               Validar mi primera idea
             </button>
@@ -176,7 +176,7 @@ export function Dashboard() {
               <Link
                 key={v.id}
                 to={`/results/${v.id}`}
-                className="flex items-center gap-4 px-4 py-3.5 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] hover:border-[#7C6FF7]/30 dark:hover:border-[#7C6FF7]/30 transition-all group"
+                className="flex items-center gap-4 px-4 py-3.5 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] hover:border-[#0EB5C6]/30 dark:hover:border-[#0EB5C6]/30 transition-all group"
               >
                 {/* Score badge */}
                 <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center shrink-0 text-xs font-black ${scoreBg(v.validation_score)}`}>
@@ -185,7 +185,7 @@ export function Dashboard() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#7C6FF7] transition-colors">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
                     {v.idea_name ?? 'Sin nombre'}
                   </p>
                   <p className="text-xs text-gray-400 dark:text-[#4A495E] mt-0.5 truncate">
@@ -198,7 +198,7 @@ export function Dashboard() {
                   <span className="text-xs text-gray-400 dark:text-[#4A495E] hidden sm:block">
                     {formatDate(v.created_at)}
                   </span>
-                  <svg className="w-4 h-4 text-gray-300 dark:text-white/20 group-hover:text-[#7C6FF7] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-4 h-4 text-gray-300 dark:text-white/20 group-hover:text-[#0EB5C6] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </div>

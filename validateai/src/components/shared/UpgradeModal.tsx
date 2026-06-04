@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { UserTier } from '@/hooks/useUserTier';
 
@@ -43,7 +43,7 @@ export const FEATURE_NAME: Record<string, string> = {
 export const TIER_INFO: Record<UserTier, { label: string; price: string; color: string; bg: string }> = {
   free:    { label: 'Free',    price: 'Gratis',        color: 'text-gray-600',   bg: 'bg-gray-100 dark:bg-white/8' },
   basic:   { label: 'Basic',   price: '$9.990 CLP/mes', color: 'text-sky-600 dark:text-sky-400',     bg: 'bg-sky-50 dark:bg-sky-500/10' },
-  pro:     { label: 'Pro',     price: '$20.000 CLP/mes', color: 'text-[#7C6FF7]', bg: 'bg-[#7C6FF7]/10' },
+  pro:     { label: 'Pro',     price: '$20.000 CLP/mes', color: 'text-[#0EB5C6]', bg: 'bg-[#0EB5C6]/10' },
   premium: { label: 'Premium', price: '$50.000 CLP/mes', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10' },
 };
 
@@ -141,7 +141,7 @@ export function UpgradeModal() {
           <Link
             to={`/pricing`}
             onClick={() => setDetail(null)}
-            className="block w-full text-center py-3 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all shadow-lg shadow-[#7C6FF7]/25"
+            className="block w-full text-center py-3 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all shadow-lg shadow-[#0EB5C6]/25"
           >
             Ver planes y precios →
           </Link>

@@ -1,4 +1,4 @@
-// Configuración de las 16 regiones de Chile con pesos de mercado
+﻿// Configuración de las 16 regiones de Chile con pesos de mercado
 // Basado en datos de PIB regional 2023 (Banco Central de Chile)
 
 export interface RegionConfig {
@@ -126,6 +126,6 @@ export const GEO_NAME_TO_CODE: Record<string, string> = {
 
 export const METRIC_COLORS: Record<MapMetric, { low: string; high: string; accent: string }> = {
   TAM: { low: '#1e3a5f', high: '#3b82f6', accent: '#60a5fa' },
-  SAM: { low: '#2d1b69', high: '#8b5cf6', accent: '#a78bfa' },
+  SAM: { low: '#2d1b69', high: '#8b5cf6', accent: '#38D5E3' },
   SOM: { low: '#0d3d38', high: '#14b8a6', accent: '#2dd4bf' },
 };

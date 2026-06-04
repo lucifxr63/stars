@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useFigmaIntegration } from '@/hooks/useFigmaIntegration';
 import { NavigationCanvas } from './NavigationCanvas';
 import type { ReactFlowNodeData, ReactFlowEdgeData } from './FigmaPanel';
@@ -44,15 +44,15 @@ export function FigmaAdminPanel() {
   if (!figma.status?.connected) {
     return (
       <div className="max-w-md mx-auto mt-16 flex flex-col items-center gap-5 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center">
-          <FigmaIcon className="w-8 h-8 text-[#7C6FF7]" />
+        <div className="w-16 h-16 rounded-2xl bg-[#0EB5C6]/10 border-2 border-[#0EB5C6]/20 flex items-center justify-center">
+          <FigmaIcon className="w-8 h-8 text-[#0EB5C6]" />
         </div>
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-[#F0EFF8] mb-1">
             Conecta tu cuenta de Figma
           </h2>
           <p className="text-sm text-gray-400 dark:text-[#8B8AA0] leading-relaxed max-w-sm">
-            Validus leerá la estructura de tus prototipos y generará un mapa
+            Validum leerá la estructura de tus prototipos y generará un mapa
             de navegación interactivo con análisis de IA.
           </p>
           <p className="text-xs text-gray-400/60 mt-2">
@@ -62,7 +62,7 @@ export function FigmaAdminPanel() {
         <button
           onClick={figma.connect}
           disabled={figma.loading}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#7C6FF7]/25 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#0EB5C6]/25 disabled:opacity-50"
         >
           {figma.loading
             ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -79,8 +79,8 @@ export function FigmaAdminPanel() {
       {/* Connection status bar */}
       <div className="flex items-center justify-between flex-wrap gap-3 p-4 rounded-2xl bg-white dark:bg-[#13121F] border border-gray-100 dark:border-[#2A2940]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#7C6FF7]/10 flex items-center justify-center">
-            <FigmaIcon className="w-5 h-5 text-[#7C6FF7]" />
+          <div className="w-9 h-9 rounded-xl bg-[#0EB5C6]/10 flex items-center justify-center">
+            <FigmaIcon className="w-5 h-5 text-[#0EB5C6]" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -119,12 +119,12 @@ export function FigmaAdminPanel() {
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !figma.loading && urlInput.trim() && handleResolve()}
                 placeholder="https://www.figma.com/design/AbCdEf123/Mi-App"
-                className="flex-1 px-3 py-2.5 rounded-xl bg-[#0D0C1A] border border-[#2A2940] text-sm text-[#F0EFF8] placeholder-[#8B8AA0]/50 focus:outline-none focus:border-[#7C6FF7] transition-colors"
+                className="flex-1 px-3 py-2.5 rounded-xl bg-[#0D0C1A] border border-[#2A2940] text-sm text-[#F0EFF8] placeholder-[#8B8AA0]/50 focus:outline-none focus:border-[#0EB5C6] transition-colors"
               />
               <button
                 onClick={handleResolve}
                 disabled={figma.loading || !urlInput.trim()}
-                className="px-4 py-2.5 bg-[#7C6FF7] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50 shrink-0"
+                className="px-4 py-2.5 bg-[#0EB5C6] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50 shrink-0"
               >
                 {figma.loading
                   ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin block" />
@@ -137,7 +137,7 @@ export function FigmaAdminPanel() {
 
       {/* Page selector after resolve */}
       {resolved && !figma.map && !figma.scanning && (
-        <div className="rounded-2xl border border-[#7C6FF7]/30 bg-[#13121F] p-5 space-y-4">
+        <div className="rounded-2xl border border-[#0EB5C6]/30 bg-[#13121F] p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-[#8B8AA0]">Archivo encontrado</p>
@@ -160,7 +160,7 @@ export function FigmaAdminPanel() {
                     onClick={() => setSelectedPage(page.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       selectedPage === page.id
-                        ? 'bg-[#7C6FF7] text-white'
+                        ? 'bg-[#0EB5C6] text-white'
                         : 'bg-[#2A2940] text-[#8B8AA0] hover:text-[#F0EFF8]'
                     }`}
                   >
@@ -174,7 +174,7 @@ export function FigmaAdminPanel() {
           <button
             onClick={handleScan}
             disabled={figma.scanning}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50"
           >
             <ScanIcon className="w-4 h-4" />
             Escanear mapa de navegación
@@ -184,8 +184,8 @@ export function FigmaAdminPanel() {
 
       {/* Scanning indicator */}
       {figma.scanning && (
-        <div className="rounded-xl bg-[#7C6FF7]/5 border border-[#7C6FF7]/20 p-5 flex items-center gap-4">
-          <span className="w-6 h-6 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin shrink-0" />
+        <div className="rounded-xl bg-[#0EB5C6]/5 border border-[#0EB5C6]/20 p-5 flex items-center gap-4">
+          <span className="w-6 h-6 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin shrink-0" />
           <div>
             <p className="text-sm font-semibold text-[#F0EFF8]">Escaneando prototipo...</p>
             <p className="text-xs text-[#8B8AA0] mt-0.5">
@@ -217,7 +217,7 @@ export function FigmaAdminPanel() {
             </div>
             <button
               onClick={handleReset}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#7C6FF7] border border-[#7C6FF7]/30 rounded-lg hover:bg-[#7C6FF7]/10 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0EB5C6] border border-[#0EB5C6]/30 rounded-lg hover:bg-[#0EB5C6]/10 transition-colors"
             >
               <ScanIcon className="w-3 h-3" />
               Nuevo escaneo
@@ -263,7 +263,7 @@ function AIInsightsSection({ insights }: { insights: Record<string, unknown> }) 
       </div>
       {summary && <p className="text-sm text-[#8B8AA0] leading-relaxed">{summary}</p>}
       {ratio && (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 text-xs font-semibold text-[#7C6FF7]">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 text-xs font-semibold text-[#0EB5C6]">
           Arquitectura: {ratio}
         </span>
       )}
@@ -273,11 +273,11 @@ function AIInsightsSection({ insights }: { insights: Record<string, unknown> }) 
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${
               item.type === 'error'   ? 'bg-red-500/5 border-red-500/20' :
               item.type === 'warning' ? 'bg-amber-500/5 border-amber-500/20' :
-              'bg-[#7C6FF7]/5 border-[#7C6FF7]/20'
+              'bg-[#0EB5C6]/5 border-[#0EB5C6]/20'
             }`}>
               <span className={`text-base leading-none mt-0.5 ${
                 item.type === 'error' ? 'text-red-400' :
-                item.type === 'warning' ? 'text-amber-400' : 'text-[#7C6FF7]'
+                item.type === 'warning' ? 'text-amber-400' : 'text-[#0EB5C6]'
               }`}>
                 {item.type === 'error' ? '✕' : item.type === 'warning' ? '!' : 'i'}
               </span>
@@ -291,7 +291,7 @@ function AIInsightsSection({ insights }: { insights: Record<string, unknown> }) 
       )}
       {recommendation && (
         <div className="pt-3 border-t border-[#2A2940]">
-          <p className="text-xs font-semibold text-[#7C6FF7] mb-1">Recomendación principal</p>
+          <p className="text-xs font-semibold text-[#0EB5C6] mb-1">Recomendación principal</p>
           <p className="text-sm text-[#F0EFF8] leading-relaxed">{recommendation}</p>
         </div>
       )}

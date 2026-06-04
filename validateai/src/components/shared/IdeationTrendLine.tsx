@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, ReferenceLine,
@@ -51,7 +51,7 @@ function CustomTooltip({ active, payload, label }: {
   return (
     <div className="bg-[#12121A] border border-white/[0.08] rounded-xl px-3 py-2 text-xs shadow-xl">
       <p className="text-gray-400 mb-0.5">Semana del {shortLabel(label)}</p>
-      <p className="text-[#7C6FF7] font-bold text-sm">
+      <p className="text-[#0EB5C6] font-bold text-sm">
         {payload[0].value}
         <span className="text-gray-500 font-normal text-xs ml-1">
           {payload[0].value === 1 ? 'idea' : 'ideas'}
@@ -143,8 +143,8 @@ export function IdeationTrendLine({ validations }: IdeationTrendLineProps) {
           <AreaChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor="#7C6FF7" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#7C6FF7" stopOpacity={0.0} />
+                <stop offset="0%"   stopColor="#0EB5C6" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#0EB5C6" stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
@@ -178,21 +178,21 @@ export function IdeationTrendLine({ validations }: IdeationTrendLineProps) {
             {data.some((d) => d.week === currentWeek) && (
               <ReferenceLine
                 x={currentWeek}
-                stroke="#7C6FF7"
+                stroke="#0EB5C6"
                 strokeDasharray="4 2"
                 strokeOpacity={0.4}
-                label={{ value: 'hoy', position: 'top', fontSize: 9, fill: '#7C6FF7', dy: -2 }}
+                label={{ value: 'hoy', position: 'top', fontSize: 9, fill: '#0EB5C6', dy: -2 }}
               />
             )}
 
             <Area
               type="monotone"
               dataKey="count"
-              stroke="#7C6FF7"
+              stroke="#0EB5C6"
               strokeWidth={2}
               fill="url(#trendGradient)"
               dot={false}
-              activeDot={{ r: 5, fill: '#7C6FF7', stroke: '#fff', strokeWidth: 2 }}
+              activeDot={{ r: 5, fill: '#0EB5C6', stroke: '#fff', strokeWidth: 2 }}
               isAnimationActive
               animationDuration={800}
               animationEasing="ease-out"

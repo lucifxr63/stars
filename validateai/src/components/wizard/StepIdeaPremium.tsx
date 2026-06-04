@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+﻿import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepIdeaSchema, type StepIdea } from '@/types/validation';
 import { useValidationStore } from '@/stores/validationStore';
@@ -42,7 +42,7 @@ function ErrorMsg({ message }: { message?: string }) {
 const inputCls = (hasError: boolean, highlight = false) =>
   `w-full px-4 py-3.5 rounded-xl text-sm text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#0A0A0F] border transition-all duration-150 outline-none
    placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
-   focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20
+   focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20
    ${hasError ? 'border-red-500/50 bg-red-500/5' : highlight ? 'border-violet-300 dark:border-violet-500/30 bg-violet-50/30 dark:bg-violet-900/5' : 'border-gray-200 dark:border-white/8 hover:border-gray-300 dark:hover:border-white/15'}`;
 
 function DescriptionQuality({ length }: { length: number }) {
@@ -54,7 +54,7 @@ function DescriptionQuality({ length }: { length: number }) {
       ? { label: `${length} — añade más contexto`, color: 'text-amber-500', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
       : length < 400
       ? { label: `${length} — buen nivel ✓`, color: 'text-emerald-600', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
-      : { label: `${length} — calidad máxima ✓`, color: 'text-[#7C6FF7]', bar: 'bg-[#7C6FF7]', pct: 95 };
+      : { label: `${length} — calidad máxima ✓`, color: 'text-[#0EB5C6]', bar: 'bg-[#0EB5C6]', pct: 95 };
   return (
     <div className="mt-1.5 space-y-1">
       <div className="h-1 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
@@ -196,7 +196,7 @@ export function StepIdeaPremium() {
                 <input type="radio" {...register('idea_industry')} value={ind.value} className="peer hidden" />
                 <div className="px-3 py-2.5 text-center text-xs border rounded-xl font-medium
                                 text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/8 bg-white dark:bg-transparent
-                                peer-checked:bg-[#7C6FF7]/15 peer-checked:text-[#7C6FF7] dark:peer-checked:text-[#A78BFA] peer-checked:border-[#7C6FF7]/40
+                                peer-checked:bg-[#0EB5C6]/15 peer-checked:text-[#0EB5C6] dark:peer-checked:text-[#38D5E3] peer-checked:border-[#0EB5C6]/40
                                 hover:border-gray-300 dark:hover:border-white/20 transition-all duration-150">
                   {ind.label}
                 </div>
@@ -213,9 +213,9 @@ export function StepIdeaPremium() {
           Volver
         </button>
         <button type="submit"
-          className="w-2/3 py-4 bg-[#7C6FF7] text-white font-bold rounded-2xl
+          className="w-2/3 py-4 bg-[#0EB5C6] text-white font-bold rounded-2xl
                      hover:bg-[#6B5EE6] active:scale-[0.98] transition-all
-                     shadow-lg shadow-[#7C6FF7]/25 text-sm">
+                     shadow-lg shadow-[#0EB5C6]/25 text-sm">
           Continuar al mercado →
         </button>
       </div>

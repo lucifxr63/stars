@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+﻿import { useCallback, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
@@ -40,12 +40,12 @@ function UploadIcon({ className }: { className?: string }) {
 
 function FileIcon({ mime }: { mime: AcceptedMime }) {
   return mime === 'application/pdf' ? (
-    <svg className="w-6 h-6 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-6 h-6 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round"
         d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
     </svg>
   ) : (
-    <svg className="w-6 h-6 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-6 h-6 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round"
         d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
     </svg>
@@ -203,7 +203,7 @@ export function StepUpload() {
   if (tierLoading) {
     return (
       <div className="py-10 flex justify-center">
-        <div className="w-7 h-7 border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-[#0EB5C6]/30 border-t-[#0EB5C6] rounded-full animate-spin" />
       </div>
     );
   }
@@ -268,7 +268,7 @@ export function StepUpload() {
                 : 'Tu documento contiene toda la información necesaria para generar tu Due Diligence Score. Preparando el reporte final…'}
             </p>
           </div>
-          <div className="w-6 h-6 border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#0EB5C6]/30 border-t-[#0EB5C6] rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -292,10 +292,10 @@ export function StepUpload() {
         className={`relative cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-200 p-8
           flex flex-col items-center gap-4 text-center select-none
           ${isDragOver
-            ? 'border-[#7C6FF7] bg-[#7C6FF7]/5 dark:bg-[#7C6FF7]/8 scale-[1.01]'
+            ? 'border-[#0EB5C6] bg-[#0EB5C6]/5 dark:bg-[#0EB5C6]/8 scale-[1.01]'
             : phase === 'error'
             ? 'border-red-400 bg-red-50 dark:bg-red-900/10'
-            : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F] hover:border-[#7C6FF7]/50 hover:bg-[#7C6FF7]/3'
+            : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F] hover:border-[#0EB5C6]/50 hover:bg-[#0EB5C6]/3'
           }`}
       >
         <input
@@ -309,13 +309,13 @@ export function StepUpload() {
         {/* Icon */}
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-colors duration-200
           ${isDragOver
-            ? 'bg-[#7C6FF7]/15 border-[#7C6FF7]/40'
+            ? 'bg-[#0EB5C6]/15 border-[#0EB5C6]/40'
             : phase === 'error'
             ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800/30'
             : 'bg-white dark:bg-[#12121A] border-gray-200 dark:border-white/8'
           }`}
         >
-          <UploadIcon className={`w-7 h-7 ${isDragOver ? 'text-[#7C6FF7]' : phase === 'error' ? 'text-red-500' : 'text-gray-400 dark:text-[#4A495E]'}`} />
+          <UploadIcon className={`w-7 h-7 ${isDragOver ? 'text-[#0EB5C6]' : phase === 'error' ? 'text-red-500' : 'text-gray-400 dark:text-[#4A495E]'}`} />
         </div>
 
         {/* Copy */}
@@ -331,8 +331,8 @@ export function StepUpload() {
         {/* Browse button */}
         {!isDragOver && (
           <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold
-            bg-[#7C6FF7]/10 text-[#7C6FF7] dark:text-[#A78BFA] border border-[#7C6FF7]/20
-            hover:bg-[#7C6FF7]/15 transition-colors duration-150">
+            bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#38D5E3] border border-[#0EB5C6]/20
+            hover:bg-[#0EB5C6]/15 transition-colors duration-150">
             Explorar archivos
           </span>
         )}
@@ -400,7 +400,7 @@ export function StepUpload() {
 function SectionHeader() {
   return (
     <div className="text-center space-y-1">
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 text-xs font-bold text-[#7C6FF7] dark:text-[#A78BFA] mb-3">
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 text-xs font-bold text-[#0EB5C6] dark:text-[#38D5E3] mb-3">
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
         </svg>
@@ -418,15 +418,15 @@ function SectionHeader() {
 
 function UploadingIndicator({ fileName, fileMime, compact = false }: { fileName: string | null; fileMime: AcceptedMime | null; compact?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-[#7C6FF7]/20 bg-[#7C6FF7]/5 dark:bg-[#7C6FF7]/8 ${compact ? '' : 'mb-2'}`}>
+    <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-[#0EB5C6]/20 bg-[#0EB5C6]/5 dark:bg-[#0EB5C6]/8 ${compact ? '' : 'mb-2'}`}>
       {fileMime && <FileIcon mime={fileMime} />}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#7C6FF7] dark:text-[#A78BFA] truncate">
+        <p className="text-sm font-semibold text-[#0EB5C6] dark:text-[#38D5E3] truncate">
           {fileName ?? 'documento'}
         </p>
-        <p className="text-xs text-[#7C6FF7]/60 dark:text-[#A78BFA]/60">Procesando con IA…</p>
+        <p className="text-xs text-[#0EB5C6]/60 dark:text-[#38D5E3]/60">Procesando con IA…</p>
       </div>
-      <div className="w-4 h-4 border-2 border-[#7C6FF7]/30 border-t-[#7C6FF7] rounded-full animate-spin shrink-0" />
+      <div className="w-4 h-4 border-2 border-[#0EB5C6]/30 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
     </div>
   );
 }

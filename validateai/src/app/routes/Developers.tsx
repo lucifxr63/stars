@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+﻿import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
@@ -76,7 +76,7 @@ const ENDPOINTS = [
     method: 'POST',
     path: '/api/v1/rag/query',
     label: 'RAG — Consulta semántica',
-    color: '#7C6FF7',
+    color: '#0EB5C6',
     defaultBody: JSON.stringify({ query: 'estrategias go-to-market fintech Chile', filters: {} }, null, 2),
   },
   {
@@ -111,18 +111,18 @@ const ENDPOINTS = [
     method: 'POST',
     path: '/functions/v1/assemble-mega-prompt',
     label: 'Due Diligence — Generar análisis IA',
-    color: '#7C6FF7',
+    color: '#0EB5C6',
     defaultBody: JSON.stringify({ validation_id: '<uuid-de-validacion>' }, null, 2),
   },
 ] as const;
 
 const METHOD_COLORS: Record<string, string> = {
-  POST: '#7C6FF7',
+  POST: '#0EB5C6',
   GET: '#2DD4BF',
   DELETE: '#EF4444',
 };
 
-const CHART_COLORS = ['#7C6FF7', '#2DD4BF', '#F59E0B', '#EC4899', '#94A3B8'];
+const CHART_COLORS = ['#0EB5C6', '#2DD4BF', '#F59E0B', '#EC4899', '#94A3B8'];
 
 const tooltipStyle = {
   backgroundColor: '#12121A',
@@ -471,15 +471,15 @@ export function Developers() {
                 <AreaChart data={areaData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradReq" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#7C6FF7" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#7C6FF7" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#0EB5C6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#0EB5C6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={v => v.slice(5)} />
                   <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} labelStyle={{ color: '#8B8AA0', marginBottom: 4 }} />
-                  <Area type="monotone" dataKey="requests" name="Requests" stroke="#7C6FF7" strokeWidth={2} fill="url(#gradReq)" dot={false} />
+                  <Area type="monotone" dataKey="requests" name="Requests" stroke="#0EB5C6" strokeWidth={2} fill="url(#gradReq)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -686,7 +686,7 @@ export function Developers() {
           const precisionPct = Math.round((summary.avg_precision ?? 0) * 100);
           const hitRate = summary.hit_rate_pct ?? 0;
           const categoryColors: Record<string, string> = {
-            legal: '#7C6FF7', gtm: '#2DD4BF', methodology: '#F59E0B', market: '#34D399', edge: '#94A3B8',
+            legal: '#0EB5C6', gtm: '#2DD4BF', methodology: '#F59E0B', market: '#34D399', edge: '#94A3B8',
           };
           const catMap: Record<string, { pass: number; fail: number; total: number }> = {};
           auditLogs.forEach(l => {
@@ -699,7 +699,7 @@ export function Developers() {
             cat: cat.charAt(0).toUpperCase() + cat.slice(1),
             pass: v.pass,
             fail: v.fail,
-            fill: categoryColors[cat] ?? '#7C6FF7',
+            fill: categoryColors[cat] ?? '#0EB5C6',
           }));
           const latencyData = auditLogs.map((l, i) => ({ i: i + 1, ms: Math.round(l.latency_ms), cat: l.category }));
 
@@ -752,14 +752,14 @@ export function Developers() {
                     <AreaChart data={latencyData}>
                       <defs>
                         <linearGradient id="auditGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#7C6FF7" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#7C6FF7" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#0EB5C6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#0EB5C6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <XAxis dataKey="i" tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
                       <YAxis hide />
                       <Tooltip contentStyle={{ background: '#12121A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} formatter={(v) => [`${v}ms`, 'Latencia']} />
-                      <Area type="monotone" dataKey="ms" stroke="#7C6FF7" strokeWidth={2} fill="url(#auditGrad)" dot={false} />
+                      <Area type="monotone" dataKey="ms" stroke="#0EB5C6" strokeWidth={2} fill="url(#auditGrad)" dot={false} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>

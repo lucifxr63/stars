@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+﻿import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { ProtectedLayout, AppLayout } from '@/app/layout';
@@ -39,7 +39,7 @@ const CheckoutSuccess   = lazy(() => import('@/app/routes/CheckoutSuccess').then
 function PageLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0A0A0F]">
-      <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
@@ -48,7 +48,7 @@ function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] px-4">
       <div className="text-center max-w-sm">
-        <p className="text-7xl font-black text-[#7C6FF7] mb-4">404</p>
+        <p className="text-7xl font-black text-[#0EB5C6] mb-4">404</p>
         <h1 className="text-xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-2">
           Página no encontrada
         </h1>
@@ -57,7 +57,7 @@ function NotFound() {
         </p>
         <a
           href="/dashboard"
-          className="inline-block px-6 py-3 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors"
+          className="inline-block px-6 py-3 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors"
         >
           Volver al inicio
         </a>

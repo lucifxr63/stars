@@ -1,16 +1,13 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function Logo({ className = 'w-5 h-7' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
-      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
     </svg>
   );
 }
@@ -50,8 +47,8 @@ function DemoLocked({ label }: { label: string }) {
         </div>
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-[#12121A]/80 backdrop-blur-sm p-6 text-center">
-        <div className="w-10 h-10 rounded-xl bg-[#7C6FF7]/10 border border-[#7C6FF7]/30 flex items-center justify-center mb-3">
-          <svg className="w-5 h-5 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-10 h-10 rounded-xl bg-[#0EB5C6]/10 border border-[#0EB5C6]/30 flex items-center justify-center mb-3">
+          <svg className="w-5 h-5 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
@@ -59,7 +56,7 @@ function DemoLocked({ label }: { label: string }) {
         <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mb-4 max-w-xs">Disponible en tu reporte personalizado</p>
         <Link
           to="/login"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#7C6FF7] text-white text-xs font-bold rounded-xl hover:bg-[#6B5EE6] transition-all"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0EB5C6] text-white text-xs font-bold rounded-xl hover:bg-[#6B5EE6] transition-all"
         >
           Validar mi idea gratis →
         </Link>
@@ -81,15 +78,15 @@ export function Demo() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Logo/>
-            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
+            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
           </Link>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-xs font-semibold text-[#7C6FF7] dark:text-[#A78BFA] px-3 py-1.5 bg-[#7C6FF7]/10 rounded-full border border-[#7C6FF7]/20">
+            <span className="hidden sm:inline text-xs font-semibold text-[#0EB5C6] dark:text-[#38D5E3] px-3 py-1.5 bg-[#0EB5C6]/10 rounded-full border border-[#0EB5C6]/20">
               Demo — FreshBox
             </span>
             <ThemeToggle/>
             <Link to="/login"
-              className="text-sm font-semibold bg-[#7C6FF7] text-white px-4 py-2.5 rounded-xl hover:bg-[#6B5EE6] transition-all shadow-lg shadow-[#7C6FF7]/25">
+              className="text-sm font-semibold bg-[#0EB5C6] text-white px-4 py-2.5 rounded-xl hover:bg-[#6B5EE6] transition-all shadow-lg shadow-[#0EB5C6]/25">
               Validar mi idea →
             </Link>
           </div>
@@ -99,12 +96,12 @@ export function Demo() {
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
 
         {/* Demo banner */}
-        <div className="mb-6 flex items-center gap-3 px-4 py-3 bg-[#7C6FF7]/8 border border-[#7C6FF7]/20 rounded-xl">
-          <span className="w-2 h-2 rounded-full bg-[#7C6FF7] animate-pulse shrink-0" />
-          <p className="text-xs text-[#A78BFA] font-medium flex-1">
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 bg-[#0EB5C6]/8 border border-[#0EB5C6]/20 rounded-xl">
+          <span className="w-2 h-2 rounded-full bg-[#0EB5C6] animate-pulse shrink-0" />
+          <p className="text-xs text-[#38D5E3] font-medium flex-1">
             Estás viendo un <strong>reporte de demostración</strong>. Los datos son de la idea "FreshBox" generada por IA para mostrarte qué obtendrías.
           </p>
-          <Link to="/login" className="text-xs font-bold text-[#7C6FF7] hover:underline whitespace-nowrap">
+          <Link to="/login" className="text-xs font-bold text-[#0EB5C6] hover:underline whitespace-nowrap">
             Crear el mío →
           </Link>
         </div>
@@ -113,7 +110,7 @@ export function Demo() {
         <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden mb-4 shadow-sm dark:shadow-none">
           <div className="px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b border-white/[0.06]">
             <div className="flex items-center gap-4 flex-1">
-              <div className="w-12 h-12 rounded-xl bg-[#7C6FF7] flex items-center justify-center text-white font-black text-lg font-heading shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-[#0EB5C6] flex items-center justify-center text-white font-black text-lg font-heading shrink-0">
                 {EXAMPLE_SCORE}
               </div>
               <div>
@@ -141,7 +138,7 @@ export function Demo() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2.5 text-xs font-medium rounded-t-lg whitespace-nowrap transition-all duration-150
                   ${activeTab === tab
-                    ? 'text-[#7C6FF7] dark:text-[#A78BFA] border-b-2 border-[#7C6FF7] bg-[#7C6FF7]/5'
+                    ? 'text-[#0EB5C6] dark:text-[#38D5E3] border-b-2 border-[#0EB5C6] bg-[#0EB5C6]/5'
                     : 'text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8]'}`}
               >
                 {tab}
@@ -163,8 +160,8 @@ export function Demo() {
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="bg-[#7C6FF7]/8 border border-[#7C6FF7]/15 rounded-xl p-4">
-                    <p className="text-[11px] font-bold text-[#A78BFA] uppercase tracking-wide mb-1.5">Segmento objetivo</p>
+                  <div className="bg-[#0EB5C6]/8 border border-[#0EB5C6]/15 rounded-xl p-4">
+                    <p className="text-[11px] font-bold text-[#38D5E3] uppercase tracking-wide mb-1.5">Segmento objetivo</p>
                     <p className="text-sm text-gray-900 dark:text-[#F0EFF8]">{EXAMPLE_CUSTOMER.customer_segment}</p>
                   </div>
                   <div className="bg-[#F7C56C]/8 border border-[#F7C56C]/15 rounded-xl p-4">
@@ -178,7 +175,7 @@ export function Demo() {
                   <div className="space-y-3">
                     {EXAMPLE_QUESTIONS_ANSWERS.map((qa, i) => (
                       <div key={i} className="bg-white dark:bg-[#0A0A0F] border border-white/[0.06] rounded-xl p-4">
-                        <p className="text-xs font-semibold text-[#7C6FF7] mb-1.5">{qa.question}</p>
+                        <p className="text-xs font-semibold text-[#0EB5C6] mb-1.5">{qa.question}</p>
                         <p className="text-sm text-gray-700 dark:text-[#C4C4D4]">{qa.answer}</p>
                         {qa.ai_followup && (
                           <p className="text-xs text-gray-400 italic mt-2 pt-2 border-t border-white/[0.06]">
@@ -263,8 +260,8 @@ export function Demo() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-8 rounded-2xl bg-gradient-to-br from-[#7C6FF7]/10 to-[#F7C56C]/8 border border-[#7C6FF7]/20 p-8 text-center">
-          <p className="text-xs font-bold text-[#A78BFA] uppercase tracking-widest mb-2">¿Lista tu idea?</p>
+        <div className="mt-8 rounded-2xl bg-gradient-to-br from-[#0EB5C6]/10 to-[#F7C56C]/8 border border-[#0EB5C6]/20 p-8 text-center">
+          <p className="text-xs font-bold text-[#38D5E3] uppercase tracking-widest mb-2">¿Lista tu idea?</p>
           <h2 className="font-heading text-2xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-3">
             Obtén tu propio reporte en 10 minutos
           </h2>
@@ -274,7 +271,7 @@ export function Demo() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/login"
-              className="px-6 py-3 bg-[#7C6FF7] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] transition-all shadow-lg shadow-[#7C6FF7]/25 text-sm"
+              className="px-6 py-3 bg-[#0EB5C6] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] transition-all shadow-lg shadow-[#0EB5C6]/25 text-sm"
             >
               Validar mi idea gratis →
             </Link>

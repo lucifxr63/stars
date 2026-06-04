@@ -1,4 +1,4 @@
-interface Props {
+﻿interface Props {
   page:    number;
   pages:   number;
   total:   number;
@@ -32,7 +32,7 @@ export function Pagination({ page, pages, total, onPage, pageSize = 20 }: Props)
             onClick={() => onPage(p)}
             className={`px-2.5 py-1.5 rounded-lg border transition ${
               p === page
-                ? 'border-[#7C6FF7] bg-[#7C6FF7]/10 text-[#A78BFA] font-semibold'
+                ? 'border-[#0EB5C6] bg-[#0EB5C6]/10 text-[#38D5E3] font-semibold'
                 : 'border-white/10 hover:bg-white/5'
             }`}
           >

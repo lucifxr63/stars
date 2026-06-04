@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -8,13 +8,10 @@ type Tier = 'free' | 'basic' | 'pro' | 'premium';
 
 function Logo({ className = 'w-6 h-8' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
-      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
     </svg>
   );
 }
@@ -69,7 +66,7 @@ const PLANS = [
     price: '$20.000',
     period: ' CLP/mes',
     description: 'Para founders que deciden con datos.',
-    color: '#7C6FF7',
+    color: '#0EB5C6',
     highlight: true,
     features: [
       'Ideas y pivotes ilimitados',
@@ -140,12 +137,12 @@ export function Pricing() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Logo/>
-            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
+            <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle/>
             <Link to="/login"
-              className="text-sm font-semibold bg-[#7C6FF7] text-white px-4 py-2.5 rounded-xl hover:bg-[#6B5EE6] transition-all shadow-md shadow-[#7C6FF7]/20">
+              className="text-sm font-semibold bg-[#0EB5C6] text-white px-4 py-2.5 rounded-xl hover:bg-[#6B5EE6] transition-all shadow-md shadow-[#0EB5C6]/20">
               Iniciar sesión
             </Link>
           </div>
@@ -156,13 +153,13 @@ export function Pricing() {
 
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#7C6FF7]/10 border border-[#7C6FF7]/20 rounded-full text-[11px] font-semibold text-[#7C6FF7] dark:text-[#A78BFA] mb-5 uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] animate-pulse"/>
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-5 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] animate-pulse"/>
             Planes y precios
           </span>
           <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
             Valida más rápido.<br className="hidden sm:block"/>
-            <span className="bg-gradient-to-r from-[#7C6FF7] to-[#A78BFA] bg-clip-text text-transparent"> Construye con confianza.</span>
+            <span className="bg-gradient-to-r from-[#0EB5C6] to-[#38D5E3] bg-clip-text text-transparent"> Construye con confianza.</span>
           </h1>
           <p className="text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto text-base">
             Empieza gratis. Pásate a Pro o Premium cuando necesites datos duros para tomar decisiones reales.
@@ -176,12 +173,12 @@ export function Pricing() {
             <div key={plan.tier}
               className={`relative rounded-3xl border flex flex-col transition-all duration-200
                 ${plan.highlight
-                  ? 'border-[#7C6FF7] bg-white dark:bg-[#12121A] shadow-2xl shadow-[#7C6FF7]/12 md:scale-[1.02] md:-my-1'
+                  ? 'border-[#0EB5C6] bg-white dark:bg-[#12121A] shadow-2xl shadow-[#0EB5C6]/12 md:scale-[1.02] md:-my-1'
                   : 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#12121A] hover:border-gray-300 dark:hover:border-white/10 hover:shadow-lg dark:hover:shadow-none'}`}>
               {plan.highlight && (
                 <>
-                  <div className="absolute top-0 right-0 bg-[#7C6FF7] text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl rounded-tr-3xl tracking-wide z-10">POPULAR</div>
-                  <div className="absolute -top-8 -right-8 w-32 h-32 bg-[#7C6FF7]/8 blur-2xl rounded-full pointer-events-none"/>
+                  <div className="absolute top-0 right-0 bg-[#0EB5C6] text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl rounded-tr-3xl tracking-wide z-10">POPULAR</div>
+                  <div className="absolute -top-8 -right-8 w-32 h-32 bg-[#0EB5C6]/8 blur-2xl rounded-full pointer-events-none"/>
                 </>
               )}
 
@@ -198,7 +195,7 @@ export function Pricing() {
                 <ul className="space-y-3">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-[#C4C4D4]">
-                      <CheckIcon color={plan.highlight ? '#7C6FF7' : plan.color}/>
+                      <CheckIcon color={plan.highlight ? '#0EB5C6' : plan.color}/>
                       {f}
                     </li>
                   ))}
@@ -209,7 +206,7 @@ export function Pricing() {
                 <button onClick={() => handleCheckout(plan.tier)} disabled={loading !== null}
                   className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-150 disabled:opacity-60 cursor-pointer"
                   style={plan.highlight
-                    ? { background: '#7C6FF7', color: '#fff' }
+                    ? { background: '#0EB5C6', color: '#fff' }
                     : { background: 'transparent', color: plan.color, border: `1.5px solid ${plan.color}` }
                   }>
                   {loading === plan.tier ? 'Redirigiendo...' : plan.cta}
@@ -223,7 +220,7 @@ export function Pricing() {
         <div className="mt-10 text-center">
           <p className="text-sm text-gray-500 dark:text-[#8B8AA0]">
             ¿Quieres explorar primero?{' '}
-            <Link to="/login" className="text-[#7C6FF7] dark:text-[#A78BFA] hover:underline font-semibold">
+            <Link to="/login" className="text-[#0EB5C6] dark:text-[#38D5E3] hover:underline font-semibold">
               El plan Free es siempre gratis
             </Link>
             {' '}— score básico + feedback IA, sin tarjeta.
@@ -238,8 +235,8 @@ export function Pricing() {
             { label: 'Precios en CLP',         sub: 'Sin conversión ni sorpresas' },
           ].map((t) => (
             <div key={t.label} className="flex items-center gap-3 p-4 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] shadow-sm dark:shadow-none">
-              <div className="w-8 h-8 rounded-xl bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-[#7C6FF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <div className="w-8 h-8 rounded-xl bg-[#0EB5C6]/10 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
                 </svg>
               </div>
@@ -253,7 +250,7 @@ export function Pricing() {
 
         <p className="text-center text-xs text-gray-400 dark:text-[#4A495E] mt-10">
           ¿Tienes preguntas?{' '}
-          <a href="mailto:contacto@validus.scouttech.lat" className="text-[#7C6FF7] hover:underline">
+          <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
             contacto@validus.scouttech.lat
           </a>
         </p>

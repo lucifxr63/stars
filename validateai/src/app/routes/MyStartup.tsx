@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { INDUSTRIES } from '@/utils/constants';
@@ -18,13 +18,13 @@ interface StartupForm {
 const inputCls =
   'w-full px-4 py-3 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm ' +
   'text-gray-900 dark:text-[#F0EFF8] bg-transparent placeholder:text-gray-400 ' +
-  'dark:placeholder:text-[#4A495E] focus:border-[#7C6FF7] focus:ring-2 ' +
-  'focus:ring-[#7C6FF7]/20 outline-none transition-all';
+  'dark:placeholder:text-[#4A495E] focus:border-[#0EB5C6] focus:ring-2 ' +
+  'focus:ring-[#0EB5C6]/20 outline-none transition-all';
 
 const selectCls =
   'w-full px-4 py-3 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm ' +
-  'text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#12121A] focus:border-[#7C6FF7] ' +
-  'focus:ring-2 focus:ring-[#7C6FF7]/20 outline-none transition-all';
+  'text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#12121A] focus:border-[#0EB5C6] ' +
+  'focus:ring-2 focus:ring-[#0EB5C6]/20 outline-none transition-all';
 
 const labelCls = 'block text-xs font-medium text-gray-600 dark:text-[#8B8AA0] mb-1.5';
 
@@ -124,7 +124,7 @@ export function MyStartup() {
         {/* Perfil del founder */}
         <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-6">
           <h2 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-md bg-[#7C6FF7]/10 flex items-center justify-center text-[10px]">👤</span>
+            <span className="w-5 h-5 rounded-md bg-[#0EB5C6]/10 flex items-center justify-center text-[10px]">👤</span>
             Perfil del Founder
           </h2>
           <div className="space-y-4">
@@ -151,7 +151,7 @@ export function MyStartup() {
         {/* Datos de la startup */}
         <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-6">
           <h2 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-md bg-[#7C6FF7]/10 flex items-center justify-center text-[10px]">🚀</span>
+            <span className="w-5 h-5 rounded-md bg-[#0EB5C6]/10 flex items-center justify-center text-[10px]">🚀</span>
             Datos de la Startup
           </h2>
           <div className="space-y-4">
@@ -197,7 +197,7 @@ export function MyStartup() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 bg-[#7C6FF7] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:cursor-not-allowed text-sm shadow-lg shadow-[#7C6FF7]/20"
+          className="w-full py-3 bg-[#0EB5C6] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:cursor-not-allowed text-sm shadow-lg shadow-[#0EB5C6]/20"
         >
           {saving ? (
             <span className="flex items-center justify-center gap-2">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import type { useFigmaIntegration } from '@/hooks/useFigmaIntegration';
 import { NavigationCanvas } from './NavigationCanvas';
 
@@ -38,16 +38,16 @@ export function FigmaPanel({ figma }: Props) {
   // ── Not connected ──────────────────────────────────────────────────────────
   if (!figma.status?.connected) {
     return (
-      <div className="rounded-2xl border border-dashed border-[#7C6FF7]/30 bg-[#7C6FF7]/5 p-10 flex flex-col items-center gap-5 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-[#7C6FF7]/10 border-2 border-[#7C6FF7]/20 flex items-center justify-center">
-          <FigmaIcon className="w-7 h-7 text-[#7C6FF7]" />
+      <div className="rounded-2xl border border-dashed border-[#0EB5C6]/30 bg-[#0EB5C6]/5 p-10 flex flex-col items-center gap-5 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-[#0EB5C6]/10 border-2 border-[#0EB5C6]/20 flex items-center justify-center">
+          <FigmaIcon className="w-7 h-7 text-[#0EB5C6]" />
         </div>
         <div>
           <h3 className="text-base font-bold text-gray-800 dark:text-[#F0EFF8] mb-1">
             Vincula tu prototipo de Figma
           </h3>
           <p className="text-sm text-gray-400 dark:text-[#8B8AA0] max-w-sm leading-relaxed">
-            Conecta tu cuenta de Figma para que Validus analice la arquitectura
+            Conecta tu cuenta de Figma para que Validum analice la arquitectura
             de navegación de tu producto y detecte fricciones antes de escribir código.
           </p>
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0]/60 mt-2">
@@ -57,7 +57,7 @@ export function FigmaPanel({ figma }: Props) {
         <button
           onClick={handleConnect}
           disabled={figma.loading}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7C6FF7] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#7C6FF7]/25 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition-colors shadow-lg shadow-[#0EB5C6]/25 disabled:opacity-50"
         >
           {figma.loading ? (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -94,21 +94,21 @@ export function FigmaPanel({ figma }: Props) {
 
         {!showFiles ? (
           <div className="rounded-2xl border border-[#2A2940] bg-[#13121F] p-8 flex flex-col items-center gap-4 text-center">
-            <div className="w-12 h-12 rounded-xl bg-[#7C6FF7]/10 flex items-center justify-center">
-              <GridIcon className="w-6 h-6 text-[#7C6FF7]" />
+            <div className="w-12 h-12 rounded-xl bg-[#0EB5C6]/10 flex items-center justify-center">
+              <GridIcon className="w-6 h-6 text-[#0EB5C6]" />
             </div>
             <div>
               <h3 className="text-base font-semibold text-[#F0EFF8] mb-1">
                 Selecciona un archivo de Figma
               </h3>
               <p className="text-sm text-[#8B8AA0] max-w-xs">
-                Validus extraerá las pantallas y flujos de navegación para analizarlos con IA.
+                Validum extraerá las pantallas y flujos de navegación para analizarlos con IA.
               </p>
             </div>
             <button
               onClick={handleShowFiles}
               disabled={figma.loading}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#7C6FF7] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0EB5C6] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors disabled:opacity-50"
             >
               {figma.loading
                 ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -132,7 +132,7 @@ export function FigmaPanel({ figma }: Props) {
                     <button
                       onClick={() => handleScan(file)}
                       disabled={figma.scanning}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#7C6FF7]/10 transition-colors text-left group disabled:opacity-50"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#0EB5C6]/10 transition-colors text-left group disabled:opacity-50"
                     >
                       {file.thumbnail_url ? (
                         <img
@@ -141,19 +141,19 @@ export function FigmaPanel({ figma }: Props) {
                           className="w-10 h-10 rounded-lg object-cover shrink-0 border border-[#2A2940]"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-[#7C6FF7]/10 flex items-center justify-center shrink-0">
-                          <FigmaIcon className="w-5 h-5 text-[#7C6FF7]" />
+                        <div className="w-10 h-10 rounded-lg bg-[#0EB5C6]/10 flex items-center justify-center shrink-0">
+                          <FigmaIcon className="w-5 h-5 text-[#0EB5C6]" />
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-[#F0EFF8] truncate group-hover:text-[#7C6FF7] transition-colors">
+                        <p className="text-sm font-medium text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
                           {file.name}
                         </p>
                         <p className="text-xs text-[#8B8AA0]">
                           {new Date(file.last_modified).toLocaleDateString('es-CL')}
                         </p>
                       </div>
-                      <span className="ml-auto text-[#7C6FF7] text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <span className="ml-auto text-[#0EB5C6] text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                         Analizar →
                       </span>
                     </button>
@@ -165,8 +165,8 @@ export function FigmaPanel({ figma }: Props) {
         )}
 
         {figma.scanning && (
-          <div className="rounded-xl bg-[#7C6FF7]/5 border border-[#7C6FF7]/20 p-4 flex items-center gap-3">
-            <span className="w-5 h-5 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin shrink-0" />
+          <div className="rounded-xl bg-[#0EB5C6]/5 border border-[#0EB5C6]/20 p-4 flex items-center gap-3">
+            <span className="w-5 h-5 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin shrink-0" />
             <div>
               <p className="text-sm font-medium text-[#F0EFF8]">Analizando prototipo...</p>
               <p className="text-xs text-[#8B8AA0]">
@@ -198,7 +198,7 @@ export function FigmaPanel({ figma }: Props) {
           <button
             onClick={() => selectedFile && figma.scanFile(selectedFile.key)}
             disabled={figma.scanning || !selectedFile}
-            className="text-xs text-[#7C6FF7] hover:text-[#6B5EE6] font-semibold transition-colors disabled:opacity-40"
+            className="text-xs text-[#0EB5C6] hover:text-[#6B5EE6] font-semibold transition-colors disabled:opacity-40"
           >
             {figma.scanning ? 'Sincronizando...' : '↺ Sincronizar'}
           </button>
@@ -262,7 +262,7 @@ function AIInsightsBar({ insights }: { insights: Record<string, unknown> }) {
               <span className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${
                 item.type === 'error' ? 'bg-red-400' :
                 item.type === 'warning' ? 'bg-amber-400' :
-                'bg-[#7C6FF7]'
+                'bg-[#0EB5C6]'
               }`} />
               <div>
                 <span className="text-xs font-medium text-[#F0EFF8]">{item.title}: </span>
@@ -273,7 +273,7 @@ function AIInsightsBar({ insights }: { insights: Record<string, unknown> }) {
         </ul>
       )}
       {typeof insights.recommendation === 'string' && (
-        <p className="text-xs text-[#7C6FF7] font-medium border-t border-[#2A2940] pt-3">
+        <p className="text-xs text-[#0EB5C6] font-medium border-t border-[#2A2940] pt-3">
           Recomendación: {insights.recommendation}
         </p>
       )}

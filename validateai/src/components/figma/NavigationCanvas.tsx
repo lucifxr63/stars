@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+﻿import { useCallback, useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -20,9 +20,9 @@ interface Props {
 
 function ScreenNode({ data }: { data: { label: string } }) {
   return (
-    <div className="px-3 py-2 rounded-xl border border-[#7C6FF7]/40 bg-[#13121F] shadow-lg shadow-black/30 min-w-[120px] max-w-[180px]">
+    <div className="px-3 py-2 rounded-xl border border-[#0EB5C6]/40 bg-[#13121F] shadow-lg shadow-black/30 min-w-[120px] max-w-[180px]">
       <div className="flex items-center gap-1.5 mb-0.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#7C6FF7] shrink-0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] shrink-0" />
         <p className="text-xs font-semibold text-[#F0EFF8] truncate leading-tight">
           {data.label}
         </p>
@@ -36,7 +36,7 @@ const nodeTypes: NodeTypes = {
 };
 
 const EDGE_COLORS: Record<string, string> = {
-  ON_CLICK:    '#7C6FF7',
+  ON_CLICK:    '#0EB5C6',
   AFTER_DELAY: '#FBBF24',
   ON_HOVER:    '#34D399',
   default:     '#4B4A6A',
@@ -112,7 +112,7 @@ export function NavigationCanvas({ nodes: rawNodes, edges: rawEdges }: Props) {
         />
         <MiniMap
           style={{ background: '#13121F', border: '1px solid #2A2940', borderRadius: 8 }}
-          nodeColor="#7C6FF7"
+          nodeColor="#0EB5C6"
           maskColor="rgba(13,12,26,0.7)"
         />
       </ReactFlow>

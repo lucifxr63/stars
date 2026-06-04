@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 interface UsageGaugeProps {
@@ -115,9 +115,9 @@ export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
       {showUpsell && (
         <Link
           to="/pricing"
-          className="mt-0.5 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#7C6FF7] text-white
+          className="mt-0.5 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#0EB5C6] text-white
                      hover:bg-[#6B5FE6] active:scale-[0.97] transition-all
-                     shadow-sm shadow-[#7C6FF7]/30 whitespace-nowrap"
+                     shadow-sm shadow-[#0EB5C6]/30 whitespace-nowrap"
         >
           {pct >= 1 ? 'Desbloquear más →' : 'Mejorar plan →'}
         </Link>

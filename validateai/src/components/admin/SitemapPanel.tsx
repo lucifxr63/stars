@@ -28,7 +28,7 @@ interface PageMeta {
 const TYPE_STYLES: Record<PageType, { bg: string; border: string; badge: string; dot: string }> = {
   public:    { bg: '#0D1F1A', border: '#34D399', badge: 'bg-emerald-500/10 text-emerald-400', dot: '#34D399' },
   auth:      { bg: '#1A1A0D', border: '#FBBF24', badge: 'bg-amber-500/10 text-amber-400',    dot: '#FBBF24' },
-  protected: { bg: '#0F0F1F', border: '#7C6FF7', badge: 'bg-[#7C6FF7]/10 text-[#7C6FF7]',   dot: '#7C6FF7' },
+  protected: { bg: '#0F0F1F', border: '#0EB5C6', badge: 'bg-[#0EB5C6]/10 text-[#0EB5C6]',   dot: '#0EB5C6' },
   admin:     { bg: '#1F0D0D', border: '#F87171', badge: 'bg-red-500/10 text-red-400',         dot: '#F87171' },
   system:    { bg: '#111118', border: '#4B4A6A', badge: 'bg-gray-700/30 text-gray-400',       dot: '#4B4A6A' },
 };
@@ -155,9 +155,9 @@ export function SitemapPanel() {
       label: e.label,
       animated: e.dashed,
       type: 'smoothstep',
-      markerEnd: { type: MarkerType.ArrowClosed, color: e.color ?? '#7C6FF7' },
+      markerEnd: { type: MarkerType.ArrowClosed, color: e.color ?? '#0EB5C6' },
       style: {
-        stroke: e.color ?? '#7C6FF7',
+        stroke: e.color ?? '#0EB5C6',
         strokeWidth: 1.5,
         strokeDasharray: e.dashed ? '5 4' : undefined,
       },
@@ -174,7 +174,7 @@ export function SitemapPanel() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8]">
-            Ãrbol de NavegaciÃ³n â€” Validus
+            Ãrbol de NavegaciÃ³n â€” Validum
           </h2>
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0] mt-0.5">
             {PAGES.length} rutas Â· {EDGES_DEF.length} transiciones Â· validus.scouttech.lat
@@ -190,7 +190,7 @@ export function SitemapPanel() {
             </div>
           ))}
           <div className="flex items-center gap-1.5">
-            <span className="w-6 border-t border-dashed border-[#7C6FF7]" />
+            <span className="w-6 border-t border-dashed border-[#0EB5C6]" />
             <span className="text-xs text-[#8B8AA0]">Flujo opcional</span>
           </div>
         </div>
@@ -200,7 +200,7 @@ export function SitemapPanel() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Rutas pÃºblicas',      count: PAGES.filter(p => p.type === 'public').length,    color: '#34D399' },
-          { label: 'Rutas protegidas',    count: PAGES.filter(p => p.type === 'protected').length, color: '#7C6FF7' },
+          { label: 'Rutas protegidas',    count: PAGES.filter(p => p.type === 'protected').length, color: '#0EB5C6' },
           { label: 'Flujos de auth',      count: PAGES.filter(p => p.type === 'auth' || p.type === 'system').length, color: '#FBBF24' },
           { label: 'Transiciones totales', count: EDGES_DEF.length,                                color: '#F0EFF8' },
         ].map((stat) => (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -6,13 +6,10 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function Logo({ className = 'w-7 h-9' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
-      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
     </svg>
   );
 }
@@ -84,14 +81,14 @@ export function Login() {
 
       {/* Panel izquierdo — branding (desktop) */}
       <div className="hidden lg:flex lg:w-[48%] bg-white dark:bg-[#12121A] border-r border-gray-100 dark:border-white/[0.06] relative overflow-hidden flex-col items-center justify-center p-12">
-        <div className="absolute top-16 left-10 w-72 h-72 bg-[#7C6FF7]/8 rounded-full blur-3xl pointer-events-none"/>
+        <div className="absolute top-16 left-10 w-72 h-72 bg-[#0EB5C6]/8 rounded-full blur-3xl pointer-events-none"/>
         <div className="absolute bottom-16 right-10 w-56 h-56 bg-[#F7C56C]/6 rounded-full blur-3xl pointer-events-none"/>
         <div className="absolute inset-0 grid-pattern opacity-40"/>
 
         <div className="relative z-10 text-center max-w-sm">
           <div className="flex items-center justify-center gap-2.5 mb-10">
             <Logo className="w-8 h-10"/>
-            <span className="font-heading text-lg font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
+            <span className="font-heading text-lg font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
           </div>
 
           {/* Demo card */}
@@ -101,14 +98,14 @@ export function Login() {
                 <p className="text-gray-900 dark:text-[#F0EFF8] font-semibold text-sm">MediConnect</p>
                 <p className="text-[#34D399] text-xs mt-0.5">Validación completada</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#7C6FF7] flex flex-col items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-[#0EB5C6] flex flex-col items-center justify-center shrink-0">
                 <span className="text-white font-black text-base font-heading leading-none">82</span>
                 <span className="text-[#C4B5FD] text-[10px]">pts</span>
               </div>
             </div>
             <div className="space-y-2.5">
               {[
-                { label: 'Problema validado', pct: 88, color: '#7C6FF7' },
+                { label: 'Problema validado', pct: 88, color: '#0EB5C6' },
                 { label: 'Mercado objetivo',  pct: 75, color: '#34D399' },
                 { label: 'Plan de MVP',        pct: 92, color: '#F7C56C' },
               ].map((item) => (
@@ -138,7 +135,7 @@ export function Login() {
         <div className="flex items-center justify-between px-4 py-4 lg:justify-end lg:px-8">
           <Link to="/" className="flex items-center gap-2 lg:hidden">
             <Logo className="w-6 h-7"/>
-            <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
+            <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validum</span>
           </Link>
           <ThemeToggle/>
         </div>
@@ -185,7 +182,7 @@ export function Login() {
                   className="w-full px-4 py-3 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm
                              text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#12121A]
                              placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
-                             focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20
+                             focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20
                              hover:border-gray-300 dark:hover:border-white/15 transition-all outline-none"/>
               </div>
               <div>
@@ -196,13 +193,13 @@ export function Login() {
                   className="w-full px-4 py-3 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm
                              text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#12121A]
                              placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
-                             focus:border-[#7C6FF7] focus:ring-2 focus:ring-[#7C6FF7]/20
+                             focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20
                              hover:border-gray-300 dark:hover:border-white/15 transition-all outline-none"/>
               </div>
               <button type="submit" disabled={loading}
-                className="w-full py-3 bg-[#7C6FF7] text-white font-semibold rounded-xl
+                className="w-full py-3 bg-[#0EB5C6] text-white font-semibold rounded-xl
                            hover:bg-[#6B5EE6] active:scale-[0.98] transition-all duration-150
-                           shadow-lg shadow-[#7C6FF7]/25 disabled:opacity-40 disabled:cursor-not-allowed mt-1 text-sm cursor-pointer">
+                           shadow-lg shadow-[#0EB5C6]/25 disabled:opacity-40 disabled:cursor-not-allowed mt-1 text-sm cursor-pointer">
                 {loading
                   ? <span className="flex items-center justify-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Cargando...</span>
                   : isSignUp ? 'Crear cuenta' : 'Ingresar'
@@ -211,7 +208,7 @@ export function Login() {
             </form>
 
             <button onClick={() => setIsSignUp(!isSignUp)}
-              className="w-full text-center text-sm text-gray-500 dark:text-[#8B8AA0] hover:text-[#7C6FF7] mt-5 transition-colors font-medium cursor-pointer">
+              className="w-full text-center text-sm text-gray-500 dark:text-[#8B8AA0] hover:text-[#0EB5C6] mt-5 transition-colors font-medium cursor-pointer">
               {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate gratis'}
             </button>
 

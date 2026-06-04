@@ -158,7 +158,7 @@ function RadarChart({ sb }: { sb: ScoreBreakdown }) {
 function Footer({ pageLabel }: { pageLabel: string }) {
   return (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>Validus Â· Investment Dossier</Text>
+      <Text style={styles.footerText}>Validum Â· Investment Dossier</Text>
       <Text style={styles.footerText}>{pageLabel}</Text>
     </View>
   );
@@ -208,7 +208,7 @@ function CoverPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.coverPage}>
       {/* Hero banner */}
       <View style={styles.coverHero}>
-        <Text style={styles.coverBadge}>Investment Dossier Â· Validus</Text>
+        <Text style={styles.coverBadge}>Investment Dossier Â· Validum</Text>
 
         <Text style={styles.coverTitle}>{data.idea_name ?? 'Startup Report'}</Text>
 
@@ -274,14 +274,14 @@ function CoverPage({ data }: { data: PDFData }) {
         </View>
       </View>
 
-      {/* "Audited by Validus Pro" stamp â€” PLG watermark */}
+      {/* "Audited by Validum Pro" stamp â€” PLG watermark */}
       {data.due_diligence && (
         <View style={{
           marginHorizontal: 40,
           marginTop: 12,
           paddingVertical: 6,
           paddingHorizontal: 12,
-          backgroundColor: '#7C6FF7',
+          backgroundColor: '#0EB5C6',
           borderRadius: 6,
           flexDirection: 'row',
           alignItems: 'center',
@@ -663,7 +663,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
   return (
     <Page size="A4" style={styles.page}>
       {/* Header */}
-      <View style={{ backgroundColor: '#7C6FF7', padding: 20, marginBottom: 24 }}>
+      <View style={{ backgroundColor: '#0EB5C6', padding: 20, marginBottom: 24 }}>
         <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, marginBottom: 4 }}>
           DUE DILIGENCE SCORE
         </Text>
@@ -733,7 +733,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
         )}
 
         {/* Stamp */}
-        <View style={{ marginTop: 20, padding: 8, backgroundColor: '#7C6FF7', borderRadius: 4, alignItems: 'center' }}>
+        <View style={{ marginTop: 20, padding: 8, backgroundColor: '#0EB5C6', borderRadius: 4, alignItems: 'center' }}>
           <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#ffffff', letterSpacing: 0.5 }}>
             âœ“ AUDITED BY VALIDATEAI PRO Â· validus.scouttech.lat
           </Text>
@@ -749,7 +749,7 @@ export function InvestmentDossier({ data }: { data: PDFData }) {
   return (
     <Document
       title={data.idea_name ?? 'Investment Dossier'}
-      author="Validus"
+      author="Validum"
       subject="Startup Validation Report"
       keywords="startup, investment, validation"
     >

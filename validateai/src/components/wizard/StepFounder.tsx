@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+﻿import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepFounderSchema, type StepFounder as StepFounderData } from '@/types/validation';
@@ -48,15 +48,15 @@ function GamificationBanner() {
 
   return (
     <div className={`transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-      <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#7C6FF7]/8 border border-[#7C6FF7]/20 mb-6">
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#0EB5C6]/8 border border-[#0EB5C6]/20 mb-6">
         <span className="text-lg shrink-0" aria-hidden>✦</span>
-        <p className="text-sm text-[#7C6FF7] dark:text-[#A78BFA] font-medium leading-relaxed">
+        <p className="text-sm text-[#0EB5C6] dark:text-[#38D5E3] font-medium leading-relaxed">
           {msg}
         </p>
         <button
           onClick={() => setVisible(false)}
           aria-label="Cerrar"
-          className="ml-auto shrink-0 text-[#7C6FF7]/40 hover:text-[#7C6FF7] transition-colors"
+          className="ml-auto shrink-0 text-[#0EB5C6]/40 hover:text-[#0EB5C6] transition-colors"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

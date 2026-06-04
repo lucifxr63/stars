@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, UserCheck, Clock, HelpCircle, AlertTriangle } from 'lucide-react';
+﻿import { CheckCircle2, XCircle, UserCheck, Clock, HelpCircle, AlertTriangle } from 'lucide-react';
 import type { FounderFit, MarketSignals } from '@/types/validation';
 import { EmptyStateAI } from '@/components/shared/EmptyStateAI';
 
@@ -96,7 +96,7 @@ export function VerdictFounderFit({
         <div className="flex flex-col items-center gap-2 py-3 text-center">
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
             Sin datos del fundador para evaluar. Conecta tu LinkedIn en la pestaña{' '}
-            <strong className="text-[#A78BFA]">Inversión</strong> para obtener un score real.
+            <strong className="text-[#38D5E3]">Inversión</strong> para obtener un score real.
           </p>
         </div>
       ) : (

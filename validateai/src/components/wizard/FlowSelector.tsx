@@ -1,4 +1,4 @@
-export interface FlowCopy {
+﻿export interface FlowCopy {
   quick: string;
   detailed: string;
 }
@@ -44,7 +44,7 @@ export function FlowSelector({ value, onChange, flowCopy }: FlowSelectorProps) {
             onClick={() => onChange(opt.id)}
             className={`p-4 rounded-xl border-2 text-left transition-all duration-200
               ${value === opt.id
-                ? 'border-[#7C6FF7] bg-[#7C6FF7]/10'
+                ? 'border-[#0EB5C6] bg-[#0EB5C6]/10'
                 : 'border-gray-200 dark:border-white/8 hover:border-white/20 bg-white dark:bg-white/5'
               }`}
           >
@@ -61,7 +61,7 @@ export function FlowSelector({ value, onChange, flowCopy }: FlowSelectorProps) {
             <ul className="space-y-1">
               {opt.bullets.map((b) => (
                 <li key={b} className="text-xs text-gray-500 dark:text-[#8B8AA0] flex items-center gap-1.5">
-                  <span className={value === opt.id ? 'text-[#7C6FF7]' : 'text-gray-500 dark:text-[#8B8AA0]'}>
+                  <span className={value === opt.id ? 'text-[#0EB5C6]' : 'text-gray-500 dark:text-[#8B8AA0]'}>
                     ✓
                   </span>
                   {b}

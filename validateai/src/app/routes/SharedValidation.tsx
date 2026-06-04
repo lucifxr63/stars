@@ -1,15 +1,12 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
 function Logo({ className = 'w-5 h-7' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 338 426" className={className} aria-label="Validus" role="img">
-      <path d="M111 187 A78 78 0 0 1 168 123" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M213 123 A78 78 0 0 1 271 187" fill="none" className="stroke-[#001431] dark:stroke-white" strokeWidth="10" strokeLinecap="butt"/>
-      <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z" className="fill-white dark:fill-[#0A0A0F]"/>
-      <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z" className="fill-[#001431] dark:fill-white"/>
-      <path d="M169 68 L193 257 L169 237 L156 254 Z" className="fill-[#ff2b23] dark:fill-[#7C6FF7]"/>
+    <svg viewBox="0 0 500 500" className={className} aria-label="Validum" role="img">
+      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
+      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
+      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
     </svg>
   );
 }
@@ -67,7 +64,7 @@ export function SharedValidation() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F7FF] dark:bg-[#0A0A0F] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -81,7 +78,7 @@ export function SharedValidation() {
           </svg>
         </div>
         <p className="font-bold text-gray-700 dark:text-[#C4C4D4]">Esta validación no existe o ya no está disponible.</p>
-        <Link to="/" className="text-sm text-[#7C6FF7] hover:underline font-medium">Ir a Validus →</Link>
+        <Link to="/" className="text-sm text-[#0EB5C6] hover:underline font-medium">Ir a Validum →</Link>
       </div>
     );
   }
@@ -102,7 +99,7 @@ export function SharedValidation() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Logo/>
-            <span className="font-heading font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">Validus</span>
+            <span className="font-heading font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">Validum</span>
           </Link>
           <span className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-gray-100 dark:bg-white/[0.05] px-2.5 py-1 rounded-full">Reporte compartido</span>
         </div>
@@ -115,7 +112,7 @@ export function SharedValidation() {
           <div className="flex flex-wrap gap-2 mt-2">
             {data.idea_industry && <span className="text-xs px-2.5 py-1 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-[#8B8AA0] rounded-full">{data.idea_industry}</span>}
             {data.target_country && <span className="text-xs px-2.5 py-1 bg-[#34D399]/10 text-[#34D399] rounded-full border border-[#34D399]/20">{data.target_country}</span>}
-            {data.business_model && <span className="text-xs px-2.5 py-1 bg-[#7C6FF7]/10 text-[#7C6FF7] dark:text-[#A78BFA] rounded-full border border-[#7C6FF7]/20 uppercase">{data.business_model}</span>}
+            {data.business_model && <span className="text-xs px-2.5 py-1 bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#38D5E3] rounded-full border border-[#0EB5C6]/20 uppercase">{data.business_model}</span>}
             {data.business_stage && <span className="text-xs px-2.5 py-1 bg-[#F7C56C]/10 text-[#F7C56C] rounded-full border border-[#F7C56C]/20">{data.business_stage}</span>}
           </div>
           {data.idea_description && (
@@ -201,7 +198,7 @@ export function SharedValidation() {
                       Instrumento sugerido: <span className="font-bold text-gray-700 dark:text-[#C4C4D4]">{instrLabels[fr.recommended_instrument] ?? fr.recommended_instrument}</span>
                     </p>
                     {fr.suggested_ticket_size && (
-                      <p className="text-xs font-bold text-[#7C6FF7]">
+                      <p className="text-xs font-bold text-[#0EB5C6]">
                         USD {fr.suggested_ticket_size.min.toLocaleString('en-US')} – {fr.suggested_ticket_size.max.toLocaleString('en-US')}
                       </p>
                     )}
@@ -253,7 +250,7 @@ export function SharedValidation() {
             <ol className="space-y-3">
               {summary.next_steps.map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#7C6FF7] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+                  <span className="w-6 h-6 rounded-full bg-[#0EB5C6] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
                     {i + 1}
                   </span>
                   <p className="text-sm text-gray-600 dark:text-[#8B8AA0] leading-relaxed">{step}</p>
@@ -308,9 +305,9 @@ export function SharedValidation() {
           <p className="text-xs text-gray-400">¿Quieres validar tu propia idea de negocio?</p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7C6FF7] text-white font-semibold rounded-2xl hover:bg-[#6B5EE6] transition text-sm shadow-md shadow-[#7C6FF7]/20"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0EB5C6] text-white font-semibold rounded-2xl hover:bg-[#6B5EE6] transition text-sm shadow-md shadow-[#0EB5C6]/20"
           >
-            Probar Validus gratis →
+            Probar Validum gratis →
           </Link>
         </div>
       </div>

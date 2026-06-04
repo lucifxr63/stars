@@ -1,4 +1,4 @@
-// Página pública de respuesta de encuesta — accesible sin autenticación
+﻿// Página pública de respuesta de encuesta — accesible sin autenticación
 // URL: /s/:slug
 // Implementa consentimiento explícito (Ley N° 21.719) y validación en tiempo real.
 
@@ -33,7 +33,7 @@ function FieldRenderer({
   onChange: (val: unknown) => void;
   error?: string;
 }) {
-  const baseInput = 'w-full text-sm bg-[#12121A] border text-[#F0EFF8] placeholder-white/20 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#7C6FF7] transition-colors';
+  const baseInput = 'w-full text-sm bg-[#12121A] border text-[#F0EFF8] placeholder-white/20 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#0EB5C6] transition-colors';
   const borderClass = error ? 'border-red-500/60' : 'border-white/10';
 
   switch (field.type as FieldType) {
@@ -70,7 +70,7 @@ function FieldRenderer({
                 value={opt}
                 checked={value === opt}
                 onChange={() => onChange(opt)}
-                className="accent-[#7C6FF7] w-4 h-4"
+                className="accent-[#0EB5C6] w-4 h-4"
               />
               <span className="text-sm text-[#C4C4D4] group-hover:text-[#F0EFF8] transition-colors">{opt}</span>
             </label>
@@ -91,7 +91,7 @@ function FieldRenderer({
                   if (e.target.checked) onChange([...selected, opt]);
                   else onChange(selected.filter(v => v !== opt));
                 }}
-                className="accent-[#7C6FF7] w-4 h-4"
+                className="accent-[#0EB5C6] w-4 h-4"
               />
               <span className="text-sm text-[#C4C4D4] group-hover:text-[#F0EFF8] transition-colors">{opt}</span>
             </label>
@@ -113,8 +113,8 @@ function FieldRenderer({
                 onClick={() => onChange(n)}
                 className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${
                   num === n
-                    ? 'bg-[#7C6FF7] text-white'
-                    : 'bg-white/5 border border-white/10 text-[#C4C4D4] hover:border-[#7C6FF7]/50'
+                    ? 'bg-[#0EB5C6] text-white'
+                    : 'bg-white/5 border border-white/10 text-[#C4C4D4] hover:border-[#0EB5C6]/50'
                 }`}
               >
                 {n}
@@ -247,7 +247,7 @@ export function SurveyRespond() {
   // ── Estados de la página ──────────────────────────────────
   if (loading) return (
     <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -281,7 +281,7 @@ export function SurveyRespond() {
       <div className="max-w-2xl mx-auto px-4 py-10">
         {/* Header del formulario */}
         <div className="mb-8">
-          <div className="w-10 h-1 bg-[#7C6FF7] rounded-full mb-4" />
+          <div className="w-10 h-1 bg-[#0EB5C6] rounded-full mb-4" />
           <h1 className="text-2xl font-bold mb-2">{form.title}</h1>
           {form.description && (
             <p className="text-sm text-[#C4C4D4]">{form.description}</p>
@@ -297,7 +297,7 @@ export function SurveyRespond() {
           {visibleFields.map((field, idx) => (
             <div key={field.id} className="bg-[#12121A] border border-white/5 rounded-2xl p-5">
               <label className="block mb-3">
-                <span className="text-xs font-semibold text-[#7C6FF7] mr-2">{idx + 1}.</span>
+                <span className="text-xs font-semibold text-[#0EB5C6] mr-2">{idx + 1}.</span>
                 <span className="text-sm font-medium text-[#F0EFF8]">{field.label}</span>
                 {field.required && <span className="text-red-400 ml-1 text-xs">*</span>}
               </label>
@@ -315,13 +315,13 @@ export function SurveyRespond() {
         </div>
 
         {/* Consentimiento — Ley 21.719 */}
-        <div className="bg-[#12121A] border border-[#7C6FF7]/20 rounded-2xl p-5 mb-6">
+        <div className="bg-[#12121A] border border-[#0EB5C6]/20 rounded-2xl p-5 mb-6">
           <label className="flex gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={consentGiven}
               onChange={e => setConsentGiven(e.target.checked)}
-              className="accent-[#7C6FF7] w-4 h-4 mt-0.5 shrink-0"
+              className="accent-[#0EB5C6] w-4 h-4 mt-0.5 shrink-0"
             />
             <span className="text-xs text-[#C4C4D4] leading-relaxed">
               {form.consent_text}
@@ -333,7 +333,7 @@ export function SurveyRespond() {
         <button
           onClick={handleSubmit}
           disabled={submitting || !consentGiven}
-          className="w-full bg-[#7C6FF7] hover:bg-[#6B5FE6] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-2xl text-sm transition-colors"
+          className="w-full bg-[#0EB5C6] hover:bg-[#6B5FE6] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-2xl text-sm transition-colors"
         >
           {submitting ? 'Enviando...' : 'Enviar respuestas'}
         </button>

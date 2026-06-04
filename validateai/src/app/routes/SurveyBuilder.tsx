@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -84,11 +84,11 @@ function FieldEditor({
     <div className="bg-[#1A1A28] border border-white/5 rounded-2xl p-4 space-y-3">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold text-[#7C6FF7] w-5 text-center">{index + 1}</span>
+        <span className="text-xs font-bold text-[#0EB5C6] w-5 text-center">{index + 1}</span>
         <select
           value={field.type}
           onChange={e => onChange({ ...newField(e.target.value as FieldType), id: field.id, label: field.label })}
-          className="text-xs bg-[#12121A] border border-white/10 text-[#C4C4D4] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#7C6FF7]"
+          className="text-xs bg-[#12121A] border border-white/10 text-[#C4C4D4] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#0EB5C6]"
         >
           {FIELD_TYPES.map(t => (
             <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
@@ -100,7 +100,7 @@ function FieldEditor({
             type="checkbox"
             checked={field.required}
             onChange={e => onChange({ ...field, required: e.target.checked })}
-            className="accent-[#7C6FF7]"
+            className="accent-[#0EB5C6]"
           />
           Obligatoria
         </label>
@@ -119,7 +119,7 @@ function FieldEditor({
           onChange={e => onChange({ ...field, label: e.target.value })}
           placeholder="Escribe la pregunta aquí..."
           rows={2}
-          className="w-full text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#7C6FF7]"
+          className="w-full text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#0EB5C6]"
         />
         <BiasAlert result={bias} />
         {!bias.hasBias && field.label.length > 10 && (
@@ -137,14 +137,14 @@ function FieldEditor({
                 value={opt}
                 onChange={e => updateOption(i, e.target.value)}
                 placeholder={`Opción ${i + 1}`}
-                className="flex-1 text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#7C6FF7]"
+                className="flex-1 text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#0EB5C6]"
               />
               {(field.options ?? []).length > 2 && (
                 <button onClick={() => removeOption(i)} className="text-red-400/50 hover:text-red-400 text-xs px-2">✕</button>
               )}
             </div>
           ))}
-          <button onClick={addOption} className="text-xs text-[#7C6FF7] hover:underline">+ Agregar opción</button>
+          <button onClick={addOption} className="text-xs text-[#0EB5C6] hover:underline">+ Agregar opción</button>
         </div>
       )}
 
@@ -154,7 +154,7 @@ function FieldEditor({
           value={field.placeholder ?? ''}
           onChange={e => onChange({ ...field, placeholder: e.target.value })}
           placeholder="Texto de ayuda (opcional)"
-          className="w-full text-xs bg-[#0A0A0F] border border-white/10 text-[#C4C4D4] placeholder-white/20 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#7C6FF7]"
+          className="w-full text-xs bg-[#0A0A0F] border border-white/10 text-[#C4C4D4] placeholder-white/20 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#0EB5C6]"
         />
       )}
     </div>
@@ -276,14 +276,14 @@ export function SurveyBuilder() {
 
   if (loading) return (
     <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F0EFF8]">
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <Link to="/surveys" className="text-xs text-[#7C6FF7] hover:underline mb-6 block">← Mis encuestas</Link>
+        <Link to="/surveys" className="text-xs text-[#0EB5C6] hover:underline mb-6 block">← Mis encuestas</Link>
         <h1 className="text-2xl font-bold mb-1">{isEdit ? 'Editar encuesta' : 'Nueva encuesta'}</h1>
         <p className="text-sm text-[#C4C4D4] mb-8">El sistema detecta preguntas sesgadas en tiempo real y sugiere reformulaciones Mom Test.</p>
 
@@ -295,7 +295,7 @@ export function SurveyBuilder() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Ej: Validación de problema — Gestión de proveedores PYME"
-              className="w-full text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#7C6FF7]"
+              className="w-full text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#0EB5C6]"
             />
           </div>
           <div>
@@ -305,20 +305,20 @@ export function SurveyBuilder() {
               onChange={e => setDescription(e.target.value)}
               placeholder="Ej: Estamos investigando cómo las PYMEs gestionan sus relaciones con proveedores. No hay respuestas correctas o incorrectas."
               rows={2}
-              className="w-full text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#7C6FF7]"
+              className="w-full text-sm bg-[#0A0A0F] border border-white/10 text-[#F0EFF8] placeholder-white/20 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#0EB5C6]"
             />
           </div>
         </div>
 
         {/* Plantillas Mom Test */}
-        <div className="bg-[#12121A] border border-[#7C6FF7]/20 rounded-2xl p-5 mb-6">
-          <p className="text-xs font-bold text-[#7C6FF7] mb-3">📋 Plantillas Mom Test (listas para usar)</p>
+        <div className="bg-[#12121A] border border-[#0EB5C6]/20 rounded-2xl p-5 mb-6">
+          <p className="text-xs font-bold text-[#0EB5C6] mb-3">📋 Plantillas Mom Test (listas para usar)</p>
           <div className="flex flex-wrap gap-2">
             {MOM_TEST_TEMPLATES.map((t, i) => (
               <button
                 key={i}
                 onClick={() => addTemplate(t)}
-                className="text-xs bg-[#7C6FF7]/10 hover:bg-[#7C6FF7]/20 border border-[#7C6FF7]/30 text-[#9B8FFF] px-3 py-1.5 rounded-lg transition-colors"
+                className="text-xs bg-[#0EB5C6]/10 hover:bg-[#0EB5C6]/20 border border-[#0EB5C6]/30 text-[#9B8FFF] px-3 py-1.5 rounded-lg transition-colors"
               >
                 + {t.label}
               </button>
@@ -368,7 +368,7 @@ export function SurveyBuilder() {
             value={consentText}
             onChange={e => setConsentText(e.target.value)}
             rows={3}
-            className="w-full text-xs bg-[#0A0A0F] border border-white/10 text-[#C4C4D4] rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#7C6FF7]"
+            className="w-full text-xs bg-[#0A0A0F] border border-white/10 text-[#C4C4D4] rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#0EB5C6]"
           />
           <p className="text-xs text-white/30 mt-1">Obligatorio — mostrado al encuestado antes de enviar sus respuestas.</p>
         </div>
@@ -385,7 +385,7 @@ export function SurveyBuilder() {
           <button
             onClick={() => handleSave(true)}
             disabled={saving}
-            className="flex-1 bg-[#7C6FF7] hover:bg-[#6B5FE6] text-white font-semibold py-2.5 rounded-xl text-sm transition-colors disabled:opacity-50"
+            className="flex-1 bg-[#0EB5C6] hover:bg-[#6B5FE6] text-white font-semibold py-2.5 rounded-xl text-sm transition-colors disabled:opacity-50"
           >
             {saving ? 'Publicando...' : 'Guardar y publicar'}
           </button>

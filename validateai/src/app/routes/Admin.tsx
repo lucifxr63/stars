@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
+﻿import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
 const ContentStudio = lazy(() => import('@/components/admin/ContentStudio').then(m => ({ default: m.ContentStudio })));
 const FigmaAdminPanel = lazy(() => import('@/components/figma/FigmaAdminPanel').then(m => ({ default: m.FigmaAdminPanel })));
 const SitemapPanel = lazy(() => import('@/components/admin/SitemapPanel').then(m => ({ default: m.SitemapPanel })));
@@ -439,7 +439,7 @@ export function Admin() {
               </svg>
             </div>
             <div>
-              <p className="text-white text-sm font-bold leading-none">Validus</p>
+              <p className="text-white text-sm font-bold leading-none">Validum</p>
               <p className="text-gray-500 dark:text-[#8B8AA0] text-xs mt-0.5">Admin Panel</p>
             </div>
           </div>
@@ -829,7 +829,7 @@ export function Admin() {
                         setValPage(0);
                       }, 350);
                     }}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-gray-300 placeholder:text-gray-500 focus:outline-none focus:border-[#7C6FF7]/50 w-40"
+                    className="text-xs px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-gray-300 placeholder:text-gray-500 focus:outline-none focus:border-[#0EB5C6]/50 w-40"
                   />
                   <div className="flex gap-1">
                     {(['all', 'completed', 'in_progress', 'archived'] as StatusFilter[]).map(f => (

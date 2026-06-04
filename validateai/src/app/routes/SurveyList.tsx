@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -87,23 +87,23 @@ export function SurveyList() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <Link to="/results" className="text-xs text-[#7C6FF7] hover:underline mb-2 block">← Volver al Dashboard</Link>
+            <Link to="/results" className="text-xs text-[#0EB5C6] hover:underline mb-2 block">← Volver al Dashboard</Link>
             <h1 className="text-2xl font-bold">Mis Encuestas</h1>
             <p className="text-sm text-[#C4C4D4] mt-1">Herramientas de Customer Development basadas en "The Mom Test"</p>
           </div>
           <button
             onClick={() => navigate('/surveys/new')}
-            className="bg-[#7C6FF7] hover:bg-[#6B5FE6] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="bg-[#0EB5C6] hover:bg-[#6B5FE6] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
             + Nueva encuesta
           </button>
         </div>
 
         {/* Callout metodológico */}
-        <div className="bg-[#12121A] border border-[#7C6FF7]/30 rounded-2xl p-4 mb-8 flex gap-3">
+        <div className="bg-[#12121A] border border-[#0EB5C6]/30 rounded-2xl p-4 mb-8 flex gap-3">
           <span className="text-2xl">📋</span>
           <div>
-            <p className="font-semibold text-sm text-[#7C6FF7]">Principio Mom Test activo</p>
+            <p className="font-semibold text-sm text-[#0EB5C6]">Principio Mom Test activo</p>
             <p className="text-xs text-[#C4C4D4] mt-0.5">
               El constructor de encuestas detecta automáticamente preguntas hipotéticas y sesgos de confirmación,
               y sugiere reformulaciones basadas en hechos pasados.
@@ -114,7 +114,7 @@ export function SurveyList() {
         {/* Lista */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#7C6FF7] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : forms.length === 0 ? (
           <div className="text-center py-20">
@@ -123,7 +123,7 @@ export function SurveyList() {
             <p className="text-sm text-[#C4C4D4] mb-6">Crea tu primera encuesta de Customer Development para descubrir problemas reales de mercado.</p>
             <button
               onClick={() => navigate('/surveys/new')}
-              className="bg-[#7C6FF7] hover:bg-[#6B5FE6] text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
+              className="bg-[#0EB5C6] hover:bg-[#6B5FE6] text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
             >
               Crear primera encuesta
             </button>
@@ -163,7 +163,7 @@ export function SurveyList() {
                         navigator.clipboard.writeText(`${window.location.origin}/s/${form.unique_slug}`);
                         toast.success('Enlace copiado');
                       }}
-                      className="text-xs text-[#7C6FF7] hover:text-[#9B8FFF] px-3 py-1.5 rounded-lg border border-[#7C6FF7]/40 transition-colors"
+                      className="text-xs text-[#0EB5C6] hover:text-[#9B8FFF] px-3 py-1.5 rounded-lg border border-[#0EB5C6]/40 transition-colors"
                     >
                       Copiar link
                     </button>

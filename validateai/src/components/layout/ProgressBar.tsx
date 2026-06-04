@@ -1,4 +1,4 @@
-import { STEPS } from '@/utils/constants';
+﻿import { STEPS } from '@/utils/constants';
 
 const STEPS_PREMIUM = [
   { num: 1, label: 'Documento' },
@@ -27,7 +27,7 @@ export function ProgressBar({ current, mode = 'detailed' }: { current: number; m
       <div className="sm:hidden flex items-center gap-3 mb-1">
         <div className="flex-1 h-0.5 bg-white dark:bg-[#12121A]/8 rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#7C6FF7] rounded-full transition-all duration-500 ease-out"
+            className="h-full bg-[#0EB5C6] rounded-full transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -48,9 +48,9 @@ export function ProgressBar({ current, mode = 'detailed' }: { current: number; m
                 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
                 transition-all duration-300
                 ${isCompleted
-                  ? 'bg-[#7C6FF7] text-white'
+                  ? 'bg-[#0EB5C6] text-white'
                   : isActive
-                  ? 'bg-[#7C6FF7] text-white ring-4 ring-[#7C6FF7]/20'
+                  ? 'bg-[#0EB5C6] text-white ring-4 ring-[#0EB5C6]/20'
                   : 'bg-gray-100 dark:bg-white/5 text-[#4A495E] border border-gray-200 dark:border-white/8'}
               `}>
                 {isCompleted ? (
@@ -69,7 +69,7 @@ export function ProgressBar({ current, mode = 'detailed' }: { current: number; m
             {i < steps.length - 1 && (
               <div className="flex-1 mx-2 mb-5">
                 <div className="h-px w-full bg-white dark:bg-[#12121A]/8 overflow-hidden rounded-full">
-                  <div className={`h-full transition-all duration-500 bg-[#7C6FF7] ${
+                  <div className={`h-full transition-all duration-500 bg-[#0EB5C6] ${
                     isCompleted ? 'w-full' : 'w-0'
                   }`} />
                 </div>

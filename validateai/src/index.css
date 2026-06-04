@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -29,9 +29,9 @@ body {
   --font-heading: 'Space Grotesk', system-ui, sans-serif;
 
   /* Brand palette */
-  --color-brand: #7C6FF7;
-  --color-brand-dim: rgba(124, 111, 247, 0.15);
-  --color-brand-glow: rgba(124, 111, 247, 0.35);
+  --color-brand: #0EB5C6;
+  --color-brand-dim: rgba(14, 181, 198, 0.15);
+  --color-brand-glow: rgba(14, 181, 198, 0.35);
   --color-amber: #F7C56C;
   --color-amber-dim: rgba(247, 197, 108, 0.15);
 
@@ -69,7 +69,7 @@ body {
 
 /* Focus */
 :focus-visible {
-  outline: 2px solid #7C6FF7;
+  outline: 2px solid #0EB5C6;
   outline-offset: 2px;
 }
 
@@ -80,7 +80,7 @@ body {
 
 /* Gradient text brand */
 .gradient-text {
-  background: linear-gradient(135deg, #7C6FF7, #A78BFA);
+  background: linear-gradient(135deg, #0EB5C6, #38D5E3);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -96,18 +96,18 @@ body {
 
 /* Glow effects */
 .glow-brand {
-  box-shadow: 0 0 40px rgba(124, 111, 247, 0.3),
-              0 0 80px rgba(124, 111, 247, 0.12);
+  box-shadow: 0 0 40px rgba(14, 181, 198, 0.3),
+              0 0 80px rgba(14, 181, 198, 0.12);
 }
 .glow-brand-sm {
-  box-shadow: 0 0 20px rgba(124, 111, 247, 0.25);
+  box-shadow: 0 0 20px rgba(14, 181, 198, 0.25);
 }
 
 /* Grid pattern decorativo — dual mode */
 .grid-pattern {
   background-image:
-    linear-gradient(rgba(124,111,247,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124,111,247,0.05) 1px, transparent 1px);
+    linear-gradient(rgba(14,181,198,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14,181,198,0.05) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 .dark .grid-pattern {
@@ -129,9 +129,9 @@ body {
 /* Glassmorphism card — dual mode */
 .glass-card {
   background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(124, 111, 247, 0.14);
+  border: 1px solid rgba(14, 181, 198, 0.14);
   backdrop-filter: blur(12px);
-  box-shadow: 0 4px 24px rgba(124, 111, 247, 0.08);
+  box-shadow: 0 4px 24px rgba(14, 181, 198, 0.08);
 }
 .dark .glass-card {
   background: rgba(18, 18, 26, 0.80);
@@ -157,7 +157,7 @@ body {
   to   { background-position: 200% center; }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(124,111,247,0.15) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(14,181,198,0.15) 50%, transparent 100%);
   background-size: 200% auto;
   animation: shimmer 2.5s linear infinite;
 }
@@ -196,7 +196,7 @@ body {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(124,111,247,0.6), rgba(167,139,250,0.2), rgba(247,197,108,0.3));
+  background: linear-gradient(135deg, rgba(14,181,198,0.6), rgba(56,213,227,0.2), rgba(247,197,108,0.3));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

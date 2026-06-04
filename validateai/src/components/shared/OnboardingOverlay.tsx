@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'validateai_onboarded';
 
@@ -48,7 +48,7 @@ export function OnboardingOverlay({ onDone }: Props) {
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === step ? 'w-6 bg-[#7C6FF7]' : i < step ? 'w-1.5 bg-[#7C6FF7]/40' : 'w-1.5 bg-gray-200 dark:bg-white/10'
+                i === step ? 'w-6 bg-[#0EB5C6]' : i < step ? 'w-1.5 bg-[#0EB5C6]/40' : 'w-1.5 bg-gray-200 dark:bg-white/10'
               }`}
             />
           ))}
@@ -65,7 +65,7 @@ export function OnboardingOverlay({ onDone }: Props) {
 
           <button
             onClick={advance}
-            className="w-full py-3 bg-[#7C6FF7] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all shadow-lg shadow-[#7C6FF7]/25 text-sm"
+            className="w-full py-3 bg-[#0EB5C6] text-white font-semibold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all shadow-lg shadow-[#0EB5C6]/25 text-sm"
           >
             {step < STEPS.length - 1 ? 'Siguiente →' : 'Empezar →'}
           </button>
