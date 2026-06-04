@@ -283,18 +283,27 @@ export interface INAPICheck {
   risk: 'critical' | 'important' | 'nice_to_have';
 }
 
+export interface CapTableEntry {
+  name:       string;
+  role:       string;
+  percentage: number;
+  vesting:    boolean;
+  notes?:     string;
+}
+
 export interface GovernanceAssessment {
   recommended_structure: string;
-  founding_team_split: string;
+  founding_team_split:   string;
+  cap_table_entries?:    CapTableEntry[];
   vesting_recommendation: string;
-  legal_checklist: GovernanceLegalItem[];
-  inapi_checklist: INAPICheck[];
-  ley_karin_required: boolean;
-  ley_karin_notes: string;
-  regulatory_risk: 'low' | 'medium' | 'high';
-  regulatory_notes: string;
-  cap_table_warnings: string[];
-  omission_warnings: string[];
+  legal_checklist:       GovernanceLegalItem[];
+  inapi_checklist:       INAPICheck[];
+  ley_karin_required:    boolean;
+  ley_karin_notes:       string;
+  regulatory_risk:       'low' | 'medium' | 'high';
+  regulatory_notes:      string;
+  cap_table_warnings:    string[];
+  omission_warnings:     string[];
 }
 
 export interface FundraisingFund {

@@ -690,6 +690,11 @@ Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown:
 {
   "recommended_structure": "SpA (Sociedad por Acciones) â€” Ãºnica estructura recomendada para startups que buscan capital externo en Chile",
   "founding_team_split": "RecomendaciÃ³n especÃ­fica sobre distribuciÃ³n de equity y pool de empleados (ej: 45%-45% fundadores + 10% ESOP)",
+  "cap_table_entries": [
+    { "name": "Fundador A", "role": "CEO", "percentage": 45, "vesting": true },
+    { "name": "Fundador B", "role": "CTO", "percentage": 45, "vesting": true },
+    { "name": "ESOP Pool", "role": "Empleados futuros", "percentage": 10, "vesting": true }
+  ],
   "vesting_recommendation": "Esquema de vesting: duraciÃ³n, cliff, aceleraciÃ³n simple o doble ante exit",
   "legal_checklist": [
     { "item": "Nombre exacto del Ã­tem legal", "priority": "critical", "description": "Por quÃ© es crÃ­tico â€” citar ley o artÃ­culo especÃ­fico", "source": "Ley 21.719 art. 3 / INAPI / etc." }
