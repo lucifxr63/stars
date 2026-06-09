@@ -273,8 +273,8 @@ export function MacroIntelligence() {
                       contentStyle={tooltipStyle}
                       itemStyle={{ color: '#F0EFF8' }}
                       labelStyle={{ color: '#8B8AA0', marginBottom: 4 }}
-                      formatter={(v: number) => [
-                        `${v.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${cfg.unit}`,
+                      formatter={(v) => [
+                        `${(v as number).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${cfg.unit}`,
                         cfg.shortLabel,
                       ]}
                     />

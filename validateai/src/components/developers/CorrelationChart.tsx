@@ -195,8 +195,8 @@ export default function CorrelationChart({
               contentStyle={tooltipStyle}
               itemStyle={{ color: '#F0EFF8' }}
               labelStyle={{ color: '#8B8AA0', marginBottom: 4 }}
-              formatter={(value: number, name: string) => [
-                `${value.toFixed(1)} (norm.)`,
+              formatter={(value, name) => [
+                `${(value as number).toFixed(1)} (norm.)`,
                 name === 'macro' ? macroLabel : pymeLabel,
               ]}
             />
