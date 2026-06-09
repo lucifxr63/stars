@@ -147,22 +147,46 @@ export const servicesHealthHandler = async (c: any) => {
       : 'Sin datos en caché',
   })
 
-  // FRED — macroeconomic series (USD/CLP, cobre, fed funds, CPI, petróleo)
-  const { data: fredData } = await supabase
-    .from('economic_knowledge')
-    .select('updated_at')
-    .eq('provider', 'FRED')
-    .order('updated_at', { ascending: false })
-    .limit(1)
-  const fredHasData = fredData && fredData.length > 0
+  // FRED via BralidusPY — knowledge_nodes con category='Macroeconomia'
+  const fredT0 = Date.now()
+  const { data: fredNodes, error: fredErr } = await supabase
+    .from('knowledge_nodes')
+    .select('id, metadata')
+    .eq('category', 'Macroeconomia')
+    .limit(5)
+  const fredMs = Date.now() - fredT0
+  const fredCount = fredNodes?.length ?? 0
   services.push({
     id: 'fred',
-    name: 'FRED (Macro EEUU)',
-    category: 'data',
-    status: fredHasData ? 'ok' : 'degraded',
-    message: fredHasData
-      ? `Última sync ${new Date(fredData[0].updated_at).toLocaleDateString('es-CL')}`
-      : 'Sin datos — ejecutar cron fred-sync',
+    name: 'FRED (Federal Reserve)',
+    category: 'macro',
+    status: fredErr ? 'error' : fredCount >= 3 ? 'ok' : fredCount > 0 ? 'degraded' : 'unused',
+    latency_ms: fredErr ? undefined : fredMs,
+    message: fredErr
+      ? `Error: ${fredErr.message}`
+      : fredCount >= 3
+        ? `${fredCount} series macro en GraphRAG`
+        : fredCount > 0 ? `${fredCount}/3 series — worker incompleto`
+        : 'Sin datos — ejecutar: py main.py',
+  })
+
+  // BralidusPY Worker — embeddings vectoriales en knowledge_nodes
+  const { data: embNodes } = await supabase
+    .from('knowledge_nodes')
+    .select('id')
+    .eq('category', 'Macroeconomia')
+    .not('embedding', 'is', null)
+    .limit(10)
+  const embCount = embNodes?.length ?? 0
+  services.push({
+    id: 'braliduspy',
+    name: 'BralidusPY (Worker)',
+    category: 'macro',
+    status: embCount >= 3 ? 'ok' : embCount > 0 ? 'degraded' : 'unused',
+    message: embCount >= 3
+      ? `${embCount} embeddings vectoriales activos`
+      : embCount > 0 ? `${embCount} embeddings — worker incompleto`
+      : 'Sin embeddings — ejecutar: py main.py',
   })
 
   // ChileCompra — Mercado Público procurement intelligence

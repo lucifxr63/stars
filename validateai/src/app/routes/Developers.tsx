@@ -535,52 +535,84 @@ export function Developers() {
             <div className="p-5">
               {servicesLoading && services.length === 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {Array.from({ length: 7 }).map((_, i) => (
+                  {Array.from({ length: 12 }).map((_, i) => (
                     <div key={i} className="h-20 bg-gray-100 dark:bg-white/5 rounded-xl animate-pulse" />
                   ))}
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {services.map(svc => {
-                    const statusConfig = {
-                      ok:       { dot: 'bg-emerald-500', text: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Activo'    },
-                      degraded: { dot: 'bg-amber-400',   text: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-400/20',   label: 'Degradado' },
-                      error:    { dot: 'bg-red-500',     text: 'text-red-500',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     label: 'Error'     },
-                      unused:   { dot: 'bg-gray-400',    text: 'text-gray-400',    bg: 'bg-white/5',        border: 'border-gray-200 dark:border-white/5', label: 'Sin uso' },
-                    }[svc.status];
+              ) : (() => {
+                const STATUS_CONFIG = {
+                  ok:       { dot: 'bg-emerald-500', text: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Activo'    },
+                  degraded: { dot: 'bg-amber-400',   text: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-400/20',   label: 'Degradado' },
+                  error:    { dot: 'bg-red-500',     text: 'text-red-500',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     label: 'Error'     },
+                  unused:   { dot: 'bg-gray-400',    text: 'text-gray-400',    bg: 'bg-white/5',        border: 'border-gray-200 dark:border-white/5', label: 'Sin uso' },
+                } as const;
 
-                    const categoryIcon = {
-                      database:  Database,
-                      ai:        Brain,
-                      analytics: BarChart2,
-                      parsing:   FileText,
-                      data:      Globe,
-                      gov:       ShieldCheck,
-                    }[svc.category] ?? Server;
-                    const CategoryIcon = categoryIcon;
+                const CATEGORY_META: Record<string, { label: string; icon: LucideIcon }> = {
+                  database: { label: 'Infraestructura',        icon: Database   },
+                  ai:       { label: 'IA / LLM',               icon: Brain      },
+                  parsing:  { label: 'Parsing',                icon: FileText   },
+                  macro:    { label: 'Inteligencia Macro',     icon: TrendingUp },
+                  gov:      { label: 'APIs Gobierno Chile',    icon: ShieldCheck },
+                  data:     { label: 'Datos de Mercado',       icon: Globe      },
+                  analytics:{ label: 'Analytics',              icon: BarChart2  },
+                };
+                const CAT_ORDER = ['database', 'ai', 'parsing', 'macro', 'gov', 'data', 'analytics'];
 
-                    return (
-                      <div
-                        key={svc.id}
-                        className={`relative rounded-xl border p-3.5 ${statusConfig.bg} ${statusConfig.border}`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <CategoryIcon className={`w-4 h-4 ${svc.status === 'unused' ? 'text-gray-400' : statusConfig.text}`} />
-                          <span className="flex items-center gap-1">
-                            <span className={`w-2 h-2 rounded-full ${statusConfig.dot} ${svc.status === 'ok' ? 'shadow-[0_0_6px_currentColor]' : ''}`} />
-                            <span className={`text-[10px] font-bold ${statusConfig.text}`}>{statusConfig.label}</span>
-                          </span>
+                const grouped = services.reduce<Record<string, ServiceInfo[]>>((acc, svc) => {
+                  (acc[svc.category] ??= []).push(svc);
+                  return acc;
+                }, {});
+
+                const orderedCats = [
+                  ...CAT_ORDER.filter(c => grouped[c]?.length),
+                  ...Object.keys(grouped).filter(c => !CAT_ORDER.includes(c) && grouped[c]?.length),
+                ];
+
+                return (
+                  <div className="space-y-6">
+                    {orderedCats.map(cat => {
+                      const meta = CATEGORY_META[cat] ?? { label: cat, icon: Server };
+                      const CatIcon = meta.icon;
+                      return (
+                        <div key={cat}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <CatIcon className="w-3.5 h-3.5 text-gray-400 dark:text-[#8B8AA0]" />
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#8B8AA0]">
+                              {meta.label}
+                            </span>
+                            <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
+                            <span className="text-[10px] text-gray-400 tabular-nums">{grouped[cat].length}</span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {grouped[cat].map(svc => {
+                              const sc = STATUS_CONFIG[svc.status];
+                              return (
+                                <div
+                                  key={svc.id}
+                                  className={`relative rounded-xl border p-3.5 ${sc.bg} ${sc.border}`}
+                                >
+                                  <div className="flex items-start justify-between mb-2">
+                                    <CatIcon className={`w-4 h-4 ${svc.status === 'unused' ? 'text-gray-400' : sc.text}`} />
+                                    <span className="flex items-center gap-1">
+                                      <span className={`w-2 h-2 rounded-full ${sc.dot} ${svc.status === 'ok' ? 'shadow-[0_0_6px_currentColor]' : ''}`} />
+                                      <span className={`text-[10px] font-bold ${sc.text}`}>{sc.label}</span>
+                                    </span>
+                                  </div>
+                                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight mb-1">{svc.name}</p>
+                                  <p className="text-[11px] text-gray-400 leading-tight truncate" title={svc.message}>{svc.message}</p>
+                                  {svc.latency_ms !== undefined && (
+                                    <span className="absolute bottom-2.5 right-3 text-[10px] font-mono text-gray-400">{svc.latency_ms}ms</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight mb-1">{svc.name}</p>
-                        <p className="text-[11px] text-gray-400 leading-tight truncate" title={svc.message}>{svc.message}</p>
-                        {svc.latency_ms !== undefined && (
-                          <span className="absolute bottom-2.5 right-3 text-[10px] font-mono text-gray-400">{svc.latency_ms}ms</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
