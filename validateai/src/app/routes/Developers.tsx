@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { KnowledgeGraph } from '@/components/developers/KnowledgeGraph';
 import { MacroIntelligence } from '@/components/developers/MacroIntelligence';
@@ -6,6 +6,7 @@ import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
   Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
   RefreshCw, Database, Brain, BarChart2, FileText, Globe, Server,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateApiKey, hashApiKey } from '@/utils/crypto';
@@ -69,6 +70,8 @@ interface ServiceInfo {
   latency_ms?: number;
   message: string;
 }
+
+type Tab = 'overview' | 'financial' | 'services' | 'playground' | 'audit' | 'graph' | 'apikeys';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const BASE = `${SUPABASE_URL}/functions/v1/api-v1`;
@@ -135,6 +138,8 @@ const tooltipStyle = {
 };
 
 export function Developers() {
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
+
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [logs, setLogs] = useState<ApiUsageLog[]>([]);
   const [auditSummaries, setAuditSummaries] = useState<AuditSummary[]>([]);
@@ -143,12 +148,10 @@ export function Developers() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  // Services health
   const [services, setServices] = useState<ServiceInfo[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [servicesCheckedAt, setServicesCheckedAt] = useState<string | null>(null);
 
-  // Playground
   const [selectedEndpointIdx, setSelectedEndpointIdx] = useState(0);
   const [playgroundBody, setPlaygroundBody] = useState(ENDPOINTS[0].defaultBody);
   const [playgroundApiKey, setPlaygroundApiKey] = useState('');
@@ -158,7 +161,6 @@ export function Developers() {
   const [showEndpointDropdown, setShowEndpointDropdown] = useState(false);
   const [snippetLang, setSnippetLang] = useState<'curl' | 'node' | 'python'>('curl');
 
-  // Modal
   const [keyName, setKeyName] = useState('');
   const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -279,7 +281,6 @@ export function Developers() {
     }
   };
 
-  // ── Stats ─────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const totalReqs = logs.reduce((s, l) => s + (l.requests_count || 1), 0);
     const totalTokens = logs.reduce((s, l) => s + (l.tokens_used || 0), 0);
@@ -289,7 +290,6 @@ export function Developers() {
     return { totalReqs, totalTokens, todayReqs, activeKeys };
   }, [logs, keys]);
 
-  // ── Area chart (last 14 days) ─────────────────────────────────────────
   const areaData = useMemo(() => {
     const days = [...Array(14)].map((_, i) => {
       const d = new Date(); d.setDate(d.getDate() - (13 - i));
@@ -304,7 +304,6 @@ export function Developers() {
     return Object.values(map);
   }, [logs]);
 
-  // ── Pie chart (by endpoint) ───────────────────────────────────────────
   const pieData = useMemo(() => {
     const map: Record<string, number> = {};
     logs.forEach(l => {
@@ -314,7 +313,8 @@ export function Developers() {
     return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [logs]);
 
-  // ── Code snippets ─────────────────────────────────────────────────────
+  const serviceErrorCount = services.filter(s => s.status === 'error').length;
+
   const ep = ENDPOINTS[selectedEndpointIdx];
   const snippets = {
     curl: ep.method === 'GET'
@@ -330,15 +330,34 @@ export function Developers() {
 
   const hasData = logs.length > 0;
 
+  // ── Tab config ─────────────────────────────────────────────────────────────
+  const TABS: {
+    id: Tab;
+    label: string;
+    icon: LucideIcon;
+    badge?: string | number;
+    badgeColor?: string;
+  }[] = [
+    { id: 'overview',   label: 'Resumen',       icon: Activity   },
+    { id: 'financial',  label: 'Inteligencia',  icon: BarChart2,  badge: 'FRED',  badgeColor: 'text-teal-500 border-teal-500/30' },
+    { id: 'services',   label: 'Servicios',     icon: Server,     ...(serviceErrorCount > 0 ? { badge: serviceErrorCount, badgeColor: 'text-red-400 border-red-400/30' } : {}) },
+    { id: 'playground', label: 'Playground',    icon: Play       },
+    { id: 'audit',      label: 'RAG Audit',     icon: ShieldCheck, ...(auditSummaries.length > 0 ? { badge: `${Math.round((auditSummaries[0]?.avg_precision ?? 0) * 100)}%`, badgeColor: 'text-violet-400 border-violet-400/30' } : {}) },
+    { id: 'graph',      label: 'Knowledge',     icon: Brain      },
+    { id: 'apikeys',    label: 'API Keys',      icon: Key,        badge: stats.activeKeys || undefined, badgeColor: 'text-emerald-500 border-emerald-500/30' },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-6">
 
-        {/* ── Header ── */}
+        {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">API & Developers</h1>
-            <p className="text-sm text-gray-400 mt-1">Gestiona llaves y monitorea el consumo de tu RaaS.</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Gestiona llaves, monitorea el consumo y explora inteligencia macroeconómica.
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <a
@@ -351,7 +370,7 @@ export function Developers() {
               Docs
             </a>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={() => { setActiveTab('apikeys'); setShowModal(true); }}
               className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-500 text-white font-semibold rounded-xl hover:bg-teal-600 transition shadow-sm text-sm"
             >
               <Plus className="w-4 h-4" />
@@ -360,511 +379,557 @@ export function Developers() {
           </div>
         </div>
 
-        {/* ── Stat cards ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Requests totales', value: stats.totalReqs.toLocaleString(), icon: Activity, color: 'text-violet-500', bg: 'bg-violet-500/10' },
-            { label: 'Hoy', value: stats.todayReqs.toLocaleString(), icon: Zap, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-            { label: 'Tokens usados', value: stats.totalTokens > 1000 ? `${(stats.totalTokens/1000).toFixed(1)}k` : stats.totalTokens.toString(), icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-            { label: 'Llaves activas', value: stats.activeKeys.toString(), icon: Key, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-          ].map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
-              <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
-                <Icon className={`w-4 h-4 ${color}`} />
-              </div>
-              <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">{loading ? '—' : value}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Service Status ── */}
-        <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Server className="w-4 h-4 text-violet-500" />
-              <span className="font-bold text-gray-900 dark:text-white text-sm">Estado de Servicios</span>
-              {servicesCheckedAt && (
-                <span className="text-[11px] text-gray-400">
-                  · verificado {new Date(servicesCheckedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
-            </div>
-            <button
-              onClick={fetchServices}
-              disabled={servicesLoading}
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-violet-400 transition disabled:opacity-40"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${servicesLoading ? 'animate-spin' : ''}`} />
-              Actualizar
-            </button>
-          </div>
-
-          <div className="p-5">
-            {servicesLoading && services.length === 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {Array.from({ length: 7 }).map((_, i) => (
-                  <div key={i} className="h-20 bg-gray-100 dark:bg-white/5 rounded-xl animate-pulse" />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {services.map(svc => {
-                  const statusConfig = {
-                    ok:       { dot: 'bg-emerald-500', text: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Activo' },
-                    degraded: { dot: 'bg-amber-400',   text: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-400/20',   label: 'Degradado' },
-                    error:    { dot: 'bg-red-500',     text: 'text-red-500',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     label: 'Error' },
-                    unused:   { dot: 'bg-gray-400',    text: 'text-gray-400',    bg: 'bg-white/5',        border: 'border-gray-200 dark:border-white/5', label: 'Sin uso' },
-                  }[svc.status];
-
-                  const categoryIcon = {
-                    database:  Database,
-                    ai:        Brain,
-                    analytics: BarChart2,
-                    parsing:   FileText,
-                    data:      Globe,
-                    gov:       ShieldCheck,
-                  }[svc.category] ?? Server;
-                  const CategoryIcon = categoryIcon;
-
-                  return (
-                    <div
-                      key={svc.id}
-                      className={`relative rounded-xl border p-3.5 ${statusConfig.bg} ${statusConfig.border}`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <CategoryIcon className={`w-4 h-4 ${svc.status === 'unused' ? 'text-gray-400' : statusConfig.text}`} />
-                        <span className="flex items-center gap-1">
-                          <span className={`w-2 h-2 rounded-full ${statusConfig.dot} ${svc.status === 'ok' ? 'shadow-[0_0_6px_currentColor]' : ''}`} />
-                          <span className={`text-[10px] font-bold ${statusConfig.text}`}>{statusConfig.label}</span>
-                        </span>
-                      </div>
-                      <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight mb-1">{svc.name}</p>
-                      <p className="text-[11px] text-gray-400 leading-tight truncate" title={svc.message}>{svc.message}</p>
-                      {svc.latency_ms !== undefined && (
-                        <span className="absolute bottom-2.5 right-3 text-[10px] font-mono text-gray-400">{svc.latency_ms}ms</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Charts ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-          {/* Area — requests over time */}
-          <div className="md:col-span-2 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-violet-500" />
-                <span className="text-sm font-bold text-gray-900 dark:text-white">Requests (14 días)</span>
-              </div>
-              <span className="text-xs text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-lg">
-                <Clock className="w-3 h-3 inline mr-1" />Tiempo real
-              </span>
-            </div>
-            {!hasData && !loading ? (
-              <div className="h-48 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={areaData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradReq" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0EB5C6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#0EB5C6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={v => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} labelStyle={{ color: '#8B8AA0', marginBottom: 4 }} />
-                  <Area type="monotone" dataKey="requests" name="Requests" stroke="#0EB5C6" strokeWidth={2} fill="url(#gradReq)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          {/* Pie — by endpoint */}
-          <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-4 h-4 text-teal-500" />
-              <span className="text-sm font-bold text-gray-900 dark:text-white">Por endpoint</span>
-            </div>
-            {!hasData && !loading ? (
-              <div className="h-48 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie data={pieData} cx="50%" cy="45%" innerRadius={42} outerRadius={66} paddingAngle={3} dataKey="value">
-                    {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#8B8AA0' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          {/* Bar — tokens */}
-          <div className="md:col-span-3 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-bold text-gray-900 dark:text-white">Tokens consumidos (14 días)</span>
-            </div>
-            {!hasData && !loading ? (
-              <div className="h-36 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={130}>
-                <BarChart data={areaData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={v => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} labelStyle={{ color: '#8B8AA0' }} />
-                  <Bar dataKey="tokens" name="Tokens" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* ── Playground ── */}
-        <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
-
-          {/* Playground header */}
-          <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Play className="w-4 h-4 text-violet-500" />
-              <span className="font-bold text-gray-900 dark:text-white text-sm">Playground</span>
-            </div>
-            <a href="/api-docs.html" target="_blank" rel="noopener noreferrer"
-              className="text-xs text-violet-400 hover:text-violet-300 transition">
-              Ver documentación completa →
-            </a>
-          </div>
-
-          <div className="p-5 space-y-4">
-            {/* API Key */}
-            <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 block">API Key</label>
-              <input
-                type="password"
-                value={playgroundApiKey}
-                onChange={e => setPlaygroundApiKey(e.target.value)}
-                placeholder="val_live_XXXX..."
-                className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition"
-              />
-            </div>
-
-            {/* Endpoint selector */}
-            <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 block">Endpoint</label>
-              <div className="relative">
+        {/* ── Tab navigation ──────────────────────────────────────────────── */}
+        <div className="overflow-x-auto -mx-1 px-1">
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/[0.04] rounded-2xl p-1 w-max min-w-full">
+            {TABS.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
                 <button
-                  onClick={() => setShowEndpointDropdown(v => !v)}
-                  className="w-full flex items-center justify-between bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm text-left hover:border-violet-400 dark:hover:border-violet-500/50 transition"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'bg-white dark:bg-[#12121A] text-gray-900 dark:text-[#F0EFF8] shadow-sm'
+                      : 'text-gray-500 dark:text-[#8B8AA0] hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-md"
-                      style={{ backgroundColor: `${METHOD_COLORS[ep.method]}22`, color: METHOD_COLORS[ep.method] }}
-                    >
-                      {ep.method}
-                    </span>
-                    <span className="font-mono text-gray-700 dark:text-gray-300 text-xs">{ep.path}</span>
-                    <span className="text-gray-400 text-xs hidden sm:inline">— {ep.label.split('—')[1]?.trim()}</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showEndpointDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                {showEndpointDropdown && (
-                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-[#1A1A26] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
-                    {ENDPOINTS.map((e, i) => (
-                      <button
-                        key={i}
-                        onClick={() => selectEndpoint(i)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/5 transition ${i === selectedEndpointIdx ? 'bg-violet-50 dark:bg-violet-500/10' : ''}`}
-                      >
-                        <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0"
-                          style={{ backgroundColor: `${METHOD_COLORS[e.method]}22`, color: METHOD_COLORS[e.method] }}
-                        >
-                          {e.method}
-                        </span>
-                        <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{e.path}</span>
-                        <span className="text-xs text-gray-400 ml-auto hidden sm:block">{e.label.split('—')[1]?.trim()}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Body + Response */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  {ep.method === 'GET' ? 'Sin body (GET)' : 'Request Body (JSON)'}
-                </label>
-                {ep.method !== 'GET' ? (
-                  <textarea
-                    value={playgroundBody}
-                    onChange={e => setPlaygroundBody(e.target.value)}
-                    rows={9}
-                    className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 resize-none transition"
-                  />
-                ) : (
-                  <div className="h-[198px] flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-400">
-                    Este endpoint no requiere body
-                  </div>
-                )}
-                <button
-                  onClick={runPlayground}
-                  disabled={playgroundLoading}
-                  className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition text-sm"
-                >
-                  {playgroundLoading
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Ejecutando...</>
-                    : <><Play className="w-4 h-4" /> Ejecutar</>
-                  }
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">Response</label>
-                  {playgroundStatus && (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${playgroundStatus < 300 ? 'bg-teal-500/15 text-teal-400' : 'bg-red-500/15 text-red-400'}`}>
-                      {playgroundStatus}
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  {tab.label}
+                  {tab.badge !== undefined && (
+                    <span className={`text-[9px] font-bold border rounded-full px-1.5 py-0.5 leading-none ${tab.badgeColor ?? 'text-gray-400 border-gray-300 dark:border-white/20'}`}>
+                      {tab.badge}
                     </span>
                   )}
-                </div>
-                <pre className="flex-1 min-h-[230px] bg-gray-950 dark:bg-black/40 text-green-400 text-xs rounded-xl p-4 overflow-auto font-mono whitespace-pre-wrap leading-relaxed">
-                  {playgroundLoading
-                    ? <span className="text-gray-500 animate-pulse">Esperando respuesta...</span>
-                    : playgroundResult
-                      ? <span>{playgroundResult}</span>
-                      : <span className="text-gray-600">// La respuesta aparecerá aquí</span>
-                  }
-                </pre>
-              </div>
-            </div>
-
-            {/* Snippets */}
-            <div className="pt-3 border-t border-gray-100 dark:border-white/5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Snippet de código</p>
-                <div className="flex gap-1">
-                  {(['curl', 'node', 'python'] as const).map(lang => (
-                    <button
-                      key={lang}
-                      onClick={() => setSnippetLang(lang)}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${snippetLang === lang ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
-                    >
-                      {lang === 'node' ? 'Node.js' : lang.charAt(0).toUpperCase() + lang.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="relative group">
-                <pre className="bg-gray-950 dark:bg-black/40 text-gray-300 text-xs rounded-xl p-4 overflow-x-auto font-mono leading-relaxed">
-                  {snippets[snippetLang]}
-                </pre>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(snippets[snippetLang]); toast.success('Copiado'); }}
-                  className="absolute top-2.5 right-2.5 p-1.5 bg-white/10 hover:bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 transition text-gray-400"
-                >
-                  <Copy className="w-3.5 h-3.5" />
                 </button>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── RAG Audit Dashboard ── */}
-        {auditSummaries.length > 0 && (() => {
-          const summary = auditSummaries[0];
-          const precisionPct = Math.round((summary.avg_precision ?? 0) * 100);
-          const hitRate = summary.hit_rate_pct ?? 0;
-          const categoryColors: Record<string, string> = {
-            legal: '#0EB5C6', gtm: '#2DD4BF', methodology: '#F59E0B', market: '#34D399', edge: '#94A3B8',
-          };
-          const catMap: Record<string, { pass: number; fail: number; total: number }> = {};
-          auditLogs.forEach(l => {
-            if (!catMap[l.category]) catMap[l.category] = { pass: 0, fail: 0, total: 0 };
-            catMap[l.category].total++;
-            if (l.precision_score >= 0.6) catMap[l.category].pass++;
-            else catMap[l.category].fail++;
-          });
-          const catBarData = Object.entries(catMap).map(([cat, v]) => ({
-            cat: cat.charAt(0).toUpperCase() + cat.slice(1),
-            pass: v.pass,
-            fail: v.fail,
-            fill: categoryColors[cat] ?? '#0EB5C6',
-          }));
-          const latencyData = auditLogs.map((l, i) => ({ i: i + 1, ms: Math.round(l.latency_ms), cat: l.category }));
+        {/* ── Tab: Resumen ────────────────────────────────────────────────── */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
 
-          return (
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <ShieldCheck className="w-5 h-5 text-violet-500" />
-                <h2 className="text-base font-bold text-gray-900 dark:text-white">RAG Audit Dashboard</h2>
-                <span className="ml-2 text-xs bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded-full font-mono">
-                  run: {summary.run_id.slice(0, 8)}…
-                </span>
-                <span className="text-xs text-gray-400">{new Date(summary.started_at).toLocaleString()}</span>
-              </div>
-
-              {/* KPI row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                {[
-                  { label: 'Precision score', value: `${precisionPct}%`, color: precisionPct >= 80 ? 'text-green-400' : precisionPct >= 60 ? 'text-amber-400' : 'text-red-400' },
-                  { label: 'Keyword hit rate', value: `${hitRate}%`, color: 'text-teal-400' },
-                  { label: 'Avg latency', value: `${Math.round(summary.avg_latency_ms)}ms`, color: 'text-violet-400' },
-                  { label: 'Errores', value: String(summary.errors), color: summary.errors === 0 ? 'text-green-400' : 'text-red-400' },
-                ].map(kpi => (
-                  <div key={kpi.label} className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
-                    <p className="text-xs text-gray-400 mb-1">{kpi.label}</p>
-                    <p className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Requests totales', value: stats.totalReqs.toLocaleString(), icon: Activity,  color: 'text-violet-500', bg: 'bg-violet-500/10' },
+                { label: 'Hoy',              value: stats.todayReqs.toLocaleString(), icon: Zap,       color: 'text-teal-500',   bg: 'bg-teal-500/10'  },
+                { label: 'Tokens usados',    value: stats.totalTokens > 1000 ? `${(stats.totalTokens/1000).toFixed(1)}k` : stats.totalTokens.toString(), icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                { label: 'Llaves activas',   value: stats.activeKeys.toString(), icon: Key, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+              ].map(({ label, value, icon: Icon, color, bg }) => (
+                <div key={label} className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                  <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
+                    <Icon className={`w-4 h-4 ${color}`} />
                   </div>
-                ))}
-              </div>
-
-              {/* Charts row */}
-              <div className="grid sm:grid-cols-2 gap-4 mb-5">
-                {/* Pass/Fail por categoría */}
-                <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Pass / Fail por categoría</p>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <BarChart data={catBarData} barSize={18}>
-                      <XAxis dataKey="cat" tick={{ fill: '#9CA3AF', fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis hide />
-                      <Tooltip contentStyle={{ background: '#12121A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} />
-                      <Bar dataKey="pass" name="Pass" stackId="a" fill="#34D399" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="fail" name="Fail" stackId="a" fill="#F87171" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">{loading ? '—' : value}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{label}</p>
                 </div>
+              ))}
+            </div>
 
-                {/* Latency scatter */}
-                <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Latencia por query (ms)</p>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <AreaChart data={latencyData}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-violet-500" />
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">Requests (14 días)</span>
+                  </div>
+                  <span className="text-xs text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-lg">
+                    <Clock className="w-3 h-3 inline mr-1" />Tiempo real
+                  </span>
+                </div>
+                {!hasData && !loading ? (
+                  <div className="h-48 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={180}>
+                    <AreaChart data={areaData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="auditGrad" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="gradReq" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#0EB5C6" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="#0EB5C6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="i" tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <YAxis hide />
-                      <Tooltip contentStyle={{ background: '#12121A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} formatter={(v) => [`${v}ms`, 'Latencia']} />
-                      <Area type="monotone" dataKey="ms" stroke="#0EB5C6" strokeWidth={2} fill="url(#auditGrad)" dot={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={v => v.slice(5)} />
+                      <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                      <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} labelStyle={{ color: '#8B8AA0', marginBottom: 4 }} />
+                      <Area type="monotone" dataKey="requests" name="Requests" stroke="#0EB5C6" strokeWidth={2} fill="url(#gradReq)" dot={false} />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
+                )}
               </div>
 
-              {/* Query table */}
-              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 dark:border-white/5">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Detalle de queries ({auditLogs.length})</p>
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-4 h-4 text-teal-500" />
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">Por endpoint</span>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-gray-50 dark:border-white/5">
-                        {['Estado', 'Categoría', 'Query', 'Precision', 'Latencia', 'Chunks'].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left font-semibold text-gray-400">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {auditLogs.map(l => (
-                        <tr key={l.id} className="border-b border-gray-50 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition">
-                          <td className="px-4 py-2.5">
-                            {l.error ? '❌' : l.precision_score >= 0.6 ? '✅' : '⚠️'}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: `${categoryColors[l.category]}20`, color: categoryColors[l.category] }}>
-                              {l.category}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={l.query}>{l.query}</td>
-                          <td className="px-4 py-2.5 font-mono font-bold" style={{ color: l.precision_score >= 0.8 ? '#34D399' : l.precision_score >= 0.5 ? '#F59E0B' : '#F87171' }}>
-                            {(l.precision_score * 100).toFixed(0)}%
-                          </td>
-                          <td className="px-4 py-2.5 font-mono text-gray-400">{Math.round(l.latency_ms)}ms</td>
-                          <td className="px-4 py-2.5 font-mono text-gray-400">{l.chunks_retrieved}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                {!hasData && !loading ? (
+                  <div className="h-48 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={180}>
+                    <PieChart>
+                      <Pie data={pieData} cx="50%" cy="45%" innerRadius={42} outerRadius={66} paddingAngle={3} dataKey="value">
+                        {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#8B8AA0' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              <div className="md:col-span-3 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">Tokens consumidos (14 días)</span>
                 </div>
+                {!hasData && !loading ? (
+                  <div className="h-36 flex items-center justify-center text-sm text-gray-400">Sin datos aún</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={130}>
+                    <BarChart data={areaData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} tickFormatter={v => v.slice(5)} />
+                      <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                      <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#F0EFF8' }} labelStyle={{ color: '#8B8AA0' }} />
+                      <Bar dataKey="tokens" name="Tokens" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
-          );
-        })()}
+          </div>
+        )}
 
-        {/* ── Financial Intelligence ── */}
-        <MacroIntelligence />
+        {/* ── Tab: Financial Intelligence ─────────────────────────────────── */}
+        {activeTab === 'financial' && (
+          <MacroIntelligence />
+        )}
 
-        {/* ── Knowledge Graph ── */}
-        <KnowledgeGraph />
-
-        {/* ── API Keys ── */}
-        <div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Mis API Keys</h2>
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2].map(i => <div key={i} className="h-20 bg-white dark:bg-[#12121A] rounded-xl animate-pulse" />)}
-            </div>
-          ) : keys.length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5">
-              <Key className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No tienes llaves generadas.</p>
-              <button onClick={() => setShowModal(true)} className="mt-4 text-sm font-semibold text-violet-500 hover:text-violet-400 transition">
-                Crear primera llave →
+        {/* ── Tab: Servicios ──────────────────────────────────────────────── */}
+        {activeTab === 'services' && (
+          <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4 text-violet-500" />
+                <span className="font-bold text-gray-900 dark:text-white text-sm">Estado de Servicios</span>
+                {servicesCheckedAt && (
+                  <span className="text-[11px] text-gray-400">
+                    · verificado {new Date(servicesCheckedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={fetchServices}
+                disabled={servicesLoading}
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-violet-400 transition disabled:opacity-40 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${servicesLoading ? 'animate-spin' : ''}`} />
+                Actualizar
               </button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {keys.map(key => (
-                <div key={key.id} className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-4 flex items-center justify-between shadow-sm">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm">{key.name}</span>
-                      {key.is_active
-                        ? <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full font-bold">ACTIVA</span>
-                        : <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full font-bold">REVOCADA</span>
-                      }
+
+            <div className="p-5">
+              {servicesLoading && services.length === 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <div key={i} className="h-20 bg-gray-100 dark:bg-white/5 rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {services.map(svc => {
+                    const statusConfig = {
+                      ok:       { dot: 'bg-emerald-500', text: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Activo'    },
+                      degraded: { dot: 'bg-amber-400',   text: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-400/20',   label: 'Degradado' },
+                      error:    { dot: 'bg-red-500',     text: 'text-red-500',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     label: 'Error'     },
+                      unused:   { dot: 'bg-gray-400',    text: 'text-gray-400',    bg: 'bg-white/5',        border: 'border-gray-200 dark:border-white/5', label: 'Sin uso' },
+                    }[svc.status];
+
+                    const categoryIcon = {
+                      database:  Database,
+                      ai:        Brain,
+                      analytics: BarChart2,
+                      parsing:   FileText,
+                      data:      Globe,
+                      gov:       ShieldCheck,
+                    }[svc.category] ?? Server;
+                    const CategoryIcon = categoryIcon;
+
+                    return (
+                      <div
+                        key={svc.id}
+                        className={`relative rounded-xl border p-3.5 ${statusConfig.bg} ${statusConfig.border}`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <CategoryIcon className={`w-4 h-4 ${svc.status === 'unused' ? 'text-gray-400' : statusConfig.text}`} />
+                          <span className="flex items-center gap-1">
+                            <span className={`w-2 h-2 rounded-full ${statusConfig.dot} ${svc.status === 'ok' ? 'shadow-[0_0_6px_currentColor]' : ''}`} />
+                            <span className={`text-[10px] font-bold ${statusConfig.text}`}>{statusConfig.label}</span>
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight mb-1">{svc.name}</p>
+                        <p className="text-[11px] text-gray-400 leading-tight truncate" title={svc.message}>{svc.message}</p>
+                        {svc.latency_ms !== undefined && (
+                          <span className="absolute bottom-2.5 right-3 text-[10px] font-mono text-gray-400">{svc.latency_ms}ms</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Playground ─────────────────────────────────────────────── */}
+        {activeTab === 'playground' && (
+          <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Play className="w-4 h-4 text-violet-500" />
+                <span className="font-bold text-gray-900 dark:text-white text-sm">Playground</span>
+              </div>
+              <a href="/api-docs.html" target="_blank" rel="noopener noreferrer"
+                className="text-xs text-violet-400 hover:text-violet-300 transition">
+                Ver documentación completa →
+              </a>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 block">API Key</label>
+                <input
+                  type="password"
+                  value={playgroundApiKey}
+                  onChange={e => setPlaygroundApiKey(e.target.value)}
+                  placeholder="val_live_XXXX..."
+                  className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 block">Endpoint</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowEndpointDropdown(v => !v)}
+                    className="w-full flex items-center justify-between bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm text-left hover:border-violet-400 dark:hover:border-violet-500/50 transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                        style={{ backgroundColor: `${METHOD_COLORS[ep.method]}22`, color: METHOD_COLORS[ep.method] }}
+                      >
+                        {ep.method}
+                      </span>
+                      <span className="font-mono text-gray-700 dark:text-gray-300 text-xs">{ep.path}</span>
+                      <span className="text-gray-400 text-xs hidden sm:inline">— {ep.label.split('—')[1]?.trim()}</span>
                     </div>
-                    <code className="text-xs text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded font-mono">
-                      {key.key_prefix}
-                    </code>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Creada {new Date(key.created_at).toLocaleDateString()} · Último uso: {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Nunca'}
-                    </p>
-                  </div>
-                  {key.is_active && (
-                    <button
-                      onClick={() => handleRevoke(key.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition"
-                      title="Revocar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showEndpointDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showEndpointDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-[#1A1A26] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
+                      {ENDPOINTS.map((e, i) => (
+                        <button
+                          key={i}
+                          onClick={() => selectEndpoint(i)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer ${i === selectedEndpointIdx ? 'bg-violet-50 dark:bg-violet-500/10' : ''}`}
+                        >
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0"
+                            style={{ backgroundColor: `${METHOD_COLORS[e.method]}22`, color: METHOD_COLORS[e.method] }}
+                          >
+                            {e.method}
+                          </span>
+                          <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{e.path}</span>
+                          <span className="text-xs text-gray-400 ml-auto hidden sm:block">{e.label.split('—')[1]?.trim()}</span>
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    {ep.method === 'GET' ? 'Sin body (GET)' : 'Request Body (JSON)'}
+                  </label>
+                  {ep.method !== 'GET' ? (
+                    <textarea
+                      value={playgroundBody}
+                      onChange={e => setPlaygroundBody(e.target.value)}
+                      rows={9}
+                      className="w-full bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-mono text-gray-800 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 resize-none transition"
+                    />
+                  ) : (
+                    <div className="h-[198px] flex items-center justify-center bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-400">
+                      Este endpoint no requiere body
+                    </div>
+                  )}
+                  <button
+                    onClick={runPlayground}
+                    disabled={playgroundLoading}
+                    className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition text-sm cursor-pointer"
+                  >
+                    {playgroundLoading
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Ejecutando...</>
+                      : <><Play className="w-4 h-4" /> Ejecutar</>
+                    }
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">Response</label>
+                    {playgroundStatus && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${playgroundStatus < 300 ? 'bg-teal-500/15 text-teal-400' : 'bg-red-500/15 text-red-400'}`}>
+                        {playgroundStatus}
+                      </span>
+                    )}
+                  </div>
+                  <pre className="flex-1 min-h-[230px] bg-gray-950 dark:bg-black/40 text-green-400 text-xs rounded-xl p-4 overflow-auto font-mono whitespace-pre-wrap leading-relaxed">
+                    {playgroundLoading
+                      ? <span className="text-gray-500 animate-pulse">Esperando respuesta...</span>
+                      : playgroundResult
+                        ? <span>{playgroundResult}</span>
+                        : <span className="text-gray-600">// La respuesta aparecerá aquí</span>
+                    }
+                  </pre>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 dark:border-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Snippet de código</p>
+                  <div className="flex gap-1">
+                    {(['curl', 'node', 'python'] as const).map(lang => (
+                      <button
+                        key={lang}
+                        onClick={() => setSnippetLang(lang)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${snippetLang === lang ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+                      >
+                        {lang === 'node' ? 'Node.js' : lang.charAt(0).toUpperCase() + lang.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="relative group">
+                  <pre className="bg-gray-950 dark:bg-black/40 text-gray-300 text-xs rounded-xl p-4 overflow-x-auto font-mono leading-relaxed">
+                    {snippets[snippetLang]}
+                  </pre>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(snippets[snippetLang]); toast.success('Copiado'); }}
+                    className="absolute top-2.5 right-2.5 p-1.5 bg-white/10 hover:bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 transition text-gray-400 cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* ── Tab: RAG Audit ──────────────────────────────────────────────── */}
+        {activeTab === 'audit' && (
+          auditSummaries.length === 0 ? (
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-12 text-center shadow-sm">
+              <ShieldCheck className="w-10 h-10 text-gray-300 dark:text-white/10 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Sin auditorías ejecutadas</p>
+              <p className="text-xs text-gray-400 mt-1">Ejecuta el script de RAG audit para ver métricas de calidad del retrieval.</p>
+            </div>
+          ) : (() => {
+            const summary = auditSummaries[0];
+            const precisionPct = Math.round((summary.avg_precision ?? 0) * 100);
+            const hitRate = summary.hit_rate_pct ?? 0;
+            const categoryColors: Record<string, string> = {
+              legal: '#0EB5C6', gtm: '#2DD4BF', methodology: '#F59E0B', market: '#34D399', edge: '#94A3B8',
+            };
+            const catMap: Record<string, { pass: number; fail: number; total: number }> = {};
+            auditLogs.forEach(l => {
+              if (!catMap[l.category]) catMap[l.category] = { pass: 0, fail: 0, total: 0 };
+              catMap[l.category].total++;
+              if (l.precision_score >= 0.6) catMap[l.category].pass++;
+              else catMap[l.category].fail++;
+            });
+            const catBarData = Object.entries(catMap).map(([cat, v]) => ({
+              cat: cat.charAt(0).toUpperCase() + cat.slice(1),
+              pass: v.pass,
+              fail: v.fail,
+              fill: categoryColors[cat] ?? '#0EB5C6',
+            }));
+            const latencyData = auditLogs.map((l, i) => ({ i: i + 1, ms: Math.round(l.latency_ms), cat: l.category }));
+
+            return (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-violet-500" />
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white">RAG Audit Dashboard</h2>
+                  <span className="ml-2 text-xs bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded-full font-mono">
+                    run: {summary.run_id.slice(0, 8)}…
+                  </span>
+                  <span className="text-xs text-gray-400">{new Date(summary.started_at).toLocaleString()}</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Precision score', value: `${precisionPct}%`, color: precisionPct >= 80 ? 'text-green-400' : precisionPct >= 60 ? 'text-amber-400' : 'text-red-400' },
+                    { label: 'Keyword hit rate', value: `${hitRate}%`,     color: 'text-teal-400'   },
+                    { label: 'Avg latency',      value: `${Math.round(summary.avg_latency_ms)}ms`, color: 'text-violet-400' },
+                    { label: 'Errores',          value: String(summary.errors), color: summary.errors === 0 ? 'text-green-400' : 'text-red-400' },
+                  ].map(kpi => (
+                    <div key={kpi.label} className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                      <p className="text-xs text-gray-400 mb-1">{kpi.label}</p>
+                      <p className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Pass / Fail por categoría</p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={catBarData} barSize={18}>
+                        <XAxis dataKey="cat" tick={{ fill: '#9CA3AF', fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis hide />
+                        <Tooltip contentStyle={{ background: '#12121A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} />
+                        <Bar dataKey="pass" name="Pass" stackId="a" fill="#34D399" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="fail" name="Fail" stackId="a" fill="#F87171" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Latencia por query (ms)</p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <AreaChart data={latencyData}>
+                        <defs>
+                          <linearGradient id="auditGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#0EB5C6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#0EB5C6" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="i" tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis hide />
+                        <Tooltip contentStyle={{ background: '#12121A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} formatter={(v) => [`${v}ms`, 'Latencia']} />
+                        <Area type="monotone" dataKey="ms" stroke="#0EB5C6" strokeWidth={2} fill="url(#auditGrad)" dot={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 dark:border-white/5">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Detalle de queries ({auditLogs.length})</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-gray-50 dark:border-white/5">
+                          {['Estado', 'Categoría', 'Query', 'Precision', 'Latencia', 'Chunks'].map(h => (
+                            <th key={h} className="px-4 py-2.5 text-left font-semibold text-gray-400">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {auditLogs.map(l => (
+                          <tr key={l.id} className="border-b border-gray-50 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition">
+                            <td className="px-4 py-2.5">
+                              {l.error ? '❌' : l.precision_score >= 0.6 ? '✅' : '⚠️'}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: `${categoryColors[l.category]}20`, color: categoryColors[l.category] }}>
+                                {l.category}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={l.query}>{l.query}</td>
+                            <td className="px-4 py-2.5 font-mono font-bold" style={{ color: l.precision_score >= 0.8 ? '#34D399' : l.precision_score >= 0.5 ? '#F59E0B' : '#F87171' }}>
+                              {(l.precision_score * 100).toFixed(0)}%
+                            </td>
+                            <td className="px-4 py-2.5 font-mono text-gray-400">{Math.round(l.latency_ms)}ms</td>
+                            <td className="px-4 py-2.5 font-mono text-gray-400">{l.chunks_retrieved}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })()
+        )}
+
+        {/* ── Tab: Knowledge Graph ────────────────────────────────────────── */}
+        {activeTab === 'graph' && (
+          <KnowledgeGraph />
+        )}
+
+        {/* ── Tab: API Keys ───────────────────────────────────────────────── */}
+        {activeTab === 'apikeys' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Mis API Keys</h2>
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 text-white font-semibold rounded-xl hover:bg-teal-600 transition text-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Nueva Llave
+              </button>
+            </div>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2].map(i => <div key={i} className="h-20 bg-white dark:bg-[#12121A] rounded-xl animate-pulse" />)}
+              </div>
+            ) : keys.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5">
+                <Key className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">No tienes llaves generadas.</p>
+                <button onClick={() => setShowModal(true)} className="mt-4 text-sm font-semibold text-violet-500 hover:text-violet-400 transition cursor-pointer">
+                  Crear primera llave →
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {keys.map(key => (
+                  <div key={key.id} className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-4 flex items-center justify-between shadow-sm">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="font-semibold text-gray-900 dark:text-[#F0EFF8] text-sm">{key.name}</span>
+                        {key.is_active
+                          ? <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full font-bold">ACTIVA</span>
+                          : <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full font-bold">REVOCADA</span>
+                        }
+                      </div>
+                      <code className="text-xs text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded font-mono">
+                        {key.key_prefix}
+                      </code>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Creada {new Date(key.created_at).toLocaleDateString()} · Último uso: {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Nunca'}
+                      </p>
+                    </div>
+                    {key.is_active && (
+                      <button
+                        onClick={() => handleRevoke(key.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition cursor-pointer"
+                        title="Revocar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
 
-      {/* ── Modal Crear Llave ── */}
+      {/* ── Modal Crear Llave ────────────────────────────────────────────── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#12121A] rounded-3xl shadow-2xl w-full max-w-md p-6">
@@ -882,8 +947,8 @@ export function Developers() {
                   autoFocus
                 />
                 <div className="flex gap-3">
-                  <button onClick={closeModal} className="flex-1 py-2.5 font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition">Cancelar</button>
-                  <button onClick={handleCreateKey} disabled={creating || !keyName.trim()} className="flex-1 py-2.5 font-semibold bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition disabled:opacity-50">
+                  <button onClick={closeModal} className="flex-1 py-2.5 font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer">Cancelar</button>
+                  <button onClick={handleCreateKey} disabled={creating || !keyName.trim()} className="flex-1 py-2.5 font-semibold bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition disabled:opacity-50 cursor-pointer">
                     {creating ? 'Generando...' : 'Generar Llave'}
                   </button>
                 </div>
@@ -903,11 +968,11 @@ export function Developers() {
                 <div className="flex items-center gap-2 bg-gray-100 dark:bg-[#0A0A0F] border border-gray-200 dark:border-white/10 p-2 rounded-xl mb-6">
                   <code className="text-sm flex-1 overflow-x-auto text-gray-800 dark:text-gray-300 px-2 font-mono whitespace-nowrap">{newKeySecret}</code>
                   <button onClick={() => { navigator.clipboard.writeText(newKeySecret!); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                    className="shrink-0 p-2 bg-white dark:bg-[#12121A] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 transition shadow-sm text-gray-700 dark:text-gray-300">
+                    className="shrink-0 p-2 bg-white dark:bg-[#12121A] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 transition shadow-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                     {copied ? <Check className="w-4 h-4 text-teal-500" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <button onClick={closeModal} className="w-full py-2.5 font-semibold bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100 rounded-xl transition">
+                <button onClick={closeModal} className="w-full py-2.5 font-semibold bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100 rounded-xl transition cursor-pointer">
                   He guardado mi llave
                 </button>
               </>
