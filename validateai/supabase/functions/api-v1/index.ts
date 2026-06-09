@@ -4,7 +4,7 @@ import { authMiddleware } from './middleware/auth.ts'
 import { usageMiddleware } from './middleware/usage.ts'
 import { rateLimitMiddleware } from './middleware/ratelimit.ts'
 import { ragQueryHandler } from './routes/rag.ts'
-import { economicDataHandler } from './routes/data.ts'
+import { economicDataHandler, macroDataHandler, chilecompraDataHandler, chilecompraMetricasHandler } from './routes/data.ts'
 import { ingestTextHandler, ingestFileHandler, ingestVaultHandler } from './routes/ingest.ts'
 import { createWebhookHandler, listWebhooksHandler, deleteWebhookHandler } from './routes/webhooks.ts'
 import { validateHandler } from './routes/validate.ts'
@@ -40,6 +40,9 @@ app.use('/api/v1/*', usageMiddleware)
 app.post('/api/v1/validate', validateHandler)
 app.post('/api/v1/rag/query', ragQueryHandler)
 app.get('/api/v1/data/economy', economicDataHandler)
+app.get('/api/v1/data/macro', macroDataHandler)
+app.get('/api/v1/data/chilecompra', chilecompraDataHandler)
+app.get('/api/v1/data/chilecompra/metricas', chilecompraMetricasHandler)
 app.post('/api/v1/rag/ingest/text', ingestTextHandler)
 app.post('/api/v1/rag/ingest/file', ingestFileHandler)
 // Vault ingest: called by GitHub Actions — bypasses RaaS auth, uses service role key

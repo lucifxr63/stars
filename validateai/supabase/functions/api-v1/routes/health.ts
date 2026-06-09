@@ -7,6 +7,7 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const LLAMAPARSE_API_KEY = Deno.env.get('LLAMAPARSE_API_KEY')
 const CMF_BEST_KEY = Deno.env.get('CMF_BEST_KEY')
 const FINTOC_SECRET_KEY = Deno.env.get('FINTOC_SECRET_KEY')
+const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')
 
 type ServiceStatus = 'ok' | 'degraded' | 'error' | 'unused'
 
@@ -129,18 +130,57 @@ export const servicesHealthHandler = async (c: any) => {
     message: ineHasData ? 'Clasificaciones en caché' : ineHasData === null ? 'Error de acceso a tabla' : 'Sin datos en caché',
   })
 
-  // CMF — check economic_knowledge for UF data
+  // CMF — check economic_knowledge for CMF provider rows
   const { data: cmfData } = await supabase
     .from('economic_knowledge')
-    .select('id')
-    .ilike('content', '%UF%')
+    .select('updated_at')
+    .eq('provider', 'CMF')
+    .order('updated_at', { ascending: false })
     .limit(1)
   services.push({
     id: 'cmf',
     name: 'CMF (UF / Indicadores)',
     category: 'gov',
     status: cmfData && cmfData.length > 0 ? 'ok' : 'degraded',
-    message: cmfData && cmfData.length > 0 ? 'Indicadores CMF en caché' : 'Sin datos en caché',
+    message: cmfData && cmfData.length > 0
+      ? `Última sync ${new Date(cmfData[0].updated_at).toLocaleDateString('es-CL')}`
+      : 'Sin datos en caché',
+  })
+
+  // FRED — macroeconomic series (USD/CLP, cobre, fed funds, CPI, petróleo)
+  const { data: fredData } = await supabase
+    .from('economic_knowledge')
+    .select('updated_at')
+    .eq('provider', 'FRED')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+  const fredHasData = fredData && fredData.length > 0
+  services.push({
+    id: 'fred',
+    name: 'FRED (Macro EEUU)',
+    category: 'data',
+    status: fredHasData ? 'ok' : 'degraded',
+    message: fredHasData
+      ? `Última sync ${new Date(fredData[0].updated_at).toLocaleDateString('es-CL')}`
+      : 'Sin datos — ejecutar cron fred-sync',
+  })
+
+  // ChileCompra — Mercado Público procurement intelligence
+  const { data: chilecompraData } = await supabase
+    .from('economic_knowledge')
+    .select('updated_at')
+    .eq('provider', 'CHILECOMPRA')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+  const chilecompraHasData = chilecompraData && chilecompraData.length > 0
+  services.push({
+    id: 'chilecompra',
+    name: 'ChileCompra (Mercado Público)',
+    category: 'gov',
+    status: chilecompraHasData ? 'ok' : 'degraded',
+    message: chilecompraHasData
+      ? `Última consulta ${new Date(chilecompraData[0].updated_at).toLocaleDateString('es-CL')}`
+      : 'Sin datos — consultar con ?rut=...',
   })
 
   // INAPI — OData live (Sprint 4)
@@ -218,8 +258,8 @@ export const servicesHealthHandler = async (c: any) => {
     id: 'serpapi',
     name: 'SerpApi (Trends)',
     category: 'data',
-    status: 'unused',
-    message: 'Pendiente integración',
+    status: SERPAPI_KEY ? 'ok' : 'error',
+    message: SERPAPI_KEY ? 'API key configurada' : 'SERPAPI_KEY no configurada',
   })
 
   services.push({

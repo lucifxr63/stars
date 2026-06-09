@@ -57,7 +57,7 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
 // Determina quÃ© fuentes de datos son necesarias para ESTE usuario en ESTE momento.
 // Objetivo: no gastar tokens ni latencia en fuentes que no aportarÃ¡n seÃ±al analÃ­tica.
 
-type DataSource = 'sii' | 'inapi' | 'fintoc' | 'pjud' | 'cmf_best';
+type DataSource = 'sii' | 'inapi' | 'fintoc' | 'pjud' | 'cmf_best' | 'fred' | 'chilecompra';
 
 interface ContextFilter {
   sources: Set<DataSource>;
@@ -123,6 +123,20 @@ function filterRelevantContext(params: {
     sources.add('cmf_best');
   } else {
     skipped.push({ source: 'cmf_best', reason: `PaÃ­s "${targetCountry ?? 'N/D'}": BEST CMF aplica solo a Chile` });
+  }
+
+  // FRED: contexto macro para startups chilenas (USD/CLP, cobre, tasas USA)
+  if (targetCountry?.toUpperCase() === 'CL' || targetCountry?.toLowerCase() === 'chile') {
+    sources.add('fred');
+  } else {
+    skipped.push({ source: 'fred', reason: `País "${targetCountry ?? 'N/D'}": macro FRED aplica solo a Chile` });
+  }
+
+  // ChileCompra: inteligencia B2G — métricas M1-M10 de Mercado Público
+  if (rutEmpresa) {
+    sources.add('chilecompra');
+  } else {
+    skipped.push({ source: 'chilecompra', reason: 'RUT de empresa no proporcionado' });
   }
 
   return { sources, skipped };
@@ -362,6 +376,50 @@ function compressCmfBest(payload: Record<string, unknown>): string {
     .map(([k, v]) => `  â€¢ ${k}: ${v.value?.toFixed(2)}${v.unit} (${v.period})`);
   if (lines.length === 0) return '[CMF BEST] Indicadores no disponibles.';
   return ['[CMF BEST â€” Mercado Financiero Chile]', ...lines].join('\n');
+}
+
+function compressFred(payload: Record<string, unknown>): string {
+  const rows = (payload.rows ?? []) as Array<{ indicator: string; data_json: Record<string, unknown> }>;
+  if (rows.length === 0) return '[FRED] Sin datos macroeconómicos disponibles.';
+  const LABELS: Record<string, string> = {
+    DEXCLUS:    'USD/CLP',
+    PCOPPUSDM:  'Cobre (USD/lb)',
+    FEDFUNDS:   'Fed Funds Rate',
+    CPIAUCSL:   'CPI USA',
+    DCOILWTICO: 'Petróleo WTI',
+  };
+  const lines = rows.map(r => {
+    const d = r.data_json ?? {};
+    const label = LABELS[r.indicator] ?? r.indicator;
+    return `  • ${label}: ${d.value ?? 'N/D'} (${d.date ?? d.period ?? 'N/D'})`;
+  });
+  return ['[FRED — Macro referencia Chile/USA]', ...lines].join('\n');
+}
+
+function compressChilecompra(m: Record<string, unknown>): string {
+  if (!m) return '[ChileCompra] Sin métricas calculadas.';
+  const clpM = (n: unknown) =>
+    typeof n === 'number' && n > 0 ? `CLP ${Math.round(n / 1_000_000)}M` : 'N/D';
+  const pct = (n: unknown) =>
+    typeof n === 'number' ? `${(n as number).toFixed(1)}%` : 'N/D';
+
+  const alertas: string[] = [];
+  if (typeof m.tendencia_pct === 'number' && (m.tendencia_pct as number) < -15)
+    alertas.push(`Contratos cayeron ${pct(m.tendencia_pct)} interanual`);
+  if (typeof m.trato_directo_pct === 'number' && (m.trato_directo_pct as number) > 60)
+    alertas.push(`Trato directo alto: ${pct(m.trato_directo_pct)}`);
+  if (typeof m.top_organismo_pct === 'number' && (m.top_organismo_pct as number) > 70)
+    alertas.push(`Concentración en ${m.top_organismo_nombre}: ${pct(m.top_organismo_pct)}`);
+  if (typeof m.deuda_estado_pendiente_clp === 'number' && (m.deuda_estado_pendiente_clp as number) > 0)
+    alertas.push(`Estado adeuda ${clpM(m.deuda_estado_pendiente_clp)}`);
+
+  return [
+    `[ChileCompra — Mercado Público | calculado ${m.calculado_al}]`,
+    `Ingresos B2G 12m: ${clpM(m.ingreso_fiscal_12m)} | Tendencia: ${pct(m.tendencia_pct)} interanual`,
+    `Trato directo: ${pct(m.trato_directo_pct)} | Win rate: ${pct(m.win_rate_pct)} (${m.licit_ganadas ?? 0}/${m.licit_participadas ?? 0} licit.)`,
+    `Top organismo: ${m.top_organismo_nombre ?? 'N/D'} (${pct(m.top_organismo_pct)}) | Sectores: ${m.sectores_count ?? 'N/D'}`,
+    alertas.length > 0 ? `⚠️ Alertas: ${alertas.join('; ')}` : '✓ Sin alertas de riesgo B2G',
+  ].join('\n');
 }
 
 // â”€â”€ Schema validator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -670,6 +728,8 @@ serve(async (req) => {
       fintocBreaker,
       pjudBreaker,
       cmfBestBreaker,
+      fredBreaker,
+      chilecompraBreaker,
     ] = await Promise.all([
       withCircuitBreaker('knowledge_base', () =>
         searchKnowledgeBase(supabase, (validation.idea_name as string) ?? '', (validation.idea_industry as string) ?? '')
@@ -688,7 +748,33 @@ serve(async (req) => {
         : { ok: false as const, reason: 'PJUD no requerido por filtro adaptativo' },
       sources.has('cmf_best')
         ? withCircuitBreaker('cmf-best-fetch', () => callEdgeFunction('cmf-best-fetch', { validation_id }), 15_000)
-        : { ok: false as const, reason: 'CMF BEST no requerido (paÃ­s no es Chile)' },
+        : { ok: false as const, reason: 'CMF BEST no requerido (país no es Chile)' },
+      sources.has('fred')
+        ? withCircuitBreaker('fred-db', async () => {
+            const { data, error } = await supabase
+              .from('economic_knowledge')
+              .select('indicator, data_json')
+              .eq('provider', 'FRED')
+              .order('updated_at', { ascending: false });
+            if (error) throw error;
+            return { rows: data ?? [] };
+          })
+        : { ok: false as const, reason: 'FRED no requerido' },
+      sources.has('chilecompra')
+        ? withCircuitBreaker('chilecompra-db', async () => {
+            const rutNorm = (rut_empresa ?? '').replace(/[^0-9Kk]/g, '').toUpperCase();
+            const { data, error } = await supabase
+              .from('chilecompra_metricas')
+              .select('*')
+              .eq('rut', rutNorm)
+              .order('calculado_al', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (error) throw error;
+            if (!data) throw new Error('Sin métricas — ejecutar chilecompra-calcular primero');
+            return data as Record<string, unknown>;
+          })
+        : { ok: false as const, reason: 'ChileCompra no requerido' },
     ]);
 
     // â”€â”€ Construir secciones de contexto + dataWarnings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -721,15 +807,18 @@ serve(async (req) => {
     applyBreaker(inapiBreaker,    'INAPI (marcas)',                  compressInapi,    sources.has('inapi'));
     applyBreaker(fintocBreaker,   'Open Banking (Fintoc)',           compressFintoc,   sources.has('fintoc'));
     applyBreaker(pjudBreaker,     'Historial Judicial (PJUD)',       compressPjud,     sources.has('pjud'));
-    applyBreaker(cmfBestBreaker,  'CMF BEST (mercado financiero)',   compressCmfBest,  sources.has('cmf_best'));
+    applyBreaker(cmfBestBreaker,     'CMF BEST (mercado financiero)',    compressCmfBest,                               sources.has('cmf_best'));
+    applyBreaker(fredBreaker,        'FRED (macro USA/Chile)',           (d) => compressFred(d),                        sources.has('fred'));
+    applyBreaker(chilecompraBreaker, 'ChileCompra (mercado público B2G)', (d) => compressChilecompra(d),               sources.has('chilecompra'));
 
     const ragChunks = ragBreaker.ok ? (ragBreaker.data as string) : '';
 
     // Techo de cristal: verdadero solo si SII o Fintoc aportaron datos reales.
     // No basta con que la fuente haya sido solicitada â€” el circuit breaker debe haber OK'd.
     const hasVerifiedFinancialData =
-      (sources.has('sii')    && siiBreaker.ok) ||
-      (sources.has('fintoc') && fintocBreaker.ok);
+      (sources.has('sii')          && siiBreaker.ok) ||
+      (sources.has('fintoc')       && fintocBreaker.ok) ||
+      (sources.has('chilecompra')  && chilecompraBreaker.ok);
 
     // â”€â”€ Llamar Claude â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { system, user: userPrompt } = buildMegaPrompt(
