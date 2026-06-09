@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { KnowledgeGraph } from '@/components/developers/KnowledgeGraph';
+import { MacroIntelligence } from '@/components/developers/MacroIntelligence';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
   Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
@@ -806,6 +807,9 @@ export function Developers() {
             </div>
           );
         })()}
+
+        {/* ── Financial Intelligence ── */}
+        <MacroIntelligence />
 
         {/* ── Knowledge Graph ── */}
         <KnowledgeGraph />
