@@ -15,6 +15,7 @@ import type {
   MarketSizingTier,
   CompetitorEntry,
   ScoreBreakdown,
+  CapitalEfficiency,
 } from '@/types/validation';
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -745,6 +746,164 @@ function DueDiligencePage({ data }: { data: PDFData }) {
 
 // â”€â”€ Root Document â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// ── Advanced Risk Page (Sprint 7) ─────────────────────────────────────────────
+
+function RegulatoryBadge({ label, compliant }: { label: string; compliant: boolean }) {
+  const bg = compliant ? colors.green + '22' : colors.amber + '22';
+  const fg = compliant ? colors.green : colors.amber;
+  return (
+    <View style={{ backgroundColor: bg, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3, marginRight: 6, marginBottom: 4 }}>
+      <Text style={{ fontSize: 7.5, color: fg, fontFamily: 'Helvetica-Bold' }}>
+        {compliant ? '+ ' : '! '}{label}
+      </Text>
+    </View>
+  );
+}
+
+function MetricRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 7, paddingBottom: 5, borderBottomWidth: 0.5, borderBottomColor: colors.border }}>
+      <Text style={{ fontSize: 9, color: colors.muted }}>{label}</Text>
+      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: highlight ? colors.amber : colors.white }}>{value}</Text>
+    </View>
+  );
+}
+
+function AdvancedRiskPage({ data }: { data: PDFData }) {
+  const ga  = data.governance_assessment;
+  const pa  = data.playbook_analysis;
+  const ue  = data.unit_economics;
+  const ce  = data.capital_efficiency as CapitalEfficiency | null | undefined;
+  const dd  = data.due_diligence;
+
+  const regulatoryRisk = ga?.regulatory_risk ?? 'medium';
+  const riskColor =
+    regulatoryRisk === 'high'   ? colors.red   :
+    regulatoryRisk === 'medium' ? colors.amber :
+    colors.green;
+
+  const legalScore = dd?.dimensions?.legal?.score ?? null;
+  const legalOk    = legalScore !== null ? legalScore >= 60 : null;
+
+  const runwayVal = ce?.runway_months   ? `${ce.runway_months} meses`                  : '—';
+  const burnVal   = ce?.monthly_burn_usd ? `USD ${ce.monthly_burn_usd.toLocaleString()}` : '—';
+  const burnMulti = ce?.burn_multiple    ? `${ce.burn_multiple.toFixed(1)}x`             : '—';
+  const nrrVal    = ce?.nrr_pct          ? `${ce.nrr_pct}%`                              : '—';
+  const churnVal  = ce?.gross_churn_pct
+    ? `${ce.gross_churn_pct}%`
+    : ue ? `${ue.monthlyChurnEstimate}%` : '—';
+  const ltvCacVal = ue ? `${ue.ltvCacRatio.value.toFixed(1)}x` : '—';
+  const paybackVal = ue ? `${ue.paybackMonths.min}-${ue.paybackMonths.max} m` : '—';
+
+  const leyDatos   = ga?.legal_checklist?.some(i => i.item?.toLowerCase().includes('21.719')) ?? false;
+  const leyFintech = ga?.legal_checklist?.some(i => i.item?.toLowerCase().includes('21.521')) ?? false;
+  const leyCiber   = ga?.legal_checklist?.some(i => i.item?.toLowerCase().includes('ciber'))  ?? false;
+
+  return (
+    <Page size="A4" style={styles.contentPage}>
+      <View style={styles.pageHeader}>
+        <Text style={styles.pageTitle}>Alertas Criticas</Text>
+        <Text style={styles.pageLabel}>05 · Red Flags & Risk Matrix</Text>
+      </View>
+
+      {/* Riesgo Regulatorio */}
+      <View style={[styles.card, { borderLeftWidth: 3, borderLeftColor: riskColor, marginBottom: 14 }]} wrap={false}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <Text style={styles.cardTitle}>Riesgo Regulatorio</Text>
+          <View style={{ backgroundColor: riskColor + '22', borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: riskColor }}>
+              {regulatoryRisk.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+          <RegulatoryBadge label="Ley 21.719 - Datos Personales" compliant={leyDatos}   />
+          <RegulatoryBadge label="Ley 21.521 - Fintech"          compliant={leyFintech} />
+          <RegulatoryBadge label="Ley Marco Ciberseguridad"       compliant={leyCiber}   />
+        </View>
+        {ga?.regulatory_notes ? (
+          <Text style={styles.cardBody}>{ga.regulatory_notes}</Text>
+        ) : legalScore !== null ? (
+          <Text style={styles.cardBody}>
+            {'Score legal Due Diligence: '}{legalScore}{'/100'}
+            {legalOk ? ' — cumplimiento aceptable.' : ' — requiere atencion antes de ronda.'}
+          </Text>
+        ) : null}
+      </View>
+
+      <View style={styles.twoCol}>
+        {/* Eficiencia de Capital */}
+        <View style={styles.col}>
+          <Text style={styles.sectionTitle}>Eficiencia de Capital</Text>
+          <View style={styles.card} wrap={false}>
+            <MetricRow label="Burn Rate mensual" value={burnVal}
+              highlight={ce?.monthly_burn_usd !== undefined && ce.monthly_burn_usd > 30000} />
+            <MetricRow label="Runway estimado"   value={runwayVal}
+              highlight={ce?.runway_months !== undefined && ce.runway_months < 12} />
+            <MetricRow label="Burn Multiple"     value={burnMulti}
+              highlight={ce?.burn_multiple !== undefined && ce.burn_multiple > 2} />
+            <MetricRow label="Payback Period"    value={paybackVal} />
+            {ue && (
+              <MetricRow label="Break-even" value={`${ue.breakEvenUsers.toLocaleString()} usuarios`} />
+            )}
+          </View>
+          {!ce?.runway_months && !ce?.monthly_burn_usd && (
+            <View style={styles.placeholder}>
+              <Text style={styles.placeholderText}>
+                Burn Rate y Runway no disponibles. Completar en Due Diligence.
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Retencion & Revenue Quality */}
+        <View style={styles.col}>
+          <Text style={styles.sectionTitle}>Retencion & Revenue Quality</Text>
+          <View style={styles.card} wrap={false}>
+            <MetricRow label="NRR (Net Revenue Retention)" value={nrrVal}
+              highlight={ce?.nrr_pct !== undefined && ce.nrr_pct < 100} />
+            <MetricRow label="Gross Churn mensual" value={churnVal}
+              highlight={ue !== undefined && ue.monthlyChurnEstimate > 5} />
+            <MetricRow label="LTV/CAC Ratio" value={ltvCacVal}
+              highlight={ue !== undefined && ue.ltvCacRatio.value < 3} />
+            {ue && (
+              <MetricRow
+                label="Estado LTV/CAC"
+                value={ue.ltvCacRatio.assessment === 'viable' ? 'Viable' : ue.ltvCacRatio.assessment === 'warning' ? 'Alerta' : 'Critico'}
+                highlight={ue.ltvCacRatio.assessment !== 'viable'}
+              />
+            )}
+          </View>
+          <View style={[styles.card, { backgroundColor: colors.green + '0D', borderColor: colors.green + '33' }]} wrap={false}>
+            <Text style={[styles.cardTitle, { color: colors.green }]}>Benchmark LatAm SaaS B2B</Text>
+            <Text style={[styles.cardBody, { fontSize: 8 }]}>
+              NRR {'>'} 100% · Churn {'<'} 3%/mes · LTV/CAC {'>'} 3x · Payback {'<'} 18 m
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Riesgo Conductual - Sesgos del Fundador */}
+      {pa?.founder_bias_warning && (
+        <View style={[styles.card, { borderColor: colors.amber + '55', borderWidth: 1.5, marginTop: 4 }]} wrap={false}>
+          <Text style={[styles.cardTitle, { color: colors.amber }]}>Riesgo Conductual - Sesgos del Fundador</Text>
+          <Text style={styles.cardBody}>{pa.founder_bias_warning}</Text>
+        </View>
+      )}
+
+      {/* Gaps legales del DD */}
+      {(dd?.dimensions?.legal?.gaps?.length ?? 0) > 0 && (
+        <View style={[styles.card, { borderColor: colors.red + '44', borderWidth: 1 }]} wrap={false}>
+          <Text style={[styles.cardTitle, { color: colors.red }]}>Gaps Legales - Exigidos por Inversores</Text>
+          <BulletList items={dd!.dimensions.legal.gaps.slice(0, 5)} />
+        </View>
+      )}
+
+      <Footer pageLabel="05 · Alertas Criticas" />
+    </Page>
+  );
+}
+
 export function InvestmentDossier({ data }: { data: PDFData }) {
   return (
     <Document
@@ -757,6 +916,7 @@ export function InvestmentDossier({ data }: { data: PDFData }) {
       <ExecutiveSummaryPage data={data} />
       <MarketPage data={data} />
       <FinancialsPage data={data} />
+      <AdvancedRiskPage data={data} />
       {data.due_diligence && <DueDiligencePage data={data} />}
       <InvestmentPage data={data} />
     </Document>

@@ -367,6 +367,17 @@ export interface PlaybookAnalysis {
   _fallo_elegante?: boolean;
 }
 
+// ─── CAPITAL EFFICIENCY & RETENTION (Sprint 7) ───────────────────────────────
+
+export interface CapitalEfficiency {
+  monthly_burn_usd?: number;
+  runway_months?: number;
+  nrr_pct?: number;         // Net Revenue Retention (%)
+  gross_churn_pct?: number; // Gross Churn mensual (%)
+  burn_multiple?: number;   // Net Burn / Net New ARR
+  cash_balance_usd?: number;
+}
+
 // ─── DUE DILIGENCE ───────────────────────────────────────────────────────────
 
 export type DDDimension = 'financiero' | 'legal' | 'mercado' | 'equipo' | 'traccion';

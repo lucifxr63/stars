@@ -1,4 +1,4 @@
-﻿import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore, PitchDeckContent, LeanRoadmap, FinancialProjection, ComplianceRoadmap } from '@/types/validation';
+﻿import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore, PitchDeckContent, LeanRoadmap, FinancialProjection, ComplianceRoadmap, CapitalEfficiency } from '@/types/validation';
 import { matchCorfoInstruments } from '@/data/corfoInstruments';
 
 // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -40,6 +40,7 @@ export interface PDFData {
   lean_roadmap?: LeanRoadmap | null;
   financial_projection?: FinancialProjection | null;
   compliance_roadmap?: ComplianceRoadmap | null;
+  capital_efficiency?: CapitalEfficiency | null;
 }
 
 export type PDFTheme = 'dark' | 'clean' | 'gradient';

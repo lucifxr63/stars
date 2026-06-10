@@ -65,6 +65,7 @@ const CHART_OPTIONS = {
 export default function DataStoryEngine() {
   const imageRef = useRef<HTMLDivElement>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
   const [postData, setPostData] = useState({ ...DEFAULT_POST });
   const [chartConfig, setChartConfig] = useState({
     type: DEFAULT_POST.chartType,
@@ -88,6 +89,96 @@ export default function DataStoryEngine() {
       })
       .catch(() => toast.error('Error al generar la imagen'));
   }, []);
+
+  const handleMarketInsight = async () => {
+    setIsGeneratingInsight(true);
+    try {
+      // Fetch live macro data from mindicador.cl (CORS-open, public Chilean API)
+      let tpmValue: number | null = null;
+      let ufValue: number | null = null;
+
+      try {
+        const [tpmRes, ufRes] = await Promise.allSettled([
+          fetch('https://mindicador.cl/api/tpm').then(r => r.json()),
+          fetch('https://mindicador.cl/api/uf').then(r => r.json()),
+        ]);
+        if (tpmRes.status === 'fulfilled') tpmValue = tpmRes.value.serie?.[0]?.valor ?? null;
+        if (ufRes.status === 'fulfilled')  ufValue  = ufRes.value.serie?.[0]?.valor  ?? null;
+      } catch {
+        // Fallback to approximate current values if CORS blocks
+        tpmValue = 5.5;
+        ufValue  = 38500;
+      }
+
+      const metricsLine = [
+        tpmValue !== null ? `TPM (Tasa Politica Monetaria): ${tpmValue}%` : null,
+        ufValue  !== null ? `UF (Unidad de Fomento): $${Math.round(ufValue).toLocaleString()}` : null,
+      ].filter(Boolean).join('; ');
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-validate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            validation_id: 'admin-content-engine',
+            step: 0,
+            prompt_type: 'market_signals',
+            context: {
+              idea_name: 'Validus Market Insight Engine',
+              idea_description: `Genera un Data Story de LinkedIn con metricas macro de Chile (${new Date().toLocaleDateString('es-CL')}): ${metricsLine}. El post debe: (1) abrir con pregunta sobre supervivencia del negocio, (2) presentar el dato macro como riesgo real para startups B2B, (3) terminar OBLIGATORIAMENTE con: "?Tu startup sobrevive a este escenario? Descubrelo en Validus." Al final incluye JSON sin markdown: {"tag_sistema":"/SYS/MACRO/${new Date().getFullYear()}","titulo":"...","subtitulo":"...","metrica":"...","benchmark":"...","saludable":"...","peligro":"...","insight":"...","copyLinkedIn":"..."}`,
+              idea_industry: 'SaaS / Venture Capital',
+              target_country: 'Chile',
+              target_region: 'LatAm',
+              business_model: 'B2B SaaS',
+              business_stage: 'growth',
+            },
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error ?? `HTTP ${res.status}`);
+      }
+
+      const raw = await res.json();
+      const text = typeof raw === 'string' ? raw : JSON.stringify(raw);
+      const match = text.match(/\{[^{}]*"titulo"[^{}]*\}/s) ?? text.match(/\{[\s\S]*?\}/);
+
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[0]);
+          if (parsed.titulo) {
+            setPostData(prev => ({ ...prev, ...parsed }));
+            toast.success('Insight de mercado generado con datos en vivo');
+            return;
+          }
+        } catch { /* fallback */ }
+      }
+
+      // If JSON parse fails, inject the hook and use raw text as copy
+      const hookLine = '\n\n\xbfTu startup sobrevive a este escenario? Descubrelo en Validus.';
+      setPostData(prev => ({
+        ...prev,
+        copyLinkedIn: text.slice(0, 500) + hookLine,
+        insight: text.slice(0, 300),
+        tag_sistema: `/SYS/MACRO/${new Date().getFullYear()}`,
+      }));
+      toast.success('Copy de LinkedIn actualizado — revisa el preview');
+    } catch (err) {
+      console.error('[MarketInsight]', err);
+      toast.error('Error consultando datos de mercado. Reintenta.');
+    } finally {
+      setIsGeneratingInsight(false);
+    }
+  };
 
   const handleAIGenerate = async () => {
     setIsGeneratingAI(true);
@@ -183,19 +274,37 @@ export default function DataStoryEngine() {
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
       {/* ── Panel de control ─────────────────────────────────────────────── */}
       <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-white/10">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <h2 className="text-lg font-bold">🛠️ Data Story Factory</h2>
-          <Button onClick={handleAIGenerate} disabled={isGeneratingAI} variant="outline" size="sm">
-            {isGeneratingAI ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>
-                Pensando...
-              </span>
-            ) : '✨ Sugerir con IA'}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              onClick={handleMarketInsight}
+              disabled={isGeneratingInsight || isGeneratingAI}
+              size="sm"
+              className="bg-teal-600 hover:bg-teal-700 text-white text-xs"
+            >
+              {isGeneratingInsight ? (
+                <span className="flex items-center gap-1.5">
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  Consultando datos...
+                </span>
+              ) : '📊 Generar Insight de Mercado'}
+            </Button>
+            <Button onClick={handleAIGenerate} disabled={isGeneratingAI || isGeneratingInsight} variant="outline" size="sm">
+              {isGeneratingAI ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  Pensando...
+                </span>
+              ) : '✨ Sugerir con IA'}
+            </Button>
+          </div>
         </div>
 
         {/* Presets rápidos */}
