@@ -15,7 +15,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
+
+_start_time = time.time()
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -577,6 +580,19 @@ async def _run_ingest_pipeline() -> None:
         log.error("[ingest] Error en pipeline: %s", exc, exc_info=True)
 
 
+# ── GET /ping — lightweight liveness check (sin queries a DB) ─────────────────
+
+@app.get("/ping", tags=["sistema"], summary="Liveness probe ligero")
+async def ping_endpoint():
+    import time
+    from api.scheduler import scheduler  # noqa: PLC0415
+    return {
+        "status": "ok",
+        "uptime_seconds": round(time.time() - _start_time),
+        "scheduler_running": scheduler.running,
+    }
+
+
 # ── GET /health ───────────────────────────────────────────────────────────────
 
 @app.get(
@@ -591,24 +607,27 @@ async def health_endpoint() -> HealthResponse:
     nodes_total = 0
     nodes_with_embedding = 0
 
-    # Supabase
+    # Supabase — count-only queries (no traer embeddings por la red)
     try:
-        result = (
+        nodes_result = (
             client.table("knowledge_nodes")
-            .select("id, embedding", count="exact")
+            .select("id", count="exact")
             .execute()
         )
-        nodes_total = result.count or len(result.data or [])
-        nodes_with_embedding = sum(
-            1 for r in (result.data or []) if r.get("embedding") is not None
+        nodes_total = nodes_result.count or 0
+        emb_result = (
+            client.table("knowledge_nodes")
+            .select("id", count="exact")
+            .not_.is_("embedding", "null")
+            .execute()
         )
-        # Contar edges
+        nodes_with_embedding = emb_result.count or 0
         edges_result = (
             client.table("knowledge_edges")
             .select("id", count="exact")
             .execute()
         )
-        edge_count = edges_result.count or len(edges_result.data or [])
+        edge_count = edges_result.count or 0
         services.append(
             ServiceStatus(
                 name="supabase",
