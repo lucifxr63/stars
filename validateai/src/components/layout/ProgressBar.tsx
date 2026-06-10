@@ -67,7 +67,7 @@ export function ProgressBar({ current, mode = 'detailed' }: { current: number; m
 
               {i < steps.length - 1 && (
                 <div className="flex-1 mx-2 mb-5">
-                  <div className="h-px w-full bg-white dark:bg-[#12121A]/8 overflow-hidden rounded-full">
+                  <div className="h-px w-full bg-white dark:bg-[#5c5c73]/8 overflow-hidden rounded-full">
                     <div className={`h-full transition-all duration-500 bg-[#0EB5C6] ${isCompleted ? 'w-full' : 'w-0'
                       }`} />
                   </div>
