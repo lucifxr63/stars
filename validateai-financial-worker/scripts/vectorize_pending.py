@@ -45,6 +45,7 @@ log = logging.getLogger(__name__)
 # Categorías incorporadas en Sprint 1 (Unit Economics), Sprint 2 (Legal) y
 # Sprint 3 (Growth). Usadas con --familia-a para filtrar solo estos nodos.
 FAMILIA_A_CATEGORIES: list[str] = [
+    # Sprints 1-3
     "Unit Economics",
     "Definicion del Problema",
     "TAM/SAM/SOM",
@@ -54,6 +55,10 @@ FAMILIA_A_CATEGORIES: list[str] = [
     "Traccion y Evidencia",
     "Moat Competitivo",
     "MVP Roadmap",
+    # Sprint 5 — VC-Grade Nodes
+    "Retención y Cohortes",
+    "Eficiencia de Capital",
+    "Estrategia de Salida",
 ]
 
 
