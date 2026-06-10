@@ -137,6 +137,26 @@ ENTITY_GROUPS: dict[str, list[str]] = {
     "gtm_latam": [
         "WhatsApp-first GTM — Adopción Conversacional LatAm",
     ],
+
+    # ── Sprint 5 — Retención y Cohortes ──────────────────────────────────────
+    # NRR + Gross Churn. Activado en modelos SaaS/subscription.
+    "retencion_cohortes": [
+        "Net Revenue Retention (NRR)",
+        "Gross Churn Rate — Efecto Cubeta Agujereada",
+    ],
+
+    # ── Sprint 5 — Eficiencia de Capital ─────────────────────────────────────
+    # Cash Runway + Burn Rate. Activado en seed/pre_seed para alertas de caja.
+    "eficiencia_capital": [
+        "Cash Runway — Regla VC 18-24 Meses",
+        "Burn Rate — Quema Mensual vs Crecimiento MRR",
+    ],
+
+    # ── Sprint 5 — Estrategia de Salida ──────────────────────────────────────
+    # M&A corporativo LatAm. Activado en series_a/growth y geo chile.
+    "exit_strategy": [
+        "M&A Estratégico — Compradores Corporativos LatAm",
+    ],
 }
 
 # ── Routing por industria → grupos de entidades ───────────────────────────────
@@ -145,19 +165,25 @@ ENTITY_GROUPS: dict[str, list[str]] = {
 INDUSTRY_ROUTING: dict[str, list[str]] = {
     # ── Finanzas / Capital ────────────────────────────────────────────────────
     "fintech":      ["macro_base", "tasas_usa", "riesgo", "mercados", "empleo_usa", "liquidez_global", "riesgo_macro",
-                     "compliance_fintech", "compliance_datos", "unit_economics"],
+                     "compliance_fintech", "compliance_datos", "unit_economics",
+                     "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
     "credito":      ["macro_base", "tasas_usa", "riesgo", "empleo_usa", "riesgo_macro",
-                     "compliance_fintech", "compliance_datos", "unit_economics"],
+                     "compliance_fintech", "compliance_datos", "unit_economics",
+                     "retencion_cohortes", "eficiencia_capital"],
     "insurtech":    ["macro_base", "tasas_usa", "riesgo", "riesgo_macro",
-                     "compliance_datos", "unit_economics"],
+                     "compliance_datos", "unit_economics",
+                     "retencion_cohortes", "eficiencia_capital"],
 
     # ── Software / Tech ───────────────────────────────────────────────────────
     "saas":         ["macro_base", "mercados", "tasas_usa", "riesgo", "forex_chile", "liquidez_global", "riesgo_macro",
-                     "unit_economics", "moat_estrategia"],
+                     "unit_economics", "moat_estrategia",
+                     "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
     "b2b_saas":     ["macro_base", "mercados", "tasas_usa", "forex_chile", "liquidez_global",
-                     "unit_economics"],
+                     "unit_economics",
+                     "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
     "b2c":          ["macro_base", "mercados_chile", "forex_chile", "empleo_usa", "chile_macro",
-                     "compliance_datos", "gtm_latam", "unit_economics"],
+                     "compliance_datos", "gtm_latam", "unit_economics",
+                     "eficiencia_capital"],
 
     # ── Comercio / Retail ─────────────────────────────────────────────────────
     "ecommerce":    ["macro_base", "forex_chile", "mercados_chile", "empleo_usa", "chile_macro"],
@@ -202,21 +228,26 @@ INDUSTRY_ROUTING: dict[str, list[str]] = {
 
 STAGE_MODIFIER: dict[str, list[str]] = {
     "pre_seed": ["riesgo", "riesgo_macro",
-                 "trl_crl", "gobernanza_core"],
+                 "trl_crl", "gobernanza_core",
+                 "eficiencia_capital"],
     "seed":     ["riesgo", "tasas_usa", "liquidez_global", "riesgo_macro",
-                 "unit_economics", "gobernanza_core", "trl_crl"],
+                 "unit_economics", "gobernanza_core", "trl_crl",
+                 "eficiencia_capital", "retencion_cohortes"],
     "series_a": ["mercados", "riesgo", "liquidez_global",
-                 "unit_economics", "moat_estrategia"],
+                 "unit_economics", "moat_estrategia",
+                 "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
     "growth":   ["mercados", "mercados_latam", "ciclo_industrial",
-                 "moat_estrategia"],
-    "ipo":      ["mercados", "mercados_chile", "mercados_latam", "riesgo_macro"],
+                 "moat_estrategia",
+                 "retencion_cohortes", "exit_strategy"],
+    "ipo":      ["mercados", "mercados_chile", "mercados_latam", "riesgo_macro",
+                 "exit_strategy"],
 }
 
 # ── Modificadores por geografía ───────────────────────────────────────────────
 
 GEO_MODIFIER: dict[str, list[str]] = {
-    "chile":   ["mercados_chile", "forex_chile", "chile_macro", "fundraising_chile"],
-    "latam":   ["mercados_latam", "mercados_chile", "forex_global", "gtm_latam"],
+    "chile":   ["mercados_chile", "forex_chile", "chile_macro", "fundraising_chile", "exit_strategy"],
+    "latam":   ["mercados_latam", "mercados_chile", "forex_global", "gtm_latam", "exit_strategy"],
     "usa":     ["mercados", "macro_base", "empleo_usa"],
     "global":  ["mercados", "mercados_latam", "forex_global"],
 }
