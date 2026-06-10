@@ -38,6 +38,7 @@ import { FundraisingRoadmapCard } from '@/components/shared/FundraisingRoadmapCa
 import { TractionTracker } from '@/components/shared/TractionTracker';
 import { PlaybookAnalysisCard } from '@/components/shared/PlaybookAnalysisCard';
 import { DueDiligenceScoreCard } from '@/components/shared/DueDiligenceScoreCard';
+import { RiskIntelligencePanel, type BraliduAlert } from '@/components/shared/RiskIntelligencePanel';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import type {
   MarketSizing,
@@ -290,6 +291,9 @@ export function ValidationDetail() {
           verdictSummary: (dd.verdict_summary as string)                             ?? '',
         });
       }
+      if (dd?.bralidus_alerts) {
+        setBralidusPYAlerts((dd.bralidus_alerts as BraliduAlert[]) ?? []);
+      }
       trackTelemetryEvent({
         event_name: 'deliverable_viewed',
         context: {
@@ -420,6 +424,9 @@ export function ValidationDetail() {
     verdictSummary: string;
   } | null>(null);
 
+  // Sprint A: alertas adversariales de BralidusPY (Familia A + Familia B)
+  const [bralidusPYAlerts, setBralidusPYAlerts] = useState<BraliduAlert[]>([]);
+
   const handleGenerateDueDiligence = async () => {
     if (!data) return;
     setGeneratingDueDiligence(true);
@@ -447,9 +454,10 @@ export function ValidationDetail() {
       if (!response.ok) throw new Error('Error al generar Due Diligence');
 
       const result = await response.json();
-      const { due_diligence_score, data_warnings, sources_used, sources_skipped, from_cache } = result;
+      const { due_diligence_score, data_warnings, sources_used, sources_skipped, from_cache, bralidus_alerts } = result;
 
       setData((prev) => prev ? { ...prev, due_diligence_score } : prev);
+      if (bralidus_alerts) setBralidusPYAlerts(bralidus_alerts as BraliduAlert[]);
 
       // Guardar audit trail para renderizado
       setDdAuditTrail({
@@ -2210,17 +2218,25 @@ export function ValidationDetail() {
                   </div>
                 </div>
               ) : data.due_diligence_score ? (
-                <ErrorBoundary label="Due Diligence Score">
-                  <DueDiligenceScoreCard
-                    score={data.due_diligence_score}
-                    extractedData={data.due_diligence_extracted}
-                    dataWarnings={ddAuditTrail?.dataWarnings}
-                    sourcesUsed={ddAuditTrail?.sourcesUsed}
-                    sourcesSkipped={ddAuditTrail?.sourcesSkipped}
-                    fromCache={ddAuditTrail?.fromCache}
-                    verdictSummary={ddAuditTrail?.verdictSummary}
-                  />
-                </ErrorBoundary>
+                <div className="space-y-5">
+                  <ErrorBoundary label="Risk Intelligence Panel">
+                    <RiskIntelligencePanel
+                      alerts={bralidusPYAlerts}
+                      isLoading={generatingDueDiligence}
+                    />
+                  </ErrorBoundary>
+                  <ErrorBoundary label="Due Diligence Score">
+                    <DueDiligenceScoreCard
+                      score={data.due_diligence_score}
+                      extractedData={data.due_diligence_extracted}
+                      dataWarnings={ddAuditTrail?.dataWarnings}
+                      sourcesUsed={ddAuditTrail?.sourcesUsed}
+                      sourcesSkipped={ddAuditTrail?.sourcesSkipped}
+                      fromCache={ddAuditTrail?.fromCache}
+                      verdictSummary={ddAuditTrail?.verdictSummary}
+                    />
+                  </ErrorBoundary>
+                </div>
               ) : (
                 <div className="flex flex-col items-center gap-4 py-14 text-center">
                   <div className="w-14 h-14 rounded-2xl bg-[#0EB5C6]/10 border-2 border-[#0EB5C6]/20 flex items-center justify-center">

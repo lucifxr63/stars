@@ -13,6 +13,30 @@ const ANTHROPIC_KEY   = Deno.env.get('ANTHROPIC_API_KEY')!;
 const OPENAI_API_KEY  = Deno.env.get('OPENAI_API_KEY');     // para embeddings
 const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 
+// ── BralidusPY config ─────────────────────────────────────────────────────────
+// Defaults to localhost for local dev; set BRALIDUS_URL in Supabase secrets for prod.
+const BRALIDUS_URL = Deno.env.get('BRALIDUS_URL') ?? 'http://localhost:8000';
+
+const BRALIDUS_TIER: Record<string, { topK: number; enabled: boolean; macroOnly: boolean }> = {
+  free:    { topK: 0,  enabled: false, macroOnly: true  },
+  basic:   { topK: 8,  enabled: true,  macroOnly: true  },
+  pro:     { topK: 20, enabled: true,  macroOnly: false },
+  premium: { topK: 25, enabled: true,  macroOnly: false },
+  admin:   { topK: 25, enabled: true,  macroOnly: false },
+};
+
+const BRALIDUS_MACRO_OVERRIDE = [
+  'PIB USA (GDP)', 'Inflación USA (CPI All Urban Consumers)',
+  'Tasa de Fondos Federales (Fed Funds Rate)', 'USD/CLP (Tipo de Cambio Chile)',
+  'High Yield Credit Spread (Apetito Riesgo Credito)', 'IPSA (Indice Bursatil Chile)',
+];
+
+interface BraliduAlert {
+  severity: 'critical' | 'warning' | 'info';
+  category: string;
+  title: string;
+}
+
 // Umbrales de cachÃ©: 0.92 para due diligence (mayor rigor = menos falsos positivos).
 // Un score 0.92 implica que dos ideas son ~92% semÃ¡nticamente idÃ©nticas â€” seguro
 // para reutilizar un anÃ¡lisis legal/financiero sin riesgo de resultado incorrecto.
@@ -231,6 +255,57 @@ async function searchKnowledgeBase(
     .join('\n\n');
 }
 
+// â”€â”€ BralidusPY bridge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Calls GraphRAG hybrid engine with startup context and tier gate.
+// Degrades gracefully if BRALIDUS_URL is unreachable (8s hard timeout).
+async function fetchBralidusPY(
+  query: string,
+  startupContext: { industry: string; stage: string; geography: string },
+  tier: string,
+): Promise<{ contextForLLM: string; alerts: BraliduAlert[] }> {
+  const config = BRALIDUS_TIER[tier] ?? BRALIDUS_TIER.free;
+  const body: Record<string, unknown> = {
+    query,
+    startup_context: startupContext,
+    top_k: config.topK,
+    match_threshold: 0.30,
+  };
+  if (config.macroOnly) body.entity_override = BRALIDUS_MACRO_OVERRIDE;
+
+  const res = await fetch(`${BRALIDUS_URL}/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!res.ok) throw new Error(`BralidusPY HTTP ${res.status}`);
+  const data = await res.json();
+  return {
+    contextForLLM: (data.context_for_llm as string) ?? '',
+    alerts: _extractBraliduAlerts((data.nodes as Array<Record<string, unknown>>) ?? []),
+  };
+}
+
+const _FAMILIA_A_SEVERITY: Record<string, 'critical' | 'warning' | 'info'> = {
+  'Cumplimiento Normativo': 'critical',
+  'Unit Economics':         'warning',
+  'Gobernanza':             'warning',
+  'Traccion y Evidencia':   'warning',
+  'Estrategia Fundraising': 'info',
+  'Moat Competitivo':       'info',
+  'MVP Roadmap':            'info',
+};
+
+function _extractBraliduAlerts(nodes: Array<Record<string, unknown>>): BraliduAlert[] {
+  return nodes
+    .filter(n => (n.metadata as Record<string, unknown> | null)?.entity_type)
+    .map(n => ({
+      severity: _FAMILIA_A_SEVERITY[n.category as string] ?? 'info',
+      category: n.category as string,
+      title: n.document_title as string,
+    }));
+}
+
 // â”€â”€ Circuit Breaker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PatrÃ³n explÃ­cito de tolerancia a fallos para llamadas a fuentes externas.
 // Si la fuente falla o supera el timeout, retorna { ok: false } sin crashear el flujo.
@@ -422,6 +497,24 @@ function compressChilecompra(m: Record<string, unknown>): string {
   ].join('\n');
 }
 
+function compressBralidus(contextForLLM: string, alerts: BraliduAlert[]): string {
+  if (!contextForLLM && alerts.length === 0) return '';
+  const criticalWarning = alerts
+    .filter(a => a.severity === 'critical' || a.severity === 'warning')
+    .map(a => `  [${a.severity.toUpperCase()}] ${a.title}`)
+    .join('\n');
+  // Cap at 1200 chars (~300 tokens) to stay within mega-prompt token budget.
+  const ctxPreview = contextForLLM.length > 1200
+    ? contextForLLM.slice(0, 1200) + '\n  [...contexto adicional disponible en UI]'
+    : contextForLLM;
+  return [
+    '[BRALIDUSPÝ — Inteligencia GraphRAG (FRED + Familia A Normativa)]',
+    criticalWarning || '  (Sin alertas Familia A para este perfil)',
+    '',
+    ctxPreview,
+  ].join('\n');
+}
+
 // â”€â”€ Schema validator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Valida que la respuesta de Claude tenga la estructura exacta de DueDiligenceScore
 // (src/types/validation.ts). Lanza excepciÃ³n descriptiva si el schema es invÃ¡lido,
@@ -471,6 +564,7 @@ function buildMegaPrompt(
   dataWarnings: string[],
   skipped: { source: string; reason: string }[],
   hasVerifiedFinancialData: boolean,
+  bralidusPYContext: string,
 ): { system: string; user: string } {
   // Techo de cristal: se aplica cuando ninguna fuente financiera verificada (SII o Fintoc)
   // aportÃ³ datos reales. Sin esto, mÃ©tricas auto-reportadas inflatadas producen scores
@@ -520,7 +614,11 @@ Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown.`;
     : '';
 
   const ragBlock = knowledgeChunks
-    ? `\n[CONTEXTO REGULATORIO Y METODOLÃ“GICO â€” base de conocimiento ValidateAI]\n${knowledgeChunks}\n`
+    ? `\n[CONTEXTO REGULATORIO Y METODOLÃ”GICO â€” base de conocimiento ValidateAI]\n${knowledgeChunks}\n`
+    : '';
+
+  const bralidusPYBlock = bralidusPYContext
+    ? `\n${bralidusPYContext}\n`
     : '';
 
   // El schema JSON debe coincidir EXACTAMENTE con la interfaz DueDiligenceScore
@@ -532,6 +630,7 @@ ETAPA: ${validation.business_stage ?? 'N/A'}
 PUNTOS DE DOLOR: ${((validation.customer_pain_points as string[]) ?? []).join(', ') || 'N/A'}
 ${warningBlock}
 ${skippedBlock}
+${bralidusPYBlock}
 ${contextSections.filter(Boolean).join('\n\n')}
 ${ragBlock}
 Responde SOLO con este JSON â€” cada campo es obligatorio:
@@ -718,6 +817,30 @@ serve(async (req) => {
       }), { headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
+    // â”€â”€ BralidusPY: lanzar concurrentemente con las demÃ¡s fuentes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Se inicia ANTES del Promise.all para que corra en paralelo con SII/INAPI/etc.
+    // Si el tier es free, se resuelve inmediatamente con ok:false sin consumir red.
+    const bralidusTierConfig = BRALIDUS_TIER[tier] ?? BRALIDUS_TIER.free;
+    const bralidusPYQuery = [
+      validation.idea_name,
+      validation.idea_industry,
+      validation.business_model,
+      validation.customer_pain_points,
+    ].filter(Boolean).join('. ');
+    const bralidusPYStartupCtx = {
+      industry: (validation.idea_industry as string) ?? 'default',
+      stage:    (validation.business_stage as string) ?? 'seed',
+      geography: (validation.target_country as string) === 'CL' ? 'chile' : 'latam',
+    };
+
+    const bralidusPYPromise = bralidusTierConfig.enabled
+      ? withCircuitBreaker(
+          'bralidus-py',
+          () => fetchBralidusPY(bralidusPYQuery, bralidusPYStartupCtx, tier),
+          10_000,
+        )
+      : Promise.resolve({ ok: false as const, reason: `tier ${tier}: BralidusPY requiere Basic o superior` });
+
     // â”€â”€ S5-C + S6: Fuentes en paralelo con circuit breaker por cada una â”€â”€â”€â”€â”€â”€â”€
     // RAG y fuentes B2G/B2B se lanzan simultÃ¡neamente.
     // withCircuitBreaker garantiza que ninguna fuente cuelgue el pipeline completo.
@@ -820,9 +943,22 @@ serve(async (req) => {
       (sources.has('fintoc')       && fintocBreaker.ok) ||
       (sources.has('chilecompra')  && chilecompraBreaker.ok);
 
+    // â”€â”€ Resolver BralidusPY (ya corriÃ³ en paralelo con las fuentes anteriores) â”€â”€
+    const bralidusPYBreaker = await bralidusPYPromise;
+    let bralidusPYAlerts: BraliduAlert[] = [];
+    let bralidusPYContextStr = '';
+    if (bralidusPYBreaker.ok) {
+      const bd = bralidusPYBreaker.data as { contextForLLM: string; alerts: BraliduAlert[] };
+      bralidusPYAlerts    = bd.alerts;
+      bralidusPYContextStr = compressBralidus(bd.contextForLLM, bd.alerts);
+    } else if (bralidusTierConfig.enabled) {
+      dataWarnings.push(`BralidusPY: ${bralidusPYBreaker.reason}`);
+    }
+
     // â”€â”€ Llamar Claude â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { system, user: userPrompt } = buildMegaPrompt(
-      validation, contextSections, ragChunks, dataWarnings, skipped, hasVerifiedFinancialData,
+      validation, contextSections, ragChunks, dataWarnings, skipped,
+      hasVerifiedFinancialData, bralidusPYContextStr,
     );
     const dueDiligenceScore = await callClaude(system, userPrompt);
 
@@ -856,10 +992,11 @@ serve(async (req) => {
       .update({
         due_diligence_score: {
           ...dueDiligenceScore,
-          data_warnings: dataWarnings,
+          data_warnings:   dataWarnings,
           sources_used:    [...sources],
           sources_skipped: skipped,
           audit_level:     hasVerifiedFinancialData ? 2 : 1,
+          bralidus_alerts: bralidusPYAlerts,
         },
       })
       .eq('id', validation_id);
@@ -877,6 +1014,7 @@ serve(async (req) => {
       sources_used: [...sources],
       sources_skipped: skipped,
       from_cache: false,
+      bralidus_alerts: bralidusPYAlerts,
     }), { headers: { ...cors, 'Content-Type': 'application/json' } });
 
   } catch (err) {
