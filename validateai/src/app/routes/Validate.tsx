@@ -5,7 +5,6 @@ import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, type UserTier } from '@/hooks/useUserTier';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { StepTransition } from '@/components/wizard/StepTransition';
 import { StepIdea } from '@/components/wizard/StepIdea';
 import { StepIdeaQuick } from '@/components/wizard/StepIdeaQuick';
