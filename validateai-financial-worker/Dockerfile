@@ -14,12 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Código fuente
 COPY . .
 
-# Puerto expuesto
-EXPOSE 8000
+# Puerto expuesto (Railway inyecta $PORT en runtime; 8080 es el default de Railway)
+EXPOSE 8080
 
-# Health check integrado
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+# Health check usa $PORT para ser compatible con Railway y Docker local
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD python -c "import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.getenv('PORT','8080') + '/health')" || exit 1
 
 # Producción: sin hot-reload. El puerto lo inyecta Railway via $PORT (serve.py lo lee).
 CMD ["python", "serve.py", "--no-reload", "--host", "0.0.0.0"]
