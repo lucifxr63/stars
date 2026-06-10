@@ -11,7 +11,8 @@ def _require(key: str) -> str:
     return value
 
 
-SUPABASE_URL: str = _require("VITE_SUPABASE_URL")
+# Accept SUPABASE_URL (Railway/prod standard) or VITE_SUPABASE_URL (local dev / Vite legacy)
+SUPABASE_URL: str = os.getenv("SUPABASE_URL") or _require("VITE_SUPABASE_URL")
 SUPABASE_SERVICE_KEY: str = _require("SUPABASE_SERVICE_ROLE_KEY")
 FRED_API_KEY: str = _require("FRED_API_KEY")
 OPENAI_API_KEY: str = _require("OPENAI_API_KEY")
