@@ -138,6 +138,32 @@ ENTITY_GROUPS: dict[str, list[str]] = {
         "WhatsApp-first GTM — Adopción Conversacional LatAm",
     ],
 
+    # ── Sprint 6 — Riesgo Conductual y Sesgos ────────────────────────────────
+    # Activado siempre en due diligence de equipo fundador (pre_seed/seed).
+    "riesgo_conductual": [
+        "Sesgo de Confirmación — Puntos Ciegos del Founder",
+        "Sesgo de Optimismo — Sobreestimación de Resultados",
+    ],
+
+    # ── Sprint 6 — Propiedad Intelectual (INAPI) ──────────────────────────────
+    # Activado en cualquier startup con marca/producto tecnológico.
+    "propiedad_intelectual": [
+        "Freedom to Operate (FTO) — Libertad de Operación INAPI",
+        "Protección de Clases Niza — Registro de Marca Temprano",
+    ],
+
+    # ── Sprint 6 — Ciberseguridad e Infraestructura ───────────────────────────
+    # Activado en B2G, B2B enterprise, fintech y SaaS con datos sensibles.
+    "ciberseguridad": [
+        "Ley Marco de Ciberseguridad (Ley 21.663)",
+    ],
+
+    # ── Sprint 6 — Compras Públicas B2G ──────────────────────────────────────
+    # Activado cuando modelo de negocio incluye ventas al Estado chileno.
+    "b2g_chile": [
+        "Mercado Público y Convenio Marco — Estrategia B2G Chile",
+    ],
+
     # ── Sprint 5 — Retención y Cohortes ──────────────────────────────────────
     # NRR + Gross Churn. Activado en modelos SaaS/subscription.
     "retencion_cohortes": [
@@ -166,24 +192,29 @@ INDUSTRY_ROUTING: dict[str, list[str]] = {
     # ── Finanzas / Capital ────────────────────────────────────────────────────
     "fintech":      ["macro_base", "tasas_usa", "riesgo", "mercados", "empleo_usa", "liquidez_global", "riesgo_macro",
                      "compliance_fintech", "compliance_datos", "unit_economics",
-                     "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
+                     "retencion_cohortes", "eficiencia_capital", "exit_strategy",
+                     "propiedad_intelectual", "ciberseguridad", "riesgo_conductual"],
     "credito":      ["macro_base", "tasas_usa", "riesgo", "empleo_usa", "riesgo_macro",
                      "compliance_fintech", "compliance_datos", "unit_economics",
-                     "retencion_cohortes", "eficiencia_capital"],
+                     "retencion_cohortes", "eficiencia_capital",
+                     "ciberseguridad", "riesgo_conductual"],
     "insurtech":    ["macro_base", "tasas_usa", "riesgo", "riesgo_macro",
                      "compliance_datos", "unit_economics",
-                     "retencion_cohortes", "eficiencia_capital"],
+                     "retencion_cohortes", "eficiencia_capital",
+                     "ciberseguridad", "riesgo_conductual"],
 
     # ── Software / Tech ───────────────────────────────────────────────────────
     "saas":         ["macro_base", "mercados", "tasas_usa", "riesgo", "forex_chile", "liquidez_global", "riesgo_macro",
                      "unit_economics", "moat_estrategia",
-                     "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
+                     "retencion_cohortes", "eficiencia_capital", "exit_strategy",
+                     "propiedad_intelectual", "ciberseguridad", "riesgo_conductual"],
     "b2b_saas":     ["macro_base", "mercados", "tasas_usa", "forex_chile", "liquidez_global",
                      "unit_economics",
-                     "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
+                     "retencion_cohortes", "eficiencia_capital", "exit_strategy",
+                     "propiedad_intelectual", "ciberseguridad", "b2g_chile", "riesgo_conductual"],
     "b2c":          ["macro_base", "mercados_chile", "forex_chile", "empleo_usa", "chile_macro",
                      "compliance_datos", "gtm_latam", "unit_economics",
-                     "eficiencia_capital"],
+                     "eficiencia_capital", "propiedad_intelectual", "riesgo_conductual"],
 
     # ── Comercio / Retail ─────────────────────────────────────────────────────
     "ecommerce":    ["macro_base", "forex_chile", "mercados_chile", "empleo_usa", "chile_macro"],
@@ -203,12 +234,23 @@ INDUSTRY_ROUTING: dict[str, list[str]] = {
     "logistica":    ["macro_base", "commodities", "forex_chile", "ciclo_industrial"],
 
     # ── Salud / Educación ─────────────────────────────────────────────────────
-    "healthtech":   ["macro_base", "tasas_usa", "empleo_usa"],
-    "salud":        ["macro_base", "tasas_usa", "empleo_usa"],
-    "edtech":       ["macro_base", "mercados_chile", "chile_macro"],
+    "healthtech":   ["macro_base", "tasas_usa", "empleo_usa",
+                     "ciberseguridad", "propiedad_intelectual", "b2g_chile", "riesgo_conductual"],
+    "salud":        ["macro_base", "tasas_usa", "empleo_usa",
+                     "ciberseguridad", "b2g_chile"],
+    "edtech":       ["macro_base", "mercados_chile", "chile_macro",
+                     "b2g_chile", "riesgo_conductual"],
+
+    # ── B2G puro (gobierno, municipios, organismos públicos) ──────────────────
+    "b2g":          ["macro_base", "mercados_chile", "chile_macro", "forex_chile",
+                     "b2g_chile", "ciberseguridad", "compliance_datos",
+                     "unit_economics", "eficiencia_capital", "riesgo_conductual"],
+    "gobierno":     ["macro_base", "mercados_chile", "chile_macro",
+                     "b2g_chile", "ciberseguridad", "compliance_datos"],
 
     # ── Inmobiliaria ──────────────────────────────────────────────────────────
-    "proptech":     ["macro_base", "tasas_usa", "mercados_chile", "riesgo_macro", "empleo_usa"],
+    "proptech":     ["macro_base", "tasas_usa", "mercados_chile", "riesgo_macro", "empleo_usa",
+                     "propiedad_intelectual", "riesgo_conductual"],
     "inmobiliaria": ["macro_base", "tasas_usa", "mercados_chile", "riesgo_macro"],
 
     # ── Turismo / Alimentos ───────────────────────────────────────────────────
@@ -229,24 +271,29 @@ INDUSTRY_ROUTING: dict[str, list[str]] = {
 STAGE_MODIFIER: dict[str, list[str]] = {
     "pre_seed": ["riesgo", "riesgo_macro",
                  "trl_crl", "gobernanza_core",
-                 "eficiencia_capital"],
+                 "eficiencia_capital",
+                 "riesgo_conductual", "propiedad_intelectual"],
     "seed":     ["riesgo", "tasas_usa", "liquidez_global", "riesgo_macro",
                  "unit_economics", "gobernanza_core", "trl_crl",
-                 "eficiencia_capital", "retencion_cohortes"],
+                 "eficiencia_capital", "retencion_cohortes",
+                 "riesgo_conductual", "propiedad_intelectual"],
     "series_a": ["mercados", "riesgo", "liquidez_global",
                  "unit_economics", "moat_estrategia",
-                 "retencion_cohortes", "eficiencia_capital", "exit_strategy"],
+                 "retencion_cohortes", "eficiencia_capital", "exit_strategy",
+                 "ciberseguridad", "propiedad_intelectual"],
     "growth":   ["mercados", "mercados_latam", "ciclo_industrial",
                  "moat_estrategia",
-                 "retencion_cohortes", "exit_strategy"],
+                 "retencion_cohortes", "exit_strategy",
+                 "b2g_chile", "ciberseguridad"],
     "ipo":      ["mercados", "mercados_chile", "mercados_latam", "riesgo_macro",
-                 "exit_strategy"],
+                 "exit_strategy", "propiedad_intelectual", "ciberseguridad"],
 }
 
 # ── Modificadores por geografía ───────────────────────────────────────────────
 
 GEO_MODIFIER: dict[str, list[str]] = {
-    "chile":   ["mercados_chile", "forex_chile", "chile_macro", "fundraising_chile", "exit_strategy"],
+    "chile":   ["mercados_chile", "forex_chile", "chile_macro", "fundraising_chile",
+                "exit_strategy", "b2g_chile", "ciberseguridad"],
     "latam":   ["mercados_latam", "mercados_chile", "forex_global", "gtm_latam", "exit_strategy"],
     "usa":     ["mercados", "macro_base", "empleo_usa"],
     "global":  ["mercados", "mercados_latam", "forex_global"],

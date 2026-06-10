@@ -59,6 +59,11 @@ FAMILIA_A_CATEGORIES: list[str] = [
     "Retención y Cohortes",
     "Eficiencia de Capital",
     "Estrategia de Salida",
+    # Sprint 6 — Advanced Risk & B2G Nodes
+    "Riesgo Conductual y Sesgos",
+    "Propiedad Intelectual",
+    "Ciberseguridad e Infraestructura",
+    "Compras Públicas B2G",
 ]
 
 
