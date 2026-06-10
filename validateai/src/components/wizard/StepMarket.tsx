@@ -63,7 +63,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
     getPartialData: () => getValues() as Record<string, unknown>,
   }));
 
-  const selectedModel   = watch('business_model');
+  const selectedModel = watch('business_model');
   const selectedPricing = watch('pricing_range');
   const selectedCountry = watch('target_country');
 
@@ -81,14 +81,14 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
     const { validationId } = useValidationStore.getState();
     if (validationId) {
       supabase.from('validations').update({
-        customer_segment:     data.customer_segment,
-        target_country:       data.target_country,
-        target_region:        data.target_region ?? null,
-        business_model:       data.business_model,
-        pricing_range:        data.pricing_range,
-        acquisition_channel:  data.acquisition_channel ?? null,
-        current_step:         3,
-      }).eq('id', validationId).then(() => {});
+        customer_segment: data.customer_segment,
+        target_country: data.target_country,
+        target_region: data.target_region ?? null,
+        business_model: data.business_model,
+        pricing_range: data.pricing_range,
+        acquisition_channel: data.acquisition_channel ?? null,
+        current_step: 3,
+      }).eq('id', validationId).then(() => { });
     }
 
     nextStep();
@@ -97,12 +97,12 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-5">
-        
+
         <div>
           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
             A quién le vendes — ICP (Ideal Customer Profile)
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
             Incluye: industria, tamaño, cargo del decisor o perfil del usuario final.
           </p>
           <textarea
@@ -193,7 +193,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
         </div>
 
         <div>
-           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-2">
+          <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-2">
             Rango de precio estimado <span className="text-red-400">*</span>
           </label>
           <select
@@ -246,7 +246,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
 
       {/* Progreso de campos del paso */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-[#4A495E]">
+        <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-[#afaebb]">
           <span>Completitud del paso</span>
           <span className="font-bold tabular-nums">{filledMarket}/{MARKET_FIELDS.length}</span>
         </div>

@@ -24,7 +24,7 @@ function isoWeekStart(dateStr: string): string {
 function shortLabel(isoDate: string): string {
   if (!isoDate || isoDate === '__ghost__') return '';
   const [, m, d] = isoDate.split('-');
-  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   return `${parseInt(d)} ${months[parseInt(m) - 1]}`;
 }
 
@@ -88,7 +88,7 @@ export function IdeationTrendLine({ validations }: IdeationTrendLineProps) {
       return {
         data: [
           { week: prev.toISOString().slice(0, 10), count: 0, ghost: true },
-          { week: date,                            count: sorted[0][1], ghost: false },
+          { week: date, count: sorted[0][1], ghost: false },
           { week: next.toISOString().slice(0, 10), count: 0, ghost: true },
         ],
         streak, totalWeeks, bestWeek,
@@ -128,11 +128,11 @@ export function IdeationTrendLine({ validations }: IdeationTrendLineProps) {
           </span>
         )}
         {bestWeek > 1 && (
-          <span className="text-[10px] text-gray-400 dark:text-[#4A495E]">
+          <span className="text-[10px] text-gray-400 dark:text-[#afaebb]">
             Mejor semana: <strong className="text-gray-600 dark:text-[#8B8AA0]">{bestWeek}</strong>
           </span>
         )}
-        <span className="ml-auto text-[10px] text-gray-400 dark:text-[#4A495E]">
+        <span className="ml-auto text-[10px] text-gray-400 dark:text-[#afaebb]">
           {totalWeeks} sem. de actividad
         </span>
       </div>
@@ -143,7 +143,7 @@ export function IdeationTrendLine({ validations }: IdeationTrendLineProps) {
           <AreaChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor="#0EB5C6" stopOpacity={0.3} />
+                <stop offset="0%" stopColor="#0EB5C6" stopOpacity={0.3} />
                 <stop offset="100%" stopColor="#0EB5C6" stopOpacity={0.0} />
               </linearGradient>
             </defs>

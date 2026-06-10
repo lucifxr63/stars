@@ -10,9 +10,9 @@ import { useIdeaQuality, type IdeaQuality } from '@/hooks/useIdeaQuality';
 function IdeaQualityIndicator({ quality, visible }: { quality: IdeaQuality; visible: boolean }) {
   if (!visible) return null;
   const cfg = {
-    poor:       { dot: 'bg-red-400',    text: 'text-red-500 dark:text-red-400',    label: 'Descripción vaga — añade números o palabras clave de dolor' },
-    acceptable: { dot: 'bg-amber-400',  text: 'text-amber-500 dark:text-amber-400', label: 'Aceptable — puedes añadir más contexto específico' },
-    good:       { dot: 'bg-emerald-500',text: 'text-emerald-600 dark:text-emerald-400', label: 'Específico — buen input para el análisis IA ✓' },
+    poor: { dot: 'bg-red-400', text: 'text-red-500 dark:text-red-400', label: 'Descripción vaga — añade números o palabras clave de dolor' },
+    acceptable: { dot: 'bg-amber-400', text: 'text-amber-500 dark:text-amber-400', label: 'Aceptable — puedes añadir más contexto específico' },
+    good: { dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', label: 'Específico — buen input para el análisis IA ✓' },
   }[quality];
   return (
     <div className="flex items-center gap-1.5 mt-1.5">
@@ -50,10 +50,10 @@ function DescriptionQuality({ length }: { length: number }) {
     length < 100
       ? { label: `${length}/100 mín — añade problema, solución y público objetivo`, color: 'text-red-500 dark:text-red-400', bar: 'bg-red-400', pct: (length / 100) * 50 }
       : length < 200
-      ? { label: `${length} — añade más contexto para análisis premium`, color: 'text-amber-500 dark:text-amber-400', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
-      : length < 400
-      ? { label: `${length} — buen nivel de detalle ✓`, color: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
-      : { label: `${length} — análisis de máxima calidad ✓`, color: 'text-[#0EB5C6]', bar: 'bg-[#0EB5C6]', pct: 95 };
+        ? { label: `${length} — añade más contexto para análisis premium`, color: 'text-amber-500 dark:text-amber-400', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
+        : length < 400
+          ? { label: `${length} — buen nivel de detalle ✓`, color: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
+          : { label: `${length} — análisis de máxima calidad ✓`, color: 'text-[#0EB5C6]', bar: 'bg-[#0EB5C6]', pct: 95 };
   return (
     <div className="mt-1.5 space-y-1">
       <div className="h-1 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
@@ -75,7 +75,7 @@ export function StepIdea({ flowCopy, isPrefilled }: { flowCopy?: FlowCopy; isPre
   });
 
   const descriptionLen = (watch('idea_description') ?? '').length;
-  const problemText    = watch('idea_problem') ?? '';
+  const problemText = watch('idea_problem') ?? '';
   const problemQuality = useIdeaQuality(problemText);
   // Upsell contextual: si el usuario escribe > 200 chars en "¿Qué problema resuelves?"
   // y está en modo rápido, sugerimos cambiar al análisis completo.
@@ -89,13 +89,13 @@ export function StepIdea({ flowCopy, isPrefilled }: { flowCopy?: FlowCopy; isPre
     if (validationId) {
       const nextStepNum = validationMode === 'premium' ? 3 : 2;
       supabase.from('validations').update({
-        idea_name:        data.idea_name,
-        idea_problem:     data.idea_problem,
+        idea_name: data.idea_name,
+        idea_problem: data.idea_problem,
         idea_description: data.idea_description,
-        idea_industry:    data.idea_industry,
+        idea_industry: data.idea_industry,
         current_solution: data.current_solution,
-        current_step:     nextStepNum,
-      }).eq('id', validationId).then(() => {});
+        current_step: nextStepNum,
+      }).eq('id', validationId).then(() => { });
     }
 
     if (validationMode === 'quick') {
@@ -133,116 +133,116 @@ export function StepIdea({ flowCopy, isPrefilled }: { flowCopy?: FlowCopy; isPre
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
-            Nombre de tu idea
-          </label>
-          <input
-            {...register('idea_name')}
-            placeholder="Ej: FreshBox, MediConnect, EduTrack..."
-            className={inputCls(!!errors.idea_name)}
-          />
-          <ErrorMsg message={errors.idea_name?.message} />
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
+              Nombre de tu idea
+            </label>
+            <input
+              {...register('idea_name')}
+              placeholder="Ej: FreshBox, MediConnect, EduTrack..."
+              className={inputCls(!!errors.idea_name)}
+            />
+            <ErrorMsg message={errors.idea_name?.message} />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
-            ¿Qué problema resuelves? <span className="text-red-400">*</span>
-          </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
-            Describe el dolor del cliente, no la solución. ¿Qué le cuesta tiempo, dinero o frustración?
-          </p>
-          <textarea
-            {...register('idea_problem')}
-            rows={2}
-            placeholder={`Ej: "Los gerentes de clínicas medianas pierden 3h/día consolidando turnos manualmente en Excel, lo que genera errores y horas extra no pagadas."`}
-            className={`${inputCls(!!errors.idea_problem)} resize-none leading-relaxed`}
-          />
-          <ErrorMsg message={errors.idea_problem?.message} />
-          <IdeaQualityIndicator quality={problemQuality} visible={problemText.length > 0} />
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
+              ¿Qué problema resuelves? <span className="text-red-400">*</span>
+            </label>
+            <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
+              Describe el dolor del cliente, no la solución. ¿Qué le cuesta tiempo, dinero o frustración?
+            </p>
+            <textarea
+              {...register('idea_problem')}
+              rows={2}
+              placeholder={`Ej: "Los gerentes de clínicas medianas pierden 3h/día consolidando turnos manualmente en Excel, lo que genera errores y horas extra no pagadas."`}
+              className={`${inputCls(!!errors.idea_problem)} resize-none leading-relaxed`}
+            />
+            <ErrorMsg message={errors.idea_problem?.message} />
+            <IdeaQualityIndicator quality={problemQuality} visible={problemText.length > 0} />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
-            Describe tu solución <span className="text-red-400">*</span>
-          </label>
-          <textarea
-            {...register('idea_description')}
-            rows={4}
-            placeholder={`Ej: "Automatizamos la programación de turnos con IA integrada al sistema HIS existente. Dirigido a clínicas de 20–80 camas en Chile y Perú."`}
-            className={`${inputCls(!!errors.idea_description)} resize-none leading-relaxed`}
-          />
-          <DescriptionQuality length={descriptionLen} />
-          {errors.idea_description && <ErrorMsg message={errors.idea_description.message} />}
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-2">
+              Describe tu solución <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              {...register('idea_description')}
+              rows={4}
+              placeholder={`Ej: "Automatizamos la programación de turnos con IA integrada al sistema HIS existente. Dirigido a clínicas de 20–80 camas en Chile y Perú."`}
+              className={`${inputCls(!!errors.idea_description)} resize-none leading-relaxed`}
+            />
+            <DescriptionQuality length={descriptionLen} />
+            {errors.idea_description && <ErrorMsg message={errors.idea_description.message} />}
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-1.5">
-            ¿Cómo lo resuelven tus clientes hoy? <span className="text-red-400">*</span>
-          </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
-            Nombra 2 herramientas o métodos concretos que usa tu cliente actualmente.
-          </p>
-          <input
-            {...register('current_solution')}
-            placeholder="Ej: Excel + WhatsApp para coordinarse, o contratan un asistente administrativo"
-            className={inputCls(!!errors.current_solution)}
-          />
-          <ErrorMsg message={errors.current_solution?.message} />
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-1.5">
+              ¿Cómo lo resuelven tus clientes hoy? <span className="text-red-400">*</span>
+            </label>
+            <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
+              Nombra 2 herramientas o métodos concretos que usa tu cliente actualmente.
+            </p>
+            <input
+              {...register('current_solution')}
+              placeholder="Ej: Excel + WhatsApp para coordinarse, o contratan un asistente administrativo"
+              className={inputCls(!!errors.current_solution)}
+            />
+            <ErrorMsg message={errors.current_solution?.message} />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-3">
-            Industria
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
-            {INDUSTRIES.map((ind) => (
-              <label key={ind.value} className="cursor-pointer">
-                <input type="radio" {...register('idea_industry')} value={ind.value} className="peer hidden" />
-                <div className="px-3 py-2.5 text-center text-xs border rounded-xl font-medium
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-3">
+              Industria
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
+              {INDUSTRIES.map((ind) => (
+                <label key={ind.value} className="cursor-pointer">
+                  <input type="radio" {...register('idea_industry')} value={ind.value} className="peer hidden" />
+                  <div className="px-3 py-2.5 text-center text-xs border rounded-xl font-medium
                                 text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/8 bg-white dark:bg-transparent
                                 peer-checked:bg-[#0EB5C6]/15 peer-checked:text-[#0EB5C6] dark:peer-checked:text-[#38D5E3] peer-checked:border-[#0EB5C6]/40
                                 hover:border-gray-300 dark:hover:border-white/20 hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-all duration-150">
-                  {ind.label}
-                </div>
-              </label>
-            ))}
+                    {ind.label}
+                  </div>
+                </label>
+              ))}
+            </div>
+            {errors.idea_industry && <ErrorMsg message="Selecciona una industria" />}
           </div>
-          {errors.idea_industry && <ErrorMsg message="Selecciona una industria" />}
         </div>
-      </div>
 
-      {/* Upsell contextual: aparece al detectar contexto rico en modo Rápido */}
-      {showUpsellBanner && (
-        <button
-          type="button"
-          onClick={() => { setValidationMode('detailed'); setStep(1); }}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl
+        {/* Upsell contextual: aparece al detectar contexto rico en modo Rápido */}
+        {showUpsellBanner && (
+          <button
+            type="button"
+            onClick={() => { setValidationMode('detailed'); setStep(1); }}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl
                      bg-[#0EB5C6]/10 border border-[#0EB5C6]/30 text-left
                      hover:bg-[#0EB5C6]/15 transition-all duration-200 animate-in fade-in slide-in-from-bottom-1"
-        >
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <p className="text-xs font-semibold text-[#38D5E3] leading-snug">
-              Tienes buen contexto → el Análisis completo te dará un score más preciso
-            </p>
-          </div>
-          <span className="shrink-0 text-[10px] font-bold text-[#0EB5C6] bg-[#0EB5C6]/20 px-2 py-0.5 rounded-full">
-            Cambiar →
-          </span>
-        </button>
-      )}
+          >
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <p className="text-xs font-semibold text-[#38D5E3] leading-snug">
+                Tienes buen contexto → el Análisis completo te dará un score más preciso
+              </p>
+            </div>
+            <span className="shrink-0 text-[10px] font-bold text-[#0EB5C6] bg-[#0EB5C6]/20 px-2 py-0.5 rounded-full">
+              Cambiar →
+            </span>
+          </button>
+        )}
 
-      <button
-        type="submit"
-        className="w-full py-3.5 bg-[#0EB5C6] text-white font-semibold rounded-xl
+        <button
+          type="submit"
+          className="w-full py-3.5 bg-[#0EB5C6] text-white font-semibold rounded-xl
                    hover:bg-[#6B5EE6] active:scale-[0.98] transition-all duration-150
                    shadow-lg shadow-[#0EB5C6]/25 text-sm font-heading"
-      >
-        Continuar →
-      </button>
+        >
+          Continuar →
+        </button>
       </form>
     </div>
   );

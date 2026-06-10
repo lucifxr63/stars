@@ -188,14 +188,14 @@ export function Dashboard() {
                   <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
                     {v.idea_name ?? 'Sin nombre'}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-[#4A495E] mt-0.5 truncate">
+                  <p className="text-xs text-gray-400 dark:text-[#afaebb] mt-0.5 truncate">
                     {[v.idea_industry, STATUS_LABEL[v.status]].filter(Boolean).join(' · ')}
                   </p>
                 </div>
 
                 {/* Date + arrow */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-gray-400 dark:text-[#4A495E] hidden sm:block">
+                  <span className="text-xs text-gray-400 dark:text-[#afaebb] hidden sm:block">
                     {formatDate(v.created_at)}
                   </span>
                   <svg className="w-4 h-4 text-gray-300 dark:text-white/20 group-hover:text-[#0EB5C6] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

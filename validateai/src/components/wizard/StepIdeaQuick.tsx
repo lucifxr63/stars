@@ -8,9 +8,9 @@ import { useIdeaQuality, type IdeaQuality } from '@/hooks/useIdeaQuality';
 function IdeaQualityIndicator({ quality, visible }: { quality: IdeaQuality; visible: boolean }) {
   if (!visible) return null;
   const cfg = {
-    poor:       { dot: 'bg-red-400',    text: 'text-red-500 dark:text-red-400',    label: 'Descripción vaga — añade números o palabras clave de dolor' },
-    acceptable: { dot: 'bg-amber-400',  text: 'text-amber-500 dark:text-amber-400', label: 'Aceptable — puedes añadir más contexto específico' },
-    good:       { dot: 'bg-emerald-500',text: 'text-emerald-600 dark:text-emerald-400', label: 'Específico — buen input para el análisis IA ✓' },
+    poor: { dot: 'bg-red-400', text: 'text-red-500 dark:text-red-400', label: 'Descripción vaga — añade números o palabras clave de dolor' },
+    acceptable: { dot: 'bg-amber-400', text: 'text-amber-500 dark:text-amber-400', label: 'Aceptable — puedes añadir más contexto específico' },
+    good: { dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', label: 'Específico — buen input para el análisis IA ✓' },
   }[quality];
   return (
     <div className="flex items-center gap-1.5 mt-1.5">
@@ -40,7 +40,7 @@ function ErrorMsg({ message }: { message?: string }) {
 
 const inputCls = (hasError: boolean) =>
   `w-full px-4 py-3.5 rounded-xl text-sm text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#0A0A0F] border transition-all duration-150 outline-none
-   placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
+   placeholder:text-gray-400 dark:placeholder:text-[#afaebb]
    focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20
    ${hasError ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200 dark:border-white/8 hover:border-gray-300 dark:hover:border-white/15'}`;
 
@@ -50,10 +50,10 @@ function DescriptionQuality({ length }: { length: number }) {
     length < 100
       ? { label: `${length}/100 mín — describe la solución con más detalle`, color: 'text-red-500 dark:text-red-400', bar: 'bg-red-400', pct: (length / 100) * 50 }
       : length < 200
-      ? { label: `${length} — añade más contexto para un análisis más preciso`, color: 'text-amber-500 dark:text-amber-400', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
-      : length < 400
-      ? { label: `${length} — buen nivel de detalle ✓`, color: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
-      : { label: `${length} — análisis de máxima calidad ✓`, color: 'text-[#0EB5C6]', bar: 'bg-[#0EB5C6]', pct: 95 };
+        ? { label: `${length} — añade más contexto para un análisis más preciso`, color: 'text-amber-500 dark:text-amber-400', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
+        : length < 400
+          ? { label: `${length} — buen nivel de detalle ✓`, color: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
+          : { label: `${length} — análisis de máxima calidad ✓`, color: 'text-[#0EB5C6]', bar: 'bg-[#0EB5C6]', pct: 95 };
   return (
     <div className="mt-1.5 space-y-1">
       <div className="h-1 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
@@ -66,7 +66,7 @@ function DescriptionQuality({ length }: { length: number }) {
 
 export function StepIdeaQuick({ flowCopy }: { flowCopy?: FlowCopy }) {
   const { stepIdeaQuick, updateStepIdeaQuick, updateStepMarket, updateStepIdea, nextStep,
-          setStep, validationMode, setValidationMode } = useValidationStore();
+    setStep, validationMode, setValidationMode } = useValidationStore();
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<StepIdeaQuick>({
     resolver: zodResolver(StepIdeaQuickSchema),
@@ -74,9 +74,9 @@ export function StepIdeaQuick({ flowCopy }: { flowCopy?: FlowCopy }) {
   });
 
   const descriptionText = watch('idea_description') ?? '';
-  const descriptionLen  = descriptionText.length;
-  const selectedModel   = watch('business_model');
-  const descQuality     = useIdeaQuality(descriptionText);
+  const descriptionLen = descriptionText.length;
+  const selectedModel = watch('business_model');
+  const descQuality = useIdeaQuality(descriptionText);
   // Upsell contextual: si el contexto es rico (> 200 chars) y el modo es Rápido,
   // sugerir el análisis completo conservando todo el texto ya ingresado.
   const showUpsellBanner = validationMode === 'quick' && descriptionText.length > 200;
@@ -98,13 +98,13 @@ export function StepIdeaQuick({ flowCopy }: { flowCopy?: FlowCopy }) {
     const { validationId } = useValidationStore.getState();
     if (validationId) {
       supabase.from('validations').update({
-        idea_name:        data.idea_name,
+        idea_name: data.idea_name,
         idea_description: data.idea_description,
-        idea_industry:    data.idea_industry,
-        quick_icp:        data.quick_icp,
-        business_model:   data.business_model,
-        current_step:     2,
-      }).eq('id', validationId).then(() => {});
+        idea_industry: data.idea_industry,
+        quick_icp: data.quick_icp,
+        business_model: data.business_model,
+        current_step: 2,
+      }).eq('id', validationId).then(() => { });
     }
 
     nextStep();
@@ -154,7 +154,7 @@ export function StepIdeaQuick({ flowCopy }: { flowCopy?: FlowCopy }) {
           <label className="block text-sm font-medium text-gray-900 dark:text-[#F0EFF8] mb-1.5">
             ¿A quién le vas a vender? <span className="text-red-400">*</span>
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
             Sé específico: tipo de empresa, cargo o perfil del usuario final.
           </p>
           <input

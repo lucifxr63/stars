@@ -3,21 +3,21 @@ import type { DueDiligenceScore, ExtractedProjectData } from '@/types/validation
 // ── Gap micro-recommendations ─────────────────────────────────────────────────
 // Actionable prescriptions paired to each known gap label (Mandato 2)
 const GAP_RECOMMENDATIONS: Record<string, string> = {
-  'MRR no definido':                    'Define un precio de lanzamiento y busca 3 usuarios dispuestos a pagar hoy, aunque sea simbólico.',
-  'CAC no cuantificado':                'Implementa un modelo de cohortes: rastrea el gasto de adquisición por canal (paid, organic, referral) dividido por clientes obtenidos.',
-  'LTV no calculado':                   'Calcula LTV = ARPU × meses promedio de retención. Si no tienes datos, usa benchmarks de tu industria como proxy.',
-  'Payback period desconocido':         'Payback = CAC ÷ margen mensual por cliente. Si supera 18 meses, revisar precio o reducir CAC.',
-  'Modelo de ingresos no definido':     'Elige un modelo primario (suscripción, transaccional, licencia) antes de hablar con inversores. Los híbridos confunden.',
+  'MRR no definido': 'Define un precio de lanzamiento y busca 3 usuarios dispuestos a pagar hoy, aunque sea simbólico.',
+  'CAC no cuantificado': 'Implementa un modelo de cohortes: rastrea el gasto de adquisición por canal (paid, organic, referral) dividido por clientes obtenidos.',
+  'LTV no calculado': 'Calcula LTV = ARPU × meses promedio de retención. Si no tienes datos, usa benchmarks de tu industria como proxy.',
+  'Payback period desconocido': 'Payback = CAC ÷ margen mensual por cliente. Si supera 18 meses, revisar precio o reducir CAC.',
+  'Modelo de ingresos no definido': 'Elige un modelo primario (suscripción, transaccional, licencia) antes de hablar con inversores. Los híbridos confunden.',
   'Sin evidencia de clientes de pago (Mom Test)': 'Aplica el Mom Test: consigue 3 pre-orders o LOIs firmados. Los usuarios gratuitos no validan el modelo.',
-  'Número de clientes no reportado':    'Documenta todos los clientes activos (de pago o en piloto) con nombre, empresa y fecha de inicio.',
+  'Número de clientes no reportado': 'Documenta todos los clientes activos (de pago o en piloto) con nombre, empresa y fecha de inicio.',
   'Sin MRR real — posible pre-revenue': 'Si eres pre-revenue, indica el pipeline con nombres y montos. Los inversores seed toleran cero MRR con pipeline sólido.',
   'Cumplimiento Ley 21.719 (Datos) no evaluado': 'Evalúa si procesas datos personales de usuarios chilenos. Si sí, implementa Privacy by Design antes del lanzamiento (multas hasta 20.000 UTM).',
   'Cumplimiento Ley 21.521 (Fintech) no evaluado': 'Si tu modelo toca pagos, crédito o inversión, consulta si requieres inscripción en el Registro CMF. Ignorarlo puede bloquear el fundraising.',
-  'Problema de mercado no articulado':  'Escribe el problema en una oración: "X% de [segmento] sufre [problema] porque [causa raíz], costándoles [impacto medible]".',
-  'Solución no descrita claramente':    'Define tu solución con el formato Jobs-to-be-Done: "Cuando [situación], quiero [motivación], para [resultado esperado]".',
-  'TAM no dimensionado':                'Usa metodología bottom-up: [# clientes potenciales] × [precio anual] = SOM. Escala desde ahí a SAM y TAM.',
-  'Segmento objetivo no definido':      'Define tu ICP (Ideal Customer Profile): industria, tamaño de empresa, cargo del decision-maker, presupuesto disponible.',
-  'Tamaño del equipo no especificado':  'Incluye el headcount actual y las 2 primeras contrataciones planificadas con el fundraising.',
+  'Problema de mercado no articulado': 'Escribe el problema en una oración: "X% de [segmento] sufre [problema] porque [causa raíz], costándoles [impacto medible]".',
+  'Solución no descrita claramente': 'Define tu solución con el formato Jobs-to-be-Done: "Cuando [situación], quiero [motivación], para [resultado esperado]".',
+  'TAM no dimensionado': 'Usa metodología bottom-up: [# clientes potenciales] × [precio anual] = SOM. Escala desde ahí a SAM y TAM.',
+  'Segmento objetivo no definido': 'Define tu ICP (Ideal Customer Profile): industria, tamaño de empresa, cargo del decision-maker, presupuesto disponible.',
+  'Tamaño del equipo no especificado': 'Incluye el headcount actual y las 2 primeras contrataciones planificadas con el fundraising.',
   'Trayectoria del fundador no documentada': 'Documenta los "unfair advantages": ¿cuántos años en la industria? ¿startups previas? ¿red de contactos en el segmento?',
 };
 
@@ -28,10 +28,10 @@ function getRecommendation(gap: string): string {
 // ── Color coding ──────────────────────────────────────────────────────────────
 function readinessConfig(readiness: DueDiligenceScore['investorReadiness']) {
   switch (readiness) {
-    case 'ready':       return { label: 'Listo para Ronda',   bg: 'bg-emerald-50 dark:bg-emerald-900/15', border: 'border-emerald-200 dark:border-emerald-700/30', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' };
-    case 'developing':  return { label: 'En Desarrollo',      bg: 'bg-amber-50 dark:bg-amber-900/15',   border: 'border-amber-200 dark:border-amber-700/30',   text: 'text-amber-700 dark:text-amber-400',   dot: 'bg-amber-500'   };
-    case 'early':       return { label: 'Etapa Temprana',     bg: 'bg-orange-50 dark:bg-orange-900/15', border: 'border-orange-200 dark:border-orange-700/30', text: 'text-orange-700 dark:text-orange-400', dot: 'bg-orange-500'  };
-    case 'not_ready':   return { label: 'No Listo',           bg: 'bg-red-50 dark:bg-red-900/15',       border: 'border-red-200 dark:border-red-700/30',       text: 'text-red-700 dark:text-red-400',       dot: 'bg-red-500'     };
+    case 'ready': return { label: 'Listo para Ronda', bg: 'bg-emerald-50 dark:bg-emerald-900/15', border: 'border-emerald-200 dark:border-emerald-700/30', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' };
+    case 'developing': return { label: 'En Desarrollo', bg: 'bg-amber-50 dark:bg-amber-900/15', border: 'border-amber-200 dark:border-amber-700/30', text: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500' };
+    case 'early': return { label: 'Etapa Temprana', bg: 'bg-orange-50 dark:bg-orange-900/15', border: 'border-orange-200 dark:border-orange-700/30', text: 'text-orange-700 dark:text-orange-400', dot: 'bg-orange-500' };
+    case 'not_ready': return { label: 'No Listo', bg: 'bg-red-50 dark:bg-red-900/15', border: 'border-red-200 dark:border-red-700/30', text: 'text-red-700 dark:text-red-400', dot: 'bg-red-500' };
   }
 }
 
@@ -88,27 +88,27 @@ function GapCard({ gap, index }: { gap: string; index: number }) {
 function ExtractedSummary({ data }: { data: ExtractedProjectData }) {
   const fields: { label: string; value: string | undefined | null }[] = [
     { label: 'Modelo de ingresos', value: data.revenueModel },
-    { label: 'MRR',                value: data.mrr != null ? `$${data.mrr.toLocaleString()} USD` : undefined },
-    { label: 'ARR',                value: data.arr != null ? `$${data.arr.toLocaleString()} USD` : undefined },
-    { label: 'CAC',                value: data.cac != null ? `$${data.cac.toLocaleString()} USD` : undefined },
-    { label: 'LTV',                value: data.ltv != null ? `$${data.ltv.toLocaleString()} USD` : undefined },
-    { label: 'Payback',            value: data.paybackPeriod != null ? `${data.paybackPeriod} meses` : undefined },
-    { label: 'Clientes',           value: data.customerCount != null ? String(data.customerCount) : undefined },
-    { label: 'Equipo',             value: data.teamSize != null ? `${data.teamSize} personas` : undefined },
-    { label: 'TAM',                value: data.tam },
+    { label: 'MRR', value: data.mrr != null ? `$${data.mrr.toLocaleString()} USD` : undefined },
+    { label: 'ARR', value: data.arr != null ? `$${data.arr.toLocaleString()} USD` : undefined },
+    { label: 'CAC', value: data.cac != null ? `$${data.cac.toLocaleString()} USD` : undefined },
+    { label: 'LTV', value: data.ltv != null ? `$${data.ltv.toLocaleString()} USD` : undefined },
+    { label: 'Payback', value: data.paybackPeriod != null ? `${data.paybackPeriod} meses` : undefined },
+    { label: 'Clientes', value: data.customerCount != null ? String(data.customerCount) : undefined },
+    { label: 'Equipo', value: data.teamSize != null ? `${data.teamSize} personas` : undefined },
+    { label: 'TAM', value: data.tam },
   ].filter((f) => f.value);
 
   if (!fields.length) return null;
 
   return (
     <div className="bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/5 rounded-2xl p-5">
-      <p className="text-xs font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest mb-3">
+      <p className="text-xs font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest mb-3">
         Datos extraídos del documento
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {fields.map(({ label, value }) => (
           <div key={label} className="space-y-0.5">
-            <p className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-wide">{label}</p>
+            <p className="text-[10px] font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-wide">{label}</p>
             <p className="text-sm font-semibold text-gray-800 dark:text-[#F0EFF8] truncate">{value}</p>
           </div>
         ))}
@@ -129,11 +129,11 @@ function AuditLevelBanner({ sourcesUsed, auditLevel }: { sourcesUsed: string[]; 
 
   const hasFinancial = sourcesUsed.includes('sii') || sourcesUsed.includes('fintoc');
   const sourceBadges = [
-    { key: 'sii',      label: 'SII',    active: sourcesUsed.includes('sii') },
-    { key: 'fintoc',   label: 'Fintoc', active: sourcesUsed.includes('fintoc') },
-    { key: 'pjud',     label: 'PJUD',   active: sourcesUsed.includes('pjud') },
-    { key: 'inapi',    label: 'INAPI',  active: sourcesUsed.includes('inapi') },
-    { key: 'cmf_best', label: 'CMF',    active: sourcesUsed.includes('cmf_best') },
+    { key: 'sii', label: 'SII', active: sourcesUsed.includes('sii') },
+    { key: 'fintoc', label: 'Fintoc', active: sourcesUsed.includes('fintoc') },
+    { key: 'pjud', label: 'PJUD', active: sourcesUsed.includes('pjud') },
+    { key: 'inapi', label: 'INAPI', active: sourcesUsed.includes('inapi') },
+    { key: 'cmf_best', label: 'CMF', active: sourcesUsed.includes('cmf_best') },
   ];
 
   return (
@@ -155,11 +155,10 @@ function AuditLevelBanner({ sourcesUsed, auditLevel }: { sourcesUsed: string[]; 
             {sourceBadges.map(({ key, label, active }) => (
               <span
                 key={key}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                  active
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${active
                     ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/30 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-400 dark:text-[#4A495E]'
-                }`}
+                    : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-400 dark:text-[#afaebb]'
+                  }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-white/20'}`} />
                 {label}
@@ -198,7 +197,7 @@ function DataQualityBanner({
 
   return (
     <div className="rounded-2xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-[#0A0A0F] p-4 space-y-3">
-      <p className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest">
+      <p className="text-[10px] font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest">
         Auditoría del análisis
       </p>
 
@@ -234,7 +233,7 @@ function DataQualityBanner({
       {/* Fuentes omitidas por filtro adaptativo */}
       {sourcesSkipped.length > 0 && (
         <details className="group">
-          <summary className="text-[10px] text-gray-400 dark:text-[#4A495E] cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 list-none flex items-center gap-1">
+          <summary className="text-[10px] text-gray-400 dark:text-[#afaebb] cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 list-none flex items-center gap-1">
             <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
@@ -242,7 +241,7 @@ function DataQualityBanner({
           </summary>
           <div className="mt-2 space-y-1 pl-4">
             {sourcesSkipped.map(({ source, reason }, i) => (
-              <p key={i} className="text-[10px] text-gray-400 dark:text-[#4A495E]">
+              <p key={i} className="text-[10px] text-gray-400 dark:text-[#afaebb]">
                 <span className="font-semibold">{sourceLabels[source] ?? source}:</span> {reason}
               </p>
             ))}
@@ -257,7 +256,7 @@ function DataQualityBanner({
 function VerdictSummary({ text }: { text: string }) {
   return (
     <div className="bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/5 rounded-2xl p-5">
-      <p className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest mb-2">
+      <p className="text-[10px] font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest mb-2">
         Veredicto del analista IA
       </p>
       <p className="text-sm text-gray-600 dark:text-[#C4C4D4] leading-relaxed">{text}</p>
@@ -279,10 +278,10 @@ interface Props {
 
 const DIMENSION_META: { key: keyof DueDiligenceScore['dimensions']; icon: string }[] = [
   { key: 'financiero', icon: '💰' },
-  { key: 'legal',      icon: '⚖️' },
-  { key: 'mercado',    icon: '🌍' },
-  { key: 'equipo',     icon: '👥' },
-  { key: 'traccion',   icon: '📈' },
+  { key: 'legal', icon: '⚖️' },
+  { key: 'mercado', icon: '🌍' },
+  { key: 'equipo', icon: '👥' },
+  { key: 'traccion', icon: '📈' },
 ];
 
 export function DueDiligenceScoreCard({
@@ -296,10 +295,10 @@ export function DueDiligenceScoreCard({
 }: Props) {
   const rc = readinessConfig(score.investorReadiness);
   const totalColor = score.total >= 70 ? 'text-emerald-600 dark:text-emerald-400' : score.total >= 45 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
-  const totalBg    = score.total >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-700/30' : score.total >= 45 ? 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-700/30' : 'bg-red-50 dark:bg-red-900/15 border-red-200 dark:border-red-700/30';
+  const totalBg = score.total >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-700/30' : score.total >= 45 ? 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-700/30' : 'bg-red-50 dark:bg-red-900/15 border-red-200 dark:border-red-700/30';
 
   const resolvedSourcesUsed = sourcesUsed ?? score.sources_used ?? [];
-  const resolvedAuditLevel  = (score.audit_level ?? (resolvedSourcesUsed.length > 0 ? 2 : 1)) as 1 | 2 | 3;
+  const resolvedAuditLevel = (score.audit_level ?? (resolvedSourcesUsed.length > 0 ? 2 : 1)) as 1 | 2 | 3;
 
   return (
     <div className="space-y-5">
@@ -336,7 +335,7 @@ export function DueDiligenceScoreCard({
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className={`text-3xl font-black leading-none ${totalColor}`}>{score.total}</span>
-                <span className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E]">/100</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-[#afaebb]">/100</span>
               </div>
             </div>
             <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold ${rc.bg} ${rc.border} ${rc.text}`}>
@@ -347,7 +346,7 @@ export function DueDiligenceScoreCard({
 
           {/* Description */}
           <div className="flex-1 text-center sm:text-left">
-            <p className="text-xs font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest mb-1">
+            <p className="text-xs font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest mb-1">
               Due Diligence Score — Preparación para Ronda de Inversión
             </p>
             <p className="text-sm text-gray-600 dark:text-[#C4C4D4] leading-relaxed">
@@ -355,7 +354,7 @@ export function DueDiligenceScoreCard({
               Un score de 80+ indica que el reporte tiene suficiente rigor para una primera reunión con inversores.
             </p>
             {score.topGaps.length > 0 && (
-              <p className="text-xs text-gray-400 dark:text-[#4A495E] mt-2">
+              <p className="text-xs text-gray-400 dark:text-[#afaebb] mt-2">
                 <strong>{score.topGaps.length}</strong> gap{score.topGaps.length > 1 ? 's' : ''} crítico{score.topGaps.length > 1 ? 's' : ''} detectado{score.topGaps.length > 1 ? 's' : ''} · Ver recomendaciones abajo
               </p>
             )}
@@ -365,7 +364,7 @@ export function DueDiligenceScoreCard({
 
       {/* ── 5 Dimensions ───────────────────────────────────────────────────── */}
       <div className="bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-        <p className="text-xs font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest mb-4">
+        <p className="text-xs font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest mb-4">
           Desglose por dimensión
         </p>
         <div className="space-y-4">

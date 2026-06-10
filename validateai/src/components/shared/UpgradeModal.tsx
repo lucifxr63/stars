@@ -6,12 +6,12 @@ import type { UserTier } from '@/hooks/useUserTier';
 export const PAYWALL_HIT_EVENT = 'validateai:paywall-hit';
 
 export interface PaywallHitDetail {
-  reason:       'tier_blocked' | 'monthly_limit' | 'expensive_limit';
-  prompt_type:  string;
+  reason: 'tier_blocked' | 'monthly_limit' | 'expensive_limit';
+  prompt_type: string;
   tier_current: UserTier;
-  tier_needed:  UserTier;
-  used?:        number;
-  limit?:       number;
+  tier_needed: UserTier;
+  used?: number;
+  limit?: number;
 }
 
 export function dispatchPaywallHit(detail: PaywallHitDetail) {
@@ -22,28 +22,28 @@ export function dispatchPaywallHit(detail: PaywallHitDetail) {
 
 export const FEATURE_NAME: Record<string, string> = {
   competitive_analysis: 'Análisis Competitivo',
-  market_sizing:        'Tamaño de Mercado (TAM/SAM/SOM)',
-  market_signals:       'Señales de Mercado',
-  risk_analysis:        'Análisis de Riesgos',
-  unit_economics:       'Unit Economics (CAC/LTV)',
-  founder_fit:          'Founder-Market Fit',
-  governance_assessment:'Gobernanza y Estructura',
-  fundraising_roadmap:  'Fundraising Roadmap',
-  pitch_deck:           'Pitch Deck',
-  lean_roadmap:         'Lean Roadmap',
+  market_sizing: 'Tamaño de Mercado (TAM/SAM/SOM)',
+  market_signals: 'Señales de Mercado',
+  risk_analysis: 'Análisis de Riesgos',
+  unit_economics: 'Unit Economics (CAC/LTV)',
+  founder_fit: 'Founder-Market Fit',
+  governance_assessment: 'Gobernanza y Estructura',
+  fundraising_roadmap: 'Fundraising Roadmap',
+  pitch_deck: 'Pitch Deck',
+  lean_roadmap: 'Lean Roadmap',
   financial_projection: 'Proyección Financiera',
-  compliance_roadmap:   'Compliance Roadmap',
-  playbook_analysis:    'Playbook de Validación',
-  summary:              'Resumen ejecutivo',
-  questions:            'Preguntas Mom Test',
-  value_prop:           'Propuesta de Valor',
-  mvp_generation:       'Roadmap MVP',
+  compliance_roadmap: 'Compliance Roadmap',
+  playbook_analysis: 'Playbook de Validación',
+  summary: 'Resumen ejecutivo',
+  questions: 'Preguntas Mom Test',
+  value_prop: 'Propuesta de Valor',
+  mvp_generation: 'Roadmap MVP',
 };
 
 export const TIER_INFO: Record<UserTier, { label: string; price: string; color: string; bg: string }> = {
-  free:    { label: 'Free',    price: 'Gratis',        color: 'text-gray-600',   bg: 'bg-gray-100 dark:bg-white/8' },
-  basic:   { label: 'Basic',   price: '$9.990 CLP/mes', color: 'text-sky-600 dark:text-sky-400',     bg: 'bg-sky-50 dark:bg-sky-500/10' },
-  pro:     { label: 'Pro',     price: '$20.000 CLP/mes', color: 'text-[#0EB5C6]', bg: 'bg-[#0EB5C6]/10' },
+  free: { label: 'Free', price: 'Gratis', color: 'text-gray-600', bg: 'bg-gray-100 dark:bg-white/8' },
+  basic: { label: 'Basic', price: '$9.990 CLP/mes', color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-500/10' },
+  pro: { label: 'Pro', price: '$20.000 CLP/mes', color: 'text-[#0EB5C6]', bg: 'bg-[#0EB5C6]/10' },
   premium: { label: 'Premium', price: '$50.000 CLP/mes', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10' },
 };
 
@@ -77,7 +77,7 @@ export function UpgradeModal() {
 
   if (!detail) return null;
 
-  const tierInfo   = TIER_INFO[detail.tier_needed];
+  const tierInfo = TIER_INFO[detail.tier_needed];
   const featureName = FEATURE_NAME[detail.prompt_type] ?? detail.prompt_type;
 
   return (
@@ -110,7 +110,7 @@ export function UpgradeModal() {
 
         {/* Feature name */}
         <div>
-          <p className="text-[10px] font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-widest mb-1">
+          <p className="text-[10px] font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest mb-1">
             Análisis bloqueado
           </p>
           <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8] leading-snug">

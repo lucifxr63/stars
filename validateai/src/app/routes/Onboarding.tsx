@@ -12,7 +12,7 @@ const ROLES = [
 const inputCls =
   'w-full px-4 py-3.5 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm ' +
   'text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#12121A] ' +
-  'placeholder:text-gray-400 dark:placeholder:text-[#4A495E] ' +
+  'placeholder:text-gray-400 dark:placeholder:text-[#afaebb] ' +
   'focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20 outline-none transition-all';
 
 const selectCls =
@@ -26,9 +26,9 @@ function OnboardingLogo() {
   return (
     <div className="flex items-center gap-2.5">
       <svg viewBox="0 0 500 500" className="w-7 h-7 shrink-0" aria-hidden="true">
-        <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
-        <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
-        <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
+        <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white" />
+        <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6" />
+        <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6" />
       </svg>
       <span className="font-heading text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
     </div>
@@ -44,9 +44,9 @@ interface OnboardingForm {
 }
 
 const STEP_META = [
-  { title: 'Tu perfil',  subtitle: 'Cuéntanos quién eres para personalizar tu experiencia.' },
+  { title: 'Tu perfil', subtitle: 'Cuéntanos quién eres para personalizar tu experiencia.' },
   { title: 'Tu startup', subtitle: '¿Qué estás construyendo? Esta info pre-llenará el wizard automáticamente.' },
-  { title: '¡Listo!',    subtitle: 'Tu cuenta está configurada y lista para usar.' },
+  { title: '¡Listo!', subtitle: 'Tu cuenta está configurada y lista para usar.' },
 ] as const;
 
 export function Onboarding() {
@@ -71,8 +71,8 @@ export function Onboarding() {
 
   const set =
     (field: keyof OnboardingForm) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+        setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const saveAndComplete = async (skipData = false) => {
     setSaving(true);
@@ -85,11 +85,11 @@ export function Onboarding() {
     };
 
     if (!skipData) {
-      if (form.full_name)      payload.full_name      = form.full_name;
-      if (form.role)           payload.role           = form.role;
-      if (form.startup_name)   payload.startup_name   = form.startup_name;
+      if (form.full_name) payload.full_name = form.full_name;
+      if (form.role) payload.role = form.role;
+      if (form.startup_name) payload.startup_name = form.startup_name;
       if (form.startup_sector) payload.startup_sector = form.startup_sector;
-      if (form.founder_pitch)  payload.founder_pitch  = form.founder_pitch;
+      if (form.founder_pitch) payload.founder_pitch = form.founder_pitch;
     }
 
     const { error } = await supabase.from('profiles').update(payload).eq('id', user.id);
@@ -131,13 +131,12 @@ export function Onboarding() {
         {[1, 2, 3].map((s) => (
           <div
             key={s}
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              s === step
+            className={`h-1.5 rounded-full transition-all duration-500 ${s === step
                 ? 'w-6 bg-[#0EB5C6]'
                 : s < step
-                ? 'w-6 bg-[#0EB5C6]/40'
-                : 'w-3 bg-gray-200 dark:bg-white/[0.08]'
-            }`}
+                  ? 'w-6 bg-[#0EB5C6]/40'
+                  : 'w-3 bg-gray-200 dark:bg-white/[0.08]'
+              }`}
           />
         ))}
       </div>
@@ -222,7 +221,7 @@ export function Onboarding() {
                   className={`${inputCls} resize-none`}
                 />
                 <div className="flex justify-end mt-1">
-                  <span className={`text-xs ${pitchLen >= 80 ? 'text-green-500' : !pitchValid ? 'text-red-400' : 'text-gray-400 dark:text-[#4A495E]'}`}>
+                  <span className={`text-xs ${pitchLen >= 80 ? 'text-green-500' : !pitchValid ? 'text-red-400' : 'text-gray-400 dark:text-[#afaebb]'}`}>
                     {pitchLen} car.{' '}
                     {pitchLen >= 80 ? '✓' : !pitchValid ? 'Mín. 30 caracteres' : '(mín. recomendado: 80)'}
                   </span>

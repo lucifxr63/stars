@@ -10,9 +10,9 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import type { User } from '@supabase/supabase-js';
 
 const PREVIEW_COLORS: Record<UserTier, string> = {
-  free:    'bg-gray-800 text-gray-200 border-gray-600',
-  basic:   'bg-sky-900 text-sky-200 border-sky-600',
-  pro:     'bg-indigo-900 text-indigo-200 border-indigo-600',
+  free: 'bg-gray-800 text-gray-200 border-gray-600',
+  basic: 'bg-sky-900 text-sky-200 border-sky-600',
+  pro: 'bg-indigo-900 text-indigo-200 border-indigo-600',
   premium: 'bg-violet-900 text-violet-200 border-violet-600',
 };
 
@@ -139,9 +139,9 @@ export function AppLayout() {
           <div className="flex-1 flex justify-center">
             <div className="flex items-center gap-2">
               <svg viewBox="0 0 500 500" className="w-6 h-6" aria-hidden="true">
-                <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
-                <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
-                <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
+                <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white" />
+                <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6" />
+                <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6" />
               </svg>
               <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
             </div>
@@ -156,7 +156,7 @@ export function AppLayout() {
         </main>
 
         <footer className="border-t border-gray-100 dark:border-white/[0.06] py-4 shrink-0">
-          <p className="text-center text-xs text-gray-400 dark:text-[#4A495E]">
+          <p className="text-center text-xs text-gray-400 dark:text-[#afaebb]">
             © {new Date().getFullYear()} Validus
           </p>
         </footer>

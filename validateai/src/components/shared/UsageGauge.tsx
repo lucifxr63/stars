@@ -16,10 +16,10 @@ interface GaugeConfig {
 }
 
 function getConfig(pct: number): GaugeConfig {
-  if (pct >= 1)   return { color: '#dc2626', bg: 'rgba(220,38,38,0.08)',   border: 'rgba(220,38,38,0.25)',   label: 'Límite alcanzado', textColor: '#dc2626' };
-  if (pct >= 0.8) return { color: '#d97706', bg: 'rgba(217,119,6,0.08)',   border: 'rgba(217,119,6,0.25)',   label: 'Casi al límite',   textColor: '#d97706' };
-  if (pct >= 0.5) return { color: '#059669', bg: 'rgba(5,150,105,0.08)',   border: 'rgba(5,150,105,0.25)',   label: 'Uso normal',        textColor: '#059669' };
-  return           { color: '#059669', bg: 'rgba(5,150,105,0.06)',   border: 'rgba(5,150,105,0.15)',   label: 'En uso',            textColor: '#059669' };
+  if (pct >= 1) return { color: '#dc2626', bg: 'rgba(220,38,38,0.08)', border: 'rgba(220,38,38,0.25)', label: 'Límite alcanzado', textColor: '#dc2626' };
+  if (pct >= 0.8) return { color: '#d97706', bg: 'rgba(217,119,6,0.08)', border: 'rgba(217,119,6,0.25)', label: 'Casi al límite', textColor: '#d97706' };
+  if (pct >= 0.5) return { color: '#059669', bg: 'rgba(5,150,105,0.08)', border: 'rgba(5,150,105,0.25)', label: 'Uso normal', textColor: '#059669' };
+  return { color: '#059669', bg: 'rgba(5,150,105,0.06)', border: 'rgba(5,150,105,0.15)', label: 'En uso', textColor: '#059669' };
 }
 
 // Calcula días restantes hasta el próximo ciclo de 30 días
@@ -31,7 +31,7 @@ function daysUntilReset(): number {
 }
 
 export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
-  const pct    = Math.min(used / Math.max(limit, 1), 1);
+  const pct = Math.min(used / Math.max(limit, 1), 1);
   const config = getConfig(pct);
 
   // Animar desde 0 al valor real en el primer render
@@ -41,14 +41,14 @@ export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
     return () => clearTimeout(t);
   }, [pct]);
 
-  const radius  = 44;
-  const circ    = 2 * Math.PI * radius;
-  const arcLen  = circ * 0.75;                   // 270° de arco (tacómetro)
+  const radius = 44;
+  const circ = 2 * Math.PI * radius;
+  const arcLen = circ * 0.75;                   // 270° de arco (tacómetro)
   const progress = arcLen * displayPct;
 
-  const showUpsell  = pct >= 0.8;
-  const daysLeft    = daysUntilReset();
-  const remaining   = Math.max(0, limit - used);
+  const showUpsell = pct >= 0.8;
+  const daysLeft = daysUntilReset();
+  const remaining = Math.max(0, limit - used);
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
@@ -85,7 +85,7 @@ export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
           <span className="text-2xl font-black leading-none tabular-nums" style={{ color: config.color }}>
             {used}
           </span>
-          <span className="text-[10px] text-gray-400 dark:text-[#4A495E] font-medium">
+          <span className="text-[10px] text-gray-400 dark:text-[#afaebb] font-medium">
             / {limit}
           </span>
         </div>
@@ -102,11 +102,11 @@ export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
       {/* Info secundaria */}
       <div className="text-center space-y-0.5">
         {remaining > 0 && pct < 1 ? (
-          <p className="text-[10px] text-gray-400 dark:text-[#4A495E]">
+          <p className="text-[10px] text-gray-400 dark:text-[#afaebb]">
             {remaining} restante{remaining !== 1 ? 's' : ''} este mes
           </p>
         ) : null}
-        <p className="text-[10px] text-gray-400 dark:text-[#4A495E]">
+        <p className="text-[10px] text-gray-400 dark:text-[#afaebb]">
           Reset en {daysLeft} día{daysLeft !== 1 ? 's' : ''}
         </p>
       </div>

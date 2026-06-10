@@ -41,7 +41,7 @@ function ErrorMsg({ message }: { message?: string }) {
 
 const inputCls = (hasError: boolean, highlight = false) =>
   `w-full px-4 py-3.5 rounded-xl text-sm text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#0A0A0F] border transition-all duration-150 outline-none
-   placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
+   placeholder:text-gray-400 dark:placeholder:text-[#afaebb]
    focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20
    ${hasError ? 'border-red-500/50 bg-red-500/5' : highlight ? 'border-violet-300 dark:border-violet-500/30 bg-violet-50/30 dark:bg-violet-900/5' : 'border-gray-200 dark:border-white/8 hover:border-gray-300 dark:hover:border-white/15'}`;
 
@@ -51,10 +51,10 @@ function DescriptionQuality({ length }: { length: number }) {
     length < 100
       ? { label: `${length}/100 mín`, color: 'text-red-500', bar: 'bg-red-400', pct: (length / 100) * 50 }
       : length < 200
-      ? { label: `${length} — añade más contexto`, color: 'text-amber-500', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
-      : length < 400
-      ? { label: `${length} — buen nivel ✓`, color: 'text-emerald-600', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
-      : { label: `${length} — calidad máxima ✓`, color: 'text-[#0EB5C6]', bar: 'bg-[#0EB5C6]', pct: 95 };
+        ? { label: `${length} — añade más contexto`, color: 'text-amber-500', bar: 'bg-amber-400', pct: 50 + ((length - 100) / 100) * 25 }
+        : length < 400
+          ? { label: `${length} — buen nivel ✓`, color: 'text-emerald-600', bar: 'bg-emerald-500', pct: 75 + ((length - 200) / 200) * 20 }
+          : { label: `${length} — calidad máxima ✓`, color: 'text-[#0EB5C6]', bar: 'bg-[#0EB5C6]', pct: 95 };
   return (
     <div className="mt-1.5 space-y-1">
       <div className="h-1 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
@@ -73,17 +73,17 @@ export function StepIdeaPremium() {
     defaultValues: stepIdea as StepIdea,
   });
 
-  const ideaNameVal     = watch('idea_name') ?? '';
-  const ideaProblemVal  = watch('idea_problem') ?? '';
-  const ideaDescVal     = watch('idea_description') ?? '';
-  const industryVal     = watch('idea_industry');
-  const descriptionLen  = ideaDescVal.length;
+  const ideaNameVal = watch('idea_name') ?? '';
+  const ideaProblemVal = watch('idea_problem') ?? '';
+  const ideaDescVal = watch('idea_description') ?? '';
+  const industryVal = watch('idea_industry');
+  const descriptionLen = ideaDescVal.length;
 
   // Badge: visible si el valor actual coincide con el extraído del PDF.
   // Desaparece en cuanto el usuario edita el campo.
   const badges = {
-    idea_name:        !!(extractedData?.projectName && ideaNameVal === extractedData.projectName),
-    idea_problem:     !!(extractedData?.problem && ideaProblemVal === extractedData.problem),
+    idea_name: !!(extractedData?.projectName && ideaNameVal === extractedData.projectName),
+    idea_problem: !!(extractedData?.problem && ideaProblemVal === extractedData.problem),
     idea_description: !!(extractedData?.solution && ideaDescVal === extractedData.solution),
   };
 
@@ -92,13 +92,13 @@ export function StepIdeaPremium() {
     const { validationId } = useValidationStore.getState();
     if (validationId) {
       supabase.from('validations').update({
-        idea_name:        data.idea_name,
-        idea_problem:     data.idea_problem,
+        idea_name: data.idea_name,
+        idea_problem: data.idea_problem,
         idea_description: data.idea_description,
-        idea_industry:    data.idea_industry,
+        idea_industry: data.idea_industry,
         current_solution: data.current_solution,
-        current_step:     3,
-      }).eq('id', validationId).then(() => {});
+        current_step: 3,
+      }).eq('id', validationId).then(() => { });
     }
     nextStep();
   };
@@ -139,7 +139,7 @@ export function StepIdeaPremium() {
             <ExtractionBadge visible={badges.idea_problem} />
             {!ideaProblemVal && <RequiredHint />}
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
             El dolor del cliente. ¿Qué le cuesta tiempo, dinero o frustración?
           </p>
           <textarea
@@ -173,7 +173,7 @@ export function StepIdeaPremium() {
             ¿Cómo lo resuelven tus clientes hoy? <span className="text-red-400">*</span>
             <RequiredHint />
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
             No extraíble automáticamente — nombra 2 herramientas o métodos concretos que usa tu cliente.
           </p>
           <input

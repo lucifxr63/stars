@@ -1,18 +1,19 @@
 # VALIDUS — Design System Master
+
 > Fuente única de verdad para Landing Page + App Shell. Generado 2026-05-31.
 
 ---
 
 ## 1. IDENTIDAD
 
-| Campo | Valor |
-|---|---|
-| Nombre del producto | **Validus** |
-| Dominio | `https://validus.scouttech.lat` |
-| Tagline | "Valida tu idea de startup antes de construirla" |
-| Mercado | Chile / LatAm — emprendedores B2B/B2C |
-| Stack | React 19 + Vite + TypeScript + Tailwind v4 + shadcn/ui |
-| Theme engine | `next-themes` — `attribute="class"` — `defaultTheme="system"` |
+| Campo               | Valor                                                         |
+| ------------------- | ------------------------------------------------------------- |
+| Nombre del producto | **Validus**                                                   |
+| Dominio             | `https://validus.scouttech.lat`                               |
+| Tagline             | "Valida tu idea de startup antes de construirla"              |
+| Mercado             | Chile / LatAm — emprendedores B2B/B2C                         |
+| Stack               | React 19 + Vite + TypeScript + Tailwind v4 + shadcn/ui        |
+| Theme engine        | `next-themes` — `attribute="class"` — `defaultTheme="system"` |
 
 ---
 
@@ -21,11 +22,13 @@
 **Archivo:** `logo_vector.svg` (338×426px)  
 **Forma:** V + flecha descendente + chevron interior  
 **Colores originales:**
+
 - Cuerpo V: `#001431` (navy oscuro)
 - Flecha central: `#ff2b23` (rojo)
 - Corte interno: blanco
 
 **Uso en UI:**
+
 ```
 Light mode → usar colores originales (#001431 + #ff2b23)
 Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
@@ -38,6 +41,7 @@ Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
 ## 3. COLORES — TOKENS
 
 ### Brand (invariante)
+
 ```
 --brand:          #7C6FF7   ← violet principal — NO cambiar jamás
 --brand-light:    #A78BFA   ← hover / texto sobre fondos oscuros
@@ -53,6 +57,7 @@ Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
 ```
 
 ### Dark Mode (`.dark`)
+
 ```
 --bg:             #0A0A0F
 --surface:        #12121A
@@ -61,10 +66,11 @@ Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
 --border-subtle:  rgba(255,255,255,0.04)
 --text:           #F0EFF8
 --text-muted:     #8B8AA0
---text-faint:     #4A495E
+--text-faint:     #afaebb
 ```
 
 ### Light Mode (sin `.dark`)
+
 ```
 --bg:             #F8F7FF   ← blanco con tinte violet sutil
 --surface:        #FFFFFF
@@ -81,27 +87,30 @@ Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
 ## 4. TIPOGRAFÍA
 
 ### Fuentes cargadas
+
 ```css
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 ```
 
 ### Escala
-| Rol | Fuente | Peso | Tamaño | Line-height | Tracking |
-|---|---|---|---|---|---|
-| H1 Hero | Space Grotesk | 800 | clamp(2.5rem, 5vw, 4.5rem) | 1.05 | -0.02em |
-| H2 Section | Space Grotesk | 700 | clamp(1.75rem, 3vw, 2.75rem) | 1.1 | -0.01em |
-| H3 Card | Space Grotesk | 600 | 1.125rem | 1.25 | 0 |
-| Body | DM Sans | 400 | 1rem | 1.65 | 0 |
-| Body sm | DM Sans | 400 | 0.875rem | 1.6 | 0 |
-| Caption | DM Sans | 500 | 0.75rem | 1.5 | 0.02em |
-| Badge | DM Sans | 600 | 0.7rem | 1 | 0.06em (uppercase) |
-| Score/Num | Space Grotesk | 800 | variable | 1 | tabular-nums |
+
+| Rol        | Fuente        | Peso | Tamaño                       | Line-height | Tracking           |
+| ---------- | ------------- | ---- | ---------------------------- | ----------- | ------------------ |
+| H1 Hero    | Space Grotesk | 800  | clamp(2.5rem, 5vw, 4.5rem)   | 1.05        | -0.02em            |
+| H2 Section | Space Grotesk | 700  | clamp(1.75rem, 3vw, 2.75rem) | 1.1         | -0.01em            |
+| H3 Card    | Space Grotesk | 600  | 1.125rem                     | 1.25        | 0                  |
+| Body       | DM Sans       | 400  | 1rem                         | 1.65        | 0                  |
+| Body sm    | DM Sans       | 400  | 0.875rem                     | 1.6         | 0                  |
+| Caption    | DM Sans       | 500  | 0.75rem                      | 1.5         | 0.02em             |
+| Badge      | DM Sans       | 600  | 0.7rem                       | 1           | 0.06em (uppercase) |
+| Score/Num  | Space Grotesk | 800  | variable                     | 1           | tabular-nums       |
 
 ---
 
 ## 5. EFECTOS
 
 ### `.glass-card` — AMBOS MODOS
+
 ```css
 /* Light mode (default) */
 .glass-card {
@@ -112,33 +121,35 @@ Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
 }
 /* Dark mode */
 .dark .glass-card {
-  background: rgba(18, 18, 26, 0.80);
+  background: rgba(18, 18, 26, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: none;
 }
 ```
 
 ### `.grid-pattern` — AMBOS MODOS
+
 ```css
 /* Light mode */
 .grid-pattern {
   background-image:
-    linear-gradient(rgba(124,111,247,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124,111,247,0.04) 1px, transparent 1px);
+    linear-gradient(rgba(124, 111, 247, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 111, 247, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 /* Dark mode */
 .dark .grid-pattern {
   background-image:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 ```
 
 ### Gradient text
+
 ```css
 .gradient-text {
-  background: linear-gradient(135deg, #7C6FF7, #A78BFA);
+  background: linear-gradient(135deg, #7c6ff7, #a78bfa);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -146,9 +157,16 @@ Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
 ```
 
 ### Glow
+
 ```css
-.glow-brand    { box-shadow: 0 0 40px rgba(124,111,247,0.3), 0 0 80px rgba(124,111,247,0.12); }
-.glow-brand-sm { box-shadow: 0 0 20px rgba(124,111,247,0.25); }
+.glow-brand {
+  box-shadow:
+    0 0 40px rgba(124, 111, 247, 0.3),
+    0 0 80px rgba(124, 111, 247, 0.12);
+}
+.glow-brand-sm {
+  box-shadow: 0 0 20px rgba(124, 111, 247, 0.25);
+}
 ```
 
 ---
@@ -156,6 +174,7 @@ Dark mode  → cuerpo: #FFFFFF | flecha: #7C6FF7 (brand violet)
 ## 6. COMPONENTES — ESPECIFICACIÓN
 
 ### `<LandingNav />`
+
 ```
 sticky top-0 z-50 h-16
 DARK:  bg-[#0A0A0F]/80 border-b border-white/[0.06] backdrop-blur-xl
@@ -170,6 +189,7 @@ Mobile: Logo + ThemeToggle + hamburger → drawer slide-down
 ```
 
 ### `<HeroSection />`
+
 ```
 relative overflow-hidden pt-28 sm:pt-36 pb-20 sm:pb-28
 Orbs: violet top-center w-[600px] h-[400px] bg-[#7C6FF7]/12 blur-[100px]
@@ -204,14 +224,14 @@ CTAs (flex-col sm:flex-row gap-3 justify-center):
     text-gray-900 dark:text-[#F0EFF8] font-semibold text-sm
     rounded-xl shadow-lg hover:shadow-xl transition-all
     SVG Google inline (4 paths oficiales)
-  
+
   SECONDARY "Entrar con email →":
     px-6 py-3.5 bg-[#7C6FF7] text-white font-semibold text-sm
     rounded-xl shadow-lg shadow-[#7C6FF7]/25
     hover:bg-[#6B5EE6] active:scale-[0.98] transition-all
 
 TRUST LINE:
-  text-xs text-[#9896AE] dark:text-[#4A495E]
+  text-xs text-[#9896AE] dark:text-[#afaebb]
   "Sin tarjeta de crédito · Resultados en 10 minutos · Ley 21.719 compliant"
 
 HERO CARD (floating mockup):
@@ -222,6 +242,7 @@ HERO CARD (floating mockup):
 ```
 
 ### `<SocialProofBar />`
+
 ```
 py-10 border-y
 DARK:  border-white/[0.06] bg-[#12121A]/40
@@ -234,6 +255,7 @@ Contenido:
 ```
 
 ### `<HowItWorksSection />`
+
 ```
 py-20 border-t
   DARK:  border-white/[0.06]
@@ -244,17 +266,18 @@ Header: label "EL PROCESO" + H2 "De la idea al análisis en 3 pasos"
 Cards grid md:grid-cols-3 gap-4:
   DARK:  bg-[#12121A] border border-white/[0.06] hover:border-[step-color]/30
   LIGHT: bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-[step-color]/25
-  
+
   Número watermark: text-[5rem] font-black opacity-5 absolute top-2 right-4
-  Conector entre cards (desktop): SVG arrow, text-[#4A495E]
+  Conector entre cards (desktop): SVG arrow, text-[#afaebb]
 
 Pasos:
   01 - "Tu idea"     - color #7C6FF7 - ~3 min
-  02 - "Tu mercado"  - color #34D399 - ~4 min  
+  02 - "Tu mercado"  - color #34D399 - ~4 min
   03 - "Tu reporte"  - color #F7C56C - ~3 min
 ```
 
 ### `<FeaturesSection />` — Bento Grid
+
 ```
 py-24 border-t
   DARK:  border-white/[0.06] bg-[#12121A]
@@ -271,8 +294,8 @@ Features (6):
   [1col] Unit Economics       — icono: currency   — CAC/LTV/Payback
   [1col] Compliance Chileno   — icono: shield      — SII, INAPI, CMF
   [2col] Founder Fit          — icono: users       — tags: Radar, Perfiles, Mentores AI
-  [1col] PDF Investor-Ready   — icono: document    
-  [1col] Encuestas Mom Test   — icono: chat-bubble  
+  [1col] PDF Investor-Ready   — icono: document
+  [1col] Encuestas Mom Test   — icono: chat-bubble
 
 Tag pills:
   DARK:  bg-[#1A1A24] border border-white/10 text-[#C4C4D4]
@@ -280,6 +303,7 @@ Tag pills:
 ```
 
 ### `<LiveReportSection />`
+
 ```
 py-20
   DARK:  bg-[#0A0A0F]
@@ -299,6 +323,7 @@ Tabs inactivo:
 ```
 
 ### `<StatsSection />`
+
 ```
 py-16 border-y
   DARK:  border-white/[0.06]
@@ -312,6 +337,7 @@ Grid grid-cols-2 sm:grid-cols-4 gap-8 text-center:
 ```
 
 ### `<TestimonialsSection />`
+
 ```
 py-20 border-t
   DARK:  border-white/[0.06] bg-[#12121A]
@@ -329,7 +355,7 @@ Placeholders:
       Validus me dio un score de 74 y un roadmap concreto en 10 minutos."
      Score badge: 74
 
-  2. Rodrigo C. · Co-founder · FinTech Concepción  
+  2. Rodrigo C. · Co-founder · FinTech Concepción
      "El análisis de competidores con datos del CMF fue lo que más
       me sorprendió. Algo que habría tomado semanas lo tuve en horas."
      Score badge: 81
@@ -341,6 +367,7 @@ Placeholders:
 ```
 
 ### `<PricingSection />`
+
 ```
 py-24 border-t
   DARK:  border-white/[0.06] bg-[#0A0A0F]
@@ -378,6 +405,7 @@ CTA bajo pricing: "Ver todos los planes →" → /pricing
 ```
 
 ### `<FinalCtaSection />`
+
 ```
 py-24 text-center px-4
 
@@ -399,6 +427,7 @@ Micro-checks:
 ```
 
 ### `<LandingFooter />`
+
 ```
 border-t py-12
   DARK:  border-white/[0.06] bg-[#0A0A0F]
@@ -423,7 +452,7 @@ COL 3: Legal
 
 BOTTOM BAR:
   "© 2026 Validus · Hecho en Chile"
-  text-xs text-[#4A495E]
+  text-xs text-[#afaebb]
 ```
 
 ---
@@ -431,22 +460,31 @@ BOTTOM BAR:
 ## 7. BRANDING — LOGO EN COMPONENTES
 
 ### Navbar (inline SVG adaptado):
+
 ```jsx
 // Light mode: navy + red original
 // Dark mode: white + brand violet
 <svg viewBox="0 0 338 426" className="w-8 h-8">
   {/* V cuerpo */}
-  <path d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z"
-        className="fill-[#001431] dark:fill-white" />
+  <path
+    d="M66 198 H118 L169 292 L220 198 H272 L169 358 Z"
+    className="fill-[#001431] dark:fill-white"
+  />
   {/* Corte blanco interno */}
-  <path d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z"
-        className="fill-white dark:fill-[#0A0A0F]" />
+  <path
+    d="M134 252 L152 252 L169 286 L187 252 L205 252 L169 324 Z"
+    className="fill-white dark:fill-[#0A0A0F]"
+  />
   {/* Chevron interior */}
-  <path d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z"
-        className="fill-[#001431] dark:fill-white" />
+  <path
+    d="M155 253 L169 279 L192 253 L200 263 L169 303 L148 263 Z"
+    className="fill-[#001431] dark:fill-white"
+  />
   {/* Flecha roja → violet en dark */}
-  <path d="M169 68 L193 257 L169 237 L156 254 Z"
-        className="fill-[#ff2b23] dark:fill-[#7C6FF7]" />
+  <path
+    d="M169 68 L193 257 L169 237 L156 254 Z"
+    className="fill-[#ff2b23] dark:fill-[#7C6FF7]"
+  />
 </svg>
 ```
 
@@ -454,13 +492,13 @@ BOTTOM BAR:
 
 ## 8. PÁGINAS — SCOPE DEL REDESIGN
 
-| Página | Scope | Archivos |
-|---|---|---|
-| `/` Landing | **Reescribir completo** | `src/app/routes/Landing.tsx` |
-| Global CSS tokens | **Editar** | `src/index.css` |
-| Header app (auth) | **Editar** light mode | `src/components/layout/Header.tsx` |
-| ThemeToggle | **Mejorar** visual | `src/components/shared/ThemeToggle.tsx` |
-| App.tsx | **Editar menor** | `src/App.tsx` |
+| Página            | Scope                   | Archivos                                |
+| ----------------- | ----------------------- | --------------------------------------- |
+| `/` Landing       | **Reescribir completo** | `src/app/routes/Landing.tsx`            |
+| Global CSS tokens | **Editar**              | `src/index.css`                         |
+| Header app (auth) | **Editar** light mode   | `src/components/layout/Header.tsx`      |
+| ThemeToggle       | **Mejorar** visual      | `src/components/shared/ThemeToggle.tsx` |
+| App.tsx           | **Editar menor**        | `src/App.tsx`                           |
 
 ---
 
@@ -482,4 +520,4 @@ BOTTOM BAR:
 
 ---
 
-*Design system listo para implementación con Stitch.*
+_Design system listo para implementación con Stitch._

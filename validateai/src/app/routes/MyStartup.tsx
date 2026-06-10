@@ -18,7 +18,7 @@ interface StartupForm {
 const inputCls =
   'w-full px-4 py-3 border border-gray-200 dark:border-white/[0.08] rounded-xl text-sm ' +
   'text-gray-900 dark:text-[#F0EFF8] bg-transparent placeholder:text-gray-400 ' +
-  'dark:placeholder:text-[#4A495E] focus:border-[#0EB5C6] focus:ring-2 ' +
+  'dark:placeholder:text-[#afaebb] focus:border-[#0EB5C6] focus:ring-2 ' +
   'focus:ring-[#0EB5C6]/20 outline-none transition-all';
 
 const selectCls =
@@ -55,11 +55,11 @@ export function MyStartup() {
       if (cancelled) return;
       if (data) {
         setForm({
-          full_name:      data.full_name ?? '',
-          role:           data.role ?? '',
-          startup_name:   data.startup_name ?? '',
+          full_name: data.full_name ?? '',
+          role: data.role ?? '',
+          startup_name: data.startup_name ?? '',
           startup_sector: data.startup_sector ?? '',
-          founder_pitch:  data.founder_pitch ?? '',
+          founder_pitch: data.founder_pitch ?? '',
         });
       }
       setLoading(false);
@@ -71,8 +71,8 @@ export function MyStartup() {
 
   const set =
     (field: keyof StartupForm) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+        setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSave = async () => {
     setSaving(true);
@@ -82,12 +82,12 @@ export function MyStartup() {
     const { error } = await supabase
       .from('profiles')
       .update({
-        full_name:      form.full_name || null,
-        role:           form.role || null,
-        startup_name:   form.startup_name || null,
+        full_name: form.full_name || null,
+        role: form.role || null,
+        startup_name: form.startup_name || null,
         startup_sector: form.startup_sector || null,
-        founder_pitch:  form.founder_pitch || null,
-        updated_at:     new Date().toISOString(),
+        founder_pitch: form.founder_pitch || null,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', user.id);
 
@@ -185,7 +185,7 @@ export function MyStartup() {
                 className={`${inputCls} resize-none`}
               />
               <div className="flex justify-end mt-1.5">
-                <span className={`text-xs font-medium ${pitchLen >= 80 ? 'text-green-500' : 'text-gray-400 dark:text-[#4A495E]'}`}>
+                <span className={`text-xs font-medium ${pitchLen >= 80 ? 'text-green-500' : 'text-gray-400 dark:text-[#afaebb]'}`}>
                   {pitchLen} car. {pitchLen >= 80 ? '✓' : `(mín. 80)`}
                 </span>
               </div>

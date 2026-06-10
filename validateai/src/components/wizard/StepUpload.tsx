@@ -21,8 +21,8 @@ type Phase =
   | 'done';      // transition to next wizard step
 
 interface ParseResponse {
-  extractedData:     ExtractedProjectData;
-  pendingQuestions:  PendingQuestion[];
+  extractedData: ExtractedProjectData;
+  pendingQuestions: PendingQuestion[];
   dueDiligenceScore: DueDiligenceScore;
   _extractionWarning?: string;
 }
@@ -66,11 +66,11 @@ export function StepUpload() {
     nextStep,
   } = useValidationStore();
 
-  const [phase, setPhase]           = useState<Phase>('idle');
+  const [phase, setPhase] = useState<Phase>('idle');
   const [isDragOver, setIsDragOver] = useState(false);
-  const [errorMsg, setErrorMsg]     = useState<string | null>(null);
-  const [fileName, setFileName]     = useState<string | null>(null);
-  const [fileMime, setFileMime]     = useState<AcceptedMime | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileMime, setFileMime] = useState<AcceptedMime | null>(null);
   const [pendingCount, setPendingCount] = useState<number | null>(null);
 
   // Holds resolved API data until the stream animation finishes
@@ -93,7 +93,7 @@ export function StepUpload() {
   function toBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload  = () => resolve((reader.result as string).split(',')[1]);
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
@@ -127,8 +127,8 @@ export function StepUpload() {
           },
           body: JSON.stringify({
             fileBase64,
-            mimeType:      file.type,
-            fileName:      file.name,
+            mimeType: file.type,
+            fileName: file.name,
             validation_id: validationId ?? undefined,
           }),
         },
@@ -191,7 +191,7 @@ export function StepUpload() {
     setIsDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) processFile(file);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,8 +294,8 @@ export function StepUpload() {
           ${isDragOver
             ? 'border-[#0EB5C6] bg-[#0EB5C6]/5 dark:bg-[#0EB5C6]/8 scale-[1.01]'
             : phase === 'error'
-            ? 'border-red-400 bg-red-50 dark:bg-red-900/10'
-            : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F] hover:border-[#0EB5C6]/50 hover:bg-[#0EB5C6]/3'
+              ? 'border-red-400 bg-red-50 dark:bg-red-900/10'
+              : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0A0A0F] hover:border-[#0EB5C6]/50 hover:bg-[#0EB5C6]/3'
           }`}
       >
         <input
@@ -311,11 +311,11 @@ export function StepUpload() {
           ${isDragOver
             ? 'bg-[#0EB5C6]/15 border-[#0EB5C6]/40'
             : phase === 'error'
-            ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800/30'
-            : 'bg-white dark:bg-[#12121A] border-gray-200 dark:border-white/8'
+              ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800/30'
+              : 'bg-white dark:bg-[#12121A] border-gray-200 dark:border-white/8'
           }`}
         >
-          <UploadIcon className={`w-7 h-7 ${isDragOver ? 'text-[#0EB5C6]' : phase === 'error' ? 'text-red-500' : 'text-gray-400 dark:text-[#4A495E]'}`} />
+          <UploadIcon className={`w-7 h-7 ${isDragOver ? 'text-[#0EB5C6]' : phase === 'error' ? 'text-red-500' : 'text-gray-400 dark:text-[#afaebb]'}`} />
         </div>
 
         {/* Copy */}
@@ -323,7 +323,7 @@ export function StepUpload() {
           <p className="text-sm font-semibold text-gray-700 dark:text-[#F0EFF8] mb-1">
             {isDragOver ? 'Suelta el archivo aquí' : 'Arrastra tu Pitch Deck o Business Plan'}
           </p>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E]">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb]">
             PDF o JSON · Máximo 10 MB
           </p>
         </div>
@@ -364,7 +364,7 @@ export function StepUpload() {
             useValidationStore.getState().setValidationMode('detailed');
             useValidationStore.getState().setStep(1);
           }}
-          className="text-xs text-gray-400 dark:text-[#4A495E] hover:text-gray-600 dark:hover:text-[#8B8AA0] underline underline-offset-2 transition-colors"
+          className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-gray-600 dark:hover:text-[#8B8AA0] underline underline-offset-2 transition-colors"
         >
           Prefiero llenar el formulario manualmente →
         </button>
@@ -373,7 +373,7 @@ export function StepUpload() {
       {/* Accepted formats */}
       <div className="flex items-center justify-center gap-4 pt-1">
         {(['application/pdf', 'application/json'] as AcceptedMime[]).map((mime) => (
-          <div key={mime} className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-[#4A495E]">
+          <div key={mime} className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-[#afaebb]">
             <FileIcon mime={mime} />
             <span className="font-medium">{mime === 'application/pdf' ? 'Pitch Deck PDF' : 'JSON estructurado'}</span>
           </div>
@@ -385,7 +385,7 @@ export function StepUpload() {
         <svg className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
-        <p className="text-xs text-gray-400 dark:text-[#4A495E] leading-relaxed">
+        <p className="text-xs text-gray-400 dark:text-[#afaebb] leading-relaxed">
           <strong className="text-gray-500 dark:text-[#8B8AA0]">Privacidad del documento:</strong>{' '}
           Tu archivo se procesa en memoria y se destruye inmediatamente tras la extracción semántica.
           No se almacena en ningún servidor ni se utiliza para entrenar modelos de IA.

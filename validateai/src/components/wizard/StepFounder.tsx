@@ -302,7 +302,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
             ¿Cuánto tiempo le dedicás a esta startup?
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-3">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-3">
             Los inversores ponderan fuertemente el compromiso full-time.
           </p>
           <input type="hidden" {...register('commitment_level')} />
@@ -330,7 +330,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
             ¿Cuántas entrevistas con clientes reales hiciste?
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-3">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-3">
             Las entrevistas son la evidencia más valorada de validación del problema.
           </p>
           <input type="hidden" {...register('customer_interviews')} />
@@ -357,7 +357,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
           <label className="block text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] mb-1.5">
             ¿Por qué vos sos la persona indicada para resolver esto?
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
             Tu experiencia única, acceso privilegiado al mercado o insight que otros no tienen.
           </p>
           <textarea
@@ -392,7 +392,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
 
       {/* Progreso de campos del paso */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-[#4A495E]">
+        <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-[#afaebb]">
           <span>Completitud del paso</span>
           <span className="font-bold tabular-nums">{founderFilled}/{FOUNDER_TOTAL}</span>
         </div>

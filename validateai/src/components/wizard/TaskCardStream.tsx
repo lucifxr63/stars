@@ -14,7 +14,7 @@ interface Props {
  */
 export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
   const [visibleCount, setVisibleCount] = useState(0);
-  const [doneIndex, setDoneIndex]       = useState<number | null>(null);
+  const [doneIndex, setDoneIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -36,14 +36,14 @@ export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
     timers.push(setTimeout(onComplete, totalDuration + cadenceMs));
 
     return () => timers.forEach(clearTimeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="space-y-2.5">
       {cards.slice(0, visibleCount).map((card, i) => {
-        const isDone    = doneIndex !== null && i <= doneIndex;
-        const isActive  = i === visibleCount - 1 && !isDone;
+        const isDone = doneIndex !== null && i <= doneIndex;
+        const isActive = i === visibleCount - 1 && !isDone;
 
         return (
           <div
@@ -52,8 +52,8 @@ export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
               ${isDone
                 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30'
                 : isActive
-                ? 'bg-[#0EB5C6]/5 border-[#0EB5C6]/30 dark:bg-[#0EB5C6]/8 dark:border-[#0EB5C6]/25'
-                : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
+                  ? 'bg-[#0EB5C6]/5 border-[#0EB5C6]/30 dark:bg-[#0EB5C6]/8 dark:border-[#0EB5C6]/25'
+                  : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
               }`}
             style={{ animationDelay: `${i * 50}ms` }}
           >
@@ -77,22 +77,20 @@ export function TaskCardStream({ cards, cadenceMs = 900, onComplete }: Props) {
             </div>
 
             {/* Label */}
-            <p className={`text-sm font-medium leading-tight flex-1 ${
-              isDone
+            <p className={`text-sm font-medium leading-tight flex-1 ${isDone
                 ? 'text-emerald-700 dark:text-emerald-400'
                 : isActive
-                ? 'text-[#0EB5C6] dark:text-[#38D5E3]'
-                : 'text-gray-400 dark:text-[#4A495E]'
-            }`}>
+                  ? 'text-[#0EB5C6] dark:text-[#38D5E3]'
+                  : 'text-gray-400 dark:text-[#afaebb]'
+              }`}>
               {card}
             </p>
 
             {/* Badge */}
-            <span className={`shrink-0 text-xs font-bold ${
-              isDone    ? 'text-emerald-600 dark:text-emerald-400' :
-              isActive  ? 'text-[#0EB5C6] dark:text-[#38D5E3] animate-pulse' :
-              'text-gray-300 dark:text-[#4A495E]'
-            }`}>
+            <span className={`shrink-0 text-xs font-bold ${isDone ? 'text-emerald-600 dark:text-emerald-400' :
+                isActive ? 'text-[#0EB5C6] dark:text-[#38D5E3] animate-pulse' :
+                  'text-gray-300 dark:text-[#afaebb]'
+              }`}>
               {isDone ? 'Listo' : isActive ? 'Procesando...' : 'En espera'}
             </span>
           </div>

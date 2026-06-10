@@ -14,27 +14,27 @@ const TIER_LABEL: Record<string, string> = {
   free: 'Free', basic: 'Basic', pro: 'Pro', premium: 'Premium',
 };
 const TIER_CLS: Record<string, string> = {
-  free:    'bg-gray-500/10 text-gray-400',
-  basic:   'bg-sky-500/10 text-sky-400',
-  pro:     'bg-indigo-500/10 text-indigo-400',
+  free: 'bg-gray-500/10 text-gray-400',
+  basic: 'bg-sky-500/10 text-sky-400',
+  pro: 'bg-indigo-500/10 text-indigo-400',
   premium: 'bg-violet-500/10 text-violet-400',
 };
 
 const NAV_ITEMS = [
-  { label: 'Inicio',           path: '/dashboard', Icon: Home },
-  { label: 'Mis Validaciones', path: '/results',   Icon: BarChart2 },
-  { label: 'Encuestas',        path: '/surveys',   Icon: ClipboardList },
-  { label: 'Mi Startup',       path: '/startup',   Icon: Rocket },
-  { label: 'Configuración',    path: '/profile',   Icon: Settings },
+  { label: 'Inicio', path: '/dashboard', Icon: Home },
+  { label: 'Mis Validaciones', path: '/results', Icon: BarChart2 },
+  { label: 'Encuestas', path: '/surveys', Icon: ClipboardList },
+  { label: 'Mi Startup', path: '/startup', Icon: Rocket },
+  { label: 'Configuración', path: '/profile', Icon: Settings },
 ] as const;
 
 function SidebarLogo() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5 group">
       <svg viewBox="0 0 500 500" className="w-7 h-7 shrink-0 group-hover:scale-105 transition-transform" aria-hidden="true">
-        <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
-        <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
-        <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
+        <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white" />
+        <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6" />
+        <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6" />
       </svg>
       <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validus</span>
     </Link>
@@ -81,17 +81,15 @@ export function Sidebar({ onClose }: SidebarProps) {
       : location.pathname === path || location.pathname.startsWith(path + '/');
 
   const navCls = (active: boolean) =>
-    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${
-      active
-        ? 'bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#A99FF9]'
-        : 'text-gray-600 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] hover:bg-gray-50 dark:hover:bg-white/[0.04]'
+    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${active
+      ? 'bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#A99FF9]'
+      : 'text-gray-600 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] hover:bg-gray-50 dark:hover:bg-white/[0.04]'
     }`;
 
   const iconCls = (active: boolean) =>
-    `w-4 h-4 shrink-0 ${
-      active
-        ? 'text-[#0EB5C6]'
-        : 'text-gray-400 dark:text-[#4A495E] group-hover:text-gray-600 dark:group-hover:text-[#8B8AA0]'
+    `w-4 h-4 shrink-0 ${active
+      ? 'text-[#0EB5C6]'
+      : 'text-gray-400 dark:text-[#afaebb] group-hover:text-gray-600 dark:group-hover:text-[#8B8AA0]'
     }`;
 
   return (
@@ -177,13 +175,12 @@ export function Sidebar({ onClose }: SidebarProps) {
               </div>
               <div className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.08] rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    remaining === 0
+                  className={`h-full rounded-full transition-all duration-500 ${remaining === 0
                       ? 'bg-red-500'
                       : remaining === 1
-                      ? 'bg-amber-500'
-                      : 'bg-[#0EB5C6]'
-                  }`}
+                        ? 'bg-amber-500'
+                        : 'bg-[#0EB5C6]'
+                    }`}
                   style={{ width: `${Math.min(100, ((usage?.total ?? 0) / limits.total) * 100)}%` }}
                 />
               </div>
@@ -192,7 +189,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                   Límite alcanzado · Se renueva el 1°
                 </p>
               ) : (
-                <p className="text-[10px] text-gray-400 dark:text-[#4A495E] mt-1.5">
+                <p className="text-[10px] text-gray-400 dark:text-[#afaebb] mt-1.5">
                   {remaining} restante{remaining !== 1 ? 's' : ''} · renueva el 1°
                 </p>
               )}
@@ -220,7 +217,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         <Link
           to="/privacy-policy"
           onClick={onClose}
-          className="block text-center text-[10px] text-gray-400 dark:text-[#4A495E] hover:text-[#0EB5C6] dark:hover:text-[#0EB5C6] transition-colors py-1"
+          className="block text-center text-[10px] text-gray-400 dark:text-[#afaebb] hover:text-[#0EB5C6] dark:hover:text-[#0EB5C6] transition-colors py-1"
         >
           Política de privacidad
         </Link>

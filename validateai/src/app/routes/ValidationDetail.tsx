@@ -2282,7 +2282,7 @@ export function ValidationDetail() {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-center text-gray-400 dark:text-[#4A495E]">
+            <p className="text-xs text-center text-gray-400 dark:text-[#afaebb]">
               ¡Gracias! Tu feedback mejora nuestros datos.
             </p>
           )}
@@ -2358,7 +2358,7 @@ export function ValidationDetail() {
               ) : (
                 <p className="text-sm text-[#8B8AA0]">Iniciando...</p>
               )}
-              <p className="text-xs text-[#4A495E] mt-2">No cierres ni recargues esta página.<br />Puede tomar hasta 90 segundos en total.</p>
+              <p className="text-xs text-[#afaebb] mt-2">No cierres ni recargues esta página.<br />Puede tomar hasta 90 segundos en total.</p>
             </div>
           </div>
         </div>

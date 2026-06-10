@@ -5,31 +5,31 @@ interface Props {
 }
 
 const PRIORITY_CONFIG = {
-  critical:     { label: 'Crítico',    className: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400' },
-  important:    { label: 'Importante', className: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400' },
-  nice_to_have: { label: 'Deseable',   className: 'bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-[#8B8AA0]' },
+  critical: { label: 'Crítico', className: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400' },
+  important: { label: 'Importante', className: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400' },
+  nice_to_have: { label: 'Deseable', className: 'bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-[#8B8AA0]' },
 } satisfies Record<GovernanceLegalItem['priority'], { label: string; className: string }>;
 
 const RISK_CONFIG = {
-  low:    { label: 'Bajo',  dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' },
-  medium: { label: 'Medio', dot: 'bg-amber-500',   text: 'text-amber-600 dark:text-amber-400' },
-  high:   { label: 'Alto',  dot: 'bg-red-500',     text: 'text-red-600 dark:text-red-400' },
+  low: { label: 'Bajo', dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' },
+  medium: { label: 'Medio', dot: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400' },
+  high: { label: 'Alto', dot: 'bg-red-500', text: 'text-red-600 dark:text-red-400' },
 };
 
 const INAPI_LABEL = {
-  marca:           { label: 'Marca',         icon: '™' },
-  patente:         { label: 'Patente',       icon: '⚙' },
+  marca: { label: 'Marca', icon: '™' },
+  patente: { label: 'Patente', icon: '⚙' },
   modelo_utilidad: { label: 'Mod. Utilidad', icon: '🔧' },
 };
 
 // Paleta de colores para el cap table (asignada por posición)
 const CAP_TABLE_COLORS = [
-  { bar: 'bg-indigo-500',  badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300' },
-  { bar: 'bg-violet-500',  badge: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300' },
+  { bar: 'bg-indigo-500', badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300' },
+  { bar: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300' },
   { bar: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' },
-  { bar: 'bg-amber-500',   badge: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' },
-  { bar: 'bg-pink-500',    badge: 'bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300' },
-  { bar: 'bg-sky-500',     badge: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300' },
+  { bar: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' },
+  { bar: 'bg-pink-500', badge: 'bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300' },
+  { bar: 'bg-sky-500', badge: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300' },
 ];
 
 // ── Visual Cap Table ──────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ function CapTableVisualizer({ entries }: { entries: CapTableEntry[] }) {
 
   return (
     <div>
-      <p className="text-xs font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-wide mb-3">
+      <p className="text-xs font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-wide mb-3">
         Cap Table Inicial
       </p>
 
@@ -76,7 +76,7 @@ function CapTableVisualizer({ entries }: { entries: CapTableEntry[] }) {
                   <span className="text-sm font-semibold text-gray-800 dark:text-[#E0DFF5] truncate block">
                     {entry.name}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-[#4A495E]">{entry.role}</span>
+                  <span className="text-xs text-gray-400 dark:text-[#afaebb]">{entry.role}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -106,9 +106,9 @@ function CapTableVisualizer({ entries }: { entries: CapTableEntry[] }) {
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export function GovernanceCard({ data }: Props) {
-  const risk         = RISK_CONFIG[data.regulatory_risk];
+  const risk = RISK_CONFIG[data.regulatory_risk];
   const criticalCount = data.legal_checklist.filter((i) => i.priority === 'critical').length;
-  const hasCapTable   = data.cap_table_entries && data.cap_table_entries.length > 0;
+  const hasCapTable = data.cap_table_entries && data.cap_table_entries.length > 0;
 
   return (
     <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm space-y-5">
@@ -159,17 +159,15 @@ export function GovernanceCard({ data }: Props) {
 
       {/* Ley Karin */}
       {(data.ley_karin_required || data.ley_karin_notes) && (
-        <div className={`rounded-xl p-4 border ${
-          data.ley_karin_required
+        <div className={`rounded-xl p-4 border ${data.ley_karin_required
             ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20'
             : 'bg-gray-50 dark:bg-white/[0.03] border-gray-200 dark:border-white/5'
-        }`}>
+          }`}>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-              data.ley_karin_required
+            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${data.ley_karin_required
                 ? 'bg-red-500 text-white'
                 : 'bg-gray-300 dark:bg-white/10 text-gray-600 dark:text-[#8B8AA0]'
-            }`}>
+              }`}>
               {data.ley_karin_required ? 'APLICA' : 'No aplica'}
             </span>
             <p className="text-xs font-bold text-gray-600 dark:text-[#C4C4D4]">Ley Karin (21.643) — Acoso Laboral</p>
@@ -183,18 +181,18 @@ export function GovernanceCard({ data }: Props) {
       {/* INAPI Checklist */}
       {data.inapi_checklist && data.inapi_checklist.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-wide mb-2">
+          <p className="text-xs font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-wide mb-2">
             Propiedad Intelectual — INAPI
           </p>
           <div className="space-y-2">
             {data.inapi_checklist.map((check, i) => {
-              const meta   = INAPI_LABEL[check.type];
-              const prio   = PRIORITY_CONFIG[check.risk];
+              const meta = INAPI_LABEL[check.type];
+              const prio = PRIORITY_CONFIG[check.risk];
               return (
                 <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-[#0A0A0F] rounded-xl border border-gray-100 dark:border-white/5">
                   <div className="shrink-0 flex flex-col items-center gap-1 mt-0.5">
                     <span className="text-base leading-none">{meta.icon}</span>
-                    <span className="text-[9px] font-bold text-gray-400 dark:text-[#4A495E] uppercase">{meta.label}</span>
+                    <span className="text-[9px] font-bold text-gray-400 dark:text-[#afaebb] uppercase">{meta.label}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-600 dark:text-[#C4C4D4] leading-snug">{check.recommendation}</p>
@@ -213,7 +211,7 @@ export function GovernanceCard({ data }: Props) {
       {data.legal_checklist.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-gray-400 dark:text-[#4A495E] uppercase tracking-wide">
+            <p className="text-xs font-bold text-gray-400 dark:text-[#afaebb] uppercase tracking-wide">
               Checklist Legal ({data.legal_checklist.length} ítems)
             </p>
             {criticalCount > 0 && (

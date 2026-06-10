@@ -60,21 +60,21 @@ export function StepMarketPremium() {
     defaultValues: stepMarket as StepMarket,
   });
 
-  const selectedModel   = watch('business_model');
+  const selectedModel = watch('business_model');
   const selectedPricing = watch('pricing_range');
   const selectedCountry = watch('target_country');
-  const segmentVal      = watch('customer_segment') ?? '';
-  const countryVal      = watch('target_country') ?? '';
-  const regionVal       = watch('target_region') ?? '';
+  const segmentVal = watch('customer_segment') ?? '';
+  const countryVal = watch('target_country') ?? '';
+  const regionVal = watch('target_region') ?? '';
 
   const showB2bFreeWarning = selectedModel === 'b2b' && selectedPricing === 'free';
 
   // Badge: visible si el valor actual coincide con el extraído del PDF.
   const badges = {
     customer_segment: !!(extractedData?.targetMarket && segmentVal === extractedData.targetMarket),
-    target_country:   !!(extractedData?.target_country && countryVal === extractedData.target_country),
-    target_region:    !!(extractedData?.target_region && regionVal === extractedData.target_region),
-    business_model:   !!(extractedData?.revenueModel && selectedModel &&
+    target_country: !!(extractedData?.target_country && countryVal === extractedData.target_country),
+    target_region: !!(extractedData?.target_region && regionVal === extractedData.target_region),
+    business_model: !!(extractedData?.revenueModel && selectedModel &&
       extractedData.revenueModel.toLowerCase().includes(selectedModel)),
   };
 
@@ -83,14 +83,14 @@ export function StepMarketPremium() {
     const { validationId } = useValidationStore.getState();
     if (validationId) {
       supabase.from('validations').update({
-        customer_segment:    data.customer_segment,
-        target_country:      data.target_country,
-        target_region:       data.target_region ?? null,
-        business_model:      data.business_model,
-        pricing_range:       data.pricing_range,
+        customer_segment: data.customer_segment,
+        target_country: data.target_country,
+        target_region: data.target_region ?? null,
+        business_model: data.business_model,
+        pricing_range: data.pricing_range,
         acquisition_channel: data.acquisition_channel ?? null,
-        current_step:        4,
-      }).eq('id', validationId).then(() => {});
+        current_step: 4,
+      }).eq('id', validationId).then(() => { });
     }
     nextStep();
   };
@@ -106,7 +106,7 @@ export function StepMarketPremium() {
             <ExtractionBadge visible={badges.customer_segment} />
             {!segmentVal && <RequiredHint />}
           </label>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mb-2">
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mb-2">
             Incluye: industria, tamaño, cargo del decisor o perfil del usuario final.
           </p>
           <textarea
@@ -115,8 +115,8 @@ export function StepMarketPremium() {
             placeholder="Ej: Gerentes de operaciones en clínicas medianas (20–80 camas) de Chile y Perú..."
             className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none resize-none placeholder:text-gray-300
               ${errors.customer_segment ? 'border-red-300 bg-red-50 dark:bg-[#0A0A0F]'
-              : badges.customer_segment ? 'border-violet-300 dark:border-violet-500/30 bg-violet-50/20 dark:bg-violet-900/5 dark:bg-[#0A0A0F]'
-              : 'border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-[#0A0A0F]'}
+                : badges.customer_segment ? 'border-violet-300 dark:border-violet-500/30 bg-violet-50/20 dark:bg-violet-900/5 dark:bg-[#0A0A0F]'
+                  : 'border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-[#0A0A0F]'}
               focus:border-indigo-500`}
           />
           <ErrorMsg message={errors.customer_segment?.message} />

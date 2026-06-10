@@ -27,8 +27,8 @@ export function UnitEconomicsKpis({ data }: Props) {
   const ratioVal = data.ltvCacRatio.value;
   const ratioColor =
     ratioVal >= 5 ? { text: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', bar: '#22c55e' }
-    : ratioVal >= 3 ? { text: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', bar: '#f59e0b' }
-    :                 { text: 'text-red-600',   bg: 'bg-red-50',   border: 'border-red-200',   bar: '#ef4444'   };
+      : ratioVal >= 3 ? { text: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', bar: '#f59e0b' }
+        : { text: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', bar: '#ef4444' };
 
   const ratioLabel =
     ratioVal >= 5 ? 'Saludable' : ratioVal >= 3 ? 'Viable' : 'Crítico';
@@ -72,9 +72,8 @@ export function UnitEconomicsKpis({ data }: Props) {
   return (
     <>
       {metrics.map((m) => (
-        <div key={m.label} className={`bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border-2 ${
-          m.badge ? `border-[1px] ${ratioColor.border}` : 'border-gray-100 dark:border-white/5'
-        }`}>
+        <div key={m.label} className={`bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border-2 ${m.badge ? `border-[1px] ${ratioColor.border}` : 'border-gray-100 dark:border-white/5'
+          }`}>
           <div className={`h-1.5 ${m.badge ? '' : m.topColor}`} style={m.badge ? { backgroundColor: ratioColor.bar } : undefined} />
           <div className={`p-4 ${m.bg.includes('50') ? 'bg-white dark:bg-slate-800' : m.bg} h-full flex flex-col justify-center`}>
             <p className="text-[10px] text-gray-500 dark:text-[#8B8AA0] mb-0.5">{m.sublabel}</p>
@@ -200,20 +199,20 @@ function benchmarkBadge(
   metric: 'cac' | 'ltv',
 ): { label: string; className: string } {
   // CAC: below = bueno, above = malo / LTV: below = malo, above = bueno
-  const good  = metric === 'cac' ? position === 'below'    : position === 'above';
-  const bad   = metric === 'cac' ? position === 'above'    : position === 'below';
+  const good = metric === 'cac' ? position === 'below' : position === 'above';
+  const bad = metric === 'cac' ? position === 'above' : position === 'below';
   const label = position === 'below' ? 'Por debajo' : position === 'above' ? 'Por encima' : 'En rango';
   const className = good
     ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
     : bad
-    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
-    : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
+      ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
+      : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
   return { label, className };
 }
 
 function BenchmarkPanel({ b }: { b: UnitEconomicsBenchmark }) {
   const sectorLabel = BENCHMARK_LABELS[b.sector] ?? b.sector;
-  const modelLabel  = MODEL_LABELS[b.model]  ?? b.model;
+  const modelLabel = MODEL_LABELS[b.model] ?? b.model;
   const cacBadge = benchmarkBadge(b.your_cac_vs_benchmark, 'cac');
   const ltvBadge = benchmarkBadge(b.your_ltv_vs_benchmark, 'ltv');
 
@@ -255,7 +254,7 @@ function BenchmarkPanel({ b }: { b: UnitEconomicsBenchmark }) {
         </div>
       </div>
 
-      <p className="text-[10px] text-gray-400 dark:text-[#4A495E] leading-relaxed">
+      <p className="text-[10px] text-gray-400 dark:text-[#afaebb] leading-relaxed">
         Churn sectorial: {b.sector_churn_pct.min}–{b.sector_churn_pct.max}% mensual ·{' '}
         <span className="italic">{b.benchmark_note}</span>
       </p>

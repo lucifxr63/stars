@@ -24,11 +24,11 @@ const DIMS = ['problem', 'market', 'competition', 'solution', 'execution'] as co
 type Dim = typeof DIMS[number];
 
 const LABELS: Record<Dim, string> = {
-  problem:     'Problema',
-  market:      'Mercado',
+  problem: 'Problema',
+  market: 'Mercado',
   competition: 'Competencia',
-  solution:    'Solución',
-  execution:   'Ejecución',
+  solution: 'Solución',
+  execution: 'Ejecución',
 };
 
 function extractScore(v: RawDim): number {
@@ -129,7 +129,7 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
             ? 'Completa una validación para ver el desglose'
             : 'Inicia tu primera validación'}
         </p>
-        <p className="text-[11px] text-gray-400 dark:text-[#4A495E] leading-relaxed">
+        <p className="text-[11px] text-gray-400 dark:text-[#afaebb] leading-relaxed">
           Tu perfil de fundador aparecerá aquí
         </p>
       </div>
@@ -161,8 +161,8 @@ export function AggregateRadarChart({ validations }: AggregateRadarChartProps) {
         return acc + extractScore(bd?.[key]);
       }, 0);
       return {
-        subject:  LABELS[key],
-        value:    Math.round(sum / completed.length),
+        subject: LABELS[key],
+        value: Math.round(sum / completed.length),
         fullMark: 100,
       };
     });
@@ -182,7 +182,7 @@ export function AggregateRadarChart({ validations }: AggregateRadarChartProps) {
     <div className="flex flex-col h-full gap-1">
       {/* Subtítulo con metadatos */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] text-gray-400 dark:text-[#4A495E]">
+        <span className="text-[10px] text-gray-400 dark:text-[#afaebb]">
           {completed.length} validación{completed.length !== 1 ? 'es' : ''} promediada{completed.length !== 1 ? 's' : ''}
         </span>
         {avgScore != null && (
@@ -234,7 +234,7 @@ export function AggregateRadarChart({ validations }: AggregateRadarChartProps) {
             >
               {d.value}
             </p>
-            <p className="text-[9px] text-gray-400 dark:text-[#4A495E] leading-tight truncate">
+            <p className="text-[9px] text-gray-400 dark:text-[#afaebb] leading-tight truncate">
               {d.subject.slice(0, 5)}
             </p>
           </div>

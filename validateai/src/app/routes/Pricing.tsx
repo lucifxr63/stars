@@ -9,9 +9,9 @@ type Tier = 'free' | 'basic' | 'pro' | 'premium';
 function Logo({ className = 'w-6 h-8' }: { className?: string }) {
   return (
     <svg viewBox="0 0 500 500" className={className} aria-label="Validus" role="img">
-      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
-      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
-      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
+      <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white" />
+      <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6" />
+      <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6" />
     </svg>
   );
 }
@@ -19,7 +19,7 @@ function Logo({ className = 'w-6 h-8' }: { className?: string }) {
 function CheckIcon({ color = '#34D399' }: { color?: string }) {
   return (
     <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
   );
 }
@@ -136,11 +136,11 @@ export function Pricing() {
       <header className="sticky top-0 z-50 border-b border-black/[0.07] dark:border-white/[0.06] bg-[#F8F7FF]/85 dark:bg-[#0A0A0F]/85 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <Logo/>
+            <Logo />
             <span className="font-heading text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Validus</span>
           </Link>
           <div className="flex items-center gap-2">
-            <ThemeToggle/>
+            <ThemeToggle />
             <Link to="/login"
               className="text-sm font-semibold bg-[#0EB5C6] text-white px-4 py-2.5 rounded-xl hover:bg-[#6B5EE6] transition-all shadow-md shadow-[#0EB5C6]/20">
               Iniciar sesión
@@ -154,17 +154,17 @@ export function Pricing() {
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-5 uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] animate-pulse"/>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] animate-pulse" />
             Planes y precios
           </span>
           <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
-            Valida más rápido.<br className="hidden sm:block"/>
+            Valida más rápido.<br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-[#0EB5C6] to-[#38D5E3] bg-clip-text text-transparent"> Construye con confianza.</span>
           </h1>
           <p className="text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto text-base">
             Empieza gratis. Pásate a Pro o Premium cuando necesites datos duros para tomar decisiones reales.
           </p>
-          <p className="text-xs text-gray-400 dark:text-[#4A495E] mt-2">Todos los planes incluyen Ley 21.719 de Privacidad</p>
+          <p className="text-xs text-gray-400 dark:text-[#afaebb] mt-2">Todos los planes incluyen Ley 21.719 de Privacidad</p>
         </div>
 
         {/* Plans */}
@@ -178,7 +178,7 @@ export function Pricing() {
               {plan.highlight && (
                 <>
                   <div className="absolute top-0 right-0 bg-[#0EB5C6] text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl rounded-tr-3xl tracking-wide z-10">POPULAR</div>
-                  <div className="absolute -top-8 -right-8 w-32 h-32 bg-[#0EB5C6]/8 blur-2xl rounded-full pointer-events-none"/>
+                  <div className="absolute -top-8 -right-8 w-32 h-32 bg-[#0EB5C6]/8 blur-2xl rounded-full pointer-events-none" />
                 </>
               )}
 
@@ -195,7 +195,7 @@ export function Pricing() {
                 <ul className="space-y-3">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-[#C4C4D4]">
-                      <CheckIcon color={plan.highlight ? '#0EB5C6' : plan.color}/>
+                      <CheckIcon color={plan.highlight ? '#0EB5C6' : plan.color} />
                       {f}
                     </li>
                   ))}
@@ -230,14 +230,14 @@ export function Pricing() {
         {/* Trust */}
         <div className="mt-10 grid sm:grid-cols-3 gap-4">
           {[
-            { label: 'Pago seguro',           sub: 'Procesado por Lemon Squeezy' },
+            { label: 'Pago seguro', sub: 'Procesado por Lemon Squeezy' },
             { label: 'Cancela cuando quieras', sub: 'Sin penalidades ni contratos' },
-            { label: 'Precios en CLP',         sub: 'Sin conversión ni sorpresas' },
+            { label: 'Precios en CLP', sub: 'Sin conversión ni sorpresas' },
           ].map((t) => (
             <div key={t.label} className="flex items-center gap-3 p-4 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] shadow-sm dark:shadow-none">
               <div className="w-8 h-8 rounded-xl bg-[#0EB5C6]/10 flex items-center justify-center shrink-0">
                 <svg className="w-4 h-4 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                 </svg>
               </div>
               <div>
@@ -248,7 +248,7 @@ export function Pricing() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-gray-400 dark:text-[#4A495E] mt-10">
+        <p className="text-center text-xs text-gray-400 dark:text-[#afaebb] mt-10">
           ¿Tienes preguntas?{' '}
           <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
             contacto@validus.scouttech.lat

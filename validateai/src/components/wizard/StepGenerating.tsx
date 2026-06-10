@@ -25,21 +25,21 @@ interface GenerationTask {
 
 const TASK_DEFINITIONS: Record<string, Omit<GenerationTask, 'status'>[]> = {
   free: [
-    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
+    { id: 'summary', label: 'Evaluando viabilidad e idea...', type: 'summary' },
   ],
   basic: [
-    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
-    { id: 'competitors', label: 'Mapeando competencia...',          type: 'competitive_analysis' },
+    { id: 'summary', label: 'Evaluando viabilidad e idea...', type: 'summary' },
+    { id: 'competitors', label: 'Mapeando competencia...', type: 'competitive_analysis' },
   ],
   pro: [
-    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
-    { id: 'market',      label: 'Calculando tamaño de mercado...',  type: 'market_sizing' },
-    { id: 'competitors', label: 'Mapeando competencia...',          type: 'competitive_analysis' },
+    { id: 'summary', label: 'Evaluando viabilidad e idea...', type: 'summary' },
+    { id: 'market', label: 'Calculando tamaño de mercado...', type: 'market_sizing' },
+    { id: 'competitors', label: 'Mapeando competencia...', type: 'competitive_analysis' },
   ],
   premium: [
-    { id: 'summary',     label: 'Evaluando viabilidad e idea...',   type: 'summary' },
-    { id: 'market',      label: 'Calculando tamaño de mercado...',  type: 'market_sizing' },
-    { id: 'competitors', label: 'Mapeando competencia...',          type: 'competitive_analysis' },
+    { id: 'summary', label: 'Evaluando viabilidad e idea...', type: 'summary' },
+    { id: 'market', label: 'Calculando tamaño de mercado...', type: 'market_sizing' },
+    { id: 'competitors', label: 'Mapeando competencia...', type: 'competitive_analysis' },
   ],
 };
 
@@ -121,7 +121,7 @@ function PremiumTerminal() {
         })}
       </div>
 
-      <p className="text-[11px] text-gray-400 dark:text-[#4A495E] text-center mt-4">
+      <p className="text-[11px] text-gray-400 dark:text-[#afaebb] text-center mt-4">
         No cierres esta pestaña. El análisis continúa en segundo plano.
       </p>
     </div>
@@ -196,11 +196,11 @@ function MicroFeedbackPanel({ tier }: { tier: string }) {
 // No inventa números — solo anima el estado de carga para retener al usuario.
 
 const SCORE_DIMENSIONS = [
-  { key: 'problem',     label: 'Problema',     icon: '🔍', weight: 25 },
-  { key: 'market',      label: 'Mercado',       icon: '📊', weight: 20 },
-  { key: 'competition', label: 'Competencia',   icon: '⚔️',  weight: 15 },
-  { key: 'solution',    label: 'Solución',      icon: '💡', weight: 25 },
-  { key: 'execution',   label: 'Ejecución',     icon: '⚡', weight: 15 },
+  { key: 'problem', label: 'Problema', icon: '🔍', weight: 25 },
+  { key: 'market', label: 'Mercado', icon: '📊', weight: 20 },
+  { key: 'competition', label: 'Competencia', icon: '⚔️', weight: 15 },
+  { key: 'solution', label: 'Solución', icon: '💡', weight: 25 },
+  { key: 'execution', label: 'Ejecución', icon: '⚡', weight: 15 },
 ] as const;
 
 function RadarPreview({ visible }: { visible: boolean }) {
@@ -235,26 +235,23 @@ function RadarPreview({ visible }: { visible: boolean }) {
           return (
             <div key={dim.key} className="flex items-center gap-2.5">
               <span className="text-sm w-5 text-center shrink-0">{dim.icon}</span>
-              <span className={`text-xs font-medium w-20 shrink-0 transition-colors ${
-                isActive ? 'text-[#0EB5C6] dark:text-[#38D5E3]' : 'text-gray-500 dark:text-[#8B8AA0]'
-              }`}>
+              <span className={`text-xs font-medium w-20 shrink-0 transition-colors ${isActive ? 'text-[#0EB5C6] dark:text-[#38D5E3]' : 'text-gray-500 dark:text-[#8B8AA0]'
+                }`}>
                 {dim.label}
               </span>
               <div className="flex-1 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    isActive
+                  className={`h-full rounded-full transition-all duration-700 ${isActive
                       ? 'bg-[#0EB5C6] animate-pulse'
                       : isScanned
-                      ? 'bg-[#0EB5C6]/40'
-                      : 'bg-transparent'
-                  }`}
+                        ? 'bg-[#0EB5C6]/40'
+                        : 'bg-transparent'
+                    }`}
                   style={{ width: isActive ? '65%' : isScanned ? `${30 + i * 8}%` : '0%' }}
                 />
               </div>
-              <span className={`text-[10px] font-bold w-8 text-right shrink-0 transition-colors ${
-                isActive ? 'text-[#0EB5C6]' : 'text-gray-300 dark:text-white/15'
-              }`}>
+              <span className={`text-[10px] font-bold w-8 text-right shrink-0 transition-colors ${isActive ? 'text-[#0EB5C6]' : 'text-gray-300 dark:text-white/15'
+                }`}>
                 {dim.weight}%
               </span>
             </div>
@@ -262,7 +259,7 @@ function RadarPreview({ visible }: { visible: boolean }) {
         })}
       </div>
 
-      <p className="text-[10px] text-gray-400 dark:text-[#4A495E] text-center pt-1">
+      <p className="text-[10px] text-gray-400 dark:text-[#afaebb] text-center pt-1">
         La IA está evaluando cada dimensión con criterios VC. Esto toma entre 8–15 segundos.
       </p>
     </div>
@@ -308,9 +305,8 @@ function QuickTerminal() {
         {QUICK_STEPS.map((s, i) => (
           <div
             key={i}
-            className={`flex items-start gap-2 transition-all duration-200 ${
-              visibleLines.includes(i) ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`flex items-start gap-2 transition-all duration-200 ${visibleLines.includes(i) ? 'opacity-100' : 'opacity-0'
+              }`}
           >
             <span className="text-[#0EB5C6] shrink-0">›</span>
             <span className={visibleLines.includes(i) && i === visibleLines[visibleLines.length - 1]
@@ -326,7 +322,7 @@ function QuickTerminal() {
         ))}
       </div>
 
-      <p className="text-[10px] text-gray-400 dark:text-[#4A495E] text-center mt-4">
+      <p className="text-[10px] text-gray-400 dark:text-[#afaebb] text-center mt-4">
         Análisis de superficie — completa el flujo Detallado para desbloquear todas las dimensiones.
       </p>
     </div>
@@ -336,10 +332,10 @@ function QuickTerminal() {
 // ── Tier label pill ───────────────────────────────────────────────────────────
 
 const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
-  free:    { label: 'Validación Base',     cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
-  basic:   { label: 'Validación Básica',   cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  pro:     { label: 'Validación Completa', cls: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  premium: { label: 'Validación Premium',  cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  free: { label: 'Validación Base', cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  basic: { label: 'Validación Básica', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  pro: { label: 'Validación Completa', cls: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  premium: { label: 'Validación Premium', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -347,7 +343,7 @@ const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
 export function StepGenerating() {
   const navigate = useNavigate();
   const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, stepIdeaQuick,
-          validationMode, setPremiumResult, setAgentLogId } = useValidationStore();
+    validationMode, setPremiumResult, setAgentLogId } = useValidationStore();
   const { isPro: isPremium, tier, loading: tierLoading } = useUserTier();
 
   // Tasks start empty — populated once tier is known to avoid running with wrong tier
@@ -363,7 +359,7 @@ export function StepGenerating() {
     // Initialize tasks for this tier before starting
     setTasks(getTasksForTier(tier, useValidationStore.getState().validationMode));
     startGeneration();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tierLoading]);
 
   const updateTaskStatus = (taskId: string, status: GenerationStatus) => {
@@ -516,12 +512,12 @@ export function StepGenerating() {
         // Flujo rápido: usar directamente los campos capturados en StepIdeaQuick.
         // No se llama a customer_analysis — el usuario ya proveyó quick_icp y business_model.
         context = {
-          idea_name:        stepIdeaQuick.idea_name        ?? stepIdea.idea_name,
+          idea_name: stepIdeaQuick.idea_name ?? stepIdea.idea_name,
           idea_description: stepIdeaQuick.idea_description ?? stepIdea.idea_description,
-          idea_industry:    stepIdeaQuick.idea_industry    ?? stepIdea.idea_industry,
-          quick_icp:        stepIdeaQuick.quick_icp        ?? '',
-          business_model:   stepIdeaQuick.business_model   ?? '',
-          validation_mode:  'quick',
+          idea_industry: stepIdeaQuick.idea_industry ?? stepIdea.idea_industry,
+          quick_icp: stepIdeaQuick.quick_icp ?? '',
+          business_model: stepIdeaQuick.business_model ?? '',
+          validation_mode: 'quick',
         };
       }
 
@@ -565,8 +561,8 @@ export function StepGenerating() {
       setTasks(tierTasks.map(t => ({
         ...t,
         status: prevProgress[t.id] === 'success' ? 'success'
-              : prevProgress[t.id] === 'error'   ? 'pending' // retry errores
-              : 'loading',
+          : prevProgress[t.id] === 'error' ? 'pending' // retry errores
+            : 'loading',
       })));
 
       // Solo correr los tasks que no completaron en sesiones anteriores
@@ -627,13 +623,13 @@ export function StepGenerating() {
   const progressPct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   const TASK_DESCRIPTIONS: Record<string, string> = {
-    summary:              'Analizando viabilidad con criterios de inversor VC',
-    summary_quick:        'Evaluando Problema y Solución con Claude Haiku',
-    market_sizing:        'Estimando TAM/SAM/SOM con datos del mercado objetivo',
+    summary: 'Analizando viabilidad con criterios de inversor VC',
+    summary_quick: 'Evaluando Problema y Solución con Claude Haiku',
+    market_sizing: 'Estimando TAM/SAM/SOM con datos del mercado objetivo',
     competitive_analysis: 'Mapeando competidores e identificando gaps de mercado',
-    risk_analysis:        'Evaluando riesgos de mercado, técnicos y regulatorios',
-    unit_economics:       'Calculando CAC, LTV y métricas financieras clave',
-    founder_fit:          'Evaluando fit fundador-mercado y Unfair Advantage',
+    risk_analysis: 'Evaluando riesgos de mercado, técnicos y regulatorios',
+    unit_economics: 'Calculando CAC, LTV y métricas financieras clave',
+    founder_fit: 'Evaluando fit fundador-mercado y Unfair Advantage',
   };
 
   if (isPremium) {
@@ -702,15 +698,14 @@ export function StepGenerating() {
         {tasks.map(task => (
           <div
             key={task.id}
-            className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 ${
-              task.status === 'success'
+            className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 ${task.status === 'success'
                 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30'
                 : task.status === 'loading'
-                ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/30'
-                : task.status === 'error'
-                ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30'
-                : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
-            }`}
+                  ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/30'
+                  : task.status === 'error'
+                    ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30'
+                    : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
+              }`}
           >
             {/* Status icon */}
             <div className="shrink-0">
@@ -742,12 +737,11 @@ export function StepGenerating() {
 
             {/* Label + description */}
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold leading-tight ${
-                task.status === 'success' ? 'text-emerald-700 dark:text-emerald-400' :
-                task.status === 'loading' ? 'text-indigo-700 dark:text-indigo-300' :
-                task.status === 'error'   ? 'text-red-600 dark:text-red-400' :
-                'text-gray-400 dark:text-[#4A495E]'
-              }`}>
+              <p className={`text-sm font-semibold leading-tight ${task.status === 'success' ? 'text-emerald-700 dark:text-emerald-400' :
+                  task.status === 'loading' ? 'text-indigo-700 dark:text-indigo-300' :
+                    task.status === 'error' ? 'text-red-600 dark:text-red-400' :
+                      'text-gray-400 dark:text-[#afaebb]'
+                }`}>
                 {task.label}
               </p>
               {task.status === 'loading' && TASK_DESCRIPTIONS[task.type] && (
@@ -759,7 +753,7 @@ export function StepGenerating() {
 
             {/* Badge / Retry */}
             <div className="shrink-0">
-              {task.status === 'pending' && <span className="text-xs text-gray-300 dark:text-[#4A495E] font-medium">En espera</span>}
+              {task.status === 'pending' && <span className="text-xs text-gray-300 dark:text-[#afaebb] font-medium">En espera</span>}
               {task.status === 'loading' && <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold animate-pulse">Analizando...</span>}
               {task.status === 'success' && <span className="text-xs text-emerald-600 font-black">Listo</span>}
               {task.status === 'error' && (
@@ -806,7 +800,7 @@ export function StepGenerating() {
       {/* Preview skeleton del reporte final */}
       {progressPct < 100 && (
         <div className="space-y-2 opacity-40">
-          <p className="text-xs font-medium text-gray-400 dark:text-[#4A495E] uppercase tracking-wide">Vista previa del reporte</p>
+          <p className="text-xs font-medium text-gray-400 dark:text-[#afaebb] uppercase tracking-wide">Vista previa del reporte</p>
           <div className="p-4 bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/5 rounded-2xl space-y-3">
             <Skeleton className="h-4 w-2/5" />
             <Skeleton className="h-3 w-full" />
