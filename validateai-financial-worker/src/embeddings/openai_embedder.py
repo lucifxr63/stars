@@ -22,10 +22,13 @@ MODEL = "text-embedding-3-small"
 def _build_embed_text(document_title: str, content: str, metadata: dict) -> str:
     """
     Texto enriquecido que se vectoriza.
-    Combina título + descripción semántica + última observación concreta.
-    El LLM recuperará el nodo por concepto ("inflacion", "tasa de interes")
-    y tendrá el último valor en contexto sin necesidad de JOIN adicional.
+    - Nodos Familia A (entity_type presente): title + content directo — el contenido
+      ya es directivo y semánticamente rico, sin necesidad de valor temporal.
+    - Nodos financieros: title + content + ultima observación concreta para que el
+      LLM recupere el valor actual sin JOIN adicional.
     """
+    if metadata.get("entity_type"):
+        return f"{document_title}. {content}"
     ultima_fecha = metadata.get("ultima_fecha") or "N/A"
     ultimo_valor = metadata.get("ultimo_valor") or "N/A"
     unidad = metadata.get("unidad", "")
