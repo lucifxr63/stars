@@ -29,10 +29,10 @@ const TIER_BADGE_CONFIG: Record<'free' | 'basic' | 'pro' | 'premium', {
   dot: string;
   upgrade: boolean;
 }> = {
-  free:    { label: 'Free',    includes: 'Veredicto + Validación base',            cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:border-gray-500/40',  dot: 'bg-gray-400',   upgrade: true  },
-  basic:   { label: 'Basic',   includes: 'Score + Competencia',                   cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:border-blue-500/40',   dot: 'bg-blue-400',   upgrade: true  },
-  pro:     { label: 'Pro',     includes: 'Completo · Estrategia y Finanzas',       cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',                      dot: 'bg-indigo-400', upgrade: false },
-  premium: { label: 'Premium', includes: 'Due Diligence completo — todo incluido', cls: 'bg-violet-500/10 text-violet-400 border-violet-500/20',                      dot: 'bg-violet-400', upgrade: false },
+  free: { label: 'Free', includes: 'Veredicto + Validación base', cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:border-gray-500/40', dot: 'bg-gray-400', upgrade: true },
+  basic: { label: 'Basic', includes: 'Score + Competencia', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:border-blue-500/40', dot: 'bg-blue-400', upgrade: true },
+  pro: { label: 'Pro', includes: 'Completo · Estrategia y Finanzas', cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', dot: 'bg-indigo-400', upgrade: false },
+  premium: { label: 'Premium', includes: 'Due Diligence completo — todo incluido', cls: 'bg-violet-500/10 text-violet-400 border-violet-500/20', dot: 'bg-violet-400', upgrade: false },
 };
 
 function ValidationPlanBadge({ tier }: { tier: UserTier }) {
@@ -96,7 +96,7 @@ const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
 export function Validate() {
   const navigate = useNavigate();
   const { currentStep, validationId, setValidationId, reset, setValidationMode, validationMode,
-          stepIdea, updateStepIdea, updateStepMarket, updateStepIdeaQuick, setStep } = useValidationStore();
+    stepIdea, updateStepIdea, updateStepMarket, updateStepIdeaQuick, setStep } = useValidationStore();
   const { isPro: isPremium, loading: tierLoading, tier } = useUserTier();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -116,7 +116,7 @@ export function Validate() {
   const stepAutoSaveRef = useRef<StepAutoSaveRef | null>(null);
   // Copies del FlowSelector — defaults seguros; sobreescritos por PostHog si el flag resuelve.
   const [flowCopy, setFlowCopy] = useState<FlowCopy>({
-    quick:    'Análisis rápido',
+    quick: 'Análisis rápido',
     detailed: 'Análisis completo',
   });
   const [isPrefilled, setIsPrefilled] = useState(false);
@@ -156,7 +156,7 @@ export function Validate() {
         trackWizardAbandoned(step, name);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sincronizar validationMode con el tier del usuario en cada mount.
@@ -182,7 +182,7 @@ export function Validate() {
       setValidationId(resumeId);
       window.history.replaceState({}, '', '/validate');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -205,29 +205,29 @@ export function Validate() {
         // Rehidratar store desde DB si el store está vacío (p.ej. otro browser)
         if (!stepIdea.idea_name && data.idea_name) {
           updateStepIdea({
-            idea_name:        data.idea_name ?? '',
+            idea_name: data.idea_name ?? '',
             idea_description: data.idea_description ?? '',
-            idea_industry:    data.idea_industry ?? '',
+            idea_industry: data.idea_industry ?? '',
             current_solution: data.current_solution ?? '',
           });
         }
         // Rehidratar stepIdeaQuick si era un análisis rápido
         if ((data as any).validation_mode === 'quick' && (data as any).quick_icp) {
           updateStepIdeaQuick({
-            idea_name:        data.idea_name ?? '',
+            idea_name: data.idea_name ?? '',
             idea_description: data.idea_description ?? '',
-            idea_industry:    data.idea_industry ?? '',
-            quick_icp:        (data as any).quick_icp ?? '',
-            business_model:   data.business_model ?? '',
+            idea_industry: data.idea_industry ?? '',
+            quick_icp: (data as any).quick_icp ?? '',
+            business_model: data.business_model ?? '',
           });
         }
         if (!useValidationStore.getState().stepMarket.target_country && data.target_country) {
           updateStepMarket({
-            customer_segment:    data.customer_segment ?? '',
-            target_country:      data.target_country ?? '',
-            target_region:       data.target_region ?? '',
-            business_model:      data.business_model ?? '',
-            pricing_range:       data.pricing_range ?? '',
+            customer_segment: data.customer_segment ?? '',
+            target_country: data.target_country ?? '',
+            target_region: data.target_region ?? '',
+            business_model: data.business_model ?? '',
+            pricing_range: data.pricing_range ?? '',
             acquisition_channel: data.acquisition_channel ?? '',
           });
         }
@@ -245,7 +245,7 @@ export function Validate() {
           setStep(data.current_step as number);
         }
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validationId]);
   // Exit-intent: mouseleave viewport → show 1-click dialog (once per wizard session)
   // 400 ms delay prevents accidental triggers from fast mouse movements
@@ -304,7 +304,7 @@ export function Validate() {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('pagehide', onPageHide);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremiumMode, isQuickMode, tier]);
 
   // Rem 3a: mobile exit-intent — scroll reversal velocity heuristic.
@@ -383,7 +383,7 @@ export function Validate() {
 
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremiumMode, isQuickMode, tier]);
 
   // Pre-carga el email del usuario autenticado en mount para que el Exit Dialog
@@ -443,9 +443,9 @@ export function Validate() {
           .single();
         if (profile) {
           const patch: Record<string, string> = {};
-          if (profile.startup_name)   patch.idea_name        = profile.startup_name;
-          if (profile.startup_sector) patch.idea_industry    = profile.startup_sector;
-          if (profile.founder_pitch)  patch.idea_description = profile.founder_pitch;
+          if (profile.startup_name) patch.idea_name = profile.startup_name;
+          if (profile.startup_sector) patch.idea_industry = profile.startup_sector;
+          if (profile.founder_pitch) patch.idea_description = profile.founder_pitch;
           if (Object.keys(patch).length > 0) {
             updateStepIdea(patch);
             setIsPrefilled(true);
@@ -455,7 +455,7 @@ export function Validate() {
         setPrefillReady(true);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Ciclo de vida del Exit Dialog:
@@ -579,7 +579,6 @@ export function Validate() {
         </div>
       </div>
 
-      <Footer />
 
       {/* Exit-intent dialog — quick mode: captura email / detailed: opciones clásicas */}
       {showExitDialog && (
