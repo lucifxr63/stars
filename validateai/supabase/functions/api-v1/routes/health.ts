@@ -220,16 +220,19 @@ export const servicesHealthHandler = async (c: any) => {
     message: bralidusMsg,
   })
 
-  // yfinance — knowledge_nodes con category='Mercado de Valores'
+  // yfinance — knowledge_nodes con categorías de tickers (Mercados, Commodities, Forex Chile, etc.)
   const { data: yfNodes } = await supabase
-    .from('knowledge_nodes').select('id').eq('category', 'Mercado de Valores').limit(3)
+    .from('knowledge_nodes')
+    .select('id')
+    .in('category', ['Mercados', 'Mercados Chile', 'Mercados LATAM', 'Commodities', 'Forex Chile', 'Riesgo', 'Tasas USA'])
+    .limit(15)
   const yfCount = yfNodes?.length ?? 0
   services.push({
     id: 'yfinance',
     name: 'yfinance (Tickers)',
     category: 'macro',
-    status: yfCount > 0 ? 'ok' : 'degraded',
-    message: yfCount > 0 ? `${yfCount} tickers en GraphRAG` : 'Sin datos — cron día 1 de cada mes',
+    status: yfCount >= 5 ? 'ok' : yfCount > 0 ? 'degraded' : 'error',
+    message: yfCount >= 5 ? `${yfCount} tickers en GraphRAG` : yfCount > 0 ? `Solo ${yfCount} tickers` : 'Sin datos — cron día 1 de cada mes',
   })
 
   // FRED API key
@@ -326,18 +329,22 @@ export const servicesHealthHandler = async (c: any) => {
       : 'Sin señales aún · cron sábados 09:00',
   })
 
-  // Mercado Público extractor — radar_signals con source LIKE 'mercadopublico%'
+  // Mercado Público extractor — knowledge_nodes con category='Compras Públicas B2G'
+  // (el job MP escribe nodos permanentes, no señales radar)
   const { data: mpData } = await supabase
-    .from('radar_signals').select('created_at').like('source', 'mercadopublico%')
-    .order('created_at', { ascending: false }).limit(1)
+    .from('knowledge_nodes')
+    .select('updated_at')
+    .eq('category', 'Compras Públicas B2G')
+    .order('updated_at', { ascending: false })
+    .limit(1)
   services.push({
     id: 'scraper_mp',
     name: 'Mercado Público (Licitaciones)',
     category: 'scraper',
     status: mpData?.[0] ? 'ok' : 'degraded',
     message: mpData?.[0]
-      ? `Última señal ${new Date(mpData[0].created_at).toLocaleDateString('es-CL')}`
-      : 'Sin señales aún · incluido en Radar Refresh',
+      ? `Última sync ${new Date(mpData[0].updated_at).toLocaleDateString('es-CL')} · cron diario`
+      : 'Sin datos aún · cron 06:00 diario',
   })
 
   // Radar Refresh (main scheduler job) — total signals last 24h
