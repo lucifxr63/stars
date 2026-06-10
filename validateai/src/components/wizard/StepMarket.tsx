@@ -55,6 +55,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
   const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<StepMarketData>({
     resolver: zodResolver(StepMarketSchema),
     defaultValues: stepMarket as StepMarketData,
+    mode: 'onBlur',
   });
 
   // Expone getPartialData() al padre (Validate.tsx) para el auto-guardado de 30s.
@@ -109,8 +110,8 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
             rows={3}
             placeholder="Ej: Gerentes de operaciones en clínicas medianas (20–80 camas) de Chile y Perú que usan sistemas HIS desactualizados y necesitan reducir tiempo de gestión de turnos."
             className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
-                        focus:border-indigo-500 resize-none placeholder:text-gray-300
-                        ${errors.customer_segment ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/8'}`}
+                        focus:border-indigo-500 resize-none placeholder:text-gray-400 dark:placeholder:text-[#71718A]
+                        ${errors.customer_segment ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/15'}`}
           />
           <ErrorMsg message={errors.customer_segment?.message} />
         </div>
@@ -124,7 +125,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
               {...register('target_country')}
               className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
                           focus:border-indigo-500
-                          ${errors.target_country ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/8'}`}
+                          ${errors.target_country ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/15'}`}
             >
               <option value="">Selecciona un país</option>
               {TARGET_COUNTRIES.map((c) => (
@@ -143,7 +144,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
                 <select
                   {...register('target_region')}
                   className="w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
-                             focus:border-indigo-500 border-gray-200 dark:border-white/8"
+                             focus:border-indigo-500 border-gray-200 dark:border-white/15"
                 >
                   <option value="">Selecciona una región</option>
                   {CHILE_REGIONS.map((r) => (
@@ -160,7 +161,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
                   {...register('target_region')}
                   placeholder="Ej: CDMX, Buenos Aires, Bogotá..."
                   className="w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
-                             focus:border-indigo-500 placeholder:text-gray-300 border-gray-200 dark:border-white/8"
+                             focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-[#71718A] border-gray-200 dark:border-white/15"
                 />
               </>
             )}
@@ -181,7 +182,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
                 className={`px-3 py-2.5 text-center text-sm border-2 rounded-xl font-medium transition-all duration-150
                   ${selectedModel === m
                     ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-[#0A0A0F] hover:border-indigo-300 hover:text-indigo-600'
+                    : 'text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/15 bg-gray-50 dark:bg-[#0A0A0F] hover:border-indigo-300 hover:text-indigo-600'
                   }`}
               >
                 {BUSINESS_MODEL_LABELS[m]}
@@ -199,7 +200,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
             {...register('pricing_range')}
             className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
                         focus:border-indigo-500
-                        ${errors.pricing_range ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/8'}`}
+                        ${errors.pricing_range ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/15'}`}
           >
             <option value="">Selecciona un rango</option>
             {PRICING_RANGES.map((p) => (
@@ -227,7 +228,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
           <p className="text-xs text-gray-400 mb-2">Ej: "Outbound en LinkedIn", "Ads en Meta", "Comunidades orgánicas en Discord"</p>
           <select
             {...register('acquisition_channel')}
-            className="w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500 border-gray-200 dark:border-white/8"
+            className="w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F] focus:border-indigo-500 border-gray-200 dark:border-white/15"
           >
             <option value="">Selecciona un canal (opcional)</option>
             <option value="outbound_linkedin">Outbound en LinkedIn / cold email</option>
@@ -260,7 +261,7 @@ export const StepMarket = forwardRef<StepAutoSaveRef>(function StepMarket(_, ref
       <div className="flex gap-4">
         <button
           type="button"
-          onClick={prevStep}
+          onClick={() => { updateStepMarket(getValues()); prevStep(); }}
           className="w-1/3 py-4 text-gray-600 dark:text-[#8B8AA0] font-bold rounded-2xl hover:bg-gray-100 dark:bg-white/5 transition-all text-sm"
         >
           Volver

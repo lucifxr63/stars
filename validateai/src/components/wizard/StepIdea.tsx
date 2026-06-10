@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepIdeaSchema, type StepIdea } from '@/types/validation';
@@ -37,9 +37,9 @@ function ErrorMsg({ message }: { message?: string }) {
 
 const inputCls = (hasError: boolean) =>
   `w-full px-4 py-3.5 rounded-xl text-sm text-gray-900 dark:text-[#F0EFF8] bg-white dark:bg-[#0A0A0F] border transition-all duration-150 outline-none
-   placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
+   placeholder:text-gray-400 dark:placeholder:text-[#71718A]
    focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20
-   ${hasError ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200 dark:border-white/8 hover:border-gray-300 dark:hover:border-white/15'}`;
+   ${hasError ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200 dark:border-white/15 hover:border-gray-300 dark:hover:border-white/25'}`;
 
 // Indicador de calidad para idea_description basado en longitud.
 // Los umbrales alinean con el mínimo Zod (100) y los rangos donde Claude
@@ -71,6 +71,7 @@ export function StepIdea({ flowCopy, isPrefilled }: { flowCopy?: FlowCopy; isPre
   const { register, handleSubmit, watch, formState: { errors } } = useForm<StepIdea>({
     resolver: zodResolver(StepIdeaSchema),
     defaultValues: stepIdea as StepIdea,
+    mode: 'onBlur',
   });
 
   const descriptionLen = (watch('idea_description') ?? '').length;

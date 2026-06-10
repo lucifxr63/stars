@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -138,9 +138,9 @@ function QuickDimensionPaywall({
     reset();
     if (ideaData?.idea_name) {
       updateStepIdea({
-        idea_name:        ideaData.idea_name        ?? '',
+        idea_name: ideaData.idea_name ?? '',
         idea_description: ideaData.idea_description ?? '',
-        idea_industry:    (ideaData.idea_industry ?? '') as StepIdea['idea_industry'],
+        idea_industry: (ideaData.idea_industry ?? '') as StepIdea['idea_industry'],
         current_solution: '',
       });
     }
@@ -189,25 +189,25 @@ const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'H
 type DashboardTab = typeof DASHBOARD_TABS[number];
 
 const TAB_SHORT: Record<DashboardTab, string> = {
-  'Veredicto':     'Veredicto',
-  'Validación':    'Score',
-  'Estrategia':    'Estrategia',
-  'Finanzas':      'Finanzas',
-  'Hoja de Ruta':  'Roadmap',
-  'Inversión':     'Inversión',
+  'Veredicto': 'Veredicto',
+  'Validación': 'Score',
+  'Estrategia': 'Estrategia',
+  'Finanzas': 'Finanzas',
+  'Hoja de Ruta': 'Roadmap',
+  'Inversión': 'Inversión',
   'Due Diligence': 'Due Dil.',
 };
 
 const TAB_REQUIRED_TIER: Partial<Record<DashboardTab, 'pro' | 'premium'>> = {
-  'Estrategia':    'pro',
-  'Finanzas':      'pro',
-  'Hoja de Ruta':  'pro',
-  'Inversión':     'pro',
+  'Estrategia': 'pro',
+  'Finanzas': 'pro',
+  'Hoja de Ruta': 'pro',
+  'Inversión': 'pro',
   'Due Diligence': 'premium',
 };
 
 const LOCK_BADGE: Record<'pro' | 'premium', string> = {
-  pro:     'bg-purple-500/15 text-purple-400 border border-purple-500/20',
+  pro: 'bg-purple-500/15 text-purple-400 border border-purple-500/20',
   premium: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
 };
 
@@ -283,11 +283,11 @@ export function ValidationDetail() {
       const dd = row.due_diligence_score as Record<string, unknown> | null;
       if (dd?.sources_used) {
         setDdAuditTrail({
-          dataWarnings:   (dd.data_warnings  as string[])                            ?? [],
-          sourcesUsed:    (dd.sources_used   as string[])                            ?? [],
+          dataWarnings: (dd.data_warnings as string[]) ?? [],
+          sourcesUsed: (dd.sources_used as string[]) ?? [],
           sourcesSkipped: (dd.sources_skipped as { source: string; reason: string }[]) ?? [],
-          fromCache:      false,
-          verdictSummary: (dd.verdict_summary as string)                             ?? '',
+          fromCache: false,
+          verdictSummary: (dd.verdict_summary as string) ?? '',
         });
       }
       trackTelemetryEvent({
@@ -333,26 +333,26 @@ export function ValidationDetail() {
       setVerdictGenerated(true);
       try {
         const ctx: Record<string, unknown> = {
-          idea_name:           data.idea_name,
-          idea_description:    data.idea_description,
-          idea_problem:        data.idea_problem,
-          idea_industry:       data.idea_industry,
-          target_country:      data.target_country,
-          business_model:      data.business_model,
-          business_stage:      data.business_stage,
-          pricing_range:       data.pricing_range,
+          idea_name: data.idea_name,
+          idea_description: data.idea_description,
+          idea_problem: data.idea_problem,
+          idea_industry: data.idea_industry,
+          target_country: data.target_country,
+          business_model: data.business_model,
+          business_stage: data.business_stage,
+          pricing_range: data.pricing_range,
           // Para quick mode: quick_icp sustituye a customer_segment
-          customer_segment:    data.customer_segment ?? data.quick_icp,
-          quick_icp:           data.quick_icp,
-          value_proposition:   data.value_proposition,
-          differentiator:      data.differentiator,
-          questions_answers:   data.questions_answers,
-          current_solution:    data.current_solution,
+          customer_segment: data.customer_segment ?? data.quick_icp,
+          quick_icp: data.quick_icp,
+          value_proposition: data.value_proposition,
+          differentiator: data.differentiator,
+          questions_answers: data.questions_answers,
+          current_solution: data.current_solution,
           acquisition_channel: data.acquisition_channel,
-          tech_level:          data.tech_level,
-          traction_status:     data.traction_status,
-          team_composition:    data.team_composition,
-          validation_mode:     data.validation_mode,
+          tech_level: data.tech_level,
+          traction_status: data.traction_status,
+          team_composition: data.team_composition,
+          validation_mode: data.validation_mode,
         };
         const result = await callAI<PlaybookAnalysis>(data.id, 6, 'playbook_analysis', ctx);
         if (result) {
@@ -392,20 +392,20 @@ export function ValidationDetail() {
 
   // Análisis avanzados — se generan on-demand con un botón dedicado
   const missingAdvanced = {
-    risk:        !data?.risk_analysis        && sections.includes('risks'),
-    unit:        !data?.unit_economics       && sections.includes('unitEconomics'),
-    founder:     !data?.founder_fit          && sections.includes('founderFit'),
-    signals:     !data?.market_signals       && sections.includes('marketSizing'),
-    governance:  !data?.governance_assessment && sections.includes('governance'),
-    fundraising: !data?.fundraising_roadmap  && sections.includes('fundraising'),
+    risk: !data?.risk_analysis && sections.includes('risks'),
+    unit: !data?.unit_economics && sections.includes('unitEconomics'),
+    founder: !data?.founder_fit && sections.includes('founderFit'),
+    signals: !data?.market_signals && sections.includes('marketSizing'),
+    governance: !data?.governance_assessment && sections.includes('governance'),
+    fundraising: !data?.fundraising_roadmap && sections.includes('fundraising'),
   };
   const hasAdvancedToGenerate = Object.values(missingAdvanced).some(Boolean);
 
   // Nuevos módulos PDF (lean_roadmap, financial_projection, compliance_roadmap)
   const missingNewModules = {
-    lean_roadmap:         !data?.lean_roadmap,
+    lean_roadmap: !data?.lean_roadmap,
     financial_projection: !data?.financial_projection,
-    compliance_roadmap:   !data?.compliance_roadmap,
+    compliance_roadmap: !data?.compliance_roadmap,
   };
   const hasNewModulesToGenerate = Object.values(missingNewModules).some(Boolean);
   const [generatingNewModules, setGeneratingNewModules] = useState(false);
@@ -440,7 +440,7 @@ export function ValidationDetail() {
           brand_name: data.idea_name ?? null,
           current_step: data.business_stage === 'funding' ? 'stepFunding'
             : data.business_stage === 'growth' ? 'stepGrowth'
-            : 'stepIdea',
+              : 'stepIdea',
         }),
       });
 
@@ -461,15 +461,15 @@ export function ValidationDetail() {
       });
 
       trackDueDiligenceCompleted({
-        validationId:        data.id,
-        total:               (due_diligence_score as Record<string, unknown>)?.total as number ?? 0,
-        investorReadiness:   (due_diligence_score as Record<string, unknown>)?.investorReadiness as string ?? 'not_ready',
-        fromCache:           from_cache ?? false,
-        sourcesUsed:         sources_used ?? [],
+        validationId: data.id,
+        total: (due_diligence_score as Record<string, unknown>)?.total as number ?? 0,
+        investorReadiness: (due_diligence_score as Record<string, unknown>)?.investorReadiness as string ?? 'not_ready',
+        fromCache: from_cache ?? false,
+        sourcesUsed: sources_used ?? [],
         sourcesSkippedCount: (sources_skipped ?? []).length,
-        dataWarningsCount:   (data_warnings ?? []).length,
-        industry:            data.idea_industry ?? '',
-        tier:                tier ?? 'free',
+        dataWarningsCount: (data_warnings ?? []).length,
+        industry: data.idea_industry ?? '',
+        tier: tier ?? 'free',
       });
 
       if (from_cache) {
@@ -509,15 +509,15 @@ export function ValidationDetail() {
       };
 
       const [leanResult, financialResult, complianceResult] = await Promise.all([
-        missingNewModules.lean_roadmap         ? callAI<LeanRoadmap>(data.id, 6, 'lean_roadmap', ctx)              : Promise.resolve(null),
-        missingNewModules.financial_projection  ? callAI<FinancialProjection>(data.id, 6, 'financial_projection', ctx) : Promise.resolve(null),
-        missingNewModules.compliance_roadmap    ? callAI<ComplianceRoadmap>(data.id, 6, 'compliance_roadmap', ctx)  : Promise.resolve(null),
+        missingNewModules.lean_roadmap ? callAI<LeanRoadmap>(data.id, 6, 'lean_roadmap', ctx) : Promise.resolve(null),
+        missingNewModules.financial_projection ? callAI<FinancialProjection>(data.id, 6, 'financial_projection', ctx) : Promise.resolve(null),
+        missingNewModules.compliance_roadmap ? callAI<ComplianceRoadmap>(data.id, 6, 'compliance_roadmap', ctx) : Promise.resolve(null),
       ]);
 
       const localUpdates: Record<string, unknown> = {};
-      if (leanResult)       localUpdates.lean_roadmap         = leanResult;
-      if (financialResult)  localUpdates.financial_projection = financialResult;
-      if (complianceResult) localUpdates.compliance_roadmap   = complianceResult;
+      if (leanResult) localUpdates.lean_roadmap = leanResult;
+      if (financialResult) localUpdates.financial_projection = financialResult;
+      if (complianceResult) localUpdates.compliance_roadmap = complianceResult;
 
       if (Object.keys(localUpdates).length > 0) {
         setData((prev) => prev ? { ...prev, ...localUpdates } : prev);
@@ -645,23 +645,23 @@ export function ValidationDetail() {
       // TS-106: enriquecer contexto founder_fit con datos editados de founder_profiles
       const founderCtx: Record<string, unknown> = { ...ctx };
       if (founderProfile) {
-        founderCtx.founder_linkedin_url        = founderProfile.linkedin_url;
-        founderCtx.founder_full_name           = founderProfile.full_name;
-        founderCtx.founder_headline            = founderProfile.headline;
-        founderCtx.founder_summary_bio         = founderProfile.summary_bio;
-        founderCtx.founder_industry_years      = founderProfile.industry_expertise_years;
-        founderCtx.founder_skills              = founderProfile.skills;
-        founderCtx.founder_work_experience     = founderProfile.work_experience;
-        founderCtx.founder_competency_scores   = founderProfile.competency_scores;
+        founderCtx.founder_linkedin_url = founderProfile.linkedin_url;
+        founderCtx.founder_full_name = founderProfile.full_name;
+        founderCtx.founder_headline = founderProfile.headline;
+        founderCtx.founder_summary_bio = founderProfile.summary_bio;
+        founderCtx.founder_industry_years = founderProfile.industry_expertise_years;
+        founderCtx.founder_skills = founderProfile.skills;
+        founderCtx.founder_work_experience = founderProfile.work_experience;
+        founderCtx.founder_competency_scores = founderProfile.competency_scores;
       }
 
       const advancedTaskDefs: { flag: boolean; label: string; fn: () => Promise<unknown> }[] = [
-        { flag: missingAdvanced.risk,        label: 'Análisis de Riesgos',   fn: () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx) },
-        { flag: missingAdvanced.unit,        label: 'Unit Economics',         fn: () => callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx) },
-        { flag: missingAdvanced.founder,     label: 'Founder Fit',            fn: () => callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx) },
-        { flag: missingAdvanced.signals,     label: 'Señales de Mercado',     fn: () => callAI<MarketSignals>(data.id, 6, 'market_signals', ctx) },
-        { flag: missingAdvanced.governance,  label: 'Gobernanza',             fn: () => callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) },
-        { flag: missingAdvanced.fundraising, label: 'Fundraising',            fn: () => callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx) },
+        { flag: missingAdvanced.risk, label: 'Análisis de Riesgos', fn: () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx) },
+        { flag: missingAdvanced.unit, label: 'Unit Economics', fn: () => callAI<UnitEconomics>(data.id, 6, 'unit_economics', ctx) },
+        { flag: missingAdvanced.founder, label: 'Founder Fit', fn: () => callAI<FounderFit>(data.id, 6, 'founder_fit', founderCtx) },
+        { flag: missingAdvanced.signals, label: 'Señales de Mercado', fn: () => callAI<MarketSignals>(data.id, 6, 'market_signals', ctx) },
+        { flag: missingAdvanced.governance, label: 'Gobernanza', fn: () => callAI<GovernanceAssessment>(data.id, 6, 'governance_assessment', ctx) },
+        { flag: missingAdvanced.fundraising, label: 'Fundraising', fn: () => callAI<FundraisingRoadmap>(data.id, 6, 'fundraising_roadmap', ctx) },
       ].filter(t => t.flag);
 
       const total = advancedTaskDefs.length;
@@ -684,22 +684,22 @@ export function ValidationDetail() {
         const r = settled[si++];
         return r.status === 'fulfilled' ? (r.value as T) : null;
       };
-      const riskResult       = pickFromSettled<RiskAnalysis>(missingAdvanced.risk);
-      const unitResult       = pickFromSettled<UnitEconomics>(missingAdvanced.unit);
-      const founderResult    = pickFromSettled<FounderFit>(missingAdvanced.founder);
-      const signalsResult    = pickFromSettled<MarketSignals>(missingAdvanced.signals);
+      const riskResult = pickFromSettled<RiskAnalysis>(missingAdvanced.risk);
+      const unitResult = pickFromSettled<UnitEconomics>(missingAdvanced.unit);
+      const founderResult = pickFromSettled<FounderFit>(missingAdvanced.founder);
+      const signalsResult = pickFromSettled<MarketSignals>(missingAdvanced.signals);
       const governanceResult = pickFromSettled<GovernanceAssessment>(missingAdvanced.governance);
-      const fundraisingResult= pickFromSettled<FundraisingRoadmap>(missingAdvanced.fundraising);
+      const fundraisingResult = pickFromSettled<FundraisingRoadmap>(missingAdvanced.fundraising);
 
       // La edge function ya persistió cada resultado en la DB.
       // Actualizamos solo el estado local para refrescar la UI sin reload.
       const localUpdates: Record<string, unknown> = {};
-      if (riskResult)        localUpdates.risk_analysis         = riskResult;
-      if (unitResult)        localUpdates.unit_economics        = unitResult;
-      if (founderResult)     localUpdates.founder_fit           = founderResult;
-      if (signalsResult)     localUpdates.market_signals        = signalsResult;
-      if (governanceResult)  localUpdates.governance_assessment = governanceResult;
-      if (fundraisingResult) localUpdates.fundraising_roadmap   = fundraisingResult;
+      if (riskResult) localUpdates.risk_analysis = riskResult;
+      if (unitResult) localUpdates.unit_economics = unitResult;
+      if (founderResult) localUpdates.founder_fit = founderResult;
+      if (signalsResult) localUpdates.market_signals = signalsResult;
+      if (governanceResult) localUpdates.governance_assessment = governanceResult;
+      if (fundraisingResult) localUpdates.fundraising_roadmap = fundraisingResult;
 
       if (Object.keys(localUpdates).length > 0) {
         setData((prev) => prev ? { ...prev, ...localUpdates } : prev);
@@ -719,9 +719,9 @@ export function ValidationDetail() {
     const store = useValidationStore.getState();
     store.reset();
     store.updateStepIdea({
-      idea_name:        data.idea_name        ?? '',
+      idea_name: data.idea_name ?? '',
       idea_description: data.idea_description ?? '',
-      idea_industry:    (data.idea_industry ?? '') as StepIdea['idea_industry'],
+      idea_industry: (data.idea_industry ?? '') as StepIdea['idea_industry'],
       current_solution: '',
     });
     store.setValidationMode('detailed');
@@ -777,8 +777,8 @@ export function ValidationDetail() {
       setSharing(false);
     }
     const score = data.validation_score ?? 0;
-    const name  = data.idea_name ?? 'mi startup';
-    const text  = `Validé "${name}" con IA y obtuve ${score}/100. ¿Tu idea resistiría este análisis?`;
+    const name = data.idea_name ?? 'mi startup';
+    const text = `Validé "${name}" con IA y obtuve ${score}/100. ¿Tu idea resistiría este análisis?`;
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`,
       '_blank',
@@ -849,37 +849,37 @@ export function ValidationDetail() {
 
       // 2 — Descargar PDF con datos frescos
       await generateValidationPDF({
-        idea_name:             freshData.idea_name ?? undefined,
-        idea_description:      freshData.idea_description ?? undefined,
-        idea_industry:         freshData.idea_industry ?? undefined,
-        target_country:        freshData.target_country ?? undefined,
-        target_region:         freshData.target_region ?? undefined,
-        business_model:        freshData.business_model ?? undefined,
-        business_stage:        freshData.business_stage ?? undefined,
-        pricing_range:         freshData.pricing_range ?? undefined,
-        known_competitors:     freshData.known_competitors ?? undefined,
-        questions_answers:     freshData.questions_answers ?? undefined,
-        customer_segment:      freshData.customer_segment ?? undefined,
-        customer_pain_points:  freshData.customer_pain_points ?? undefined,
-        value_proposition:     freshData.value_proposition ?? undefined,
-        differentiator:        freshData.differentiator ?? undefined,
-        mvp_type:              freshData.mvp_type ?? undefined,
-        mvp_features:          freshData.mvp_features ?? undefined,
-        mvp_user_flow:         freshData.mvp_user_flow ?? undefined,
-        summary:               (freshData.summary_json ?? {}) as Record<string, unknown>,
-        market_sizing:         freshData.market_sizing ?? null,
-        competitive_analysis:  freshData.competitive_analysis ?? null,
-        score_breakdown:       freshData.score_breakdown ?? null,
-        risk_analysis:         freshData.risk_analysis ?? null,
-        unit_economics:        freshData.unit_economics ?? null,
-        founder_fit:           freshData.founder_fit ?? null,
-        market_signals:        freshData.market_signals ?? null,
+        idea_name: freshData.idea_name ?? undefined,
+        idea_description: freshData.idea_description ?? undefined,
+        idea_industry: freshData.idea_industry ?? undefined,
+        target_country: freshData.target_country ?? undefined,
+        target_region: freshData.target_region ?? undefined,
+        business_model: freshData.business_model ?? undefined,
+        business_stage: freshData.business_stage ?? undefined,
+        pricing_range: freshData.pricing_range ?? undefined,
+        known_competitors: freshData.known_competitors ?? undefined,
+        questions_answers: freshData.questions_answers ?? undefined,
+        customer_segment: freshData.customer_segment ?? undefined,
+        customer_pain_points: freshData.customer_pain_points ?? undefined,
+        value_proposition: freshData.value_proposition ?? undefined,
+        differentiator: freshData.differentiator ?? undefined,
+        mvp_type: freshData.mvp_type ?? undefined,
+        mvp_features: freshData.mvp_features ?? undefined,
+        mvp_user_flow: freshData.mvp_user_flow ?? undefined,
+        summary: (freshData.summary_json ?? {}) as Record<string, unknown>,
+        market_sizing: freshData.market_sizing ?? null,
+        competitive_analysis: freshData.competitive_analysis ?? null,
+        score_breakdown: freshData.score_breakdown ?? null,
+        risk_analysis: freshData.risk_analysis ?? null,
+        unit_economics: freshData.unit_economics ?? null,
+        founder_fit: freshData.founder_fit ?? null,
+        market_signals: freshData.market_signals ?? null,
         governance_assessment: freshData.governance_assessment ?? null,
-        fundraising_roadmap:   freshData.fundraising_roadmap ?? null,
-        playbook_analysis:     freshData.playbook_analysis ?? null,
-        mentors:               mentors.length ? mentors : undefined,
-        validation_score:      freshData.validation_score ?? null,
-        due_diligence:         freshData.due_diligence_score ?? null,
+        fundraising_roadmap: freshData.fundraising_roadmap ?? null,
+        playbook_analysis: freshData.playbook_analysis ?? null,
+        mentors: mentors.length ? mentors : undefined,
+        validation_score: freshData.validation_score ?? null,
+        due_diligence: freshData.due_diligence_score ?? null,
       }, pdfTheme);
 
       trackDeliverableDownloaded('pdf_fresh', pdfTheme);
@@ -923,23 +923,23 @@ export function ValidationDetail() {
       }
 
       await generatePitchDeckPDF({
-        idea_name:            data.idea_name ?? undefined,
-        idea_description:     data.idea_description ?? undefined,
-        idea_industry:        data.idea_industry ?? undefined,
-        target_country:       data.target_country ?? undefined,
-        business_model:       data.business_model ?? undefined,
-        business_stage:       data.business_stage ?? undefined,
-        pricing_range:        data.pricing_range ?? undefined,
+        idea_name: data.idea_name ?? undefined,
+        idea_description: data.idea_description ?? undefined,
+        idea_industry: data.idea_industry ?? undefined,
+        target_country: data.target_country ?? undefined,
+        business_model: data.business_model ?? undefined,
+        business_stage: data.business_stage ?? undefined,
+        pricing_range: data.pricing_range ?? undefined,
         customer_pain_points: data.customer_pain_points ?? undefined,
-        value_proposition:    data.value_proposition ?? undefined,
-        differentiator:       data.differentiator ?? undefined,
-        mvp_features:         data.mvp_features ?? undefined,
-        market_sizing:        data.market_sizing ?? null,
-        unit_economics:       data.unit_economics ?? null,
+        value_proposition: data.value_proposition ?? undefined,
+        differentiator: data.differentiator ?? undefined,
+        mvp_features: data.mvp_features ?? undefined,
+        market_sizing: data.market_sizing ?? null,
+        unit_economics: data.unit_economics ?? null,
         competitive_analysis: data.competitive_analysis ?? null,
-        fundraising_roadmap:  data.fundraising_roadmap ?? null,
-        validation_score:     data.validation_score ?? null,
-        pitch_deck_content:   pitchContent ?? null,
+        fundraising_roadmap: data.fundraising_roadmap ?? null,
+        validation_score: data.validation_score ?? null,
+        pitch_deck_content: pitchContent ?? null,
       });
 
       trackDeliverableDownloaded('pitch_deck', pdfTheme);
@@ -977,10 +977,10 @@ export function ValidationDetail() {
   const scoreBg = displayScore == null
     ? 'bg-white/5 border-white/10'
     : isGood
-    ? 'bg-[#34D399]/10 border-[#34D399]/30 shadow-sm shadow-[#34D399]/10'
-    : isMid
-    ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30 shadow-sm shadow-[#F7C56C]/10'
-    : 'bg-[#F87171]/10 border-[#F87171]/30 shadow-sm shadow-[#F87171]/10';
+      ? 'bg-[#34D399]/10 border-[#34D399]/30 shadow-sm shadow-[#34D399]/10'
+      : isMid
+        ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30 shadow-sm shadow-[#F7C56C]/10'
+        : 'bg-[#F87171]/10 border-[#F87171]/30 shadow-sm shadow-[#F87171]/10';
 
 
   return (
@@ -1039,7 +1039,7 @@ export function ValidationDetail() {
                   : new Date(data.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })
                 }
               </p>
-              
+
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 {data.target_country && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-bold text-blue-400">
@@ -1068,7 +1068,7 @@ export function ValidationDetail() {
                 )}
               </div>
             </div>
-            
+
             {/* Acciones y Menú Dropdown */}
             <div className="flex flex-wrap items-center gap-2 shrink-0 relative z-20 w-full sm:w-auto">
               {/* Botón Principal: Exportar PDFs */}
@@ -1107,13 +1107,13 @@ export function ValidationDetail() {
                 className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#0A66C2]/30 text-[#0A66C2] dark:text-[#5BA4F5] bg-[#0A66C2]/5 text-xs font-bold rounded-xl hover:bg-[#0A66C2]/10 active:scale-[0.98] transition disabled:opacity-50"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                 </svg>
                 LinkedIn
               </button>
 
               {/* Dropdown de Más Opciones */}
-              <details 
+              <details
                 className="group relative"
                 onBlur={(e) => {
                   // Cierra el details automáticamente si el foco sale del elemento
@@ -1129,9 +1129,9 @@ export function ValidationDetail() {
                   </svg>
                   Opciones <span className="group-open:rotate-180 transition-transform opacity-50">▾</span>
                 </summary>
-                
+
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1A1A24] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 dark:border-white/10 p-2 flex flex-col gap-1 z-50">
-                  
+
                   {/* Tema del PDF */}
                   <div className="px-3 py-2.5 border-b border-white/5 mb-1 bg-[#0A0A0F]/50 rounded-lg">
                     <p className="text-[10px] font-black uppercase tracking-wider text-[#8B8AA0] mb-2">Tema del PDF</p>
@@ -1139,8 +1139,8 @@ export function ValidationDetail() {
                       {PDF_THEMES.map((t) => {
                         const isActive = pdfTheme === t.id;
                         const swatches: Record<string, string> = {
-                          dark:     'bg-[#0A0A0F]',
-                          clean:    'bg-white border border-white/20',
+                          dark: 'bg-[#0A0A0F]',
+                          clean: 'bg-white border border-white/20',
                           gradient: 'bg-gradient-to-r from-[#0EB5C6] to-[#34D399]',
                         };
                         return (
@@ -1148,11 +1148,10 @@ export function ValidationDetail() {
                             key={t.id}
                             onClick={() => handleThemeChange(t.id)}
                             title={t.label}
-                            className={`flex-1 flex justify-center py-1.5 rounded-lg border transition-all ${
-                              isActive
-                                ? 'border-[#0EB5C6] bg-[#0EB5C6]/10'
-                                : 'border-white/10 hover:border-[#0EB5C6]/50'
-                            }`}
+                            className={`flex-1 flex justify-center py-1.5 rounded-lg border transition-all ${isActive
+                              ? 'border-[#0EB5C6] bg-[#0EB5C6]/10'
+                              : 'border-white/10 hover:border-[#0EB5C6]/50'
+                              }`}
                           >
                             <span className={`w-3.5 h-3.5 rounded-full ${swatches[t.id]}`} />
                           </button>
@@ -1192,8 +1191,8 @@ export function ValidationDetail() {
                       {generatingAdvanced
                         ? 'Generando...'
                         : remaining === 0
-                        ? 'Límite alcanzado'
-                        : 'Generar Análisis Pro'}
+                          ? 'Límite alcanzado'
+                          : 'Generar Análisis Pro'}
                     </button>
                   )}
 
@@ -1298,102 +1297,101 @@ export function ValidationDetail() {
         {/* ── TABS ── */}
         <div className="relative mb-6">
           <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide snap-x">
-          {DASHBOARD_TABS.map((t) => {
-            const isActive = activeTab === t;
-            let hasData = false;
-            let tabIcon: React.ReactNode = null;
+            {DASHBOARD_TABS.map((t) => {
+              const isActive = activeTab === t;
+              let hasData = false;
+              let tabIcon: React.ReactNode = null;
 
-            switch (t) {
-              case 'Veredicto':
-                hasData = !!playbookReady;
-                tabIcon = (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                );
-                break;
-              case 'Validación':
-                hasData = data.summary_json != null;
-                tabIcon = (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                );
-                break;
-              case 'Estrategia':
-                hasData = data.market_sizing != null;
-                tabIcon = (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-                  </svg>
-                );
-                break;
-              case 'Finanzas':
-                hasData = data.unit_economics != null;
-                tabIcon = (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                );
-                break;
-              case 'Hoja de Ruta':
-                hasData = data.lean_roadmap != null;
-                tabIcon = (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-                  </svg>
-                );
-                break;
-              case 'Inversión':
-                hasData = data.fundraising_roadmap != null;
-                tabIcon = (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                  </svg>
-                );
-                break;
-              case 'Due Diligence':
-                hasData = data.due_diligence_score != null;
-                tabIcon = (
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                  </svg>
-                );
-                break;
-            }
+              switch (t) {
+                case 'Veredicto':
+                  hasData = !!playbookReady;
+                  tabIcon = (
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  );
+                  break;
+                case 'Validación':
+                  hasData = data.summary_json != null;
+                  tabIcon = (
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  );
+                  break;
+                case 'Estrategia':
+                  hasData = data.market_sizing != null;
+                  tabIcon = (
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                    </svg>
+                  );
+                  break;
+                case 'Finanzas':
+                  hasData = data.unit_economics != null;
+                  tabIcon = (
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  );
+                  break;
+                case 'Hoja de Ruta':
+                  hasData = data.lean_roadmap != null;
+                  tabIcon = (
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+                    </svg>
+                  );
+                  break;
+                case 'Inversión':
+                  hasData = data.fundraising_roadmap != null;
+                  tabIcon = (
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                  );
+                  break;
+                case 'Due Diligence':
+                  hasData = data.due_diligence_score != null;
+                  tabIcon = (
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                  );
+                  break;
+              }
 
-            const requiredTier = TAB_REQUIRED_TIER[t];
-            const isLocked = requiredTier === 'premium'
-              ? tier !== 'premium'
-              : requiredTier === 'pro'
-                ? tier === 'free' || tier === 'basic'
-                : false;
+              const requiredTier = TAB_REQUIRED_TIER[t];
+              const isLocked = requiredTier === 'premium'
+                ? tier !== 'premium'
+                : requiredTier === 'pro'
+                  ? tier === 'free' || tier === 'basic'
+                  : false;
 
-            return (
-              <button
-                key={t}
-                onClick={() => { setActiveTab(t); trackTabView(t); }}
-                className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-150 border shrink-0 snap-start cursor-pointer ${
-                  isActive
+              return (
+                <button
+                  key={t}
+                  onClick={() => { setActiveTab(t); trackTabView(t); }}
+                  className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-150 border shrink-0 snap-start cursor-pointer ${isActive
                     ? 'bg-[#0EB5C6]/10 text-[#38D5E3] border-[#0EB5C6]/30 shadow-sm shadow-[#0EB5C6]/10'
                     : 'bg-[#12121A] text-[#8B8AA0] border-white/[0.06] hover:bg-white/5 hover:text-[#F0EFF8]'
-                }`}
-              >
-                <span className={isActive ? 'text-[#38D5E3]' : 'text-[#8B8AA0]'}>{tabIcon}</span>
-                <span className="whitespace-nowrap">
-                  <span className="sm:hidden">{TAB_SHORT[t]}</span>
-                  <span className="hidden sm:inline">{t}</span>
-                </span>
-                {isLocked && requiredTier ? (
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${LOCK_BADGE[requiredTier]}`}>
-                    {requiredTier}
+                    }`}
+                >
+                  <span className={isActive ? 'text-[#38D5E3]' : 'text-[#8B8AA0]'}>{tabIcon}</span>
+                  <span className="whitespace-nowrap">
+                    <span className="sm:hidden">{TAB_SHORT[t]}</span>
+                    <span className="hidden sm:inline">{t}</span>
                   </span>
-                ) : hasData ? (
-                  <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#0EB5C6]' : 'bg-[#0EB5C6]/50'}`} title="Datos disponibles" />
-                ) : null}
-              </button>
-            );
-          })}
+                  {isLocked && requiredTier ? (
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${LOCK_BADGE[requiredTier]}`}>
+                      {requiredTier}
+                    </span>
+                  ) : hasData ? (
+                    <span className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#0EB5C6]' : 'bg-[#0EB5C6]/50'}`} title="Datos disponibles" />
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
           {/* gradiente derecho — indica scroll disponible */}
           <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-[#0A0A0F]/70 to-transparent" />
@@ -1434,7 +1432,7 @@ export function ValidationDetail() {
                           <ScoreGauge score={displayScore} />
                           <div className="flex-1 text-center sm:text-left">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
-                            <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">
+                            <p className="text-gray-700 dark:text-[#BDBDCF] leading-relaxed text-sm">
                               {summary?.feedback ??
                                 data.playbook_analysis?.funding_verdict ??
                                 'Análisis Premium completado.'}
@@ -1443,7 +1441,7 @@ export function ValidationDetail() {
                         </div>
                       </div>
                     )}
-                    
+
                     {data.score_breakdown && (
                       <div className="space-y-3">
                         <ScoreBreakdown data={data.score_breakdown} />
@@ -1560,13 +1558,13 @@ export function ValidationDetail() {
                         {data.customer_segment && (
                           <div>
                             <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-1.5">Segmento Objetivo</p>
-                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.customer_segment}</p>
+                            <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.customer_segment}</p>
                           </div>
                         )}
                         {data.value_proposition && (
                           <div>
                             <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-1.5">Propuesta de Valor</p>
-                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.value_proposition}</p>
+                            <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.value_proposition}</p>
                           </div>
                         )}
                         {(data.customer_pain_points?.length ?? 0) > 0 && (
@@ -1574,7 +1572,7 @@ export function ValidationDetail() {
                             <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-2">Pain Points a Validar</p>
                             <ul className="space-y-1.5">
                               {data.customer_pain_points!.map((p, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-[#C4C4D4]">
+                                <li key={i} className="flex items-start gap-2 text-sm text-[#BDBDCF]">
                                   <span className="text-[#F87171] shrink-0 mt-0.5">•</span>
                                   {p}
                                 </li>
@@ -1585,7 +1583,7 @@ export function ValidationDetail() {
                         {data.differentiator && (
                           <div className="sm:col-span-2">
                             <p className="text-[10px] font-bold text-[#8B8AA0] uppercase tracking-wider mb-1.5">Diferenciador Clave</p>
-                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.differentiator}</p>
+                            <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.differentiator}</p>
                           </div>
                         )}
                       </div>
@@ -1601,7 +1599,7 @@ export function ValidationDetail() {
                         </svg>
                         <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Jobs-to-be-Done real</p>
                       </div>
-                      <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.jtbd_analysis}</p>
+                      <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.playbook_analysis.jtbd_analysis}</p>
                     </div>
                   )}
 
@@ -1618,7 +1616,7 @@ export function ValidationDetail() {
                         {data.playbook_analysis!.validation_playbook.map((step, i) => (
                           <li key={i} className="flex gap-3">
                             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0EB5C6] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-                            <p className="text-sm text-[#C4C4D4] leading-relaxed">{step}</p>
+                            <p className="text-sm text-[#BDBDCF] leading-relaxed">{step}</p>
                           </li>
                         ))}
                       </ol>
@@ -1634,7 +1632,7 @@ export function ValidationDetail() {
                         </svg>
                         <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Stack No-Code &amp; Legal Chile</p>
                       </div>
-                      <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
+                      <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
                     </div>
                   )}
 
@@ -1723,96 +1721,96 @@ export function ValidationDetail() {
                 hint="¿Cómo llegarás a tus primeros clientes y superarás a la competencia?"
               />
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* GTM & Growth Plan */}
-              {data.playbook_analysis?.gtm_and_growth_plan && (
-                <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
-                    </svg>
-                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
-                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* GTM & Growth Plan */}
+                {data.playbook_analysis?.gtm_and_growth_plan && (
+                  <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+                      </svg>
+                      <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Plan GTM y Crecimiento</p>
+                      <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+                    </div>
+                    <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.playbook_analysis.gtm_and_growth_plan}</p>
                   </div>
-                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.gtm_and_growth_plan}</p>
-                </div>
-              )}
+                )}
 
-              {/* Product & AI Strategy */}
-              {data.playbook_analysis?.product_ai_strategy && (
-                <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
-                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+                {/* Product & AI Strategy */}
+                {data.playbook_analysis?.product_ai_strategy && (
+                  <div className="md:col-span-6 bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 h-full">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Estrategia de Producto e IA</p>
+                      <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+                    </div>
+                    <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.playbook_analysis.product_ai_strategy}</p>
                   </div>
-                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.product_ai_strategy}</p>
-                </div>
-              )}
+                )}
 
-              {/* Market Sizing */}
-              {isQuickMode ? (
-                <div className="md:col-span-6 h-full">
-                  <QuickDimensionPaywall
-                    dimension="Mercado (20%)"
-                    description="El tamaño de mercado (TAM/SAM/SOM) requiere datos de país, precio y segmento detallado."
-                    ideaData={data}
-                  />
-                </div>
-              ) : data.market_sizing ? (
-                <div className="md:col-span-6 h-full">
-                  <MarketFunnel data={data.market_sizing} />
-                </div>
-              ) : null}
-
-              {/* SWOT */}
-              {(summary?.strengths?.length || summary?.weaknesses?.length) ? (
-                <div className="md:col-span-6 h-full flex flex-col gap-3">
-                  <div className="flex items-center gap-2 px-1">
-                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h8m-8 6h16" />
-                    </svg>
-                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Análisis SWOT</p>
-                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+                {/* Market Sizing */}
+                {isQuickMode ? (
+                  <div className="md:col-span-6 h-full">
+                    <QuickDimensionPaywall
+                      dimension="Mercado (20%)"
+                      description="El tamaño de mercado (TAM/SAM/SOM) requiere datos de país, precio y segmento detallado."
+                      ideaData={data}
+                    />
                   </div>
-                  <SwotMatrix
-                    strengths={summary?.strengths || []}
-                    weaknesses={summary?.weaknesses || []}
-                  />
-                </div>
-              ) : null}
-
-              {/* Competitive Analysis */}
-              {isQuickMode ? (
-                <div className="md:col-span-12">
-                  <QuickDimensionPaywall
-                    dimension="Competencia (15%)"
-                    description="El mapeo de competidores requiere la solución actual de incumbentes y el canal de adquisición."
-                    ideaData={data}
-                  />
-                </div>
-              ) : data.competitive_analysis ? (
-                <div className="md:col-span-12 h-full">
-                  <CompetitiveAnalysis data={data.competitive_analysis} />
-                </div>
-              ) : null}
-
-              {/* Señales de Mercado */}
-              <div className="md:col-span-12">
-                {data.market_signals ? (
-                  <MarketSignalsCard data={data.market_signals} />
-                ) : !sections.includes('marketSizing') ? (
-                  <LockedSection
-                    title="Señales de Mercado"
-                    description="Tendencias, rondas de inversión recientes y análisis de timing."
-                    requiredTier="pro"
-                    hint="¿Es el momento correcto para lanzar?"
-                  />
+                ) : data.market_sizing ? (
+                  <div className="md:col-span-6 h-full">
+                    <MarketFunnel data={data.market_sizing} />
+                  </div>
                 ) : null}
+
+                {/* SWOT */}
+                {(summary?.strengths?.length || summary?.weaknesses?.length) ? (
+                  <div className="md:col-span-6 h-full flex flex-col gap-3">
+                    <div className="flex items-center gap-2 px-1">
+                      <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h8m-8 6h16" />
+                      </svg>
+                      <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Análisis SWOT</p>
+                      <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+                    </div>
+                    <SwotMatrix
+                      strengths={summary?.strengths || []}
+                      weaknesses={summary?.weaknesses || []}
+                    />
+                  </div>
+                ) : null}
+
+                {/* Competitive Analysis */}
+                {isQuickMode ? (
+                  <div className="md:col-span-12">
+                    <QuickDimensionPaywall
+                      dimension="Competencia (15%)"
+                      description="El mapeo de competidores requiere la solución actual de incumbentes y el canal de adquisición."
+                      ideaData={data}
+                    />
+                  </div>
+                ) : data.competitive_analysis ? (
+                  <div className="md:col-span-12 h-full">
+                    <CompetitiveAnalysis data={data.competitive_analysis} />
+                  </div>
+                ) : null}
+
+                {/* Señales de Mercado */}
+                <div className="md:col-span-12">
+                  {data.market_signals ? (
+                    <MarketSignalsCard data={data.market_signals} />
+                  ) : !sections.includes('marketSizing') ? (
+                    <LockedSection
+                      title="Señales de Mercado"
+                      description="Tendencias, rondas de inversión recientes y análisis de timing."
+                      requiredTier="pro"
+                      hint="¿Es el momento correcto para lanzar?"
+                    />
+                  ) : null}
+                </div>
               </div>
-            </div>
             )
           )}
 
@@ -1826,105 +1824,105 @@ export function ValidationDetail() {
                 hint="¿Tiene sentido financiero tu modelo de negocio?"
               />
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Unit Economics Check (RAG) */}
-              {data.playbook_analysis?.unit_economics_check && (
-                <div className="md:col-span-12 bg-[#12121A] border border-[#F7C56C]/20 rounded-2xl p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#F7C56C] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-xs font-bold text-[#F7C56C] uppercase tracking-wider">Diagnóstico de Unit Economics</p>
-                  </div>
-                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.unit_economics_check}</p>
-                </div>
-              )}
-
-              {/* KPIs Finanzas (Grid 2x2 on mobile, 4 cols on desktop) */}
-              {data.unit_economics ? (
-                <div className="md:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <UnitEconomicsKpis data={data.unit_economics} />
-                </div>
-              ) : isQuickMode ? (
-                <div className="md:col-span-12">
-                  <QuickDimensionPaywall
-                    dimension="Unit Economics"
-                    description="CAC, LTV y break-even requieren datos de precio, segmento y canal de adquisición del análisis Detallado."
-                    ideaData={data}
-                  />
-                </div>
-              ) : !sections.includes('unitEconomics') ? (
-                <div className="md:col-span-12">
-                  <LockedSection
-                    title="Unit Economics"
-                    description="CAC, LTV, ratio LTV/CAC, break-even y churn estimado."
-                    requiredTier="pro"
-                    hint="Estimaciones financieras basadas en tu modelo de negocio"
-                  />
-                </div>
-              ) : (
-                <div className="md:col-span-12 flex flex-col items-center justify-center gap-4 py-10 bg-[#12121A] border border-white/[0.06] rounded-2xl text-center px-6">
-                  <div className="w-10 h-10 rounded-full bg-[#F7C56C]/10 border border-[#F7C56C]/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-[#F7C56C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#F0EFF8] mb-1">Unit Economics no generados aún</p>
-                    <p className="text-xs text-[#8B8AA0] max-w-xs mx-auto leading-relaxed">
-                      CAC, LTV, break-even y proyección de crecimiento. Se genera con tus datos del análisis Detallado.
-                    </p>
-                  </div>
-                  <button
-                    onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
-                    disabled={generatingAdvanced || remaining === 0}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-[#F7C56C] text-gray-900 text-xs font-bold rounded-xl hover:bg-[#F7C56C]/90 transition disabled:opacity-50"
-                    title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
-                  >
-                    {generatingAdvanced ? (
-                      <span className="w-3.5 h-3.5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
-                    ) : (
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Unit Economics Check (RAG) */}
+                {data.playbook_analysis?.unit_economics_check && (
+                  <div className="md:col-span-12 bg-[#12121A] border border-[#F7C56C]/20 rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-[#F7C56C] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                    )}
-                    {generatingAdvanced
-                      ? 'Generando…'
-                      : remaining === 0
-                      ? 'Límite alcanzado'
-                      : 'Generar Análisis Pro'}
-                  </button>
-                </div>
-              )}
+                      <p className="text-xs font-bold text-[#F7C56C] uppercase tracking-wider">Diagnóstico de Unit Economics</p>
+                    </div>
+                    <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.playbook_analysis.unit_economics_check}</p>
+                  </div>
+                )}
 
-              {/* Chart & Risks */}
-              {data.unit_economics && (
-                <div className="md:col-span-6 h-full">
-                  <UnitEconomicsChart data={data.unit_economics} />
-                </div>
-              )}
-
-              <div className={data.unit_economics ? "md:col-span-6 h-full" : "md:col-span-12"}>
-                {data.risk_analysis ? (
-                  <div className="h-full">
-                    <RiskAnalysisCard data={data.risk_analysis} />
+                {/* KPIs Finanzas (Grid 2x2 on mobile, 4 cols on desktop) */}
+                {data.unit_economics ? (
+                  <div className="md:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <UnitEconomicsKpis data={data.unit_economics} />
                   </div>
                 ) : isQuickMode ? (
-                  <QuickDimensionPaywall
-                    dimension="Análisis de Riesgos"
-                    description="El análisis en 4 dimensiones (mercado, técnico, regulatorio y timing) requiere los datos del análisis Detallado."
-                    ideaData={data}
-                  />
-                ) : !sections.includes('risks') ? (
-                  <LockedSection
-                    title="Análisis de Riesgos"
-                    description="Score compuesto de riesgo en 4 dimensiones con mitigaciones concretas."
-                    requiredTier="pro"
-                    hint="Riesgo de mercado, técnico, regulatorio y timing"
-                  />
-                ) : null}
+                  <div className="md:col-span-12">
+                    <QuickDimensionPaywall
+                      dimension="Unit Economics"
+                      description="CAC, LTV y break-even requieren datos de precio, segmento y canal de adquisición del análisis Detallado."
+                      ideaData={data}
+                    />
+                  </div>
+                ) : !sections.includes('unitEconomics') ? (
+                  <div className="md:col-span-12">
+                    <LockedSection
+                      title="Unit Economics"
+                      description="CAC, LTV, ratio LTV/CAC, break-even y churn estimado."
+                      requiredTier="pro"
+                      hint="Estimaciones financieras basadas en tu modelo de negocio"
+                    />
+                  </div>
+                ) : (
+                  <div className="md:col-span-12 flex flex-col items-center justify-center gap-4 py-10 bg-[#12121A] border border-white/[0.06] rounded-2xl text-center px-6">
+                    <div className="w-10 h-10 rounded-full bg-[#F7C56C]/10 border border-[#F7C56C]/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#F7C56C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#F0EFF8] mb-1">Unit Economics no generados aún</p>
+                      <p className="text-xs text-[#8B8AA0] max-w-xs mx-auto leading-relaxed">
+                        CAC, LTV, break-even y proyección de crecimiento. Se genera con tus datos del análisis Detallado.
+                      </p>
+                    </div>
+                    <button
+                      onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
+                      disabled={generatingAdvanced || remaining === 0}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#F7C56C] text-gray-900 text-xs font-bold rounded-xl hover:bg-[#F7C56C]/90 transition disabled:opacity-50"
+                      title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
+                    >
+                      {generatingAdvanced ? (
+                        <span className="w-3.5 h-3.5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      )}
+                      {generatingAdvanced
+                        ? 'Generando…'
+                        : remaining === 0
+                          ? 'Límite alcanzado'
+                          : 'Generar Análisis Pro'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Chart & Risks */}
+                {data.unit_economics && (
+                  <div className="md:col-span-6 h-full">
+                    <UnitEconomicsChart data={data.unit_economics} />
+                  </div>
+                )}
+
+                <div className={data.unit_economics ? "md:col-span-6 h-full" : "md:col-span-12"}>
+                  {data.risk_analysis ? (
+                    <div className="h-full">
+                      <RiskAnalysisCard data={data.risk_analysis} />
+                    </div>
+                  ) : isQuickMode ? (
+                    <QuickDimensionPaywall
+                      dimension="Análisis de Riesgos"
+                      description="El análisis en 4 dimensiones (mercado, técnico, regulatorio y timing) requiere los datos del análisis Detallado."
+                      ideaData={data}
+                    />
+                  ) : !sections.includes('risks') ? (
+                    <LockedSection
+                      title="Análisis de Riesgos"
+                      description="Score compuesto de riesgo en 4 dimensiones con mitigaciones concretas."
+                      requiredTier="pro"
+                      hint="Riesgo de mercado, técnico, regulatorio y timing"
+                    />
+                  ) : null}
+                </div>
               </div>
-            </div>
             )
           )}
           {/* ── HOJA DE RUTA ───────────────────────────────────────────────── */}
@@ -1937,81 +1935,81 @@ export function ValidationDetail() {
                 hint="¿Cuáles son los 3 pasos exactos para lanzar tu MVP esta semana?"
               />
             ) : (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Tech & Legal Stack (RAG) */}
-              {data.playbook_analysis?.tech_and_legal_stack && (
-                <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
-                    <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Tech & Legal Stack (RAG) */}
+                {data.playbook_analysis?.tech_and_legal_stack && (
+                  <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wider">Stack Técnico y Legal</p>
+                      <span className="ml-auto text-[10px] font-semibold text-violet-400/70 bg-violet-500/10 border border-violet-500/15 rounded-md px-2 py-0.5 tracking-wide shrink-0">Insight IA</span>
+                    </div>
+                    <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
                   </div>
-                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.tech_and_legal_stack}</p>
-                </div>
-              )}
+                )}
 
-              {/* MVP Kanban */}
-              <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-[#C4C4D4] mb-4">Plan de MVP</h3>
-                <div className="flex items-center gap-3 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-xl p-3 mb-4">
-                  <svg className="w-5 h-5 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <div>
-                    <p className="text-xs text-[#38D5E3] font-bold uppercase">Tipo</p>
-                    <p className={`font-bold text-[#F0EFF8] capitalize ${!data.mvp_type ? 'italic opacity-70' : ''}`}>
-                      {data.mvp_type ? data.mvp_type.replace(/_/g, ' ') : '(Ejemplo) Concierge MVP'}
-                    </p>
+                {/* MVP Kanban */}
+                <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                  <h3 className="text-sm font-bold text-[#C4C4D4] mb-4">Plan de MVP</h3>
+                  <div className="flex items-center gap-3 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-xl p-3 mb-4">
+                    <svg className="w-5 h-5 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-[#38D5E3] font-bold uppercase">Tipo</p>
+                      <p className={`font-bold text-[#F0EFF8] capitalize ${!data.mvp_type ? 'italic opacity-70' : ''}`}>
+                        {data.mvp_type ? data.mvp_type.replace(/_/g, ' ') : '(Ejemplo) Concierge MVP'}
+                      </p>
+                    </div>
                   </div>
+                  <ErrorBoundary label="Plan de MVP">
+                    <KanbanMVP features={data.mvp_features || []} userFlow={data.mvp_user_flow} />
+                  </ErrorBoundary>
                 </div>
-                <ErrorBoundary label="Plan de MVP">
-                  <KanbanMVP features={data.mvp_features || []} userFlow={data.mvp_user_flow} />
+
+                {/* Próximos pasos */}
+                {(summary?.next_steps?.length ?? 0) > 0 && (
+                  <NextStepsTimeline steps={summary!.next_steps} />
+                )}
+
+                {/* Regulatory Roadmap */}
+                {data.target_country === 'Chile' && data.idea_industry && (
+                  <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
+                    <RegulatoryRoadmap industry={data.idea_industry} />
+                  </div>
+                )}
+
+                {/* Deliverables */}
+                <ErrorBoundary label="Entregables PDF">
+                  <DeliverableTabs
+                    validationId={data.id}
+                    unitEconomics={data.unit_economics}
+                    context={{
+                      idea_name: data.idea_name,
+                      idea_description: data.idea_description,
+                      idea_industry: data.idea_industry,
+                      target_country: data.target_country,
+                      target_region: data.target_region,
+                      business_model: data.business_model,
+                      business_stage: data.business_stage,
+                      pricing_range: data.pricing_range,
+                      customer_segment: data.customer_segment,
+                      customer_pain_points: data.customer_pain_points,
+                      value_proposition: data.value_proposition,
+                      differentiator: data.differentiator,
+                      mvp_type: data.mvp_type,
+                      mvp_features: data.mvp_features,
+                      mvp_user_flow: data.mvp_user_flow,
+                      known_competitors: data.known_competitors,
+                      questions_answers: data.questions_answers,
+                      tech_level: data.tech_level,
+                      validation_score: data.validation_score,
+                    }}
+                  />
                 </ErrorBoundary>
               </div>
-
-              {/* Próximos pasos */}
-              {(summary?.next_steps?.length ?? 0) > 0 && (
-                <NextStepsTimeline steps={summary!.next_steps} />
-              )}
-
-              {/* Regulatory Roadmap */}
-              {data.target_country === 'Chile' && data.idea_industry && (
-                <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
-                  <RegulatoryRoadmap industry={data.idea_industry} />
-                </div>
-              )}
-
-              {/* Deliverables */}
-              <ErrorBoundary label="Entregables PDF">
-                <DeliverableTabs
-                  validationId={data.id}
-                  unitEconomics={data.unit_economics}
-                  context={{
-                    idea_name: data.idea_name,
-                    idea_description: data.idea_description,
-                    idea_industry: data.idea_industry,
-                    target_country: data.target_country,
-                    target_region: data.target_region,
-                    business_model: data.business_model,
-                    business_stage: data.business_stage,
-                    pricing_range: data.pricing_range,
-                    customer_segment: data.customer_segment,
-                    customer_pain_points: data.customer_pain_points,
-                    value_proposition: data.value_proposition,
-                    differentiator: data.differentiator,
-                    mvp_type: data.mvp_type,
-                    mvp_features: data.mvp_features,
-                    mvp_user_flow: data.mvp_user_flow,
-                    known_competitors: data.known_competitors,
-                    questions_answers: data.questions_answers,
-                    tech_level: data.tech_level,
-                    validation_score: data.validation_score,
-                  }}
-                />
-              </ErrorBoundary>
-            </div>
             )
           )}
 
@@ -2025,158 +2023,158 @@ export function ValidationDetail() {
                 hint="¿Estás listo para buscar inversión? ¿Qué fondos deberías contactar?"
               />
             ) : (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Funding Verdict (RAG) */}
-              {data.playbook_analysis?.funding_verdict && (
-                <div className="bg-[#12121A] border border-[#34D399]/20 rounded-2xl p-5">
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-[#34D399] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                      </svg>
-                      <p className="text-xs font-bold text-[#34D399] uppercase tracking-wider">Veredicto de Inversión</p>
+              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Funding Verdict (RAG) */}
+                {data.playbook_analysis?.funding_verdict && (
+                  <div className="bg-[#12121A] border border-[#34D399]/20 rounded-2xl p-5">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-[#34D399] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                        </svg>
+                        <p className="text-xs font-bold text-[#34D399] uppercase tracking-wider">Veredicto de Inversión</p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-violet-500/15 text-violet-400 rounded-full shrink-0">💡 Análisis IA</span>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-violet-500/15 text-violet-400 rounded-full shrink-0">💡 Análisis IA</span>
+                    <p className="text-sm text-[#BDBDCF] leading-relaxed">{data.playbook_analysis.funding_verdict}</p>
                   </div>
-                  <p className="text-sm text-[#C4C4D4] leading-relaxed">{data.playbook_analysis.funding_verdict}</p>
-                </div>
-              )}
+                )}
 
-              {/* Perfil del Fundador (Sprint 1.5) */}
-              {sections.includes('founderFit') && (
-                <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
-                  <h3 className="text-base font-bold text-[#F0EFF8] mb-4">
-                    Perfil del Fundador
-                  </h3>
-                  <FounderProfileTab />
-                </div>
-              )}
+                {/* Perfil del Fundador (Sprint 1.5) */}
+                {sections.includes('founderFit') && (
+                  <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
+                    <h3 className="text-base font-bold text-[#F0EFF8] mb-4">
+                      Perfil del Fundador
+                    </h3>
+                    <FounderProfileTab />
+                  </div>
+                )}
 
-              {/* Founder-Market Fit */}
-              {data.founder_fit ? (
-                <FounderFitCard data={data.founder_fit} />
-              ) : !sections.includes('founderFit') ? (
-                <LockedSection
-                  title="Founder-Market Fit"
-                  description="Qué tan bien posicionado estás para ejecutar esta idea."
-                  requiredTier="pro"
-                  hint="Score en 5 dimensiones: problema, industria, técnica, red, track record"
-                />
-              ) : null}
-
-              {/* CORFO */}
-              {data.target_country === 'Chile' && data.business_stage && data.idea_industry && (
-                <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
-                  <CorfoFunds
-                    stage={data.business_stage}
-                    industry={data.idea_industry}
-                    businessModel={data.business_model ?? 'b2c'}
-                    corfoProgram={data.fundraising_roadmap?.corfo_eligibility?.program}
+                {/* Founder-Market Fit */}
+                {data.founder_fit ? (
+                  <FounderFitCard data={data.founder_fit} />
+                ) : !sections.includes('founderFit') ? (
+                  <LockedSection
+                    title="Founder-Market Fit"
+                    description="Qué tan bien posicionado estás para ejecutar esta idea."
+                    requiredTier="pro"
+                    hint="Score en 5 dimensiones: problema, industria, técnica, red, track record"
                   />
-                </div>
-              )}
+                ) : null}
 
-              {/* Gobernanza */}
-              {data.governance_assessment ? (
-                <GovernanceCard data={data.governance_assessment} />
-              ) : !sections.includes('governance') ? (
-                <LockedSection
-                  title="Gobernanza y Estructura Legal"
-                  description="Estructura societaria recomendada, vesting, cap table y checklist legal."
-                  requiredTier="pro"
-                  hint="Necesario para ser investible: SpA, vesting 4 años, cumplimiento Ley 21.719"
-                />
-              ) : (
-                <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
-                  <p className="text-sm text-[#8B8AA0] mb-3">Análisis de gobernanza no generado aún</p>
-                  <button
-                    onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
-                    disabled={generatingAdvanced || remaining === 0}
-                    className="px-4 py-2 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition disabled:opacity-50"
-                    title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
-                  >
-                    {generatingAdvanced
-                      ? 'Generando...'
-                      : remaining === 0
-                      ? 'Límite alcanzado'
-                      : 'Generar Análisis Pro'}
-                  </button>
-                </div>
-              )}
-
-              {/* Fundraising Roadmap */}
-              {data.fundraising_roadmap ? (
-                <FundraisingRoadmapCard data={data.fundraising_roadmap} />
-              ) : !sections.includes('fundraising') ? (
-                <LockedSection
-                  title="Estrategia de Fundraising"
-                  description="Instrumento recomendado, ticket size, fondos LatAm y narrative del pitch."
-                  requiredTier="pro"
-                  hint="SAFE, Notas Convertibles o Ronda Valorizada según tu etapa"
-                />
-              ) : (
-                <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
-                  <p className="text-sm text-[#8B8AA0] mb-3">Hoja de ruta de fundraising no generada aún</p>
-                  <button
-                    onClick={handleGenerateAdvanced}
-                    disabled={generatingAdvanced}
-                    className="px-4 py-2 bg-[#34D399] text-[#0A0A0F] text-sm font-bold rounded-xl hover:bg-[#2BBD87] transition disabled:opacity-50"
-                  >
-                    {generatingAdvanced ? 'Generando...' : 'Generar Análisis Premium'}
-                  </button>
-                </div>
-              )}
-
-              {/* Pitch Deck Export */}
-              <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                      </svg>
-                      <p className="text-sm font-bold text-[#F0EFF8]">Investor Pitch Deck</p>
-                      <span className="px-2 py-0.5 rounded-full bg-[#0EB5C6]/20 text-[#38D5E3] text-[10px] font-bold">8 slides</span>
-                    </div>
-                    <p className="text-xs text-[#8B8AA0]">
-                      {data.pitch_deck_content ? 'Narrativa generada · listo para descargar' : 'Genera la narrativa de las 8 slides con IA y descarga el PDF'}
-                    </p>
+                {/* CORFO */}
+                {data.target_country === 'Chile' && data.business_stage && data.idea_industry && (
+                  <div className="bg-[#12121A] rounded-3xl border border-white/[0.06] p-6">
+                    <CorfoFunds
+                      stage={data.business_stage}
+                      industry={data.idea_industry}
+                      businessModel={data.business_model ?? 'b2c'}
+                      corfoProgram={data.fundraising_roadmap?.corfo_eligibility?.program}
+                    />
                   </div>
-                  <button
-                    onClick={handleExportPitchDeck}
-                    disabled={pitchDeckLoading}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                  >
-                    {pitchDeckLoading ? (
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                      </svg>
-                    )}
-                    {pitchDeckLoading ? 'Generando…' : 'Descargar Pitch Deck'}
-                  </button>
+                )}
+
+                {/* Gobernanza */}
+                {data.governance_assessment ? (
+                  <GovernanceCard data={data.governance_assessment} />
+                ) : !sections.includes('governance') ? (
+                  <LockedSection
+                    title="Gobernanza y Estructura Legal"
+                    description="Estructura societaria recomendada, vesting, cap table y checklist legal."
+                    requiredTier="pro"
+                    hint="Necesario para ser investible: SpA, vesting 4 años, cumplimiento Ley 21.719"
+                  />
+                ) : (
+                  <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
+                    <p className="text-sm text-[#8B8AA0] mb-3">Análisis de gobernanza no generado aún</p>
+                    <button
+                      onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
+                      disabled={generatingAdvanced || remaining === 0}
+                      className="px-4 py-2 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition disabled:opacity-50"
+                      title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
+                    >
+                      {generatingAdvanced
+                        ? 'Generando...'
+                        : remaining === 0
+                          ? 'Límite alcanzado'
+                          : 'Generar Análisis Pro'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Fundraising Roadmap */}
+                {data.fundraising_roadmap ? (
+                  <FundraisingRoadmapCard data={data.fundraising_roadmap} />
+                ) : !sections.includes('fundraising') ? (
+                  <LockedSection
+                    title="Estrategia de Fundraising"
+                    description="Instrumento recomendado, ticket size, fondos LatAm y narrative del pitch."
+                    requiredTier="pro"
+                    hint="SAFE, Notas Convertibles o Ronda Valorizada según tu etapa"
+                  />
+                ) : (
+                  <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
+                    <p className="text-sm text-[#8B8AA0] mb-3">Hoja de ruta de fundraising no generada aún</p>
+                    <button
+                      onClick={handleGenerateAdvanced}
+                      disabled={generatingAdvanced}
+                      className="px-4 py-2 bg-[#34D399] text-[#0A0A0F] text-sm font-bold rounded-xl hover:bg-[#2BBD87] transition disabled:opacity-50"
+                    >
+                      {generatingAdvanced ? 'Generando...' : 'Generar Análisis Premium'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Pitch Deck Export */}
+                <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                        </svg>
+                        <p className="text-sm font-bold text-[#F0EFF8]">Investor Pitch Deck</p>
+                        <span className="px-2 py-0.5 rounded-full bg-[#0EB5C6]/20 text-[#38D5E3] text-[10px] font-bold">8 slides</span>
+                      </div>
+                      <p className="text-xs text-[#8B8AA0]">
+                        {data.pitch_deck_content ? 'Narrativa generada · listo para descargar' : 'Genera la narrativa de las 8 slides con IA y descarga el PDF'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleExportPitchDeck}
+                      disabled={pitchDeckLoading}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      {pitchDeckLoading ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        </svg>
+                      )}
+                      {pitchDeckLoading ? 'Generando…' : 'Descargar Pitch Deck'}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Traction Tracker */}
-              {sections.includes('governance') ? (
-                <TractionTracker validationId={data.id} />
-              ) : (
-                <LockedSection
-                  title="Traction Tracker"
-                  description="Registra pre-orders, entrevistas, LOIs y señales de tracción real para mostrar a inversores."
-                  requiredTier="pro"
-                  hint="Los inversores piden tracción. Documenta cada señal."
+                {/* Traction Tracker */}
+                {sections.includes('governance') ? (
+                  <TractionTracker validationId={data.id} />
+                ) : (
+                  <LockedSection
+                    title="Traction Tracker"
+                    description="Registra pre-orders, entrevistas, LOIs y señales de tracción real para mostrar a inversores."
+                    requiredTier="pro"
+                    hint="Los inversores piden tracción. Documenta cada señal."
+                  />
+                )}
+
+                {/* Mentor Recommendations */}
+                <MentorRecommendations
+                  ideaDescription={data.idea_description}
+                  founderGaps={data.founder_fit?.gaps}
                 />
-              )}
-
-              {/* Mentor Recommendations */}
-              <MentorRecommendations
-                ideaDescription={data.idea_description}
-                founderGaps={data.founder_fit?.gaps}
-              />
-            </div>
+              </div>
             )
           )}
           {/* ── DUE DILIGENCE ──────────────────────────────────────────────── */}
@@ -2360,7 +2358,7 @@ export function ValidationDetail() {
               ) : (
                 <p className="text-sm text-[#8B8AA0]">Iniciando...</p>
               )}
-              <p className="text-xs text-[#4A495E] mt-2">No cierres ni recargues esta página.<br/>Puede tomar hasta 90 segundos en total.</p>
+              <p className="text-xs text-[#4A495E] mt-2">No cierres ni recargues esta página.<br />Puede tomar hasta 90 segundos en total.</p>
             </div>
           </div>
         </div>

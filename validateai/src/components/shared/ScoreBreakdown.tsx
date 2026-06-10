@@ -9,6 +9,46 @@ const LABELS: Record<keyof ScoreBreakdownType, string> = {
   execution: 'Ejecución',
 };
 
+// Explicaciones contextuales para cada dimensión del radar.
+// Se muestran en el tooltip al hacer hover sobre un nodo del gráfico.
+const DIMENSION_DESCRIPTIONS: Record<keyof ScoreBreakdownType, {
+  high: string;   // score >= 70
+  mid: string;    // score >= 40
+  low: string;    // score < 40
+  insufficient: string; // datos insuficientes
+}> = {
+  problem: {
+    high: 'Problema claro, urgente y validado. Los clientes lo reconocen activamente.',
+    mid: 'El problema existe pero la urgencia o el tamaño del dolor no son evidentes.',
+    low: 'No se identifica un dolor real o medible. Requiere más investigación de campo.',
+    insufficient: 'Sin datos suficientes para evaluar el problema. Completa el análisis Detallado.',
+  },
+  market: {
+    high: 'Mercado grande, en crecimiento y accesible. Buen timing para entrar.',
+    mid: 'Mercado viable pero con limitaciones de tamaño, acceso o crecimiento.',
+    low: 'Mercado pequeño, saturado o en declive. Considera pivotar el segmento.',
+    insufficient: 'Sin datos de mercado. El análisis Detallado incluye TAM/SAM/SOM.',
+  },
+  competition: {
+    high: 'Ventaja competitiva clara y defendible. Pocos incumbentes directos.',
+    mid: 'Competencia presente pero con espacio para diferenciación.',
+    low: 'Mercado muy competido sin diferenciador evidente. Red flag para inversores.',
+    insufficient: 'Sin análisis de competidores. Añade la solución actual de incumbentes.',
+  },
+  solution: {
+    high: 'Solución bien definida, técnicamente viable y con PMF potencial.',
+    mid: 'La solución resuelve el problema parcialmente. Falta validación técnica o de usuario.',
+    low: 'La solución no ataca el dolor principal o es demasiado compleja para el mercado.',
+    insufficient: 'Sin datos de solución. Describe tu propuesta con más detalle.',
+  },
+  execution: {
+    high: 'Equipo fuerte, tracción real y compromiso full-time. Listo para escalar.',
+    mid: 'Equipo funcional pero con gaps en experiencia, tracción o dedicación.',
+    low: 'Riesgo alto de ejecución: equipo incompleto, sin tracción ni experiencia relevante.',
+    insufficient: 'Sin datos de equipo/fundador. Completa el paso de Founder para desbloquearlo.',
+  },
+};
+
 // Normaliza el valor de cada dimensión: acepta tanto el formato plano (número)
 // del flujo Detallado como el formato objeto { score, feedback } del flujo Rápido.
 type RawDimension = number | { score: number; feedback: string };
@@ -26,12 +66,47 @@ function isInsufficient(val: RawDimension): boolean {
   return false;
 }
 
+// Tooltip personalizado para el radar chart.
+// Muestra: nombre de la dimensión, score numérico y descripción contextual.
+function RadarTooltip({ active, payload }: { active?: boolean; payload?: { payload: { subject: string; value: number; dimKey: keyof ScoreBreakdownType; isInsufficient: boolean } }[] }) {
+  if (!active || !payload?.length) return null;
+  const { subject, value, dimKey, isInsufficient: insuf } = payload[0].payload;
+  const desc = DIMENSION_DESCRIPTIONS[dimKey];
+  const explanation = insuf
+    ? desc.insufficient
+    : value >= 70
+      ? desc.high
+      : value >= 40
+        ? desc.mid
+        : desc.low;
+  const color = insuf ? '#6b7280'
+    : value >= 70 ? '#10b981'
+      : value >= 40 ? '#f59e0b'
+        : '#ef4444';
+
+  return (
+    <div className="bg-[#1A1A24]/95 backdrop-blur-md border border-white/10 rounded-xl px-4 py-3 shadow-2xl max-w-[220px]">
+      <div className="flex items-center justify-between gap-3 mb-1.5">
+        <span className="text-xs font-bold text-[#F0EFF8]">{subject}</span>
+        {insuf ? (
+          <span className="text-[10px] font-bold text-gray-400 bg-white/5 px-1.5 py-0.5 rounded">—</span>
+        ) : (
+          <span className="text-xs font-black tabular-nums" style={{ color }}>{value}<span className="text-[10px] font-normal text-[#8B8AA0]">/100</span></span>
+        )}
+      </div>
+      <p className="text-[11px] text-[#BDBDCF] leading-relaxed">{explanation}</p>
+    </div>
+  );
+}
+
 export function ScoreBreakdown({ data }: { data: ScoreBreakdownType | RawBreakdown }) {
   const rawData = data as RawBreakdown;
   const chartData = (Object.keys(LABELS) as (keyof ScoreBreakdownType)[]).map((key) => ({
     subject: LABELS[key],
     value: extractScore(rawData[key]),
     fullMark: 100,
+    dimKey: key,
+    isInsufficient: isInsufficient(rawData[key]),
   }));
 
   return (
@@ -64,10 +139,12 @@ export function ScoreBreakdown({ data }: { data: ScoreBreakdownType | RawBreakdo
                   fill="#14b8a6"
                   fillOpacity={0.2}
                   strokeWidth={2}
+                  activeDot={{ r: 5, stroke: '#14b8a6', strokeWidth: 2, fill: '#0d9488' }}
                 />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', fontSize: 12 }}
-                  formatter={(value) => [`${value}/100`, 'Score']}
+                  content={<RadarTooltip />}
+                  cursor={false}
+                  wrapperStyle={{ outline: 'none', zIndex: 50 }}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -81,8 +158,8 @@ export function ScoreBreakdown({ data }: { data: ScoreBreakdownType | RawBreakdo
                 const insufficient = isInsufficient(raw);
                 const color = insufficient ? '#6b7280'
                   : val >= 70 ? '#10b981'
-                  : val >= 40 ? '#f59e0b'
-                  : '#ef4444';
+                    : val >= 40 ? '#f59e0b'
+                      : '#ef4444';
                 return (
                   <div key={key}>
                     <div className="flex items-center justify-between mb-1">

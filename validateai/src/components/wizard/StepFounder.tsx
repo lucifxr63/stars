@@ -1,4 +1,4 @@
-﻿import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StepFounderSchema, type StepFounder as StepFounderData } from '@/types/validation';
@@ -87,16 +87,16 @@ const TRACTION_STATUS_OPTIONS = [
 ] as const;
 
 const COMMITMENT_OPTIONS = [
-  { value: 'full_time', label: 'Full-time',            desc: 'Me dedico 100% a esto',           icon: '🔥' },
-  { value: 'part_time', label: 'Part-time',            desc: 'Tengo otro trabajo en paralelo',   icon: '⚡' },
-  { value: 'weekends',  label: 'Noches y fines de semana', desc: 'Lo arranco en mis ratos libres', icon: '🌙' },
+  { value: 'full_time', label: 'Full-time', desc: 'Me dedico 100% a esto', icon: '🔥' },
+  { value: 'part_time', label: 'Part-time', desc: 'Tengo otro trabajo en paralelo', icon: '⚡' },
+  { value: 'weekends', label: 'Noches y fines de semana', desc: 'Lo arranco en mis ratos libres', icon: '🌙' },
 ] as const;
 
 const INTERVIEWS_OPTIONS = [
-  { value: '0',       label: 'Ninguna todavía', desc: 'Aún no hablé con clientes'     },
-  { value: '1_5',     label: '1–5 entrevistas', desc: 'Primeras conversaciones'        },
-  { value: '6_20',    label: '6–20 entrevistas', desc: 'Validación activa del problema' },
-  { value: '20_plus', label: '20+ entrevistas',  desc: 'Investigación profunda'         },
+  { value: '0', label: 'Ninguna todavía', desc: 'Aún no hablé con clientes' },
+  { value: '1_5', label: '1–5 entrevistas', desc: 'Primeras conversaciones' },
+  { value: '6_20', label: '6–20 entrevistas', desc: 'Validación activa del problema' },
+  { value: '20_plus', label: '20+ entrevistas', desc: 'Investigación profunda' },
 ] as const;
 
 function ErrorMsg({ message }: { message?: string }) {
@@ -121,6 +121,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
       yearsInIndustry: 0,
       ...stepFounder,
     },
+    mode: 'onBlur',
   });
 
   useImperativeHandle(ref, () => ({
@@ -134,35 +135,35 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
     if (validationId) {
       supabase.from('validations').update({
         founder_context: {
-          yearsInIndustry:        data.yearsInIndustry,
+          yearsInIndustry: data.yearsInIndustry,
           personallyFacedProblem: data.personallyFacedProblem,
-          commitment_level:       data.commitment_level   ?? null,
-          customer_interviews:    data.customer_interviews ?? null,
-          unfair_advantage:       data.unfair_advantage   ?? null,
+          commitment_level: data.commitment_level ?? null,
+          customer_interviews: data.customer_interviews ?? null,
+          unfair_advantage: data.unfair_advantage ?? null,
         },
-        tech_level:       data.tech_level,
+        tech_level: data.tech_level,
         team_composition: data.team_composition,
-        traction_status:  data.traction_status,
-        current_step:     4,
-      }).eq('id', validationId).then(() => {});
+        traction_status: data.traction_status,
+        current_step: 4,
+      }).eq('id', validationId).then(() => { });
     }
 
     nextStep();
   };
 
-  const facedProblem      = watch('personallyFacedProblem');
-  const techLevel         = watch('tech_level');
-  const teamComp          = watch('team_composition');
-  const tractionStatus    = watch('traction_status');
-  const commitmentLevel   = watch('commitment_level');
+  const facedProblem = watch('personallyFacedProblem');
+  const techLevel = watch('tech_level');
+  const teamComp = watch('team_composition');
+  const tractionStatus = watch('traction_status');
+  const commitmentLevel = watch('commitment_level');
   const customerInterviews = watch('customer_interviews');
-  const unfairAdvantage   = watch('unfair_advantage') ?? '';
+  const unfairAdvantage = watch('unfair_advantage') ?? '';
 
   // Progreso: 3 campos requeridos + 3 opcionales de enriquecimiento
-  const founderFilled   = [teamComp, tractionStatus, techLevel].filter(Boolean).length;
-  const enrichFilled    = [commitmentLevel, customerInterviews, unfairAdvantage.length > 0 ? 'x' : ''].filter(Boolean).length;
-  const FOUNDER_TOTAL   = 3;
-  const ENRICH_TOTAL    = 3;
+  const founderFilled = [teamComp, tractionStatus, techLevel].filter(Boolean).length;
+  const enrichFilled = [commitmentLevel, customerInterviews, unfairAdvantage.length > 0 ? 'x' : ''].filter(Boolean).length;
+  const FOUNDER_TOTAL = 3;
+  const ENRICH_TOTAL = 3;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -189,7 +190,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
             placeholder="0"
             className={`w-full px-4 py-3.5 border-2 rounded-2xl text-sm transition outline-none bg-gray-50 dark:bg-[#0A0A0F]
                         focus:border-indigo-500
-                        ${errors.yearsInIndustry ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/8'}`}
+                        ${errors.yearsInIndustry ? 'border-red-300 bg-red-50' : 'border-gray-200 dark:border-white/15'}`}
           />
           <ErrorMsg message={errors.yearsInIndustry?.message} />
         </div>
@@ -209,7 +210,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
                 className={`p-3 border-2 rounded-2xl text-left transition-all
                   ${teamComp === opt.value
                     ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
-                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+                    : 'border-gray-200 dark:border-white/15 hover:border-indigo-300'}`}
               >
                 <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{opt.desc}</p>
@@ -234,7 +235,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
                 className={`p-3 border-2 rounded-2xl text-left transition-all
                   ${tractionStatus === opt.value
                     ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
-                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+                    : 'border-gray-200 dark:border-white/15 hover:border-indigo-300'}`}
               >
                 <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{opt.desc}</p>
@@ -256,7 +257,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
                 <div className={`p-3 border-2 rounded-2xl text-center transition-all
                   ${techLevel === level.value
                     ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
-                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}>
+                    : 'border-gray-200 dark:border-white/15 hover:border-indigo-300'}`}>
                   <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{level.label}</p>
                   <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{level.desc}</p>
                 </div>
@@ -271,7 +272,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
             Contexto del Problema
           </label>
           <label className={`flex items-center gap-3 p-4 border-2 rounded-2xl cursor-pointer transition
-                            ${facedProblem ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 dark:border-white/8 hover:bg-white dark:bg-[#12121A]/3'}`}>
+                            ${facedProblem ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 dark:border-white/15 hover:bg-white dark:bg-[#12121A]/3'}`}>
             <input
               type="checkbox"
               {...register('personallyFacedProblem')}
@@ -314,7 +315,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
                 className={`p-3 border-2 rounded-2xl text-left transition-all
                   ${commitmentLevel === opt.value
                     ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
-                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+                    : 'border-gray-200 dark:border-white/15 hover:border-indigo-300'}`}
               >
                 <p className="text-base mb-0.5">{opt.icon}</p>
                 <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
@@ -342,7 +343,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
                 className={`p-3 border-2 rounded-2xl text-left transition-all
                   ${customerInterviews === opt.value
                     ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10'
-                    : 'border-gray-200 dark:border-white/8 hover:border-indigo-300'}`}
+                    : 'border-gray-200 dark:border-white/15 hover:border-indigo-300'}`}
               >
                 <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8]">{opt.label}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{opt.desc}</p>
@@ -366,8 +367,8 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
             placeholder="Ej: Fui gerente de operaciones en una naviera durante 8 años. Conozco el dolor desde adentro y tengo relación directa con los tomadores de decisión."
             className="w-full px-4 py-3 border-2 rounded-2xl text-sm resize-none transition outline-none
                        bg-gray-50 dark:bg-[#0A0A0F] text-gray-900 dark:text-[#F0EFF8]
-                       placeholder:text-gray-400 dark:placeholder:text-[#4A495E]
-                       border-gray-200 dark:border-white/8 focus:border-indigo-500"
+                       placeholder:text-gray-400 dark:placeholder:text-[#71718A]
+                       border-gray-200 dark:border-white/15 focus:border-indigo-500"
           />
           <div className="flex justify-end mt-1">
             <span className={`text-[10px] ${unfairAdvantage.length >= 80 ? 'text-indigo-500' : 'text-gray-400'}`}>
@@ -406,7 +407,7 @@ export const StepFounder = forwardRef<StepAutoSaveRef>(function StepFounder(_, r
       <div className="flex gap-4">
         <button
           type="button"
-          onClick={prevStep}
+          onClick={() => { updateStepFounder(getValues()); prevStep(); }}
           className="w-1/3 py-4 text-gray-600 dark:text-[#8B8AA0] font-bold rounded-2xl hover:bg-gray-100 dark:bg-white/5 transition-all text-sm"
         >
           Volver
