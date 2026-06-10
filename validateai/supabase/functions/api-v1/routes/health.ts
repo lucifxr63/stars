@@ -8,6 +8,9 @@ const LLAMAPARSE_API_KEY = Deno.env.get('LLAMAPARSE_API_KEY')
 const CMF_BEST_KEY = Deno.env.get('CMF_BEST_KEY')
 const FINTOC_SECRET_KEY = Deno.env.get('FINTOC_SECRET_KEY')
 const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')
+const FRED_API_KEY = Deno.env.get('FRED_API_KEY')
+const BDE_USER = Deno.env.get('BDE_USER')
+const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY')
 
 type ServiceStatus = 'ok' | 'degraded' | 'error' | 'unused'
 
@@ -170,23 +173,157 @@ export const servicesHealthHandler = async (c: any) => {
         : 'Sin datos — ejecutar: py main.py',
   })
 
-  // BralidusPY Worker — embeddings vectoriales en knowledge_nodes
-  const { data: embNodes } = await supabase
-    .from('knowledge_nodes')
-    .select('id')
-    .eq('category', 'Macroeconomia')
-    .not('embedding', 'is', null)
-    .limit(10)
+  // BralidusPY Worker — KG total + embeddings
+  const [{ count: kgTotal }, { data: embNodes }] = await Promise.all([
+    supabase.from('knowledge_nodes').select('id', { count: 'exact', head: true }),
+    supabase.from('knowledge_nodes').select('id').not('embedding', 'is', null).limit(10),
+  ])
   const embCount = embNodes?.length ?? 0
+  const totalNodes = kgTotal ?? 0
   services.push({
     id: 'braliduspy',
     name: 'BralidusPY (Worker)',
     category: 'macro',
     status: embCount >= 3 ? 'ok' : embCount > 0 ? 'degraded' : 'unused',
     message: embCount >= 3
-      ? `${embCount} embeddings vectoriales activos`
+      ? `${totalNodes} nodos KG · ${embCount} embeddings activos`
       : embCount > 0 ? `${embCount} embeddings — worker incompleto`
       : 'Sin embeddings — ejecutar: py main.py',
+  })
+
+  // yfinance — knowledge_nodes con category='Mercado de Valores'
+  const { data: yfNodes } = await supabase
+    .from('knowledge_nodes').select('id').eq('category', 'Mercado de Valores').limit(3)
+  const yfCount = yfNodes?.length ?? 0
+  services.push({
+    id: 'yfinance',
+    name: 'yfinance (Tickers)',
+    category: 'macro',
+    status: yfCount > 0 ? 'ok' : 'degraded',
+    message: yfCount > 0 ? `${yfCount} tickers en GraphRAG` : 'Sin datos — cron día 1 de cada mes',
+  })
+
+  // FRED API key
+  services.push({
+    id: 'fred_key',
+    name: 'FRED API Key',
+    category: 'macro',
+    status: FRED_API_KEY ? 'ok' : 'error',
+    message: FRED_API_KEY ? 'API key configurada' : 'FRED_API_KEY no configurada',
+  })
+
+  // Bralidus API Auth
+  services.push({
+    id: 'bralidus_auth',
+    name: 'Bralidus API Auth',
+    category: 'macro',
+    status: BRALIDUS_API_KEY ? 'ok' : 'error',
+    message: BRALIDUS_API_KEY ? 'Bearer auth activo (Beta)' : 'BRALIDUS_API_KEY no configurada',
+  })
+
+  // ── Scrapers Bralidus ──────────────────────────────────────────────────────
+
+  // CMF Hechos Esenciales — radar_signals con source LIKE 'cmf%'
+  const { data: cmfScraperData } = await supabase
+    .from('radar_signals')
+    .select('created_at, source')
+    .like('source', 'cmf%')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const cmfScraperLast = cmfScraperData?.[0]
+  services.push({
+    id: 'scraper_cmf',
+    name: 'CMF Hechos Esenciales',
+    category: 'scraper',
+    status: cmfScraperLast ? 'ok' : 'degraded',
+    message: cmfScraperLast
+      ? `Última señal ${new Date(cmfScraperLast.created_at).toLocaleDateString('es-CL')} · 3×/día`
+      : 'Sin señales aún · cron 09:15, 13:15, 17:15',
+  })
+
+  // BCCH Minutas — radar_signals con source LIKE 'bcch%'
+  const { data: bcchData } = await supabase
+    .from('radar_signals').select('created_at').like('source', 'bcch%')
+    .order('created_at', { ascending: false }).limit(1)
+  services.push({
+    id: 'scraper_bcch',
+    name: 'BCCH Minutas y Comunicados',
+    category: 'scraper',
+    status: bcchData?.[0] ? 'ok' : 'degraded',
+    message: bcchData?.[0]
+      ? `Última señal ${new Date(bcchData[0].created_at).toLocaleDateString('es-CL')} · Lunes 07:00`
+      : 'Sin señales aún · cron lunes 07:00',
+  })
+
+  // SEIA — radar_signals con source LIKE 'seia%'
+  const { data: seiaData } = await supabase
+    .from('radar_signals').select('created_at').like('source', 'seia%')
+    .order('created_at', { ascending: false }).limit(1)
+  services.push({
+    id: 'scraper_seia',
+    name: 'SEIA Proyectos Ambientales',
+    category: 'scraper',
+    status: seiaData?.[0] ? 'ok' : 'degraded',
+    message: seiaData?.[0]
+      ? `Última señal ${new Date(seiaData[0].created_at).toLocaleDateString('es-CL')} · c/3 días`
+      : 'Sin señales aún · cron cada 3 días 08:00',
+  })
+
+  // Boletín Concursal — radar_signals con source LIKE 'concursal%'
+  const { data: concursalData } = await supabase
+    .from('radar_signals').select('created_at').like('source', 'concursal%')
+    .order('created_at', { ascending: false }).limit(1)
+  services.push({
+    id: 'scraper_concursal',
+    name: 'Boletín Concursal (Diario Oficial)',
+    category: 'scraper',
+    status: concursalData?.[0] ? 'ok' : 'degraded',
+    message: concursalData?.[0]
+      ? `Última señal ${new Date(concursalData[0].created_at).toLocaleDateString('es-CL')} · días hábiles`
+      : 'Sin señales aún · cron hábiles 07:30',
+  })
+
+  // INE Empleo — radar_signals con source LIKE 'empleo%'
+  const { data: empleoData } = await supabase
+    .from('radar_signals').select('created_at').like('source', 'empleo%')
+    .order('created_at', { ascending: false }).limit(1)
+  services.push({
+    id: 'scraper_empleo',
+    name: 'INE Señal Empleo Sectorial',
+    category: 'scraper',
+    status: empleoData?.[0] ? 'ok' : 'degraded',
+    message: empleoData?.[0]
+      ? `Última señal ${new Date(empleoData[0].created_at).toLocaleDateString('es-CL')} · Sáb 09:00`
+      : 'Sin señales aún · cron sábados 09:00',
+  })
+
+  // Mercado Público extractor — radar_signals con source LIKE 'mercadopublico%'
+  const { data: mpData } = await supabase
+    .from('radar_signals').select('created_at').like('source', 'mercadopublico%')
+    .order('created_at', { ascending: false }).limit(1)
+  services.push({
+    id: 'scraper_mp',
+    name: 'Mercado Público (Licitaciones)',
+    category: 'scraper',
+    status: mpData?.[0] ? 'ok' : 'degraded',
+    message: mpData?.[0]
+      ? `Última señal ${new Date(mpData[0].created_at).toLocaleDateString('es-CL')}`
+      : 'Sin señales aún · incluido en Radar Refresh',
+  })
+
+  // Radar Refresh (main scheduler job) — total signals last 24h
+  const since24h = new Date(Date.now() - 86_400_000).toISOString()
+  const { count: radarCount } = await supabase
+    .from('radar_signals').select('id', { count: 'exact', head: true })
+    .gte('created_at', since24h)
+  services.push({
+    id: 'radar_refresh',
+    name: 'Radar Forense (Refresh)',
+    category: 'scraper',
+    status: (radarCount ?? 0) > 0 ? 'ok' : 'degraded',
+    message: (radarCount ?? 0) > 0
+      ? `${radarCount} señales últimas 24h · c/30 min`
+      : 'Sin señales en 24h · cron cada 30 min',
   })
 
   // ChileCompra — Mercado Público procurement intelligence
