@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { useUserTier } from '@/hooks/useUserTier';
+import { trackTelemetryEvent } from '@/lib/telemetry';
 
 export interface BraliduAlert {
   severity: 'critical' | 'warning' | 'info';
@@ -96,6 +98,20 @@ interface Props {
 export function RiskIntelligencePanel({ alerts, isLoading = false }: Props) {
   const { tier } = useUserTier();
   const isPaid = tier === 'pro' || tier === 'premium' || tier === 'admin';
+  const paywallFired = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || isPaid || paywallFired.current) return;
+    paywallFired.current = true;
+    trackTelemetryEvent({
+      event_name: 'paywall_hit',
+      context: {
+        tier: (tier === 'basic' ? 'basic' : 'free'),
+        action_taken: 'bralidus_panel_blocked',
+        feature_name: 'risk_intelligence_panel',
+      },
+    });
+  }, [isLoading, isPaid, tier]);
 
   const criticals = alerts.filter(a => a.severity === 'critical');
   const warnings  = alerts.filter(a => a.severity === 'warning');
