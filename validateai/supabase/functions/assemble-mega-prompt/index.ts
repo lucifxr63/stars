@@ -15,7 +15,8 @@ const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 
 // ── BralidusPY config ─────────────────────────────────────────────────────────
 // Defaults to localhost for local dev; set BRALIDUS_URL in Supabase secrets for prod.
-const BRALIDUS_URL = Deno.env.get('BRALIDUS_URL') ?? 'http://localhost:8000';
+const BRALIDUS_URL     = Deno.env.get('BRALIDUS_URL') ?? 'http://localhost:8000';
+const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY') ?? '';  // Bearer token for prod auth
 
 const BRALIDUS_TIER: Record<string, { topK: number; enabled: boolean; macroOnly: boolean }> = {
   free:    { topK: 0,  enabled: false, macroOnly: true  },
@@ -272,9 +273,13 @@ async function fetchBralidusPY(
   };
   if (config.macroOnly) body.entity_override = BRALIDUS_MACRO_OVERRIDE;
 
+  const authHeaders: Record<string, string> = BRALIDUS_API_KEY
+    ? { 'Authorization': `Bearer ${BRALIDUS_API_KEY}` }
+    : {};
+
   const res = await fetch(`${BRALIDUS_URL}/query`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(8_000),
   });

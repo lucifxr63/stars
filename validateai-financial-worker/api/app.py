@@ -89,13 +89,18 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# ALLOWED_ORIGINS env var: space-separated list of origins.
+# Railway adds supabase Edge Functions as internal caller — kept open to supabase.co domain.
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()] or [
+    "https://validus.scouttech.lat",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://validus.scouttech.lat",
-        "http://localhost:5173",
-        "http://localhost:3000",
-    ],
+    allow_origins=_origins,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )

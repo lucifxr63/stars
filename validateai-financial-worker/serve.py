@@ -9,13 +9,15 @@ Uso:
 La API queda en: http://localhost:8000/docs
 """
 import argparse
+import os
 import uvicorn
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="BralidusPY API Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8000, help="Puerto (default: 8000)")
+    # Railway injects PORT env var; --port flag overrides (useful for local dev)
+    parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8000")), help="Puerto (default: $PORT o 8000)")
     parser.add_argument("--no-reload", action="store_true", help="Desactivar hot-reload")
     args = parser.parse_args()
 
