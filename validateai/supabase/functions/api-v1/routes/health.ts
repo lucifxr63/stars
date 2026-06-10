@@ -180,19 +180,22 @@ export const servicesHealthHandler = async (c: any) => {
   let bralidusMsg = 'No responde'
   let bralidusLatency: number | undefined
   try {
-    // /ping is auth-free and returns immediately (no DB queries)
-    const br = await fetch(`${BRALIDUS_URL}/ping`, {
-      signal: AbortSignal.timeout(8000),
-    })
+    // Try /ping first (fast, no DB); fall back to /health if 404 (old deployment)
+    let br = await fetch(`${BRALIDUS_URL}/ping`, { signal: AbortSignal.timeout(6000) })
+    if (br.status === 404) {
+      br = await fetch(`${BRALIDUS_URL}/health`, { signal: AbortSignal.timeout(10000) })
+    }
     bralidusLatency = Date.now() - bralidusT0
     if (br.ok) {
       const bj = await br.json() as Record<string, unknown>
       const uptime = typeof bj.uptime_seconds === 'number' ? Math.round(bj.uptime_seconds / 3600) : null
-      const schedulerOk = bj.scheduler_running !== false
+      const nodesCount = typeof bj.knowledge_nodes_count === 'number' ? bj.knowledge_nodes_count : null
+      const schedulerOk = bj.scheduler_running !== false && !(bj.status === 'error')
       bralidusStatus = schedulerOk ? 'ok' : 'degraded'
-      bralidusMsg = uptime !== null
-        ? `Online · uptime ${uptime}h · Railway${schedulerOk ? '' : ' · scheduler stopped'}`
-        : 'Online · Railway'
+      const parts: string[] = ['Online · Railway']
+      if (nodesCount) parts.push(`${nodesCount} nodos KG`)
+      if (uptime !== null) parts.push(`uptime ${uptime}h`)
+      bralidusMsg = parts.join(' · ')
     } else {
       bralidusStatus = 'degraded'
       bralidusMsg = `HTTP ${br.status} · Railway`
