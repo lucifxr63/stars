@@ -16,6 +16,7 @@ const Demo             = lazy(() => import('@/app/routes/Demo').then((m) => ({ d
 const FigmaCallback      = lazy(() => import('@/app/routes/FigmaCallback').then((m) => ({ default: m.FigmaCallback })));
 const LinkedInCallback   = lazy(() => import('@/app/routes/LinkedInCallback').then((m) => ({ default: m.LinkedInCallback })));
 const PrivacyPolicy      = lazy(() => import('@/app/routes/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
+const VCDiligence        = lazy(() => import('@/app/routes/VCDiligence').then((m) => ({ default: m.VCDiligence })));
 
 // Protected — standalone (no sidebar)
 const Onboarding = lazy(() => import('@/app/routes/Onboarding').then((m) => ({ default: m.Onboarding })));
@@ -84,6 +85,7 @@ export default function App() {
               <Route path="/figma/callback"              element={<FigmaCallback />} />
               <Route path="/auth/linkedin/callback"      element={<LinkedInCallback />} />
               <Route path="/privacy-policy"              element={<PrivacyPolicy />} />
+              <Route path="/vc-diligence"               element={<VCDiligence />} />
 
               {/* Rutas protegidas */}
               <Route element={<ProtectedLayout />}>
