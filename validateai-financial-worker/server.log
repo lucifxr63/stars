@@ -1,0 +1,41 @@
+INFO:     Started server process [3312]
+INFO:     Waiting for application startup.
+2026-06-10 15:31:14,065 [INFO] api.app - BralidusPY API iniciando...
+2026-06-10 15:31:14,356 [INFO] api.app - Supabase client listo.
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,392 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-10 15:31:14,393 [INFO] apscheduler.scheduler - Added job "FRED weekly sync" to job store "default"
+2026-06-10 15:31:14,393 [INFO] apscheduler.scheduler - Added job "yfinance monthly sync" to job store "default"
+2026-06-10 15:31:14,393 [INFO] apscheduler.scheduler - Added job "Cache sweep" to job store "default"
+2026-06-10 15:31:14,393 [INFO] apscheduler.scheduler - Added job "Radar Forense — scraping + clasificación de señales" to job store "default"
+2026-06-10 15:31:14,393 [INFO] apscheduler.scheduler - Added job "CMF Hechos Esenciales — KG permanente + señales radar" to job store "default"
+2026-06-10 15:31:14,393 [INFO] apscheduler.scheduler - Added job "SEIA — proyectos aprobados/rechazados (cada 3 días)" to job store "default"
+2026-06-10 15:31:14,393 [INFO] apscheduler.scheduler - Added job "Boletín Concursal SUPERIR + Diario Oficial (diario hábil)" to job store "default"
+2026-06-10 15:31:14,394 [INFO] apscheduler.scheduler - Added job "Señal Empleo Sectorial — Computrabajo (semanal)" to job store "default"
+2026-06-10 15:31:14,394 [INFO] apscheduler.scheduler - Added job "BCCH Comunicados + Minutas — KG permanente + señal hawkish/dovish" to job store "default"
+2026-06-10 15:31:14,394 [INFO] apscheduler.scheduler - Scheduler started
+2026-06-10 15:31:14,394 [INFO] api.app - Scheduler iniciado: 9 jobs activos.
+2026-06-10 15:31:14,394 [INFO] api.app -   - Cache sweep: próxima ejecución 2026-06-10 16:00:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - Radar Forense — scraping + clasificación de señales: próxima ejecución 2026-06-10 16:00:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - CMF Hechos Esenciales — KG permanente + señales radar: próxima ejecución 2026-06-10 17:15:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - Boletín Concursal SUPERIR + Diario Oficial (diario hábil): próxima ejecución 2026-06-11 07:30:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - SEIA — proyectos aprobados/rechazados (cada 3 días): próxima ejecución 2026-06-13 08:00:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - Señal Empleo Sectorial — Computrabajo (semanal): próxima ejecución 2026-06-13 09:00:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - FRED weekly sync: próxima ejecución 2026-06-14 03:00:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - BCCH Comunicados + Minutas — KG permanente + señal hawkish/dovish: próxima ejecución 2026-06-15 07:00:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app -   - yfinance monthly sync: próxima ejecución 2026-07-01 04:00:00-04:00
+2026-06-10 15:31:14,394 [INFO] api.app - Auth: activa (Bearer token)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:63407 - "POST /query HTTP/1.1" 401 Unauthorized
+2026-06-10 15:31:43,376 [INFO] httpx - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-06-10 15:31:44,364 [INFO] httpx - HTTP Request: POST https://fcdhcntyvsydnvjwopfe.supabase.co/rest/v1/rpc/search_hybrid_graphrag "HTTP/2 200 OK"
+2026-06-10 15:31:44,530 [INFO] httpx - HTTP Request: GET https://fcdhcntyvsydnvjwopfe.supabase.co/rest/v1/knowledge_nodes?select=document_title%2Ccategory%2Cmetadata&document_title=in.%28%22Tasa+de+Fondos+Federales+%28Fed+Funds+Rate%29%22%2C%22USD%2FCNY+%28Tipo+de+Cambio+Yuan%29%22%2C%22Inflaci%C3%B3n+USA+%28CPI+All+Urban+Consumers%29%22%2C%22Desempleo+USA+%28Unemployment+Rate%29%22%2C%22Oro+%28Gold+Futures%29%22%2C%22Produccion+Industrial+USA+%28Industrial+Production+Index%29%22%29 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63410 - "POST /query HTTP/1.1" 200 OK
