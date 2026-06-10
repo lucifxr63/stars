@@ -1,0 +1,411 @@
+"""
+BralidusPY API — FastAPI application.
+
+Motor de inteligencia macro para ValidateAI.
+Convierte contexto de startup en consultas GraphRAG dinámicas.
+
+Endpoints:
+  POST /query     → RAG dinámico (el principal)
+  GET  /entities  → Lista entidades disponibles en knowledge_nodes
+  GET  /cache     → Stats del cache de embeddings
+  POST /ingest    → Dispara ingesta FRED + yfinance en background
+  GET  /health    → Estado del sistema
+"""
+from __future__ import annotations
+import asyncio
+import logging
+import os
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+from fastapi.middleware.cors import CORSMiddleware
+
+from api.schemas import (
+    QueryRequest, QueryResponse, NodeResult,
+    EntitiesResponse, EntitySummary,
+    IngestResponse,
+    HealthResponse, ServiceStatus,
+)
+from api.entity_router import route as route_entities
+from api.auth import require_api_key
+from api import rag, cache
+
+log = logging.getLogger(__name__)
+
+
+# ── Supabase client singleton ─────────────────────────────────────────────────
+
+_supabase_client = None
+
+def get_db():
+    global _supabase_client
+    if _supabase_client is None:
+        from src.db.supabase_client import get_client
+        _supabase_client = get_client()
+    return _supabase_client
+
+
+# ── App lifecycle ─────────────────────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    )
+    log.info("BralidusPY API iniciando...")
+    get_db()
+    log.info("Supabase client listo.")
+
+    # Iniciar scheduler de jobs automáticos
+    from api.scheduler import scheduler
+    scheduler.start()
+    jobs = scheduler.get_jobs()
+    log.info("Scheduler iniciado: %d jobs activos.", len(jobs))
+    for job in jobs:
+        log.info("  - %s: próxima ejecución %s", job.name, job.next_run_time)
+
+    auth_active = bool(os.getenv("BRALIDUS_API_KEY"))
+    log.info("Auth: %s", "activa (Bearer token)" if auth_active else "deshabilitada (dev mode)")
+
+    yield
+
+    scheduler.shutdown(wait=False)
+    log.info("BralidusPY API apagando.")
+
+
+# ── FastAPI instance ──────────────────────────────────────────────────────────
+
+app = FastAPI(
+    title="BralidusPY API",
+    description=(
+        "Motor de inteligencia macro para ValidateAI. "
+        "Expone GraphRAG dinámico sobre knowledge_nodes (FRED + yfinance). "
+        "La consulta del usuario determina qué entidades se activan."
+    ),
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# ALLOWED_ORIGINS env var: space-separated list of origins.
+# Railway adds supabase Edge Functions as internal caller — kept open to supabase.co domain.
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()] or [
+    "https://validus.scouttech.lat",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_origins,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+
+# ── POST /query ───────────────────────────────────────────────────────────────
+
+@app.post(
+    "/query",
+    response_model=QueryResponse,
+    summary="RAG dinámico: startup_context + query → contexto para LLM",
+    tags=["rag"],
+    dependencies=[Depends(require_api_key)],
+)
+async def query_endpoint(req: QueryRequest) -> QueryResponse:
+    """
+    Flujo completo:
+
+    1. **Cache**: si la query ya fue procesada, devuelve embedding cacheado
+    2. **Routing**: startup_context → entity_titles[] (qué nodos del grafo activar)
+    3. **Embed**: query text → vector[1536] (con cache LRU)
+    4. **GraphRAG**: search_hybrid_graphrag(embedding, entities) → nodos rankeados
+    5. **Enriquecimiento**: añade category + metadata a cada nodo
+    6. **Ensamblado**: formatea en Markdown para inyectar en prompt de LLM
+
+    Si `startup_context` es null, usa solo búsqueda vectorial pura.
+    Si `entity_override` está presente, ignora el routing automático.
+    """
+    client = get_db()
+
+    # 1. Routing de entidades
+    if req.entity_override:
+        entities = req.entity_override
+        routing_reason = f"override manual: {len(entities)} entidades"
+    elif req.startup_context:
+        routing = route_entities(
+            industry=req.startup_context.industry,
+            stage=req.startup_context.stage,
+            geography=req.startup_context.geography,
+        )
+        entities = routing.entities
+        routing_reason = routing.reason
+    else:
+        entities = []
+        routing_reason = "sin contexto — búsqueda vectorial pura"
+
+    # 2. Embedding con cache
+    cached_vec = cache.get(req.query)
+    if cached_vec is not None:
+        embedding = cached_vec
+    else:
+        try:
+            embedding = await asyncio.to_thread(rag.embed_text, req.query)
+            cache.set(req.query, embedding)
+        except Exception as exc:
+            log.error("Error embeddeando query: %s", exc)
+            raise HTTPException(status_code=503, detail=f"Error al generar embedding: {exc}")
+
+    # 3. Búsqueda GraphRAG
+    raw_nodes = await asyncio.to_thread(
+        rag.search,
+        client,
+        embedding,
+        entities,
+        req.match_threshold,
+        req.top_k,
+    )
+
+    # 4. Enriquecer con metadata
+    enriched = await asyncio.to_thread(rag.enrich_nodes_with_metadata, client, raw_nodes)
+
+    # 5. Ensamblar contexto
+    context = rag.assemble_context(enriched)
+
+    node_results = [
+        NodeResult(
+            source_type=n.get("source_type", "VECTOR"),
+            document_title=n["document_title"],
+            category=n.get("category"),
+            content=n["content"],
+            relevance=round(float(n.get("relevance", 0)), 4),
+            metadata=n.get("metadata"),
+        )
+        for n in enriched
+    ]
+
+    graph_hits = sum(1 for n in node_results if n.source_type == "GRAPH")
+    vector_hits = sum(1 for n in node_results if n.source_type == "VECTOR")
+
+    return QueryResponse(
+        query=req.query,
+        entities_activated=entities,
+        routing_reason=routing_reason,
+        nodes=node_results,
+        context_for_llm=context,
+        total_hits=len(node_results),
+        graph_hits=graph_hits,
+        vector_hits=vector_hits,
+    )
+
+
+# ── GET /entities ─────────────────────────────────────────────────────────────
+
+@app.get(
+    "/entities",
+    response_model=EntitiesResponse,
+    summary="Lista entidades disponibles en knowledge_nodes agrupadas por categoría",
+    tags=["rag"],
+)
+async def list_entities() -> EntitiesResponse:
+    client = get_db()
+    result = (
+        client.table("knowledge_nodes")
+        .select("document_title, category, metadata, embedding")
+        .execute()
+    )
+    rows = result.data or []
+
+    by_category: dict[str, list[EntitySummary]] = {}
+    for row in rows:
+        cat = row.get("category") or "Sin categoría"
+        meta = row.get("metadata") or {}
+        summary = EntitySummary(
+            document_title=row["document_title"],
+            category=cat,
+            has_embedding=row.get("embedding") is not None,
+            latest_value=meta.get("ultimo_valor"),
+            latest_date=meta.get("ultima_fecha"),
+            unit=meta.get("unidad"),
+        )
+        by_category.setdefault(cat, []).append(summary)
+
+    return EntitiesResponse(total=len(rows), by_category=by_category)
+
+
+# ── GET /cache ────────────────────────────────────────────────────────────────
+
+@app.get(
+    "/cache",
+    summary="Estadísticas del cache de embeddings",
+    tags=["sistema"],
+)
+async def cache_stats() -> dict:
+    return cache.stats()
+
+
+# ── POST /ingest ──────────────────────────────────────────────────────────────
+
+@app.post(
+    "/ingest",
+    response_model=IngestResponse,
+    summary="Dispara ingesta FRED + yfinance en background",
+    tags=["datos"],
+    dependencies=[Depends(require_api_key)],
+)
+async def ingest_endpoint(background_tasks: BackgroundTasks) -> IngestResponse:
+    background_tasks.add_task(_run_ingest_pipeline)
+    return IngestResponse(
+        status="started",
+        message="Pipeline de ingesta iniciado en background. Usa GET /health para monitorear.",
+    )
+
+
+async def _run_ingest_pipeline() -> None:
+    from src.db.supabase_client import (
+        get_client, bulk_insert_nodes,
+        fetch_nodes_pending_embedding, bulk_update_embeddings,
+    )
+    from src.extractors.fred import fetch_all as fred_fetch_all
+    from src.extractors.yfinance_extractor import fetch_all as yf_fetch_all
+    from src.embeddings.openai_embedder import embed_nodes
+
+    WORKER_CATEGORIES = [
+        "Macroeconomia", "Mercados", "Mercados Chile", "Mercados LATAM",
+        "Commodities", "Forex Chile", "Riesgo", "Tasas USA",
+    ]
+
+    try:
+        client = get_client()
+        log.info("[ingest] Iniciando FRED...")
+        fred_nodes = await asyncio.to_thread(fred_fetch_all)
+        await asyncio.to_thread(bulk_insert_nodes, client, fred_nodes)
+        log.info("[ingest] FRED OK: %d nodos", len(fred_nodes))
+
+        log.info("[ingest] Iniciando yfinance...")
+        try:
+            yf_nodes = await asyncio.to_thread(yf_fetch_all)
+            await asyncio.to_thread(bulk_insert_nodes, client, yf_nodes)
+            log.info("[ingest] yfinance OK: %d nodos", len(yf_nodes))
+        except Exception as exc:
+            log.warning("[ingest] yfinance rate-limited: %s. Continuando...", exc)
+
+        log.info("[ingest] Generando embeddings pendientes...")
+        pending = await asyncio.to_thread(
+            fetch_nodes_pending_embedding, client, None, WORKER_CATEGORIES
+        )
+        if pending:
+            vectors = await asyncio.to_thread(embed_nodes, pending)
+            updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
+            await asyncio.to_thread(bulk_update_embeddings, client, updates)
+            log.info("[ingest] %d embeddings actualizados.", len(updates))
+
+        log.info("[ingest] Pipeline completado.")
+    except Exception as exc:
+        log.error("[ingest] Error en pipeline: %s", exc, exc_info=True)
+
+
+# ── GET /health ───────────────────────────────────────────────────────────────
+
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+    summary="Estado del sistema BralidusPY",
+    tags=["sistema"],
+)
+async def health_endpoint() -> HealthResponse:
+    services: list[ServiceStatus] = []
+    client = get_db()
+    nodes_total = 0
+    nodes_with_embedding = 0
+
+    # Supabase
+    try:
+        result = (
+            client.table("knowledge_nodes")
+            .select("id, embedding", count="exact")
+            .execute()
+        )
+        nodes_total = result.count or len(result.data or [])
+        nodes_with_embedding = sum(
+            1 for r in (result.data or []) if r.get("embedding") is not None
+        )
+        # Contar edges
+        edges_result = (
+            client.table("knowledge_edges")
+            .select("id", count="exact")
+            .execute()
+        )
+        edge_count = edges_result.count or len(edges_result.data or [])
+        services.append(
+            ServiceStatus(
+                name="supabase",
+                ok=True,
+                detail=f"{nodes_total} nodos, {edge_count} aristas",
+            )
+        )
+    except Exception as exc:
+        services.append(ServiceStatus(name="supabase", ok=False, detail=str(exc)))
+
+    # OpenAI
+    try:
+        from src.config import OPENAI_API_KEY
+        services.append(
+            ServiceStatus(
+                name="openai",
+                ok=bool(OPENAI_API_KEY),
+                detail="key configurada" if OPENAI_API_KEY else "key faltante",
+            )
+        )
+    except Exception as exc:
+        services.append(ServiceStatus(name="openai", ok=False, detail=str(exc)))
+
+    # FRED
+    try:
+        from src.config import FRED_API_KEY
+        services.append(
+            ServiceStatus(
+                name="fred",
+                ok=bool(FRED_API_KEY),
+                detail="key configurada" if FRED_API_KEY else "key faltante",
+            )
+        )
+    except Exception as exc:
+        services.append(ServiceStatus(name="fred", ok=False, detail=str(exc)))
+
+    # Cache
+    c_stats = cache.stats()
+    services.append(
+        ServiceStatus(
+            name="cache",
+            ok=True,
+            detail=f"{c_stats['entries']} entradas, hit_rate={c_stats['hit_rate']}",
+        )
+    )
+
+    # Scheduler
+    try:
+        from api.scheduler import scheduler
+        jobs = scheduler.get_jobs()
+        services.append(
+            ServiceStatus(
+                name="scheduler",
+                ok=scheduler.running,
+                detail=f"{len(jobs)} jobs activos",
+            )
+        )
+    except Exception as exc:
+        services.append(ServiceStatus(name="scheduler", ok=False, detail=str(exc)))
+
+    all_ok = all(s.ok for s in services)
+    status = "ok" if all_ok else ("degraded" if any(s.ok for s in services) else "error")
+
+    return HealthResponse(
+        status=status,
+        services=services,
+        knowledge_nodes_count=nodes_total,
+        nodes_with_embedding=nodes_with_embedding,
+    )

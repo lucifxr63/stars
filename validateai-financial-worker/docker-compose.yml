@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  bralidus-api:
+    build: .
+    container_name: bralidus-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      # Hot-reload en desarrollo: monta código fuente
+      - ./api:/app/api
+      - ./src:/app/src
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # Descomentar para usar Redis como cache en lugar de dict en memoria
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: bralidus-redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+  #   command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru

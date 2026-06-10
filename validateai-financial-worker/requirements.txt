@@ -1,0 +1,27 @@
+# Core
+supabase==2.10.0
+python-dotenv==1.0.1
+
+# HTTP + Resilience
+requests==2.32.3
+tenacity==9.0.0
+
+# Embeddings
+openai>=1.30.0
+
+# Financial data — Fase 1
+yfinance>=1.4.1
+curl_cffi>=0.7         # TLS fingerprinting — activa bypass de rate limit en yfinance
+
+# API server
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+apscheduler>=3.10.0
+
+# Vectores en memoria (fallback cuando RPC no tiene edges)
+numpy>=1.26.0
+
+# Financial data — Phase 3 (OpenBB, instalar bajo demanda)
+# Activación: pip install openbb>=4.3.3 && openbb-build
+# Docs: https://github.com/OpenBB-finance/OpenBB
+# openbb>=4.3.3

@@ -242,10 +242,10 @@ function RadarPreview({ visible }: { visible: boolean }) {
               <div className="flex-1 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${isActive
-                      ? 'bg-[#0EB5C6] animate-pulse'
-                      : isScanned
-                        ? 'bg-[#0EB5C6]/40'
-                        : 'bg-transparent'
+                    ? 'bg-[#0EB5C6] animate-pulse'
+                    : isScanned
+                      ? 'bg-[#0EB5C6]/40'
+                      : 'bg-transparent'
                     }`}
                   style={{ width: isActive ? '65%' : isScanned ? `${30 + i * 8}%` : '0%' }}
                 />
@@ -336,6 +336,7 @@ const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
   basic: { label: 'Validación Básica', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   pro: { label: 'Validación Completa', cls: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   premium: { label: 'Validación Premium', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  admin: { label: 'Validación Admin', cls: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -699,12 +700,12 @@ export function StepGenerating() {
           <div
             key={task.id}
             className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 ${task.status === 'success'
-                ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30'
-                : task.status === 'loading'
-                  ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/30'
-                  : task.status === 'error'
-                    ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30'
-                    : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
+              ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30'
+              : task.status === 'loading'
+                ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/30'
+                : task.status === 'error'
+                  ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30'
+                  : 'bg-white dark:bg-[#12121A] border-gray-100 dark:border-white/5'
               }`}
           >
             {/* Status icon */}
@@ -738,9 +739,9 @@ export function StepGenerating() {
             {/* Label + description */}
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold leading-tight ${task.status === 'success' ? 'text-emerald-700 dark:text-emerald-400' :
-                  task.status === 'loading' ? 'text-indigo-700 dark:text-indigo-300' :
-                    task.status === 'error' ? 'text-red-600 dark:text-red-400' :
-                      'text-gray-400 dark:text-[#afaebb]'
+                task.status === 'loading' ? 'text-indigo-700 dark:text-indigo-300' :
+                  task.status === 'error' ? 'text-red-600 dark:text-red-400' :
+                    'text-gray-400 dark:text-[#afaebb]'
                 }`}>
                 {task.label}
               </p>

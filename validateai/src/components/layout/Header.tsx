@@ -13,6 +13,7 @@ const PREVIEW_COLORS: Record<UserTier, string> = {
   basic:   'bg-sky-900 text-sky-200 border-sky-600',
   pro:     'bg-indigo-900 text-indigo-200 border-indigo-600',
   premium: 'bg-violet-900 text-violet-200 border-violet-600',
+  admin:   'bg-rose-900 text-rose-200 border-rose-600',
 };
 
 export function Header() {

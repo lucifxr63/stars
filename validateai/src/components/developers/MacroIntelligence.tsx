@@ -67,6 +67,97 @@ const SERIES: SeriesConfig[] = [
   },
 ];
 
+// Phase 3A — OpenBB / FRED extendido
+const PHASE3A_SERIES: SeriesConfig[] = [
+  {
+    seriesId:    'UNRATE',
+    title:       'Desempleo USA (Unemployment Rate)',
+    color:       '#FB923C',
+    gradientId:  'gradUNRATE',
+    unit:        '%',
+    shortLabel:  'Desempleo USA',
+    periodsBack: 12,
+  },
+  {
+    seriesId:    'M2SL',
+    title:       'M2 Money Supply USA',
+    color:       '#38BDF8',
+    gradientId:  'gradM2SL',
+    unit:        'mil M USD',
+    shortLabel:  'M2 Supply',
+    periodsBack: 12,
+  },
+  {
+    seriesId:    'T10Y2Y',
+    title:       'Spread Curva 10Y-2Y USA (Indicador Recesion)',
+    color:       '#F87171',
+    gradientId:  'gradT10Y2Y',
+    unit:        '%',
+    shortLabel:  'Yield Spread',
+    periodsBack: 12,
+  },
+  {
+    seriesId:    'BAMLH0A0HYM2',
+    title:       'High Yield Credit Spread (Apetito Riesgo Credito)',
+    color:       '#E879F9',
+    gradientId:  'gradHY',
+    unit:        '%',
+    shortLabel:  'HY Spread',
+    periodsBack: 12,
+  },
+  {
+    seriesId:    'INDPRO',
+    title:       'Produccion Industrial USA (Industrial Production Index)',
+    color:       '#34D399',
+    gradientId:  'gradINDPRO',
+    unit:        'idx',
+    shortLabel:  'Prod. Industrial',
+    periodsBack: 12,
+  },
+  {
+    seriesId:    'DEXCHUS',
+    title:       'USD/CNY (Tipo de Cambio Yuan)',
+    color:       '#A78BFA',
+    gradientId:  'gradCNY',
+    unit:        'CNY/USD',
+    shortLabel:  'USD/CNY',
+    periodsBack: 12,
+  },
+];
+
+// Phase 3B — EconDB / Chile Macro
+const PHASE3B_SERIES: SeriesConfig[] = [
+  {
+    seriesId:    'URATE_CL',
+    title:       'Desempleo Chile (% fuerza laboral)',
+    color:       '#FCD34D',
+    gradientId:  'gradURATECL',
+    unit:        '%',
+    shortLabel:  'Desempleo Chile',
+    periodsBack: 12,
+  },
+  {
+    seriesId:    'NIIP_CL',
+    title:       'Posicion de Inversion Internacional Chile (NIIP)',
+    color:       '#6EE7B7',
+    gradientId:  'gradNIIP',
+    unit:        'M USD',
+    shortLabel:  'NIIP Chile',
+    periodsBack: 4,
+  },
+  {
+    seriesId:    'CPI_CL',
+    title:       'Inflacion Chile (CPI Indice Precios Consumidor)',
+    color:       '#FDA4AF',
+    gradientId:  'gradCPICL',
+    unit:        'índice',
+    shortLabel:  'IPC Chile',
+    periodsBack: 12,
+  },
+];
+
+const ALL_SERIES = [...SERIES, ...PHASE3A_SERIES, ...PHASE3B_SERIES];
+
 const tooltipStyle = {
   backgroundColor: '#12121A',
   border: '1px solid rgba(255,255,255,0.08)',
@@ -120,12 +211,16 @@ export function MacroIntelligence() {
     const { data, error } = await supabase
       .from('knowledge_nodes')
       .select('document_title, metadata')
-      .eq('category', 'Macroeconomia');
+      .in('category', [
+        'Macroeconomia',
+        'Empleo USA', 'Liquidez Global', 'Riesgo Macro', 'Riesgo Credito',
+        'Ciclo Industrial', 'Forex Global', 'Chile Macro',
+      ]);
 
     if (!error && data) {
       const map = new Map<string, KnowledgeNode>();
       for (const row of data as KnowledgeNode[]) {
-        const cfg = SERIES.find(s => s.title === row.document_title);
+        const cfg = ALL_SERIES.find(s => s.title === row.document_title);
         if (cfg) map.set(cfg.seriesId, row);
       }
       setNodes(map);
@@ -151,7 +246,7 @@ export function MacroIntelligence() {
               Financial Intelligence
             </h2>
             <p className="text-[10px] text-gray-400 dark:text-[#8B8AA0]">
-              BralidusPY · FRED / Federal Reserve Bank of St. Louis
+              BralidusPY · FRED + OpenBB Phase 3 · Federal Reserve / EconDB
             </p>
           </div>
         </div>
@@ -293,6 +388,165 @@ export function MacroIntelligence() {
             </div>
           );
         })}
+      </div>
+
+      {/* Phase 3A — Indicadores Avanzados USA */}
+      <div>
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#8B8AA0]">
+            Indicadores Avanzados USA
+          </span>
+          <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
+          <span className="text-[10px] text-teal-500 border border-teal-500/30 rounded-full px-2 py-0.5 font-bold">
+            OpenBB Phase 3A
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {PHASE3A_SERIES.map(cfg => {
+            const node  = nodes.get(cfg.seriesId);
+            const meta  = node?.metadata;
+            const trend = meta ? computeTrend(meta.observaciones, cfg.periodsBack) : null;
+            const pts   = chartPoints(node, 18);
+            return (
+              <div
+                key={cfg.seriesId}
+                className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-3 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
+                    {cfg.shortLabel}
+                  </span>
+                  {meta?.url_fuente && (
+                    <a href={meta.url_fuente} target="_blank" rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-teal-400 transition" aria-label={cfg.shortLabel}>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+                {loading ? (
+                  <div className="h-5 w-16 bg-gray-100 dark:bg-white/5 rounded animate-pulse mb-1" />
+                ) : (
+                  <p className="text-sm font-black text-gray-900 dark:text-[#F0EFF8] tabular-nums leading-none">
+                    {formatValue(meta?.ultimo_valor ?? null, cfg.unit)}
+                    <span className="text-[9px] font-normal text-gray-400 ml-1">{cfg.unit}</span>
+                  </p>
+                )}
+                {!loading && trend !== null && (
+                  <div className={`flex items-center gap-0.5 text-[10px] font-semibold mt-1 ${
+                    trend > 0.5 ? 'text-emerald-500' : trend < -0.5 ? 'text-red-400' : 'text-gray-400'
+                  }`}>
+                    {trend > 0.5 ? <TrendingUp className="w-2.5 h-2.5" /> : trend < -0.5 ? <TrendingDown className="w-2.5 h-2.5" /> : <Minus className="w-2.5 h-2.5" />}
+                    {Math.abs(trend).toFixed(1)}%
+                  </div>
+                )}
+                {!loading && pts.length > 0 && (
+                  <div className="mt-2">
+                    <ResponsiveContainer width="100%" height={52}>
+                      <AreaChart data={pts} margin={{ top: 1, right: 0, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id={cfg.gradientId} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor={cfg.color} stopOpacity={0.3} />
+                            <stop offset="95%" stopColor={cfg.color} stopOpacity={0}   />
+                          </linearGradient>
+                        </defs>
+                        <YAxis hide domain={['auto', 'auto']} />
+                        <Tooltip
+                          contentStyle={tooltipStyle}
+                          itemStyle={{ color: '#F0EFF8' }}
+                          labelStyle={{ color: '#8B8AA0', marginBottom: 4 }}
+                          formatter={(v) => [`${(v as number).toFixed(2)} ${cfg.unit}`, cfg.shortLabel]}
+                        />
+                        <Area type="monotone" dataKey="value" stroke={cfg.color} strokeWidth={1.5}
+                          fill={`url(#${cfg.gradientId})`} dot={false} connectNulls />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Phase 3B — Chile Macro */}
+      <div>
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#8B8AA0]">
+            Chile Macro
+          </span>
+          <div className="flex-1 h-px bg-gray-100 dark:bg-white/5" />
+          <span className="text-[10px] text-amber-500 border border-amber-500/30 rounded-full px-2 py-0.5 font-bold">
+            OpenBB Phase 3B · EconDB
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {PHASE3B_SERIES.map(cfg => {
+            const node  = nodes.get(cfg.seriesId);
+            const meta  = node?.metadata;
+            const trend = meta ? computeTrend(meta.observaciones, cfg.periodsBack) : null;
+            const pts   = chartPoints(node, 24);
+            return (
+              <div
+                key={cfg.seriesId}
+                className="bg-white dark:bg-[#12121A] rounded-xl border border-gray-100 dark:border-white/5 p-3.5 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
+                    {cfg.shortLabel}
+                  </span>
+                  {meta?.url_fuente && (
+                    <a href={meta.url_fuente} target="_blank" rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-teal-400 transition">
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+                {loading ? (
+                  <div className="h-5 w-20 bg-gray-100 dark:bg-white/5 rounded animate-pulse mb-1" />
+                ) : (
+                  <p className="text-base font-black text-gray-900 dark:text-[#F0EFF8] tabular-nums leading-none">
+                    {formatValue(meta?.ultimo_valor ?? null, cfg.unit)}
+                    <span className="text-[10px] font-normal text-gray-400 ml-1">{cfg.unit}</span>
+                  </p>
+                )}
+                <p className="text-[10px] text-gray-400 dark:text-[#8B8AA0] mt-1 mb-2">
+                  {meta?.ultima_fecha ?? '—'} · mensual
+                </p>
+                {!loading && trend !== null && (
+                  <div className={`flex items-center gap-1 text-[10px] font-semibold mb-2 ${
+                    trend > 0.5 ? 'text-emerald-500' : trend < -0.5 ? 'text-red-400' : 'text-gray-400'
+                  }`}>
+                    {trend > 0.5 ? <TrendingUp className="w-3 h-3" /> : trend < -0.5 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                    {Math.abs(trend).toFixed(1)}% vs año anterior
+                  </div>
+                )}
+                {!loading && pts.length > 0 && (
+                  <ResponsiveContainer width="100%" height={70}>
+                    <AreaChart data={pts} margin={{ top: 1, right: 0, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id={cfg.gradientId} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor={cfg.color} stopOpacity={0.28} />
+                          <stop offset="95%" stopColor={cfg.color} stopOpacity={0}    />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="date" tick={{ fontSize: 8, fill: '#8B8AA0' }} axisLine={false}
+                        tickLine={false} tickFormatter={v => (v as string).slice(2, 7)} interval="preserveStartEnd" />
+                      <YAxis hide domain={['auto', 'auto']} />
+                      <Tooltip
+                        contentStyle={tooltipStyle}
+                        itemStyle={{ color: '#F0EFF8' }}
+                        labelStyle={{ color: '#8B8AA0', marginBottom: 4 }}
+                        formatter={(v) => [`${(v as number).toFixed(2)} ${cfg.unit}`, cfg.shortLabel]}
+                      />
+                      <Area type="monotone" dataKey="value" stroke={cfg.color} strokeWidth={1.5}
+                        fill={`url(#${cfg.gradientId})`} dot={false} connectNulls />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Correlación Macro <-> PYME */}

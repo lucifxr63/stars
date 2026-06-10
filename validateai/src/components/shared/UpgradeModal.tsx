@@ -45,6 +45,7 @@ export const TIER_INFO: Record<UserTier, { label: string; price: string; color: 
   basic: { label: 'Basic', price: '$9.990 CLP/mes', color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-500/10' },
   pro: { label: 'Pro', price: '$20.000 CLP/mes', color: 'text-[#0EB5C6]', bg: 'bg-[#0EB5C6]/10' },
   premium: { label: 'Premium', price: '$50.000 CLP/mes', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10' },
+  admin:   { label: 'Admin',   price: 'Interno',        color: 'text-rose-600 dark:text-rose-400',   bg: 'bg-rose-50 dark:bg-rose-500/10' },
 };
 
 export function reasonText(detail: PaywallHitDetail): string {
