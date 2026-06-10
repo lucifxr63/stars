@@ -1,26 +1,27 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export type UserTier = 'free' | 'basic' | 'pro' | 'premium';
+export type UserTier = 'free' | 'basic' | 'pro' | 'premium' | 'admin';
 
 export const TIER_SECTIONS = {
   free:    ['score', 'breakdown', 'questions', 'nextSteps'],
   basic:   ['score', 'breakdown', 'questions', 'nextSteps', 'competitiveAnalysis', 'valueProposition', 'client'],
   pro:     'all',
   premium: 'all',
+  admin:   'all',
 } as const;
 
 export const ALL_SECTIONS = ['score', 'breakdown', 'questions', 'client', 'valueProposition', 'mvp', 'swot', 'nextSteps', 'risks', 'unitEconomics', 'founderFit', 'marketSizing', 'competitiveAnalysis', 'governance', 'fundraising'];
 
 export function getUserSections(tier: UserTier): string[] {
-  if (tier === 'pro' || tier === 'premium') return ALL_SECTIONS;
+  if (tier === 'pro' || tier === 'premium' || tier === 'admin') return ALL_SECTIONS;
   return [...TIER_SECTIONS[tier]];
 }
 
 // ── Preview override (admin only) ────────────────────────────────────────────
 const PREVIEW_TIER_KEY = 'validateai_preview_tier';
 const PREVIEW_EVENT    = 'validateai:tier-preview';
-const VALID_TIERS      = ['free', 'basic', 'pro', 'premium'] as const;
+const VALID_TIERS      = ['free', 'basic', 'pro', 'premium', 'admin'] as const;
 
 export function getPreviewTier(): UserTier | null {
   const v = localStorage.getItem(PREVIEW_TIER_KEY);
@@ -83,7 +84,7 @@ export function useUserTier() {
     return () => window.removeEventListener(PREVIEW_EVENT, onPreview);
   }, []);
 
-  const isPro = tier === 'pro' || tier === 'premium';
-  const isPremium = tier === 'premium';
+  const isPro = tier === 'pro' || tier === 'premium' || tier === 'admin';
+  const isPremium = tier === 'premium' || tier === 'admin';
   return { tier, loading, isPro, isPremium };
 }

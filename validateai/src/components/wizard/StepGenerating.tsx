@@ -340,6 +340,7 @@ const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
   basic:   { label: 'Validación Básica',   cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   pro:     { label: 'Validación Completa', cls: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   premium: { label: 'Validación Premium',  cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  admin:   { label: 'Validación Admin',    cls: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
 };
 
 // ── Main component ────────────────────────────────────────────────────────────

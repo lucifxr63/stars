@@ -7,4 +7,5 @@ export const TIER_LIMITS: Record<UserTier, { total: number; expensive: number }>
   basic:   { total: 15,  expensive: 5   },
   pro:     { total: 50,  expensive: 50  },
   premium: { total: 999, expensive: 999 },
+  admin:   { total: 999, expensive: 999 },
 };
