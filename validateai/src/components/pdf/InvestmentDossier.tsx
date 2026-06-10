@@ -863,9 +863,9 @@ function AdvancedRiskPage({ data }: { data: PDFData }) {
             <MetricRow label="NRR (Net Revenue Retention)" value={nrrVal}
               highlight={ce?.nrr_pct !== undefined && ce.nrr_pct < 100} />
             <MetricRow label="Gross Churn mensual" value={churnVal}
-              highlight={ue !== undefined && ue.monthlyChurnEstimate > 5} />
+              highlight={ue != null && ue.monthlyChurnEstimate > 5} />
             <MetricRow label="LTV/CAC Ratio" value={ltvCacVal}
-              highlight={ue !== undefined && ue.ltvCacRatio.value < 3} />
+              highlight={ue != null && ue.ltvCacRatio.value < 3} />
             {ue && (
               <MetricRow
                 label="Estado LTV/CAC"
