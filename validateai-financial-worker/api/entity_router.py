@@ -76,11 +76,66 @@ ENTITY_GROUPS: dict[str, list[str]] = {
     ],
 
     # ── Phase 3B: OpenBB / World Bank Chile ──────────────────────────────────
-    # Activo tras: openbb economy.indicators con World Bank provider
     "chile_macro": [
         "PIB per Capita Chile (USD corrientes)",
         "Desempleo Chile (% fuerza laboral)",
         "Inversion Extranjera Directa Chile (% PIB)",
+    ],
+
+    # ── Familia A — Sprint 1: Unit Economics ─────────────────────────────────
+    # Nodos de due diligence financiero. Activados en seed/series_a y por
+    # industrias que requieren justificar unit economics ante VCs.
+    "unit_economics": [
+        "CAC — Costo de Adquisición de Cliente",
+        "LTV — Lifetime Value del Cliente",
+        "Benchmark LTV:CAC > 3:1",
+        "Benchmark Payback < 12 meses",
+    ],
+
+    # ── Familia A — Sprint 2: Compliance Fintech (Ley 21.521) ────────────────
+    # Activado cuando la industria es fintech, credito o insurtech.
+    "compliance_fintech": [
+        "Ley Fintech 21.521 — Registro CMF de Prestadores",
+        "Ley Fintech 21.521 — Sistema de Finanzas Abiertas (SFA)",
+    ],
+
+    # ── Familia A — Sprint 2: Compliance Datos (Ley 21.719) ──────────────────
+    # Activado para cualquier startup que use datos de usuarios o pauta digital.
+    "compliance_datos": [
+        "Ley 21.719 — Gestión de Consentimiento",
+        "Ley 21.719 — Estándar GDPR Chile",
+    ],
+
+    # ── Familia A — Sprint 2: Gobernanza Cap Table ────────────────────────────
+    # Activado en etapas early-stage para alertar sobre vesting/SpA.
+    "gobernanza_core": [
+        "Estructura SpA (Sociedad por Acciones)",
+        "Vesting y Cliff — Retención de Fundadores",
+    ],
+
+    # ── Familia A — Sprint 3: Tracción TRL/CRL ───────────────────────────────
+    # Activado en pre_seed y seed para cruzar madurez tecnológica/comercial.
+    "trl_crl": [
+        "TRL — Technology Readiness Level",
+        "CRL — Commercial Readiness Level",
+    ],
+
+    # ── Familia A — Sprint 3: Fundraising Corfo (solo geo chile) ─────────────
+    "fundraising_chile": [
+        "Corfo Semilla Inicia — Requisitos de Postulación",
+        "Corfo Semilla Expande — Requisitos de Postulación",
+    ],
+
+    # ── Familia A — Sprint 3: Moat Competitivo ───────────────────────────────
+    # Activado para plataformas, SaaS y marketplaces.
+    "moat_estrategia": [
+        "Network Effects — Efecto de Red",
+        "Blue Ocean Strategy — Value Innovation",
+    ],
+
+    # ── Familia A — Sprint 3: GTM LatAm ──────────────────────────────────────
+    "gtm_latam": [
+        "WhatsApp-first GTM — Adopción Conversacional LatAm",
     ],
 }
 
@@ -89,14 +144,20 @@ ENTITY_GROUPS: dict[str, list[str]] = {
 
 INDUSTRY_ROUTING: dict[str, list[str]] = {
     # ── Finanzas / Capital ────────────────────────────────────────────────────
-    "fintech":      ["macro_base", "tasas_usa", "riesgo", "mercados", "empleo_usa", "liquidez_global", "riesgo_macro"],
-    "credito":      ["macro_base", "tasas_usa", "riesgo", "empleo_usa", "riesgo_macro"],
-    "insurtech":    ["macro_base", "tasas_usa", "riesgo", "riesgo_macro"],
+    "fintech":      ["macro_base", "tasas_usa", "riesgo", "mercados", "empleo_usa", "liquidez_global", "riesgo_macro",
+                     "compliance_fintech", "compliance_datos", "unit_economics"],
+    "credito":      ["macro_base", "tasas_usa", "riesgo", "empleo_usa", "riesgo_macro",
+                     "compliance_fintech", "compliance_datos", "unit_economics"],
+    "insurtech":    ["macro_base", "tasas_usa", "riesgo", "riesgo_macro",
+                     "compliance_datos", "unit_economics"],
 
     # ── Software / Tech ───────────────────────────────────────────────────────
-    "saas":         ["macro_base", "mercados", "tasas_usa", "riesgo", "forex_chile", "liquidez_global", "riesgo_macro"],
-    "b2b_saas":     ["macro_base", "mercados", "tasas_usa", "forex_chile", "liquidez_global"],
-    "b2c":          ["macro_base", "mercados_chile", "forex_chile", "empleo_usa", "chile_macro"],
+    "saas":         ["macro_base", "mercados", "tasas_usa", "riesgo", "forex_chile", "liquidez_global", "riesgo_macro",
+                     "unit_economics", "moat_estrategia"],
+    "b2b_saas":     ["macro_base", "mercados", "tasas_usa", "forex_chile", "liquidez_global",
+                     "unit_economics"],
+    "b2c":          ["macro_base", "mercados_chile", "forex_chile", "empleo_usa", "chile_macro",
+                     "compliance_datos", "gtm_latam", "unit_economics"],
 
     # ── Comercio / Retail ─────────────────────────────────────────────────────
     "ecommerce":    ["macro_base", "forex_chile", "mercados_chile", "empleo_usa", "chile_macro"],
@@ -140,18 +201,22 @@ INDUSTRY_ROUTING: dict[str, list[str]] = {
 # Startups early-stage priorizan riesgo/capital; growth priorizan expansión
 
 STAGE_MODIFIER: dict[str, list[str]] = {
-    "pre_seed": ["riesgo", "riesgo_macro"],
-    "seed":     ["riesgo", "tasas_usa", "liquidez_global", "riesgo_macro"],
-    "series_a": ["mercados", "riesgo", "liquidez_global"],
-    "growth":   ["mercados", "mercados_latam", "ciclo_industrial"],
+    "pre_seed": ["riesgo", "riesgo_macro",
+                 "trl_crl", "gobernanza_core"],
+    "seed":     ["riesgo", "tasas_usa", "liquidez_global", "riesgo_macro",
+                 "unit_economics", "gobernanza_core", "trl_crl"],
+    "series_a": ["mercados", "riesgo", "liquidez_global",
+                 "unit_economics", "moat_estrategia"],
+    "growth":   ["mercados", "mercados_latam", "ciclo_industrial",
+                 "moat_estrategia"],
     "ipo":      ["mercados", "mercados_chile", "mercados_latam", "riesgo_macro"],
 }
 
 # ── Modificadores por geografía ───────────────────────────────────────────────
 
 GEO_MODIFIER: dict[str, list[str]] = {
-    "chile":   ["mercados_chile", "forex_chile", "chile_macro"],
-    "latam":   ["mercados_latam", "mercados_chile", "forex_global"],
+    "chile":   ["mercados_chile", "forex_chile", "chile_macro", "fundraising_chile"],
+    "latam":   ["mercados_latam", "mercados_chile", "forex_global", "gtm_latam"],
     "usa":     ["mercados", "macro_base", "empleo_usa"],
     "global":  ["mercados", "mercados_latam", "forex_global"],
 }

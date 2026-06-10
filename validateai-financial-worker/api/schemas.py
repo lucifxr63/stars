@@ -43,7 +43,7 @@ class QueryRequest(BaseModel):
         None,
         description="Si se provee, activa el routing dinámico de entidades. Sin contexto, usa solo vector search.",
     )
-    top_k: int = Field(6, ge=1, le=20, description="Máximo de nodos a retornar del GraphRAG.")
+    top_k: int = Field(6, ge=1, le=50, description="Máximo de nodos a retornar del GraphRAG.")
     match_threshold: float = Field(
         0.40,
         ge=0.0,
