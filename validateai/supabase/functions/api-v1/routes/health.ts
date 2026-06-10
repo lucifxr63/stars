@@ -11,6 +11,7 @@ const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')
 const FRED_API_KEY = Deno.env.get('FRED_API_KEY')
 const BDE_USER = Deno.env.get('BDE_USER')
 const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY')
+const BRALIDUS_URL = Deno.env.get('BRALIDUS_URL') ?? 'https://braliduspy-production.up.railway.app'
 
 type ServiceStatus = 'ok' | 'degraded' | 'error' | 'unused'
 
@@ -173,22 +174,46 @@ export const servicesHealthHandler = async (c: any) => {
         : 'Sin datos — ejecutar: py main.py',
   })
 
-  // BralidusPY Worker — KG total + embeddings
+  // BralidusPY — ping directo a Railway + KG stats
+  const bralidusT0 = Date.now()
+  let bralidusStatus: ServiceStatus = 'error'
+  let bralidusMsg = 'No responde'
+  let bralidusLatency: number | undefined
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (BRALIDUS_API_KEY) headers['Authorization'] = `Bearer ${BRALIDUS_API_KEY}`
+    const br = await fetch(`${BRALIDUS_URL}/health`, {
+      headers,
+      signal: AbortSignal.timeout(5000),
+    })
+    bralidusLatency = Date.now() - bralidusT0
+    if (br.ok) {
+      const bj = await br.json() as Record<string, unknown>
+      const uptime = typeof bj.uptime_seconds === 'number' ? Math.round(bj.uptime_seconds / 3600) : null
+      bralidusStatus = 'ok'
+      bralidusMsg = uptime !== null ? `Online · uptime ${uptime}h · Railway` : 'Online · Railway'
+    } else {
+      bralidusStatus = 'degraded'
+      bralidusMsg = `HTTP ${br.status} · Railway`
+    }
+  } catch (e) {
+    bralidusLatency = Date.now() - bralidusT0
+    bralidusMsg = `Timeout / offline · ${BRALIDUS_URL}`
+  }
   const [{ count: kgTotal }, { data: embNodes }] = await Promise.all([
     supabase.from('knowledge_nodes').select('id', { count: 'exact', head: true }),
     supabase.from('knowledge_nodes').select('id').not('embedding', 'is', null).limit(10),
   ])
   const embCount = embNodes?.length ?? 0
   const totalNodes = kgTotal ?? 0
+  if (bralidusStatus === 'ok') bralidusMsg += ` · ${totalNodes} nodos KG`
   services.push({
     id: 'braliduspy',
-    name: 'BralidusPY (Worker)',
+    name: 'BralidusPY (Railway)',
     category: 'macro',
-    status: embCount >= 3 ? 'ok' : embCount > 0 ? 'degraded' : 'unused',
-    message: embCount >= 3
-      ? `${totalNodes} nodos KG · ${embCount} embeddings activos`
-      : embCount > 0 ? `${embCount} embeddings — worker incompleto`
-      : 'Sin embeddings — ejecutar: py main.py',
+    status: bralidusStatus,
+    latency_ms: bralidusLatency,
+    message: bralidusMsg,
   })
 
   // yfinance — knowledge_nodes con category='Mercado de Valores'
