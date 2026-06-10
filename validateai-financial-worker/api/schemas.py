@@ -83,6 +83,64 @@ class QueryResponse(BaseModel):
     vector_hits: int
 
 
+# ── MoE Query endpoint ───────────────────────────────────────────────────────
+
+class ExpertActivation(BaseModel):
+    expert_id: str = Field(..., description="ID del experto activado (macro, legal, unit_economics, ...)")
+    expert_name: str
+    score: float = Field(..., description="Score normalizado del GatingNetwork (0–1).")
+    entities_contributed: int = Field(..., description="Número de títulos aportados por este experto.")
+
+
+class MoEQueryRequest(BaseModel):
+    query: str = Field(
+        ...,
+        min_length=5,
+        description="Pregunta o contexto de la validación.",
+        examples=["¿Nuestro CAC de $8 viola la Ley 21.719 de datos?"],
+    )
+    startup_context: StartupContext | None = Field(
+        None,
+        description="Si se provee, activa el context boost del GatingNetwork.",
+    )
+    top_k: int = Field(6, ge=1, le=50, description="Máximo de nodos a retornar del GraphRAG.")
+    match_threshold: float = Field(
+        0.40,
+        ge=0.0,
+        le=1.0,
+        description="Umbral mínimo de similitud coseno para matches vectoriales.",
+    )
+    max_experts: int = Field(
+        2,
+        ge=1,
+        le=5,
+        description="Máximo de Experts que pueden activarse simultáneamente.",
+    )
+    entity_override: list[str] | None = Field(
+        None,
+        description="Sobreescribe el routing MoE: usa estos document_titles directamente.",
+    )
+
+
+class MoEQueryResponse(BaseModel):
+    query: str
+    experts_activated: list[ExpertActivation]
+    routing_method: str = Field(
+        ...,
+        description="keyword | semantic | keyword+context | fallback",
+    )
+    routing_reason: str = Field(
+        ...,
+        description="Traza completa del GatingNetwork: scores, método, expertos.",
+    )
+    entities_activated: list[str]
+    nodes: list[NodeResult]
+    context_for_llm: str
+    total_hits: int
+    graph_hits: int
+    vector_hits: int
+
+
 # ── Entities endpoint ─────────────────────────────────────────────────────────
 
 class EntitySummary(BaseModel):

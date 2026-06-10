@@ -22,11 +22,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.schemas import (
     QueryRequest, QueryResponse, NodeResult,
+    MoEQueryRequest, MoEQueryResponse, ExpertActivation,
     EntitiesResponse, EntitySummary,
     IngestResponse,
     HealthResponse, ServiceStatus,
 )
 from api.entity_router import route as route_entities
+from api.moe_router import gating_network
+from api.experts import EXPERTS
+from api.radar.signal_cache import signal_cache
 from api.auth import require_api_key
 from api import rag, cache
 
@@ -200,6 +204,205 @@ async def query_endpoint(req: QueryRequest) -> QueryResponse:
         graph_hits=graph_hits,
         vector_hits=vector_hits,
     )
+
+
+# ── POST /query/moe ───────────────────────────────────────────────────────────
+
+@app.post(
+    "/query/moe",
+    response_model=MoEQueryResponse,
+    summary="RAG con Mixture of Experts — GatingNetwork de 2 etapas",
+    tags=["rag"],
+    dependencies=[Depends(require_api_key)],
+)
+async def query_moe_endpoint(
+    req: MoEQueryRequest,
+    background_tasks: BackgroundTasks,
+) -> MoEQueryResponse:
+    """
+    Flujo MoE:
+
+    1. **GatingNetwork**: keyword-scan → (semantic fallback si ambiguo) → context boost
+    2. **Embed**: query → vector[1536] con cache LRU
+    3. **GraphRAG**: search_hybrid_graphrag sobre el sub-grafo del Expert activo
+    4. **Enriquecimiento** + ensamblado de contexto Markdown multi-experto
+    5. **Audit log**: routing_reason persistido en moe_routing_log (background, non-blocking)
+
+    El endpoint /query original permanece activo para backward compatibility.
+    """
+    client = get_db()
+
+    # ── 1. GatingNetwork routing ──────────────────────────────────────────────
+    if req.entity_override:
+        entities = req.entity_override
+        routing_method = "override"
+        routing_reason = f"override manual: {len(entities)} entidades"
+        expert_activations: list[ExpertActivation] = []
+    else:
+        ctx = req.startup_context
+        # Radar Forense: inyectar señales activas en el GatingNetwork
+        radar_ctx = signal_cache.get_active(client)
+
+        moe_result = gating_network.route(
+            query=req.query,
+            industry=ctx.industry if ctx else None,
+            stage=ctx.stage if ctx else None,
+            geography=ctx.geography if ctx else "chile",
+            top_n=req.max_experts,
+            embedding_fn=rag.embed_text,
+            radar_signals=radar_ctx if radar_ctx else None,
+        )
+        entities = moe_result.entities
+        routing_method = moe_result.routing_method
+        routing_reason = moe_result.routing_reason
+
+        expert_activations = [
+            ExpertActivation(
+                expert_id=eid,
+                expert_name=EXPERTS[eid].name,
+                score=round(moe_result.expert_scores.get(eid, 0.0), 4),
+                entities_contributed=len(EXPERTS[eid].entity_titles),
+            )
+            for eid in moe_result.experts_activated
+            if eid in EXPERTS
+        ]
+
+    log.info(
+        "[moe] routing_method=%s experts=%s reason=%s",
+        routing_method,
+        [e.expert_id for e in expert_activations],
+        routing_reason[:200],
+    )
+
+    # ── 2. Embedding con cache LRU ────────────────────────────────────────────
+    cached_vec = cache.get(req.query)
+    if cached_vec is not None:
+        embedding = cached_vec
+    else:
+        try:
+            embedding = await asyncio.to_thread(rag.embed_text, req.query)
+            cache.set(req.query, embedding)
+        except Exception as exc:
+            log.error("[moe] Error embeddeando query: %s", exc)
+            raise HTTPException(status_code=503, detail=f"Error al generar embedding: {exc}")
+
+    # ── 3. GraphRAG search ────────────────────────────────────────────────────
+    raw_nodes = await asyncio.to_thread(
+        rag.search,
+        client,
+        embedding,
+        entities,
+        req.match_threshold,
+        req.top_k,
+    )
+
+    # ── 4. Enriquecer + ensamblar contexto ────────────────────────────────────
+    enriched = await asyncio.to_thread(rag.enrich_nodes_with_metadata, client, raw_nodes)
+    context = rag.assemble_context(enriched)
+
+    node_results = [
+        NodeResult(
+            source_type=n.get("source_type", "VECTOR"),
+            document_title=n["document_title"],
+            category=n.get("category"),
+            content=n["content"],
+            relevance=round(float(n.get("relevance", 0)), 4),
+            metadata=n.get("metadata"),
+        )
+        for n in enriched
+    ]
+
+    graph_hits = sum(1 for n in node_results if n.source_type == "GRAPH")
+    vector_hits = sum(1 for n in node_results if n.source_type == "VECTOR")
+
+    # ── 5. Audit log (non-blocking) ───────────────────────────────────────────
+    background_tasks.add_task(
+        _log_moe_routing,
+        client=client,
+        query=req.query,
+        routing_method=routing_method,
+        routing_reason=routing_reason,
+        experts_activated=[e.expert_id for e in expert_activations],
+        graph_hits=graph_hits,
+        vector_hits=vector_hits,
+        total_hits=len(node_results),
+    )
+
+    return MoEQueryResponse(
+        query=req.query,
+        experts_activated=expert_activations,
+        routing_method=routing_method,
+        routing_reason=routing_reason,
+        entities_activated=entities,
+        nodes=node_results,
+        context_for_llm=context,
+        total_hits=len(node_results),
+        graph_hits=graph_hits,
+        vector_hits=vector_hits,
+    )
+
+
+@app.get(
+    "/radar/signals",
+    summary="Señales activas del Radar Forense",
+    tags=["radar"],
+)
+async def radar_signals_endpoint() -> dict:
+    """
+    Retorna las señales de mercado actualmente en cache.
+    Útil para monitoreo operacional sin necesidad de abrir Supabase Studio.
+    No requiere autenticación — datos de mercado, no datos de usuario.
+    """
+    client = get_db()
+    signals = signal_cache.get_active(client)
+    return {
+        "total": len(signals),
+        "signals": [
+            {
+                "sector": s.sector,
+                "signal_type": s.signal_type,
+                "severity": s.severity,
+                "headline": s.headline_preview[:100],
+                "source": s.source,
+                "classified_by": s.classified_by,
+                "affects": s.affected_industries,
+                "expires_at": s.expires_at.isoformat() if s.expires_at else None,
+            }
+            for s in signals
+        ],
+    }
+
+
+async def _log_moe_routing(
+    *,
+    client,
+    query: str,
+    routing_method: str,
+    routing_reason: str,
+    experts_activated: list[str],
+    graph_hits: int,
+    vector_hits: int,
+    total_hits: int,
+) -> None:
+    """
+    Persiste el routing del GatingNetwork en moe_routing_log para análisis
+    de calidad y refinamiento de match_threshold por los analistas.
+
+    Non-blocking: falla silenciosamente si la tabla no existe todavía
+    (aplicar migración sprint_moe4.sql antes de mover tráfico a producción).
+    """
+    try:
+        client.table("moe_routing_log").insert({
+            "query_preview": query[:300],
+            "routing_method": routing_method,
+            "routing_reason": routing_reason,
+            "experts_activated": experts_activated,
+            "graph_hits": graph_hits,
+            "vector_hits": vector_hits,
+            "total_hits": total_hits,
+        }).execute()
+    except Exception as exc:
+        log.debug("[moe] audit log skipped (tabla no existe aún): %s", exc)
 
 
 # ── GET /entities ─────────────────────────────────────────────────────────────

@@ -21,6 +21,10 @@ apscheduler>=3.10.0
 # Vectores en memoria (fallback cuando RPC no tiene edges)
 numpy>=1.26.0
 
+# Radar Forense — Sprint MoE-8
+feedparser>=6.0.10           # Parseo de feeds RSS/Atom (Diario Financiero, Emol)
+anthropic>=0.34.0            # Claude Haiku fallback para clasificación de señales
+
 # Financial data — Phase 3 (OpenBB, instalar bajo demanda)
 # Activación: pip install openbb>=4.3.3 && openbb-build
 # Docs: https://github.com/OpenBB-finance/OpenBB
