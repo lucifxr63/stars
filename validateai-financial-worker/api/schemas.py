@@ -164,6 +164,39 @@ class IngestResponse(BaseModel):
     message: str
 
 
+# ── Radar feedback endpoint ──────────────────────────────────────────────────
+
+class RateSignalRequest(BaseModel):
+    rating: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="Calificación de relevancia: 1=ruido total, 3=neutral, 5=muy relevante.",
+    )
+    is_false_positive: bool | None = Field(
+        None,
+        description="True si la señal no corresponde a un evento real o fue mal clasificada.",
+    )
+    notes: str | None = Field(
+        None,
+        max_length=500,
+        description="Comentario opcional del analista (qué faltó, qué fue incorrecto, etc.).",
+    )
+    rated_by: str | None = Field(
+        None,
+        max_length=100,
+        description="Identificador del analista (email o alias). Opcional.",
+    )
+
+
+class RateSignalResponse(BaseModel):
+    id: str
+    analyst_rating: int
+    is_false_positive: bool | None
+    rated_at: str
+    rated_by: str | None
+
+
 # ── Health endpoint ───────────────────────────────────────────────────────────
 
 class ServiceStatus(BaseModel):

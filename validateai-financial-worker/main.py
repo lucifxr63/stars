@@ -113,11 +113,112 @@ def run() -> None:
         total_nodes += len(openbb_nodes)
         total_inserted += inserted_ob
 
+    # ── Paso 5: Sprint 1 — CMF Hechos Esenciales ─────────────────────────
+    # Mercado Público es ingestado por proceso externo — no se ejecuta aquí.
+    cmf_nodes: list = []
+    inserted_cmf = 0
+    if _os.getenv("CMF_BEST_KEY"):
+        print("\n[5/5] Sprint 1 — CMF Hechos Esenciales...")
+        try:
+            from src.extractors.cmf_extractor import fetch_all_as_nodes as cmf_nodes_fetch
+            cmf_nodes = cmf_nodes_fetch()
+            inserted_cmf = bulk_insert_nodes(client, cmf_nodes)
+            print(f"      OK {inserted_cmf}/{len(cmf_nodes)} HEs CMF upserted")
+
+            if cmf_nodes:
+                print("      Generando embeddings CMF...")
+                pending_cmf = fetch_nodes_pending_embedding(client, category="Regulatorio CMF")
+                if pending_cmf:
+                    vectors_cmf = embed_nodes(pending_cmf)
+                    updates_cmf = [
+                        {"id": n["id"], "embedding": v}
+                        for n, v in zip(pending_cmf, vectors_cmf)
+                    ]
+                    updated_cmf = bulk_update_embeddings(client, updates_cmf)
+                    print(f"      OK {updated_cmf}/{len(pending_cmf)} embeddings CMF actualizados\n")
+                else:
+                    print("      -- embeddings CMF ya actualizados\n")
+        except Exception as exc:
+            print(f"      WARN: CMF error ({exc.__class__.__name__}: {exc})")
+
+        total_nodes += len(cmf_nodes)
+        total_inserted += inserted_cmf
+
+    # ── Paso 6: Sprint 4 — SEIA + Diario Oficial + Empleo ────────────────
+    sprint4_enabled = _os.getenv("SPRINT4_ENABLED", "").lower() == "true" or "--sprint4" in sys.argv
+    if sprint4_enabled:
+        print("\n[6/7] Sprint 4 — Señales Alternativas (SEIA / Concursal / Empleo)...")
+
+        for label, module_path, cat in [
+            ("SEIA", "src.extractors.seia_extractor", "SEIA"),
+            ("Concursal+DO", "src.extractors.diario_oficial_extractor",
+             ["Boletín Concursal", "Diario Oficial"]),
+            ("Empleo", "src.extractors.empleo_extractor", "Señal Empleo"),
+        ]:
+            try:
+                import importlib
+                mod = importlib.import_module(module_path)
+                if label == "Empleo":
+                    sprint4_nodes = mod.fetch_all_as_nodes(client)
+                else:
+                    sprint4_nodes = mod.fetch_all_as_nodes()
+
+                if sprint4_nodes:
+                    inserted_s4 = bulk_insert_nodes(client, sprint4_nodes)
+                    print(f"      OK [{label}] {inserted_s4}/{len(sprint4_nodes)} nodos upserted")
+                    cats = cat if isinstance(cat, list) else [cat]
+                    pending_s4 = fetch_nodes_pending_embedding(client, categories=cats)
+                    if pending_s4:
+                        vectors_s4 = embed_nodes(pending_s4)
+                        updates_s4 = [{"id": n["id"], "embedding": v}
+                                      for n, v in zip(pending_s4, vectors_s4)]
+                        bulk_update_embeddings(client, updates_s4)
+                        print(f"           {len(updates_s4)} embeddings actualizados")
+                else:
+                    print(f"      [{label}] Sin datos nuevos.")
+            except Exception as exc:
+                print(f"      WARN [{label}]: {exc.__class__.__name__}: {exc}")
+
+    # ── Paso 7: Sprint 3 — BCCH Comunicados + Minutas ────────────────────
+    bcch_nodes: list = []
+    if "--bcch" in sys.argv or _os.getenv("BCCH_ENABLED", "").lower() == "true":
+        print("\n[7/7] Sprint 3 — BCCH Banco Central Chile (PDF → KG + sentimiento)...")
+        try:
+            from src.extractors.bcch_extractor import fetch_all_as_nodes as bcch_fetch
+            bcch_nodes = bcch_fetch()
+            if bcch_nodes:
+                inserted_bcch = bulk_insert_nodes(client, bcch_nodes)
+                print(f"      OK {inserted_bcch}/{len(bcch_nodes)} nodos BCCH upserted")
+                print("      Generando embeddings BCCH...")
+                pending_bcch = fetch_nodes_pending_embedding(
+                    client, category="Banco Central Chile"
+                )
+                if pending_bcch:
+                    vectors_bcch = embed_nodes(pending_bcch)
+                    updates_bcch = [
+                        {"id": n["id"], "embedding": v}
+                        for n, v in zip(pending_bcch, vectors_bcch)
+                    ]
+                    updated_bcch = bulk_update_embeddings(client, updates_bcch)
+                    print(f"      OK {updated_bcch}/{len(pending_bcch)} embeddings BCCH actualizados\n")
+                else:
+                    print("      -- embeddings BCCH ya actualizados\n")
+            else:
+                print("      Sin documentos nuevos o BCCH no accesible.\n")
+        except Exception as exc:
+            print(f"      WARN: BCCH error ({exc.__class__.__name__}: {exc})\n")
+
+        total_nodes += len(bcch_nodes)
+
     print("\nPipeline completado.")
     print(f"  - FRED:     {len(fred_nodes)} series macro (GraphRAG Macroeconomia)")
     print(f"  - yfinance: {len(yf_nodes)} tickers (indices, commodities, forex)")
     if openbb_nodes:
         print(f"  - OpenBB:   {len(openbb_nodes)} series extendidas (Phase 3A + 3B)")
+    if cmf_nodes:
+        print(f"  - CMF:      {len(cmf_nodes)} Hechos Esenciales (Regulatorio CMF)")
+    if bcch_nodes:
+        print(f"  - BCCH:     {len(bcch_nodes)} nodos (Comunicados + Minutas + ancla)")
     print(f"  - Total:    {total_nodes} nodos con embedding vectorial en Supabase")
 
 

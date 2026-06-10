@@ -82,20 +82,76 @@ def _vector_search_direct(
     client: Client, query_embedding: list[float], limit: int
 ) -> list[dict]:
     """
-    Búsqueda vectorial en Python cuando el RPC no retorna resultados.
-    Fetch todos los nodos y ordena por similitud coseno en memoria.
-    Viable para el tamaño actual del knowledge graph (< 2000 nodos).
+    Fallback vectorial cuando search_hybrid_graphrag retorna 0 resultados.
 
-    Nota: Supabase devuelve vector(1536) como string; _parse_embedding() lo convierte.
+    Usa la función RPC vector_search_direct (pgvector nativo, O(log n) con HNSW).
+    Requiere aplicar scripts/migration_vector_search_rpc.sql en Supabase.
+
+    Si el RPC no existe aún (migration pendiente), cae al scan en memoria
+    con un guardia de tamaño para evitar OOM en grafos grandes.
+    """
+    # ── Path 1: RPC pgvector nativo (post-migration) ──────────────────────────
+    try:
+        result = client.rpc(
+            "vector_search_direct",
+            {
+                "query_embedding": query_embedding,
+                "match_count": limit,
+                "match_threshold": 0.30,
+            },
+        ).execute()
+        nodes = result.data or []
+        if nodes:
+            return [
+                {
+                    "source_type": "VECTOR",
+                    "document_title": n["document_title"],
+                    "content": n["content"],
+                    "relevance": round(float(n.get("relevance", 0)), 4),
+                    "category": n.get("category"),
+                    "metadata": n.get("metadata"),
+                }
+                for n in nodes
+            ]
+    except Exception as exc:
+        log.warning(
+            "RPC vector_search_direct no disponible (%s). "
+            "Aplicar scripts/migration_vector_search_rpc.sql en Supabase. "
+            "Usando scan en memoria como emergencia.",
+            exc,
+        )
+
+    # ── Path 2: Scan en memoria — solo si KG está bajo el umbral seguro ───────
+    return _vector_search_in_memory(client, query_embedding, limit)
+
+
+def _vector_search_in_memory(
+    client: Client, query_embedding: list[float], limit: int
+) -> list[dict]:
+    """
+    Scan en memoria: fallback de emergencia solo para KG < 2000 nodos.
+    Deprecated — eliminar tras confirmar que vector_search_direct RPC funciona.
     """
     import numpy as np
+
+    NODE_LIMIT_SAFE = 2000
 
     result = (
         client.table("knowledge_nodes")
         .select("document_title, content, category, metadata, embedding")
+        .limit(NODE_LIMIT_SAFE + 1)
         .execute()
     )
     rows = result.data or []
+
+    if len(rows) > NODE_LIMIT_SAFE:
+        log.error(
+            "KG superó %d nodos (%d total). Scan en memoria no seguro. "
+            "Aplicar migration_vector_search_rpc.sql URGENTE.",
+            NODE_LIMIT_SAFE, len(rows),
+        )
+        rows = rows[:NODE_LIMIT_SAFE]
+
     if not rows:
         return []
 
@@ -109,11 +165,9 @@ def _vector_search_direct(
             continue
         v = np.array(vec, dtype=np.float32)
         v_norm = v / (np.linalg.norm(v) + 1e-10)
-        similarity = float(np.dot(q_norm, v_norm))
-        scored.append((similarity, row))
+        scored.append((float(np.dot(q_norm, v_norm)), row))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-
     return [
         {
             "source_type": "VECTOR",

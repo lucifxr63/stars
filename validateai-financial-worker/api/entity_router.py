@@ -82,6 +82,17 @@ ENTITY_GROUPS: dict[str, list[str]] = {
         "Inversion Extranjera Directa Chile (% PIB)",
     ],
 
+    # ── Sprint 3: BCCH Política Monetaria ────────────────────────────────────
+    "bcch_tpm": [
+        "BCCH Política Monetaria Chile — Estado Actual",
+    ],
+
+    # ── Sprint 4: SEIA — Proyectos de inversión ───────────────────────────────
+    # Ancla con resumen de aprobaciones recientes → CAPEX futuro por sector.
+    "seia_inversiones": [
+        "SEIA Proyectos Aprobados Chile — Estado Actual",
+    ],
+
     # ── Familia A — Sprint 1: Unit Economics ─────────────────────────────────
     # Nodos de due diligence financiero. Activados en seed/series_a y por
     # industrias que requieren justificar unit economics ante VCs.
@@ -191,10 +202,12 @@ ENTITY_GROUPS: dict[str, list[str]] = {
 INDUSTRY_ROUTING: dict[str, list[str]] = {
     # ── Finanzas / Capital ────────────────────────────────────────────────────
     "fintech":      ["macro_base", "tasas_usa", "riesgo", "mercados", "empleo_usa", "liquidez_global", "riesgo_macro",
+                     "bcch_tpm",
                      "compliance_fintech", "compliance_datos", "unit_economics",
                      "retencion_cohortes", "eficiencia_capital", "exit_strategy",
                      "propiedad_intelectual", "ciberseguridad", "riesgo_conductual"],
     "credito":      ["macro_base", "tasas_usa", "riesgo", "empleo_usa", "riesgo_macro",
+                     "bcch_tpm",
                      "compliance_fintech", "compliance_datos", "unit_economics",
                      "retencion_cohortes", "eficiencia_capital",
                      "ciberseguridad", "riesgo_conductual"],
@@ -224,9 +237,12 @@ INDUSTRY_ROUTING: dict[str, list[str]] = {
     # ── Recursos naturales / Commodities ──────────────────────────────────────
     "agro":         ["macro_base", "commodities", "mercados_chile", "forex_chile", "forex_global"],
     "agricultura":  ["macro_base", "commodities", "mercados_chile", "forex_chile", "forex_global"],
-    "mineria":      ["macro_base", "commodities", "forex_chile", "mercados_chile", "forex_global"],
-    "cleantech":    ["macro_base", "commodities", "tasas_usa", "mercados", "liquidez_global"],
-    "energia":      ["macro_base", "commodities", "tasas_usa", "ciclo_industrial"],
+    "mineria":      ["macro_base", "commodities", "forex_chile", "mercados_chile", "forex_global",
+                     "seia_inversiones"],
+    "cleantech":    ["macro_base", "commodities", "tasas_usa", "mercados", "liquidez_global",
+                     "seia_inversiones"],
+    "energia":      ["macro_base", "commodities", "tasas_usa", "ciclo_industrial",
+                     "seia_inversiones"],
 
     # ── Comercio exterior ─────────────────────────────────────────────────────
     "exportacion":  ["macro_base", "commodities", "forex_chile", "mercados_chile", "mercados_latam", "forex_global", "chile_macro"],
@@ -250,8 +266,8 @@ INDUSTRY_ROUTING: dict[str, list[str]] = {
 
     # ── Inmobiliaria ──────────────────────────────────────────────────────────
     "proptech":     ["macro_base", "tasas_usa", "mercados_chile", "riesgo_macro", "empleo_usa",
-                     "propiedad_intelectual", "riesgo_conductual"],
-    "inmobiliaria": ["macro_base", "tasas_usa", "mercados_chile", "riesgo_macro"],
+                     "bcch_tpm", "propiedad_intelectual", "riesgo_conductual"],
+    "inmobiliaria": ["macro_base", "tasas_usa", "mercados_chile", "riesgo_macro", "bcch_tpm"],
 
     # ── Turismo / Alimentos ───────────────────────────────────────────────────
     "turismo":      ["macro_base", "forex_chile", "mercados_chile", "chile_macro"],
@@ -273,11 +289,11 @@ STAGE_MODIFIER: dict[str, list[str]] = {
                  "trl_crl", "gobernanza_core",
                  "eficiencia_capital",
                  "riesgo_conductual", "propiedad_intelectual"],
-    "seed":     ["riesgo", "tasas_usa", "liquidez_global", "riesgo_macro",
+    "seed":     ["riesgo", "tasas_usa", "liquidez_global", "riesgo_macro", "bcch_tpm",
                  "unit_economics", "gobernanza_core", "trl_crl",
                  "eficiencia_capital", "retencion_cohortes",
                  "riesgo_conductual", "propiedad_intelectual"],
-    "series_a": ["mercados", "riesgo", "liquidez_global",
+    "series_a": ["mercados", "riesgo", "liquidez_global", "bcch_tpm",
                  "unit_economics", "moat_estrategia",
                  "retencion_cohortes", "eficiencia_capital", "exit_strategy",
                  "ciberseguridad", "propiedad_intelectual"],

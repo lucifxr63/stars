@@ -26,6 +26,7 @@ from api.schemas import (
     EntitiesResponse, EntitySummary,
     IngestResponse,
     HealthResponse, ServiceStatus,
+    RateSignalRequest, RateSignalResponse,
 )
 from api.entity_router import route as route_entities
 from api.moe_router import gating_network
@@ -373,6 +374,71 @@ async def radar_signals_endpoint() -> dict:
     }
 
 
+@app.patch(
+    "/radar/signals/{signal_id}/rate",
+    response_model=RateSignalResponse,
+    summary="Califica una señal del Radar Forense (feedback de analista)",
+    tags=["radar"],
+    dependencies=[Depends(require_api_key)],
+)
+async def rate_signal_endpoint(
+    signal_id: str,
+    req: RateSignalRequest,
+) -> RateSignalResponse:
+    """
+    Registra la evaluación de un analista sobre una señal del Radar Forense.
+
+    Alimenta el pipeline de calidad del classifier:
+    - Señales con `is_false_positive=True` se usan para ajustar pesos en classifier.py
+    - La distribución de ratings por `classified_by` indica qué reglas generan más ruido
+    - El campo `rated_by` permite filtrar feedback por analista en el Comité Beta
+
+    Requiere que `migration_analyst_rating.sql` haya sido aplicado en Supabase.
+    """
+    from datetime import datetime, timezone
+
+    client = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+
+    update_payload: dict = {
+        "analyst_rating": req.rating,
+        "rated_at": now,
+    }
+    if req.is_false_positive is not None:
+        update_payload["is_false_positive"] = req.is_false_positive
+    if req.notes is not None:
+        update_payload["analyst_notes"] = req.notes[:500]
+    if req.rated_by is not None:
+        update_payload["rated_by"] = req.rated_by[:100]
+
+    try:
+        result = (
+            client.table("radar_signals")
+            .update(update_payload)
+            .eq("id", signal_id)
+            .execute()
+        )
+    except Exception as exc:
+        log.error("[rate] Error actualizando señal %s: %s", signal_id, exc)
+        raise HTTPException(
+            status_code=503,
+            detail=f"Error de base de datos: {exc}. ¿Se aplicó migration_analyst_rating.sql?",
+        )
+
+    rows = result.data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"Señal '{signal_id}' no encontrada.")
+
+    row = rows[0]
+    return RateSignalResponse(
+        id=str(row["id"]),
+        analyst_rating=row["analyst_rating"],
+        is_false_positive=row.get("is_false_positive"),
+        rated_at=row.get("rated_at", now),
+        rated_by=row.get("rated_by"),
+    )
+
+
 async def _log_moe_routing(
     *,
     client,
@@ -589,9 +655,10 @@ async def health_endpoint() -> HealthResponse:
         )
     )
 
-    # Scheduler
+    # Scheduler + job health
     try:
         from api.scheduler import scheduler
+        from api.health_monitor import job_health
         jobs = scheduler.get_jobs()
         services.append(
             ServiceStatus(
@@ -600,6 +667,21 @@ async def health_endpoint() -> HealthResponse:
                 detail=f"{len(jobs)} jobs activos",
             )
         )
+        for job_id, state in job_health.status().items():
+            healthy = state["healthy"]
+            streak = state["consecutive_empty"]
+            last_ok = state["last_success"] or "nunca"
+            services.append(
+                ServiceStatus(
+                    name=f"job:{job_id}",
+                    ok=healthy,
+                    detail=(
+                        f"runs={state['total_runs']} results={state['total_results']} "
+                        f"last_ok={last_ok}"
+                        + (f" [ALERTA: {streak} corridas vacías]" if not healthy else "")
+                    ),
+                )
+            )
     except Exception as exc:
         services.append(ServiceStatus(name="scheduler", ok=False, detail=str(exc)))
 

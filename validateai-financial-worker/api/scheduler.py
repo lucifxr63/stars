@@ -15,6 +15,7 @@ import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from api.health_monitor import job_health
 
 log = logging.getLogger(__name__)
 
@@ -120,7 +121,8 @@ async def _job_radar_refresh() -> None:
         new_signals = []
         for headline in headlines:
             signal = await asyncio.to_thread(
-                classify_headline, headline.text, headline.source
+                classify_headline, headline.text, headline.source,
+                24, getattr(headline, "lang", "es"),
             )
             if signal and signal.severity >= SEVERITY_THRESHOLD:
                 new_signals.append(signal)
@@ -158,8 +160,303 @@ async def _job_radar_refresh() -> None:
             signal_cache.inject(new_signals)
 
         log.info("[scheduler] Radar Forense refresh completado.")
+        job_health.report("radar_refresh", len(new_signals))
     except Exception:
         log.exception("[scheduler] Error en Radar Forense refresh.")
+        job_health.report("radar_refresh", 0)
+
+
+async def _job_cmf_sync() -> None:
+    """
+    Sincroniza Hechos Esenciales CMF (cada 4 horas, horario bursátil Santiago).
+    Produce:
+      - Nodos PERMANENTES en knowledge_nodes (category='Regulatorio CMF')
+      - RadarSignals para HEs materialmente negativos (multas, quiebras)
+    """
+    log.info("[scheduler] CMF sync iniciado...")
+    try:
+        from src.db.supabase_client import (
+            get_client, bulk_insert_nodes,
+            fetch_nodes_pending_embedding, bulk_update_embeddings,
+        )
+        from src.extractors.cmf_extractor import (
+            fetch_all_as_nodes, fetch_all_as_signals,
+        )
+        from src.embeddings.openai_embedder import embed_nodes
+        from api.radar.models import SEVERITY_THRESHOLD
+        from api.radar.signal_cache import signal_cache
+
+        client = get_client()
+
+        # Nodos KG permanentes
+        nodes = await asyncio.to_thread(fetch_all_as_nodes)
+        if nodes:
+            inserted = await asyncio.to_thread(bulk_insert_nodes, client, nodes)
+            log.info("[scheduler] CMF: %d/%d nodos upserted.", inserted, len(nodes))
+
+            pending = await asyncio.to_thread(
+                fetch_nodes_pending_embedding, client, "Regulatorio CMF"
+            )
+            if pending:
+                vectors = await asyncio.to_thread(embed_nodes, pending)
+                updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
+                await asyncio.to_thread(bulk_update_embeddings, client, updates)
+                log.info("[scheduler] CMF: %d embeddings actualizados.", len(updates))
+
+        # RadarSignals para HEs materiales
+        signals = await asyncio.to_thread(fetch_all_as_signals)
+        active = [s for s in signals if s.severity >= SEVERITY_THRESHOLD]
+        if active:
+            rows = [s.to_supabase_row() for s in active]
+            try:
+                client.table("radar_signals").insert(rows).execute()
+                log.info("[scheduler] CMF: %d señales radar insertadas.", len(rows))
+            except Exception as exc:
+                log.warning("[scheduler] CMF radar insert falló: %s", exc)
+            signal_cache.inject(active)
+
+        log.info("[scheduler] CMF sync completado.")
+        job_health.report("cmf_sync", len(nodes) + len(active))
+    except Exception:
+        log.exception("[scheduler] Error en CMF sync.")
+        job_health.report("cmf_sync", 0)
+
+
+async def _job_mp_sync() -> None:
+    """
+    Sincroniza licitaciones ADJUDICADAS desde Mercado Público (diario 06:00).
+    Produce nodos PERMANENTES en knowledge_nodes (category='Mercado Público').
+    """
+    log.info("[scheduler] Mercado Público sync iniciado...")
+    try:
+        from src.db.supabase_client import (
+            get_client, bulk_insert_nodes,
+            fetch_nodes_pending_embedding, bulk_update_embeddings,
+        )
+        from src.extractors.mercadopublico_extractor import fetch_all_as_nodes
+        from src.embeddings.openai_embedder import embed_nodes
+
+        client = get_client()
+        nodes = await asyncio.to_thread(fetch_all_as_nodes)
+
+        if nodes:
+            inserted = await asyncio.to_thread(bulk_insert_nodes, client, nodes)
+            log.info("[scheduler] MP: %d/%d licitaciones upserted.", inserted, len(nodes))
+
+            pending = await asyncio.to_thread(
+                fetch_nodes_pending_embedding, client, "Mercado Público"
+            )
+            if pending:
+                vectors = await asyncio.to_thread(embed_nodes, pending)
+                updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
+                await asyncio.to_thread(bulk_update_embeddings, client, updates)
+                log.info("[scheduler] MP: %d embeddings actualizados.", len(updates))
+        else:
+            log.info("[scheduler] MP: sin licitaciones adjudicadas hoy.")
+
+        log.info("[scheduler] Mercado Público sync completado.")
+    except Exception:
+        log.exception("[scheduler] Error en Mercado Público sync.")
+
+
+async def _job_bcch_sync() -> None:
+    """
+    Sprint 3 — Procesa los documentos BCCH más recientes (Comunicados + Minutas).
+    Corre los lunes 07:00 hora Santiago: captura reuniones del jueves/viernes previo.
+
+    Produce:
+      - Nodos PERMANENTES en knowledge_nodes (category='Banco Central Chile')
+      - Nodo ancla 'BCCH Política Monetaria Chile — Estado Actual' (upsert)
+      - RadarSignals si la decisión TPM o el tono es material
+    """
+    log.info("[scheduler] BCCH sync iniciado...")
+    try:
+        from src.db.supabase_client import (
+            get_client, bulk_insert_nodes,
+            fetch_nodes_pending_embedding, bulk_update_embeddings,
+        )
+        from src.extractors.bcch_extractor import fetch_all_as_nodes, fetch_all_as_signals
+        from src.embeddings.openai_embedder import embed_nodes
+        from api.radar.models import SEVERITY_THRESHOLD
+        from api.radar.signal_cache import signal_cache
+
+        client = get_client()
+
+        nodes = await asyncio.to_thread(fetch_all_as_nodes)
+        if nodes:
+            inserted = await asyncio.to_thread(bulk_insert_nodes, client, nodes)
+            log.info("[scheduler] BCCH: %d/%d nodos upserted.", inserted, len(nodes))
+
+            pending = await asyncio.to_thread(
+                fetch_nodes_pending_embedding, client, CATEGORY
+            )
+            if pending:
+                vectors = await asyncio.to_thread(embed_nodes, pending)
+                updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
+                await asyncio.to_thread(bulk_update_embeddings, client, updates)
+                log.info("[scheduler] BCCH: %d embeddings actualizados.", len(updates))
+
+        signals = await asyncio.to_thread(fetch_all_as_signals)
+        active = [s for s in signals if s.severity >= SEVERITY_THRESHOLD]
+        if active:
+            rows = [s.to_supabase_row() for s in active]
+            try:
+                client.table("radar_signals").insert(rows).execute()
+                log.info("[scheduler] BCCH: %d señales radar insertadas.", len(rows))
+            except Exception as exc:
+                log.warning("[scheduler] BCCH radar insert falló: %s", exc)
+            signal_cache.inject(active)
+
+        log.info("[scheduler] BCCH sync completado.")
+        job_health.report("bcch_sync", len(nodes) + len(active))
+    except Exception:
+        log.exception("[scheduler] Error en BCCH sync.")
+        job_health.report("bcch_sync", 0)
+
+
+CATEGORY = "Banco Central Chile"
+
+
+async def _job_seia_sync() -> None:
+    """
+    Sprint 4 — SEIA: proyectos aprobados/rechazados (cada 3 días, 08:00 Santiago).
+    Produce nodos KG + RadarSignals para rechazos.
+    """
+    log.info("[scheduler] SEIA sync iniciado...")
+    try:
+        from src.db.supabase_client import (
+            get_client, bulk_insert_nodes,
+            fetch_nodes_pending_embedding, bulk_update_embeddings,
+        )
+        from src.extractors.seia_extractor import fetch_all_as_nodes, fetch_all_as_signals
+        from src.embeddings.openai_embedder import embed_nodes
+        from api.radar.signal_cache import signal_cache
+        from api.radar.models import SEVERITY_THRESHOLD
+
+        client = get_client()
+        nodes = await asyncio.to_thread(fetch_all_as_nodes)
+        if nodes:
+            await asyncio.to_thread(bulk_insert_nodes, client, nodes)
+            pending = await asyncio.to_thread(
+                fetch_nodes_pending_embedding, client, "SEIA"
+            )
+            if pending:
+                vectors = await asyncio.to_thread(embed_nodes, pending)
+                updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
+                await asyncio.to_thread(bulk_update_embeddings, client, updates)
+                log.info("[scheduler] SEIA: %d embeddings actualizados.", len(updates))
+
+        signals = await asyncio.to_thread(fetch_all_as_signals)
+        active = [s for s in signals if s.severity >= SEVERITY_THRESHOLD]
+        if active:
+            rows = [s.to_supabase_row() for s in active]
+            try:
+                client.table("radar_signals").insert(rows).execute()
+            except Exception as exc:
+                log.warning("[scheduler] SEIA radar insert falló: %s", exc)
+            signal_cache.inject(active)
+
+        log.info("[scheduler] SEIA sync completado.")
+        job_health.report("seia_sync", len(nodes) + len(active))
+    except Exception:
+        log.exception("[scheduler] Error en SEIA sync.")
+        job_health.report("seia_sync", 0)
+
+
+async def _job_concursal_sync() -> None:
+    """
+    Sprint 4 — SUPERIR Boletín Concursal + Diario Oficial (diario 07:30 Santiago).
+    Produce nodos KG + RadarSignals de alta severidad para liquidaciones.
+    """
+    log.info("[scheduler] Boletín Concursal sync iniciado...")
+    try:
+        from src.db.supabase_client import (
+            get_client, bulk_insert_nodes,
+            fetch_nodes_pending_embedding, bulk_update_embeddings,
+        )
+        from src.extractors.diario_oficial_extractor import (
+            fetch_all_as_nodes, fetch_all_as_signals,
+        )
+        from src.embeddings.openai_embedder import embed_nodes
+        from api.radar.signal_cache import signal_cache
+        from api.radar.models import SEVERITY_THRESHOLD
+
+        client = get_client()
+        nodes = await asyncio.to_thread(fetch_all_as_nodes)
+        if nodes:
+            await asyncio.to_thread(bulk_insert_nodes, client, nodes)
+            cats = ["Boletín Concursal", "Diario Oficial"]
+            pending = await asyncio.to_thread(
+                fetch_nodes_pending_embedding, client, categories=cats
+            )
+            if pending:
+                vectors = await asyncio.to_thread(embed_nodes, pending)
+                updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
+                await asyncio.to_thread(bulk_update_embeddings, client, updates)
+
+        signals = await asyncio.to_thread(fetch_all_as_signals)
+        active = [s for s in signals if s.severity >= SEVERITY_THRESHOLD]
+        if active:
+            rows = [s.to_supabase_row() for s in active]
+            try:
+                client.table("radar_signals").insert(rows).execute()
+                log.info("[scheduler] Concursal: %d señales insertadas.", len(rows))
+            except Exception as exc:
+                log.warning("[scheduler] Concursal radar insert falló: %s", exc)
+            signal_cache.inject(active)
+
+        log.info("[scheduler] Boletín Concursal sync completado.")
+        job_health.report("concursal_sync", len(nodes) + len(active))
+    except Exception:
+        log.exception("[scheduler] Error en Concursal sync.")
+        job_health.report("concursal_sync", 0)
+
+
+async def _job_empleo_sync() -> None:
+    """
+    Sprint 4 — Señal de empleo sectorial (sábados 09:00 Santiago).
+    Proxy de expansión/contracción por sector.
+    """
+    log.info("[scheduler] Empleo sync iniciado...")
+    try:
+        from src.db.supabase_client import (
+            get_client, bulk_insert_nodes,
+            fetch_nodes_pending_embedding, bulk_update_embeddings,
+        )
+        from src.extractors.empleo_extractor import (
+            fetch_all_as_nodes, fetch_all_as_signals,
+        )
+        from src.embeddings.openai_embedder import embed_nodes
+        from api.radar.signal_cache import signal_cache
+        from api.radar.models import SEVERITY_THRESHOLD
+
+        client = get_client()
+        nodes = await asyncio.to_thread(fetch_all_as_nodes, client)
+        if nodes:
+            await asyncio.to_thread(bulk_insert_nodes, client, nodes)
+            pending = await asyncio.to_thread(
+                fetch_nodes_pending_embedding, client, "Señal Empleo"
+            )
+            if pending:
+                vectors = await asyncio.to_thread(embed_nodes, pending)
+                updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
+                await asyncio.to_thread(bulk_update_embeddings, client, updates)
+
+        signals = await asyncio.to_thread(fetch_all_as_signals, client)
+        active = [s for s in signals if s.severity >= SEVERITY_THRESHOLD]
+        if active:
+            rows = [s.to_supabase_row() for s in active]
+            try:
+                client.table("radar_signals").insert(rows).execute()
+            except Exception as exc:
+                log.warning("[scheduler] Empleo radar insert falló: %s", exc)
+            signal_cache.inject(active)
+
+        log.info("[scheduler] Empleo sync completado.")
+        job_health.report("empleo_sync", len(nodes) + len(active))
+    except Exception:
+        log.exception("[scheduler] Error en Empleo sync.")
+        job_health.report("empleo_sync", 0)
 
 
 async def _job_cache_sweep() -> None:
@@ -210,5 +507,52 @@ scheduler.add_job(
     id="radar_refresh",
     name="Radar Forense — scraping + clasificación de señales",
     misfire_grace_time=300,
+    replace_existing=True,
+)
+
+scheduler.add_job(
+    _job_cmf_sync,
+    CronTrigger(hour="9,13,17", minute=15, timezone="America/Santiago"),
+    id="cmf_sync",
+    name="CMF Hechos Esenciales — KG permanente + señales radar",
+    misfire_grace_time=3600,
+    replace_existing=True,
+)
+
+# Mercado Público: ingestado por proceso externo — job no registrado aquí.
+
+scheduler.add_job(
+    _job_seia_sync,
+    CronTrigger(day="*/3", hour=8, minute=0, timezone="America/Santiago"),
+    id="seia_sync",
+    name="SEIA — proyectos aprobados/rechazados (cada 3 días)",
+    misfire_grace_time=3600,
+    replace_existing=True,
+)
+
+scheduler.add_job(
+    _job_concursal_sync,
+    CronTrigger(day_of_week="mon-fri", hour=7, minute=30, timezone="America/Santiago"),
+    id="concursal_sync",
+    name="Boletín Concursal SUPERIR + Diario Oficial (diario hábil)",
+    misfire_grace_time=3600,
+    replace_existing=True,
+)
+
+scheduler.add_job(
+    _job_empleo_sync,
+    CronTrigger(day_of_week="sat", hour=9, minute=0, timezone="America/Santiago"),
+    id="empleo_sync",
+    name="Señal Empleo Sectorial — Computrabajo (semanal)",
+    misfire_grace_time=3600,
+    replace_existing=True,
+)
+
+scheduler.add_job(
+    _job_bcch_sync,
+    CronTrigger(day_of_week="mon", hour=7, minute=0, timezone="America/Santiago"),
+    id="bcch_sync",
+    name="BCCH Comunicados + Minutas — KG permanente + señal hawkish/dovish",
+    misfire_grace_time=3600,
     replace_existing=True,
 )
