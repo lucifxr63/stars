@@ -139,6 +139,14 @@ class MoEQueryResponse(BaseModel):
     total_hits: int
     graph_hits: int
     vector_hits: int
+    data_freshness: dict[str, str] | None = Field(
+        None,
+        description="Timestamp ISO de última actualización por fuente detectada en la query.",
+    )
+    data_note: str | None = Field(
+        None,
+        description="Aviso cuando se disparó un refresh de datos en background.",
+    )
 
 
 # ── Entities endpoint ─────────────────────────────────────────────────────────

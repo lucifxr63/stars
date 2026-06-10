@@ -278,6 +278,24 @@ async def query_moe_endpoint(
         routing_reason[:200],
     )
 
+    # ── 1b. Freshness check + background refresh ──────────────────────────────
+    from api.data_freshness import detect_sources_needed, build_freshness_dict
+    from api.scheduler import _job_mp_sync
+
+    data_freshness: dict[str, str] | None = None
+    data_note: str | None = None
+
+    sources_needed = detect_sources_needed(req.query)
+    if sources_needed:
+        freshness_map, stale_sources = build_freshness_dict(client, sources_needed)
+        data_freshness = freshness_map if freshness_map else None
+
+        if "mercado_publico" in stale_sources:
+            background_tasks.add_task(_job_mp_sync)
+            age = freshness_map.get("mercado_publico", "desconocido")
+            data_note = f"Datos de Mercado Público actualizándose en background (última sync: {age})."
+            log.info("[moe] Refresh Mercado Público disparado (stale >24h).")
+
     # ── 2. Embedding con cache LRU ────────────────────────────────────────────
     cached_vec = cache.get(req.query)
     if cached_vec is not None:
@@ -343,6 +361,8 @@ async def query_moe_endpoint(
         total_hits=len(node_results),
         graph_hits=graph_hits,
         vector_hits=vector_hits,
+        data_freshness=data_freshness,
+        data_note=data_note,
     )
 
 
