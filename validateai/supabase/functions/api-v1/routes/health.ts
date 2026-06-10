@@ -180,18 +180,19 @@ export const servicesHealthHandler = async (c: any) => {
   let bralidusMsg = 'No responde'
   let bralidusLatency: number | undefined
   try {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (BRALIDUS_API_KEY) headers['Authorization'] = `Bearer ${BRALIDUS_API_KEY}`
-    const br = await fetch(`${BRALIDUS_URL}/health`, {
-      headers,
-      signal: AbortSignal.timeout(5000),
+    // /ping is auth-free and returns immediately (no DB queries)
+    const br = await fetch(`${BRALIDUS_URL}/ping`, {
+      signal: AbortSignal.timeout(8000),
     })
     bralidusLatency = Date.now() - bralidusT0
     if (br.ok) {
       const bj = await br.json() as Record<string, unknown>
       const uptime = typeof bj.uptime_seconds === 'number' ? Math.round(bj.uptime_seconds / 3600) : null
-      bralidusStatus = 'ok'
-      bralidusMsg = uptime !== null ? `Online · uptime ${uptime}h · Railway` : 'Online · Railway'
+      const schedulerOk = bj.scheduler_running !== false
+      bralidusStatus = schedulerOk ? 'ok' : 'degraded'
+      bralidusMsg = uptime !== null
+        ? `Online · uptime ${uptime}h · Railway${schedulerOk ? '' : ' · scheduler stopped'}`
+        : 'Online · Railway'
     } else {
       bralidusStatus = 'degraded'
       bralidusMsg = `HTTP ${br.status} · Railway`
