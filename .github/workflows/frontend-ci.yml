@@ -1,0 +1,84 @@
+name: frontend-ci
+
+# Barrera de calidad del frontend (validateai/). Corre en cada PR y push a main
+# que toque el código del frontend. Bloquea regresiones de tipos, tests y build
+# (whole-project, ya en verde) antes de que lleguen a Vercel.
+#
+# El LINT corre SOLO sobre los .ts/.tsx cambiados y es ADVISORY (continue-on-error):
+# no bloquea el merge todavía porque src/ arrastra ~68 errores preexistentes
+# (la mayoría de la nueva ruleset react-hooks v7). Surface las anotaciones en el
+# PR para ir limpiando. Flip a bloqueante cuando se cierre el burn-down
+# (backlog "linter estricto progresivo").
+on:
+  pull_request:
+    paths:
+      - 'validateai/**'
+      - '.github/workflows/frontend-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'validateai/**'
+      - '.github/workflows/frontend-ci.yml'
+
+# Cancela runs anteriores del mismo branch/PR para no malgastar minutos de CI.
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: validateai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: validateai/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Lint incremental: solo archivos .ts/.tsx cambiados bajo validateai/src.
+      - name: Detectar archivos cambiados
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          # Rutas relativas a validateai/ (cwd), filtradas a src/*.ts(x).
+          files=$(git diff --name-only "$base" HEAD -- 'validateai/src/**/*.ts' 'validateai/src/**/*.tsx' \
+            | sed 's#^validateai/##' || true)
+          oneline=$(echo "$files" | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+          echo "files=$oneline" >> "$GITHUB_OUTPUT"
+          if [ -z "$oneline" ]; then
+            echo "Sin .ts/.tsx cambiados bajo src/ — nada que lintear."
+          else
+            echo "Linteando:"; printf '  - %s\n' $oneline
+          fi
+
+      - name: Lint (archivos cambiados, advisory)
+        if: steps.changed.outputs.files != ''
+        continue-on-error: true
+        run: npx eslint ${{ steps.changed.outputs.files }}
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      - name: Tests unitarios
+        run: npx vitest run
+
+      - name: Build de producción
+        run: npx vite build
