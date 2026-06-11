@@ -88,6 +88,14 @@ jobs:
   # Objetivo: < 2 min. Corre en paralelo al job `build`.
   smoke-e2e:
     runs-on: ubuntu-latest
+    # El frontend construye el cliente Supabase al boot con estas vars; sin ellas
+    # createClient() lanza y la app no renderiza (white screen → todo falla).
+    # El smoke mockea TODA la red vía page.route contra este host exacto
+    # (e2e/fixtures/mockSupabase.ts), así que la URL debe coincidir literal y el
+    # anon key es un placeholder — ninguna llamada real sale a Supabase.
+    env:
+      VITE_SUPABASE_URL: https://fcdhcntyvsydnvjwopfe.supabase.co
+      VITE_SUPABASE_ANON_KEY: smoke-e2e-mocked-anon-key
     steps:
       - uses: actions/checkout@v4
 
