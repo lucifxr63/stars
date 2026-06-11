@@ -82,3 +82,47 @@ jobs:
 
       - name: Build de producción
         run: npx vite build
+
+  # Smoke E2E (Escalón 1): solo tests @smoke, chromium headless, Edge Functions
+  # mockeadas vía page.route → depende SOLO del artefacto del frontend.
+  # Objetivo: < 2 min. Corre en paralelo al job `build`.
+  smoke-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: validateai/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Caché de los binarios de Playwright, keyed por la versión instalada.
+      - name: Resolver versión de Playwright
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache de browsers Playwright
+        uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # Solo chromium. --with-deps siempre (las libs del SO no se cachean).
+      - name: Instalar chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke E2E (@smoke)
+        run: npx playwright test --project=chromium --grep @smoke
+
+      - name: Subir reporte si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: validateai/playwright-report/
+          retention-days: 7
