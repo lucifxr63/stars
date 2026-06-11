@@ -446,7 +446,9 @@ function PrivacySection({ userId, initialConsent }: { userId: string; initialCon
           onClick={async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user?.email) return;
-            await supabase.auth.resetPasswordForEmail(user.email);
+            await supabase.auth.resetPasswordForEmail(user.email, {
+              redirectTo: `${window.location.origin}/reset-password`,
+            });
             toast.success('Revisa tu email para cambiar la contraseña');
           }}
           className="w-full text-left p-4 rounded-2xl border border-gray-100 dark:border-white/8 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all group"

@@ -195,6 +195,14 @@ export function Login() {
                              focus:border-[#0EB5C6] focus:ring-2 focus:ring-[#0EB5C6]/20
                              hover:border-gray-300 dark:hover:border-white/15 transition-all outline-none"/>
               </div>
+              {!isSignUp && (
+                <div className="flex justify-end -mt-1">
+                  <Link to="/forgot-password"
+                    className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-[#0EB5C6] transition-colors font-medium">
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+              )}
               <button type="submit" disabled={loading}
                 className="w-full py-3 bg-[#0EB5C6] text-white font-semibold rounded-xl
                            hover:bg-[#6B5EE6] active:scale-[0.98] transition-all duration-150
