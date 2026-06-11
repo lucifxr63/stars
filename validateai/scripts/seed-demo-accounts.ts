@@ -155,6 +155,31 @@ async function upsertProfile(id: string, acc: DemoAccount): Promise<void> {
 }
 
 /**
+ * Pre-siembra el consentimiento Ley 21.719 (consent_logs) para que las cuentas
+ * demo no vean el ConsentModal obligatorio durante el pitch. useConsentGuard
+ * busca una fila con flagged=true; los INSERT solo los hace service_role.
+ * Idempotente: inserta solo si no existe ya un consentimiento válido.
+ */
+async function ensureConsent(userId: string): Promise<void> {
+  const { data: existing } = await admin
+    .from('consent_logs')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('flagged', true)
+    .limit(1)
+    .maybeSingle();
+  if (existing) { console.log('  ~ consentimiento ya registrado'); return; }
+
+  const { error } = await admin.from('consent_logs').insert({
+    user_id: userId,
+    consent_type: 'data_processing',
+    flagged: true,
+  });
+  if (error) throw new Error(`insert consent_logs falló: ${error.message}`);
+  console.log('  ✓ consentimiento Ley 21.719 pre-registrado (sin modal)');
+}
+
+/**
  * Siembra la Golden Validation (MediConnect) para las cuentas pro/premium.
  * Idempotente: borra primero cualquier validación previa del usuario (el log de
  * agentes cae por ON DELETE CASCADE) y luego inserta la golden fresca.
@@ -208,6 +233,7 @@ async function main() {
     console.log(`• ${acc.tier.toUpperCase()} — ${acc.email}`);
     const id = await ensureAuthUser(acc);
     await upsertProfile(id, acc);
+    await ensureConsent(id);
     if (acc.tier === 'pro' || acc.tier === 'premium') {
       await seedGoldenValidation(id, acc.tier);
     }
