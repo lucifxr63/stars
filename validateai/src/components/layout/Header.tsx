@@ -2,6 +2,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { markDeliberateLogout } from '@/lib/session';
 import { useValidationStore } from '@/stores/validationStore';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { getPreviewTier, setPreviewTier, type UserTier } from '@/hooks/useUserTier';
@@ -41,6 +42,7 @@ export function Header() {
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   const handleLogout = async () => {
+    markDeliberateLogout();
     await supabase.auth.signOut();
     reset();
     toast.success('Sesión cerrada');

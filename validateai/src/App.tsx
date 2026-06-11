@@ -8,6 +8,8 @@ import { ThemeProvider } from 'next-themes';
 // Public routes
 const Landing          = lazy(() => import('@/app/routes/Landing').then((m) => ({ default: m.Landing })));
 const Login            = lazy(() => import('@/app/routes/Login').then((m) => ({ default: m.Login })));
+const ForgotPassword   = lazy(() => import('@/app/routes/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
+const ResetPassword    = lazy(() => import('@/app/routes/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const AuthCallback     = lazy(() => import('@/app/routes/AuthCallback').then((m) => ({ default: m.AuthCallback })));
 const SharedValidation = lazy(() => import('@/app/routes/SharedValidation').then((m) => ({ default: m.SharedValidation })));
 const SurveyRespond    = lazy(() => import('@/app/routes/SurveyRespond').then((m) => ({ default: m.SurveyRespond })));
@@ -77,6 +79,8 @@ export default function App() {
               {/* Rutas públicas */}
               <Route path="/"               element={<Landing />} />
               <Route path="/login"          element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password"  element={<ResetPassword />} />
               <Route path="/auth/callback"  element={<AuthCallback />} />
               <Route path="/shared/:token"  element={<SharedValidation />} />
               <Route path="/s/:slug"        element={<SurveyRespond />} />

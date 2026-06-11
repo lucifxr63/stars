@@ -1,6 +1,9 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { consumeDeliberateLogout } from '@/lib/session';
+import { useValidationStore } from '@/stores/validationStore';
 import { useConsentGuard } from '@/hooks/useConsentGuard';
 import { ConsentModal } from '@/components/shared/ConsentModal';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -26,8 +29,18 @@ export function ProtectedLayout() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null;
+
+      // SIGNED_OUT inesperado (refresh token vencido/revocado) → expiración.
+      // Un logout deliberado marca la bandera antes de signOut, así no lo
+      // confundimos con una expiración. El <Navigate to="/login"> de abajo
+      // hace la redirección; aquí solo limpiamos estado sensible + avisamos.
+      if (event === 'SIGNED_OUT' && !consumeDeliberateLogout()) {
+        useValidationStore.getState().reset();
+        toast.error('Tu sesión expiró. Inicia sesión nuevamente.', { duration: 6000 });
+      }
+
       setUser(u);
       if (!u) clearSentryUser();
     });

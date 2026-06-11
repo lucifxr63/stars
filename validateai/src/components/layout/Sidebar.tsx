@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X, ClipboardList, Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { markDeliberateLogout } from '@/lib/session';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
 import { useUsage } from '@/hooks/useUsage';
@@ -69,6 +70,7 @@ export function Sidebar({ onClose }: SidebarProps) {
   }, []);
 
   const handleLogout = async () => {
+    markDeliberateLogout();
     await supabase.auth.signOut();
     reset();
     toast.success('Sesión cerrada');
