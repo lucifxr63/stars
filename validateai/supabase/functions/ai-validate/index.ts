@@ -1,6 +1,7 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { phCapture } from '../_shared/posthog.ts';
+import { fetchBralidusContextForPrompt, BRALIDUS_CITE_DIRECTIVE } from '../_shared/bralidus.ts';
 
 // â”€â”€ Env vars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
@@ -1539,6 +1540,20 @@ serve(async (req) => {
 
     // Haiku pre-pass: enriquece el contexto con idea estructurada
     let enrichedContext = context;
+
+    // ── BralidusPY (Fase 2) — Capa 4: disparar AHORA para correr en paralelo con
+    // el pre-pass Haiku y el RAG. Gating por prompt_type + tier (Capa 1) y caché por
+    // perfil (Capa 2) viven dentro de fetchBralidusContextForPrompt → retorna null
+    // (sin red) si el prompt no aplica o el tier no lo habilita. Se resuelve más abajo.
+    const bralidusQuery = [
+      context.idea_name,
+      context.idea_description ?? context.idea_problem,
+      context.idea_industry ?? context.industry,
+      context.business_model,
+    ].filter(Boolean).join('. ').slice(0, 600);
+    const bralidusPromise = fetchBralidusContextForPrompt(
+      supabase, prompt_type, bralidusQuery, context, userTier,
+    );
     const rawDescription = context.idea_description as string | undefined;
     let structuredIdea: StructuredIdea | null = null;
     if (rawDescription && rawDescription.length > 50) {
@@ -1637,6 +1652,18 @@ serve(async (req) => {
       }
     }
 
+    // ── Resolver BralidusPY (disparado al inicio) e inyectar contexto citable ──
+    // Inyecta en el contexto (dato) Y en el system prompt (instrucción de uso+cita).
+    // Degradación elegante: si el fetch falló o no aplica, bralidusResult es null.
+    const bralidusResult = await bralidusPromise;
+    if (bralidusResult && bralidusResult.context.contextBlock) {
+      enrichedContext = { ...enrichedContext, bralidus_context: bralidusResult.context.contextBlock };
+      const baseSystem = ragSystemOverride ?? SYSTEM_PROMPTS[prompt_type];
+      ragSystemOverride =
+        `${baseSystem}\n\n# INTELIGENCIA BRALIDUS (datos macro fechados + doctrina normativa)\n` +
+        `${bralidusResult.context.contextBlock}\n\n${BRALIDUS_CITE_DIRECTIVE}`;
+    }
+
     // CachÃ©: verificar si existe un anÃ¡lisis similar reciente
     const cacheableTypes = ['summary', 'risk_analysis', 'unit_economics', 'market_sizing'];
     const ideaCacheKey = rawDescription
@@ -1658,6 +1685,17 @@ serve(async (req) => {
     const tierForAI = (userTier === 'premium' ? 'pro' : userTier) as 'free' | 'basic' | 'pro';
     const { parsed, inputTokens, outputTokens, model } = await callAI(prompt_type, enrichedContext, ragSystemOverride, tierForAI);
 
+    // Adjuntar evidencia Bralidus al resultado: auditable y respaldado (insumo EvidenceWall, Fase 3).
+    // Clave `_bralidus` ignorada por los renderers del frontend que no la conocen.
+    if (bralidusResult && bralidusResult.context.evidence.length > 0) {
+      (parsed as Record<string, unknown>)._bralidus = {
+        evidence:       bralidusResult.context.evidence,
+        experts:        bralidusResult.context.experts,
+        data_freshness: bralidusResult.context.dataFreshness,
+        cached:         bralidusResult.cached,
+      };
+    }
+
     phCapture('ai_prompt_called', user.id, {
       prompt_type,
       tier: userTier,
@@ -1666,6 +1704,8 @@ serve(async (req) => {
       tokens_out: outputTokens,
       tokens_total: inputTokens + outputTokens,
       validation_id: validation_id ?? null,
+      bralidus_used: bralidusResult !== null,
+      bralidus_cached: bralidusResult?.cached ?? false,
     });
 
     // Guardar en cachÃ© (no bloqueante)

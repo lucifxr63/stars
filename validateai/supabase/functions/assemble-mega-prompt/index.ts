@@ -1,5 +1,14 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  BRALIDUS_TIER,
+  fetchBralidusBundle,
+  compressBralidus,
+  type BraliduAlert,
+  type BralidusEvidence,
+  type BralidusExpert,
+  type BralidusBundle,
+} from '../_shared/bralidus.ts';
 
 // â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ALLOWED_ORIGINS = [
@@ -14,29 +23,7 @@ const OPENAI_API_KEY  = Deno.env.get('OPENAI_API_KEY');     // para embeddings
 const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 
 // ── BralidusPY config ─────────────────────────────────────────────────────────
-// Defaults to localhost for local dev; set BRALIDUS_URL in Supabase secrets for prod.
-const BRALIDUS_URL     = Deno.env.get('BRALIDUS_URL') ?? 'http://localhost:8000';
-const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY') ?? '';  // Bearer token for prod auth
-
-const BRALIDUS_TIER: Record<string, { topK: number; enabled: boolean; macroOnly: boolean }> = {
-  free:    { topK: 0,  enabled: false, macroOnly: true  },
-  basic:   { topK: 8,  enabled: true,  macroOnly: true  },
-  pro:     { topK: 20, enabled: true,  macroOnly: false },
-  premium: { topK: 25, enabled: true,  macroOnly: false },
-  admin:   { topK: 25, enabled: true,  macroOnly: false },
-};
-
-const BRALIDUS_MACRO_OVERRIDE = [
-  'PIB USA (GDP)', 'Inflación USA (CPI All Urban Consumers)',
-  'Tasa de Fondos Federales (Fed Funds Rate)', 'USD/CLP (Tipo de Cambio Chile)',
-  'High Yield Credit Spread (Apetito Riesgo Credito)', 'IPSA (Indice Bursatil Chile)',
-];
-
-interface BraliduAlert {
-  severity: 'critical' | 'warning' | 'info';
-  category: string;
-  title: string;
-}
+// Config, tipos y bridge de Bralidus viven en ../_shared/bralidus.ts (importados arriba).
 
 // Umbrales de cachÃ©: 0.92 para due diligence (mayor rigor = menos falsos positivos).
 // Un score 0.92 implica que dos ideas son ~92% semÃ¡nticamente idÃ©nticas â€” seguro
@@ -259,57 +246,11 @@ async function searchKnowledgeBase(
 // â”€â”€ BralidusPY bridge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Calls GraphRAG hybrid engine with startup context and tier gate.
 // Degrades gracefully if BRALIDUS_URL is unreachable (8s hard timeout).
-async function fetchBralidusPY(
-  query: string,
-  startupContext: { industry: string; stage: string; geography: string },
-  tier: string,
-): Promise<{ contextForLLM: string; alerts: BraliduAlert[] }> {
-  const config = BRALIDUS_TIER[tier] ?? BRALIDUS_TIER.free;
-  const body: Record<string, unknown> = {
-    query,
-    startup_context: startupContext,
-    top_k: config.topK,
-    match_threshold: 0.30,
-  };
-  if (config.macroOnly) body.entity_override = BRALIDUS_MACRO_OVERRIDE;
-
-  const authHeaders: Record<string, string> = BRALIDUS_API_KEY
-    ? { 'Authorization': `Bearer ${BRALIDUS_API_KEY}` }
-    : {};
-
-  const res = await fetch(`${BRALIDUS_URL}/query`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(8_000),
-  });
-  if (!res.ok) throw new Error(`BralidusPY HTTP ${res.status}`);
-  const data = await res.json();
-  return {
-    contextForLLM: (data.context_for_llm as string) ?? '',
-    alerts: _extractBraliduAlerts((data.nodes as Array<Record<string, unknown>>) ?? []),
-  };
-}
-
-const _FAMILIA_A_SEVERITY: Record<string, 'critical' | 'warning' | 'info'> = {
-  'Cumplimiento Normativo': 'critical',
-  'Unit Economics':         'warning',
-  'Gobernanza':             'warning',
-  'Traccion y Evidencia':   'warning',
-  'Estrategia Fundraising': 'info',
-  'Moat Competitivo':       'info',
-  'MVP Roadmap':            'info',
-};
-
-function _extractBraliduAlerts(nodes: Array<Record<string, unknown>>): BraliduAlert[] {
-  return nodes
-    .filter(n => (n.metadata as Record<string, unknown> | null)?.entity_type)
-    .map(n => ({
-      severity: _FAMILIA_A_SEVERITY[n.category as string] ?? 'info',
-      category: n.category as string,
-      title: n.document_title as string,
-    }));
-}
+// Mapea un nodo Bralidus → evidencia citable. Polimórfico (smoke test 2026-06-11):
+//   shape 'financial' → nodos con ultimo_valor + ultima_fecha (FRED/yfinance/OpenBB) — fechado, auditable
+//   shape 'doctrine'  → nodos con entity_type (Familia A) — referencia permanente, SIN fecha
+// nodeToEvidence, callBralidusMoE, fetchBralidusBundle y _extractBraliduAlerts
+// viven ahora en ../_shared/bralidus.ts (importados arriba).
 
 // â”€â”€ Circuit Breaker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PatrÃ³n explÃ­cito de tolerancia a fallos para llamadas a fuentes externas.
@@ -502,23 +443,7 @@ function compressChilecompra(m: Record<string, unknown>): string {
   ].join('\n');
 }
 
-function compressBralidus(contextForLLM: string, alerts: BraliduAlert[]): string {
-  if (!contextForLLM && alerts.length === 0) return '';
-  const criticalWarning = alerts
-    .filter(a => a.severity === 'critical' || a.severity === 'warning')
-    .map(a => `  [${a.severity.toUpperCase()}] ${a.title}`)
-    .join('\n');
-  // Cap at 1200 chars (~300 tokens) to stay within mega-prompt token budget.
-  const ctxPreview = contextForLLM.length > 1200
-    ? contextForLLM.slice(0, 1200) + '\n  [...contexto adicional disponible en UI]'
-    : contextForLLM;
-  return [
-    '[BRALIDUSPÝ — Inteligencia GraphRAG (FRED + Familia A Normativa)]',
-    criticalWarning || '  (Sin alertas Familia A para este perfil)',
-    '',
-    ctxPreview,
-  ].join('\n');
-}
+// compressBralidus vive ahora en ../_shared/bralidus.ts (importada arriba).
 
 // â”€â”€ Schema validator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Valida que la respuesta de Claude tenga la estructura exacta de DueDiligenceScore
@@ -607,6 +532,7 @@ REGLAS CRÃTICAS PARA FUENTES NO DISPONIBLES:
    Mencionarlos en verdict_summary solo si estÃ¡n disponibles.
 3. Fuentes "excluidas por filtro adaptativo" (no requeridas por etapa/tier) no generan penalizaciÃ³n.
 4. NUNCA uses datos de CMF BEST para hacer afirmaciones sobre la startup especÃ­fica â€” son benchmarks del sistema financiero chileno, no mÃ©tricas de la empresa.
+5. EVIDENCIA BRALIDUS: cuando un dato de la secciÃ³n [BRALIDUS] influya en un score (ej: spread de crÃ©dito alto â†’ mÃ¡s riesgo financiero; desempleo Chile alto â†’ menor disposiciÃ³n a pagar), CITA el indicador, su valor y su fecha en el gap o verdict_summary correspondiente. Los Ã­tems marcados "[DATO aaaa-mm-dd]" llevan fecha verificable â€” Ãºsala. Los Ã­tems marcados "[DOCTRINA]" son referencias permanentes SIN fecha â€” cÃ­talos por nombre, NUNCA inventes una fecha para ellos.
 ${glassCeilingBlock}
 Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown.`;
 
@@ -841,7 +767,7 @@ serve(async (req) => {
     const bralidusPYPromise = bralidusTierConfig.enabled
       ? withCircuitBreaker(
           'bralidus-py',
-          () => fetchBralidusPY(bralidusPYQuery, bralidusPYStartupCtx, tier),
+          () => fetchBralidusBundle(bralidusPYQuery, bralidusPYStartupCtx, tier),
           10_000,
         )
       : Promise.resolve({ ok: false as const, reason: `tier ${tier}: BralidusPY requiere Basic o superior` });
@@ -951,11 +877,17 @@ serve(async (req) => {
     // â”€â”€ Resolver BralidusPY (ya corriÃ³ en paralelo con las fuentes anteriores) â”€â”€
     const bralidusPYBreaker = await bralidusPYPromise;
     let bralidusPYAlerts: BraliduAlert[] = [];
+    let bralidusEvidence: BralidusEvidence[] = [];
+    let bralidusExperts: BralidusExpert[] = [];
+    let bralidusFreshness: Record<string, string> | null = null;
     let bralidusPYContextStr = '';
     if (bralidusPYBreaker.ok) {
-      const bd = bralidusPYBreaker.data as { contextForLLM: string; alerts: BraliduAlert[] };
-      bralidusPYAlerts    = bd.alerts;
-      bralidusPYContextStr = compressBralidus(bd.contextForLLM, bd.alerts);
+      const bd = bralidusPYBreaker.data as BralidusBundle;
+      bralidusPYAlerts     = bd.alerts;
+      bralidusEvidence     = bd.evidence;
+      bralidusExperts      = bd.experts;
+      bralidusFreshness    = bd.dataFreshness;
+      bralidusPYContextStr = compressBralidus(bd.evidence, bd.alerts, bd.dataFreshness);
     } else if (bralidusTierConfig.enabled) {
       dataWarnings.push(`BralidusPY: ${bralidusPYBreaker.reason}`);
     }
@@ -1002,6 +934,9 @@ serve(async (req) => {
           sources_skipped: skipped,
           audit_level:     hasVerifiedFinancialData ? 2 : 1,
           bralidus_alerts: bralidusPYAlerts,
+          bralidus_evidence: bralidusEvidence,
+          bralidus_experts:  bralidusExperts,
+          bralidus_data_freshness: bralidusFreshness,
         },
       })
       .eq('id', validation_id);
@@ -1020,6 +955,9 @@ serve(async (req) => {
       sources_skipped: skipped,
       from_cache: false,
       bralidus_alerts: bralidusPYAlerts,
+      bralidus_evidence: bralidusEvidence,
+      bralidus_experts: bralidusExperts,
+      bralidus_data_freshness: bralidusFreshness,
     }), { headers: { ...cors, 'Content-Type': 'application/json' } });
 
   } catch (err) {
