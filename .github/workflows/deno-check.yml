@@ -1,0 +1,47 @@
+name: deno-check
+
+# Red de seguridad de tipos para las Supabase Edge Functions (Deno).
+# Corre `deno check` + `deno lint` SOLO sobre los archivos .ts cambiados en el PR
+# bajo validateai/supabase/functions/ — no bloquea por deuda preexistente en
+# funciones no tocadas.
+on:
+  pull_request:
+    paths:
+      - 'validateai/supabase/functions/**'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Detectar archivos .ts cambiados bajo functions/
+        id: changed
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          files=$(git diff --name-only "$base" HEAD -- validateai/supabase/functions | grep '\.ts$' || true)
+          # Una sola línea separada por espacios para pasar a deno.
+          oneline=$(echo "$files" | tr '\n' ' ' | sed 's/  */ /g' | sed 's/^ *//;s/ *$//')
+          echo "files=$oneline" >> "$GITHUB_OUTPUT"
+          if [ -z "$oneline" ]; then
+            echo "Sin archivos .ts cambiados bajo functions/ — nada que validar."
+          else
+            echo "Validando:"; printf '  - %s\n' $oneline
+          fi
+
+      - name: deno check
+        if: steps.changed.outputs.files != ''
+        run: deno check ${{ steps.changed.outputs.files }}
+
+      - name: deno lint
+        if: steps.changed.outputs.files != ''
+        run: deno lint ${{ steps.changed.outputs.files }}
