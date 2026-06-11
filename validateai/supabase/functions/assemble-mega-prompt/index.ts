@@ -38,6 +38,41 @@ interface BraliduAlert {
   title: string;
 }
 
+// Evidencia citable extraída de un nodo Bralidus (ver nodeToEvidence).
+// Polimórfica: el metadata de Bralidus tiene DOS shapes (smoke test 2026-06-11).
+interface BralidusEvidence {
+  shape: 'financial' | 'doctrine';
+  claim: string;             // document_title
+  category: string | null;
+  relevance: number;
+  // shape 'financial' — FRED/yfinance/OpenBB: dato fechado y auditable
+  indicator?: string;        // series_id | symbol
+  value?: number;            // ultimo_valor
+  unit?: string;             // unidad
+  date?: string;             // ultima_fecha
+  source?: string;           // fuente
+  source_url?: string;       // url_fuente
+  // shape 'doctrine' — Familia A: referencia permanente, SIN fecha
+  entity_type?: string;
+  entity_value?: string;
+  dimension?: string;
+  threshold?: number | string;
+}
+
+interface BralidusExpert {
+  expert_id: string;
+  expert_name: string;
+  score: number;
+}
+
+interface BralidusBundle {
+  contextForLLM: string;
+  alerts: BraliduAlert[];
+  evidence: BralidusEvidence[];
+  experts: BralidusExpert[];
+  dataFreshness: Record<string, string> | null;
+}
+
 // Umbrales de cachÃ©: 0.92 para due diligence (mayor rigor = menos falsos positivos).
 // Un score 0.92 implica que dos ideas son ~92% semÃ¡nticamente idÃ©nticas â€” seguro
 // para reutilizar un anÃ¡lisis legal/financiero sin riesgo de resultado incorrecto.
@@ -259,35 +294,137 @@ async function searchKnowledgeBase(
 // â”€â”€ BralidusPY bridge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Calls GraphRAG hybrid engine with startup context and tier gate.
 // Degrades gracefully if BRALIDUS_URL is unreachable (8s hard timeout).
-async function fetchBralidusPY(
-  query: string,
-  startupContext: { industry: string; stage: string; geography: string },
-  tier: string,
-): Promise<{ contextForLLM: string; alerts: BraliduAlert[] }> {
-  const config = BRALIDUS_TIER[tier] ?? BRALIDUS_TIER.free;
-  const body: Record<string, unknown> = {
-    query,
-    startup_context: startupContext,
-    top_k: config.topK,
-    match_threshold: 0.30,
+// Mapea un nodo Bralidus → evidencia citable. Polimórfico (smoke test 2026-06-11):
+//   shape 'financial' → nodos con ultimo_valor + ultima_fecha (FRED/yfinance/OpenBB) — fechado, auditable
+//   shape 'doctrine'  → nodos con entity_type (Familia A) — referencia permanente, SIN fecha
+function nodeToEvidence(n: Record<string, unknown>): BralidusEvidence | null {
+  const md = (n.metadata ?? {}) as Record<string, unknown>;
+  const base = {
+    claim: (n.document_title as string) ?? 'N/D',
+    category: (n.category as string) ?? null,
+    relevance: typeof n.relevance === 'number' ? (n.relevance as number) : 0,
   };
-  if (config.macroOnly) body.entity_override = BRALIDUS_MACRO_OVERRIDE;
+  // Shape 1 — financiero/macro: valor + fecha → cita fechada y verificable.
+  if (md.ultimo_valor !== undefined && md.ultimo_valor !== null && md.ultima_fecha) {
+    return {
+      ...base,
+      shape: 'financial',
+      indicator: (md.series_id as string) ?? (md.symbol as string) ?? undefined,
+      value: md.ultimo_valor as number,
+      unit: (md.unidad as string) ?? undefined,
+      date: md.ultima_fecha as string,
+      source: (md.fuente as string) ?? undefined,
+      source_url: (md.url_fuente as string) ?? undefined,
+    };
+  }
+  // Shape 2 — doctrina/Familia A: referencia permanente, sin frescura.
+  if (md.entity_type) {
+    return {
+      ...base,
+      shape: 'doctrine',
+      entity_type: md.entity_type as string,
+      entity_value: (md.entity_value as string) ?? undefined,
+      dimension: (md.dimension as string) ?? undefined,
+      threshold: (md.threshold ?? md.threshold_months) as number | string | undefined,
+    };
+  }
+  return null;
+}
 
+// Llamada cruda a /query/moe (MoE GatingNetwork + Radar Forense + freshness).
+async function callBralidusMoE(body: Record<string, unknown>): Promise<Record<string, unknown>> {
   const authHeaders: Record<string, string> = BRALIDUS_API_KEY
     ? { 'Authorization': `Bearer ${BRALIDUS_API_KEY}` }
     : {};
-
-  const res = await fetch(`${BRALIDUS_URL}/query`, {
+  const res = await fetch(`${BRALIDUS_URL}/query/moe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(8_000),
   });
-  if (!res.ok) throw new Error(`BralidusPY HTTP ${res.status}`);
-  const data = await res.json();
+  if (!res.ok) throw new Error(`BralidusPY MoE HTTP ${res.status}`);
+  return await res.json() as Record<string, unknown>;
+}
+
+// Pull holístico para el mega-prompt de Due Diligence.
+// pro/premium (macroOnly=false): DOS llamadas concurrentes a /query/moe —
+//   (a) MoE semántico → doctrina (legal/unit_economics/estrategia) + señales Radar Forense
+//   (b) macro forzado vía entity_override → datos duros fechados (FRED/yfinance/OpenBB)
+// Sin (b) el GatingNetwork desplaza los nodos macro del top-k (crowding-out confirmado
+// en smoke test 2026-06-11: 6/6 hits fueron doctrina, 0 datos macro fechados).
+// basic (macroOnly=true): solo el pull macro (b).
+async function fetchBralidusBundle(
+  query: string,
+  startupContext: { industry: string; stage: string; geography: string },
+  tier: string,
+): Promise<BralidusBundle> {
+  const config = BRALIDUS_TIER[tier] ?? BRALIDUS_TIER.free;
+
+  const calls: Promise<Record<string, unknown>>[] = [
+    callBralidusMoE({
+      query,
+      startup_context: startupContext,
+      top_k: BRALIDUS_MACRO_OVERRIDE.length,
+      match_threshold: 0.30,
+      entity_override: BRALIDUS_MACRO_OVERRIDE,
+    }),
+  ];
+  if (!config.macroOnly) {
+    calls.unshift(callBralidusMoE({
+      query,
+      startup_context: startupContext,
+      top_k: config.topK,
+      match_threshold: 0.30,
+      max_experts: 3,
+    }));
+  }
+
+  const settled = await Promise.allSettled(calls);
+  const responses = settled
+    .filter((s): s is PromiseFulfilledResult<Record<string, unknown>> => s.status === 'fulfilled')
+    .map(s => s.value);
+  if (responses.length === 0) throw new Error('BralidusPY: MoE + macro fallaron');
+
+  // Merge de nodos (dedupe por document_title, preferir mayor relevance).
+  const nodeByTitle = new Map<string, Record<string, unknown>>();
+  const expertsById = new Map<string, BralidusExpert>();
+  let dataFreshness: Record<string, string> | null = null;
+  const contextParts: string[] = [];
+
+  for (const r of responses) {
+    for (const n of (r.nodes ?? []) as Record<string, unknown>[]) {
+      const title = n.document_title as string;
+      const prev = nodeByTitle.get(title);
+      if (!prev || ((n.relevance as number) ?? 0) > ((prev.relevance as number) ?? 0)) {
+        nodeByTitle.set(title, n);
+      }
+    }
+    for (const e of (r.experts_activated ?? []) as Record<string, unknown>[]) {
+      const id = e.expert_id as string;
+      if (id && !expertsById.has(id)) {
+        expertsById.set(id, {
+          expert_id: id,
+          expert_name: (e.expert_name as string) ?? id,
+          score: (e.score as number) ?? 0,
+        });
+      }
+    }
+    if (r.data_freshness && !dataFreshness) dataFreshness = r.data_freshness as Record<string, string>;
+    if (typeof r.context_for_llm === 'string' && r.context_for_llm) contextParts.push(r.context_for_llm);
+  }
+
+  const mergedNodes = [...nodeByTitle.values()];
+  const evidence = mergedNodes
+    .map(nodeToEvidence)
+    .filter((e): e is BralidusEvidence => e !== null)
+    .sort((a, b) => b.relevance - a.relevance);
+
   return {
-    contextForLLM: (data.context_for_llm as string) ?? '',
-    alerts: _extractBraliduAlerts((data.nodes as Array<Record<string, unknown>>) ?? []),
+    contextForLLM: contextParts.join('\n\n'),
+    alerts: _extractBraliduAlerts(mergedNodes),
+    evidence,
+    experts: [...expertsById.values()],
+    dataFreshness,
   };
 }
 
@@ -502,22 +639,48 @@ function compressChilecompra(m: Record<string, unknown>): string {
   ].join('\n');
 }
 
-function compressBralidus(contextForLLM: string, alerts: BraliduAlert[]): string {
-  if (!contextForLLM && alerts.length === 0) return '';
+function compressBralidus(
+  evidence: BralidusEvidence[],
+  alerts: BraliduAlert[],
+  dataFreshness: Record<string, string> | null,
+): string {
+  if (evidence.length === 0 && alerts.length === 0) return '';
   const criticalWarning = alerts
     .filter(a => a.severity === 'critical' || a.severity === 'warning')
     .map(a => `  [${a.severity.toUpperCase()}] ${a.title}`)
     .join('\n');
-  // Cap at 1200 chars (~300 tokens) to stay within mega-prompt token budget.
-  const ctxPreview = contextForLLM.length > 1200
-    ? contextForLLM.slice(0, 1200) + '\n  [...contexto adicional disponible en UI]'
-    : contextForLLM;
+  // Evidencia citable: top-N por relevance, cap ~600 tokens (~2400 chars).
+  // Shape 'financial' → cita fechada; shape 'doctrine' → referencia sin fecha.
+  const evLines: string[] = [];
+  let budget = 2400;
+  for (const ev of evidence) {
+    let line: string;
+    if (ev.shape === 'financial') {
+      const val = typeof ev.value === 'number' ? ev.value.toLocaleString('es-CL') : String(ev.value ?? '');
+      const ind = ev.indicator ? ` (${ev.indicator})` : '';
+      const src = ev.source ? ` - fuente: ${ev.source}` : '';
+      const url = ev.source_url ? ` <${ev.source_url}>` : '';
+      line = `  - [DATO ${ev.date}] ${ev.claim}${ind}: ${val}${ev.unit ?? ''}${src}${url}`;
+    } else {
+      const dim = ev.dimension ? ` / ${ev.dimension}` : '';
+      const thr = ev.threshold !== undefined ? ` (umbral: ${ev.threshold})` : '';
+      line = `  - [DOCTRINA] ${ev.entity_value ?? ev.claim}${dim}${thr}`;
+    }
+    if (budget - line.length < 0) break;
+    budget -= line.length;
+    evLines.push(line);
+  }
+  const freshnessNote = dataFreshness
+    ? `  Frescura de datos: ${Object.entries(dataFreshness).map(([k, v]) => `${k}=${v}`).join(', ')}`
+    : '';
   return [
     '[BRALIDUSPÝ — Inteligencia GraphRAG (FRED + Familia A Normativa)]',
     criticalWarning || '  (Sin alertas Familia A para este perfil)',
     '',
-    ctxPreview,
-  ].join('\n');
+    '  EVIDENCIA CITABLE (cita estas fuentes y fechas al ajustar un score):',
+    ...evLines,
+    freshnessNote,
+  ].filter(Boolean).join('\n');
 }
 
 // â”€â”€ Schema validator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -607,6 +770,7 @@ REGLAS CRÃTICAS PARA FUENTES NO DISPONIBLES:
    Mencionarlos en verdict_summary solo si estÃ¡n disponibles.
 3. Fuentes "excluidas por filtro adaptativo" (no requeridas por etapa/tier) no generan penalizaciÃ³n.
 4. NUNCA uses datos de CMF BEST para hacer afirmaciones sobre la startup especÃ­fica â€” son benchmarks del sistema financiero chileno, no mÃ©tricas de la empresa.
+5. EVIDENCIA BRALIDUS: cuando un dato de la secciÃ³n [BRALIDUS] influya en un score (ej: spread de crÃ©dito alto â†’ mÃ¡s riesgo financiero; desempleo Chile alto â†’ menor disposiciÃ³n a pagar), CITA el indicador, su valor y su fecha en el gap o verdict_summary correspondiente. Los Ã­tems marcados "[DATO aaaa-mm-dd]" llevan fecha verificable â€” Ãºsala. Los Ã­tems marcados "[DOCTRINA]" son referencias permanentes SIN fecha â€” cÃ­talos por nombre, NUNCA inventes una fecha para ellos.
 ${glassCeilingBlock}
 Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown.`;
 
@@ -841,7 +1005,7 @@ serve(async (req) => {
     const bralidusPYPromise = bralidusTierConfig.enabled
       ? withCircuitBreaker(
           'bralidus-py',
-          () => fetchBralidusPY(bralidusPYQuery, bralidusPYStartupCtx, tier),
+          () => fetchBralidusBundle(bralidusPYQuery, bralidusPYStartupCtx, tier),
           10_000,
         )
       : Promise.resolve({ ok: false as const, reason: `tier ${tier}: BralidusPY requiere Basic o superior` });
@@ -951,11 +1115,17 @@ serve(async (req) => {
     // â”€â”€ Resolver BralidusPY (ya corriÃ³ en paralelo con las fuentes anteriores) â”€â”€
     const bralidusPYBreaker = await bralidusPYPromise;
     let bralidusPYAlerts: BraliduAlert[] = [];
+    let bralidusEvidence: BralidusEvidence[] = [];
+    let bralidusExperts: BralidusExpert[] = [];
+    let bralidusFreshness: Record<string, string> | null = null;
     let bralidusPYContextStr = '';
     if (bralidusPYBreaker.ok) {
-      const bd = bralidusPYBreaker.data as { contextForLLM: string; alerts: BraliduAlert[] };
-      bralidusPYAlerts    = bd.alerts;
-      bralidusPYContextStr = compressBralidus(bd.contextForLLM, bd.alerts);
+      const bd = bralidusPYBreaker.data as BralidusBundle;
+      bralidusPYAlerts     = bd.alerts;
+      bralidusEvidence     = bd.evidence;
+      bralidusExperts      = bd.experts;
+      bralidusFreshness    = bd.dataFreshness;
+      bralidusPYContextStr = compressBralidus(bd.evidence, bd.alerts, bd.dataFreshness);
     } else if (bralidusTierConfig.enabled) {
       dataWarnings.push(`BralidusPY: ${bralidusPYBreaker.reason}`);
     }
@@ -1002,6 +1172,9 @@ serve(async (req) => {
           sources_skipped: skipped,
           audit_level:     hasVerifiedFinancialData ? 2 : 1,
           bralidus_alerts: bralidusPYAlerts,
+          bralidus_evidence: bralidusEvidence,
+          bralidus_experts:  bralidusExperts,
+          bralidus_data_freshness: bralidusFreshness,
         },
       })
       .eq('id', validation_id);
@@ -1020,6 +1193,9 @@ serve(async (req) => {
       sources_skipped: skipped,
       from_cache: false,
       bralidus_alerts: bralidusPYAlerts,
+      bralidus_evidence: bralidusEvidence,
+      bralidus_experts: bralidusExperts,
+      bralidus_data_freshness: bralidusFreshness,
     }), { headers: { ...cors, 'Content-Type': 'application/json' } });
 
   } catch (err) {
