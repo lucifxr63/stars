@@ -9,6 +9,7 @@ const CMF_BEST_KEY = Deno.env.get('CMF_BEST_KEY')
 const FINTOC_SECRET_KEY = Deno.env.get('FINTOC_SECRET_KEY')
 const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')
 const FRED_API_KEY = Deno.env.get('FRED_API_KEY')
+const SII_APIGATEWAY_KEY = Deno.env.get('SII_APIGATEWAY_KEY')
 const BDE_USER = Deno.env.get('BDE_USER')
 const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY')
 const BRALIDUS_URL = Deno.env.get('BRALIDUS_URL') ?? 'https://braliduspy-production.up.railway.app'
@@ -95,23 +96,23 @@ export const servicesHealthHandler = async (c: any) => {
 
   // ── Chilean Government APIs ────────────────────────────────────────────────
 
-  // SII — check if it has been called (data in temp_context with source='sii')
-  const siiRows = await hasRows(supabase, 'temp_context')
-  const { data: siiData } = await supabase
-    .from('temp_context')
-    .select('created_at')
-    .eq('source', 'sii')
-    .order('created_at', { ascending: false })
+  // SII — sii-proxy Edge Function + sii_empresa_cache
+  const { data: siiCacheData } = await supabase
+    .from('sii_empresa_cache')
+    .select('cached_at')
+    .order('cached_at', { ascending: false })
     .limit(1)
-  const siiHasData = siiData && siiData.length > 0
+  const siiHasData = siiCacheData && siiCacheData.length > 0
   services.push({
     id: 'sii',
     name: 'SII (apigateway.cl)',
     category: 'gov',
-    status: siiRows === null ? 'degraded' : 'ok',
-    message: siiHasData
-      ? `Última consulta ${new Date(siiData![0].created_at).toLocaleDateString('es-CL')}`
-      : 'Proxy activo — sin consultas recientes',
+    status: SII_APIGATEWAY_KEY ? 'ok' : 'error',
+    message: !SII_APIGATEWAY_KEY
+      ? 'SII_APIGATEWAY_KEY no configurada'
+      : siiHasData
+        ? `Última consulta ${new Date(siiCacheData![0].cached_at).toLocaleDateString('es-CL')} · caché 7 días`
+        : 'Proxy activo · sin consultas aún',
   })
 
   // BCE / Banco Central — check cache table

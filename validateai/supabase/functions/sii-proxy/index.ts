@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { z } from 'npm:zod';
 import { SiiEmpresaSchema, RutSchema } from '../shared-schemas/mod.ts';
 
 const corsHeaders = {
@@ -58,7 +58,10 @@ async function fetchSiiEmpresa(rut: string) {
     });
 
     if (!res.ok) {
-      console.warn(`SII API returned ${res.status} for RUT ${rut}`);
+      const body = await res.text().catch(() => '');
+      console.warn(`SII API ${res.status} for RUT ${rut}: ${body.slice(0, 200)}`);
+      if (res.status === 401) throw new Error(`SII_APIGATEWAY_KEY inválida o expirada (401)`);
+      if (res.status === 404) throw new Error(`RUT ${rut} no encontrado en SII (404)`);
       return buildFallback(rut);
     }
 
