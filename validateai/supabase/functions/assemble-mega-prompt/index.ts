@@ -1,5 +1,14 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  BRALIDUS_TIER,
+  fetchBralidusBundle,
+  compressBralidus,
+  type BraliduAlert,
+  type BralidusEvidence,
+  type BralidusExpert,
+  type BralidusBundle,
+} from '../_shared/bralidus.ts';
 
 // â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ALLOWED_ORIGINS = [
@@ -14,64 +23,7 @@ const OPENAI_API_KEY  = Deno.env.get('OPENAI_API_KEY');     // para embeddings
 const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 
 // ── BralidusPY config ─────────────────────────────────────────────────────────
-// Defaults to localhost for local dev; set BRALIDUS_URL in Supabase secrets for prod.
-const BRALIDUS_URL     = Deno.env.get('BRALIDUS_URL') ?? 'http://localhost:8000';
-const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY') ?? '';  // Bearer token for prod auth
-
-const BRALIDUS_TIER: Record<string, { topK: number; enabled: boolean; macroOnly: boolean }> = {
-  free:    { topK: 0,  enabled: false, macroOnly: true  },
-  basic:   { topK: 8,  enabled: true,  macroOnly: true  },
-  pro:     { topK: 20, enabled: true,  macroOnly: false },
-  premium: { topK: 25, enabled: true,  macroOnly: false },
-  admin:   { topK: 25, enabled: true,  macroOnly: false },
-};
-
-const BRALIDUS_MACRO_OVERRIDE = [
-  'PIB USA (GDP)', 'Inflación USA (CPI All Urban Consumers)',
-  'Tasa de Fondos Federales (Fed Funds Rate)', 'USD/CLP (Tipo de Cambio Chile)',
-  'High Yield Credit Spread (Apetito Riesgo Credito)', 'IPSA (Indice Bursatil Chile)',
-];
-
-interface BraliduAlert {
-  severity: 'critical' | 'warning' | 'info';
-  category: string;
-  title: string;
-}
-
-// Evidencia citable extraída de un nodo Bralidus (ver nodeToEvidence).
-// Polimórfica: el metadata de Bralidus tiene DOS shapes (smoke test 2026-06-11).
-interface BralidusEvidence {
-  shape: 'financial' | 'doctrine';
-  claim: string;             // document_title
-  category: string | null;
-  relevance: number;
-  // shape 'financial' — FRED/yfinance/OpenBB: dato fechado y auditable
-  indicator?: string;        // series_id | symbol
-  value?: number;            // ultimo_valor
-  unit?: string;             // unidad
-  date?: string;             // ultima_fecha
-  source?: string;           // fuente
-  source_url?: string;       // url_fuente
-  // shape 'doctrine' — Familia A: referencia permanente, SIN fecha
-  entity_type?: string;
-  entity_value?: string;
-  dimension?: string;
-  threshold?: number | string;
-}
-
-interface BralidusExpert {
-  expert_id: string;
-  expert_name: string;
-  score: number;
-}
-
-interface BralidusBundle {
-  contextForLLM: string;
-  alerts: BraliduAlert[];
-  evidence: BralidusEvidence[];
-  experts: BralidusExpert[];
-  dataFreshness: Record<string, string> | null;
-}
+// Config, tipos y bridge de Bralidus viven en ../_shared/bralidus.ts (importados arriba).
 
 // Umbrales de cachÃ©: 0.92 para due diligence (mayor rigor = menos falsos positivos).
 // Un score 0.92 implica que dos ideas son ~92% semÃ¡nticamente idÃ©nticas â€” seguro
@@ -297,156 +249,8 @@ async function searchKnowledgeBase(
 // Mapea un nodo Bralidus → evidencia citable. Polimórfico (smoke test 2026-06-11):
 //   shape 'financial' → nodos con ultimo_valor + ultima_fecha (FRED/yfinance/OpenBB) — fechado, auditable
 //   shape 'doctrine'  → nodos con entity_type (Familia A) — referencia permanente, SIN fecha
-function nodeToEvidence(n: Record<string, unknown>): BralidusEvidence | null {
-  const md = (n.metadata ?? {}) as Record<string, unknown>;
-  const base = {
-    claim: (n.document_title as string) ?? 'N/D',
-    category: (n.category as string) ?? null,
-    relevance: typeof n.relevance === 'number' ? (n.relevance as number) : 0,
-  };
-  // Shape 1 — financiero/macro: valor + fecha → cita fechada y verificable.
-  if (md.ultimo_valor !== undefined && md.ultimo_valor !== null && md.ultima_fecha) {
-    return {
-      ...base,
-      shape: 'financial',
-      indicator: (md.series_id as string) ?? (md.symbol as string) ?? undefined,
-      value: md.ultimo_valor as number,
-      unit: (md.unidad as string) ?? undefined,
-      date: md.ultima_fecha as string,
-      source: (md.fuente as string) ?? undefined,
-      source_url: (md.url_fuente as string) ?? undefined,
-    };
-  }
-  // Shape 2 — doctrina/Familia A: referencia permanente, sin frescura.
-  if (md.entity_type) {
-    return {
-      ...base,
-      shape: 'doctrine',
-      entity_type: md.entity_type as string,
-      entity_value: (md.entity_value as string) ?? undefined,
-      dimension: (md.dimension as string) ?? undefined,
-      threshold: (md.threshold ?? md.threshold_months) as number | string | undefined,
-    };
-  }
-  return null;
-}
-
-// Llamada cruda a /query/moe (MoE GatingNetwork + Radar Forense + freshness).
-async function callBralidusMoE(body: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const authHeaders: Record<string, string> = BRALIDUS_API_KEY
-    ? { 'Authorization': `Bearer ${BRALIDUS_API_KEY}` }
-    : {};
-  const res = await fetch(`${BRALIDUS_URL}/query/moe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(8_000),
-  });
-  if (!res.ok) throw new Error(`BralidusPY MoE HTTP ${res.status}`);
-  return await res.json() as Record<string, unknown>;
-}
-
-// Pull holístico para el mega-prompt de Due Diligence.
-// pro/premium (macroOnly=false): DOS llamadas concurrentes a /query/moe —
-//   (a) MoE semántico → doctrina (legal/unit_economics/estrategia) + señales Radar Forense
-//   (b) macro forzado vía entity_override → datos duros fechados (FRED/yfinance/OpenBB)
-// Sin (b) el GatingNetwork desplaza los nodos macro del top-k (crowding-out confirmado
-// en smoke test 2026-06-11: 6/6 hits fueron doctrina, 0 datos macro fechados).
-// basic (macroOnly=true): solo el pull macro (b).
-async function fetchBralidusBundle(
-  query: string,
-  startupContext: { industry: string; stage: string; geography: string },
-  tier: string,
-): Promise<BralidusBundle> {
-  const config = BRALIDUS_TIER[tier] ?? BRALIDUS_TIER.free;
-
-  const calls: Promise<Record<string, unknown>>[] = [
-    callBralidusMoE({
-      query,
-      startup_context: startupContext,
-      top_k: BRALIDUS_MACRO_OVERRIDE.length,
-      match_threshold: 0.30,
-      entity_override: BRALIDUS_MACRO_OVERRIDE,
-    }),
-  ];
-  if (!config.macroOnly) {
-    calls.unshift(callBralidusMoE({
-      query,
-      startup_context: startupContext,
-      top_k: config.topK,
-      match_threshold: 0.30,
-      max_experts: 3,
-    }));
-  }
-
-  const settled = await Promise.allSettled(calls);
-  const responses = settled
-    .filter((s): s is PromiseFulfilledResult<Record<string, unknown>> => s.status === 'fulfilled')
-    .map(s => s.value);
-  if (responses.length === 0) throw new Error('BralidusPY: MoE + macro fallaron');
-
-  // Merge de nodos (dedupe por document_title, preferir mayor relevance).
-  const nodeByTitle = new Map<string, Record<string, unknown>>();
-  const expertsById = new Map<string, BralidusExpert>();
-  let dataFreshness: Record<string, string> | null = null;
-  const contextParts: string[] = [];
-
-  for (const r of responses) {
-    for (const n of (r.nodes ?? []) as Record<string, unknown>[]) {
-      const title = n.document_title as string;
-      const prev = nodeByTitle.get(title);
-      if (!prev || ((n.relevance as number) ?? 0) > ((prev.relevance as number) ?? 0)) {
-        nodeByTitle.set(title, n);
-      }
-    }
-    for (const e of (r.experts_activated ?? []) as Record<string, unknown>[]) {
-      const id = e.expert_id as string;
-      if (id && !expertsById.has(id)) {
-        expertsById.set(id, {
-          expert_id: id,
-          expert_name: (e.expert_name as string) ?? id,
-          score: (e.score as number) ?? 0,
-        });
-      }
-    }
-    if (r.data_freshness && !dataFreshness) dataFreshness = r.data_freshness as Record<string, string>;
-    if (typeof r.context_for_llm === 'string' && r.context_for_llm) contextParts.push(r.context_for_llm);
-  }
-
-  const mergedNodes = [...nodeByTitle.values()];
-  const evidence = mergedNodes
-    .map(nodeToEvidence)
-    .filter((e): e is BralidusEvidence => e !== null)
-    .sort((a, b) => b.relevance - a.relevance);
-
-  return {
-    contextForLLM: contextParts.join('\n\n'),
-    alerts: _extractBraliduAlerts(mergedNodes),
-    evidence,
-    experts: [...expertsById.values()],
-    dataFreshness,
-  };
-}
-
-const _FAMILIA_A_SEVERITY: Record<string, 'critical' | 'warning' | 'info'> = {
-  'Cumplimiento Normativo': 'critical',
-  'Unit Economics':         'warning',
-  'Gobernanza':             'warning',
-  'Traccion y Evidencia':   'warning',
-  'Estrategia Fundraising': 'info',
-  'Moat Competitivo':       'info',
-  'MVP Roadmap':            'info',
-};
-
-function _extractBraliduAlerts(nodes: Array<Record<string, unknown>>): BraliduAlert[] {
-  return nodes
-    .filter(n => (n.metadata as Record<string, unknown> | null)?.entity_type)
-    .map(n => ({
-      severity: _FAMILIA_A_SEVERITY[n.category as string] ?? 'info',
-      category: n.category as string,
-      title: n.document_title as string,
-    }));
-}
+// nodeToEvidence, callBralidusMoE, fetchBralidusBundle y _extractBraliduAlerts
+// viven ahora en ../_shared/bralidus.ts (importados arriba).
 
 // â”€â”€ Circuit Breaker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PatrÃ³n explÃ­cito de tolerancia a fallos para llamadas a fuentes externas.
@@ -639,49 +443,7 @@ function compressChilecompra(m: Record<string, unknown>): string {
   ].join('\n');
 }
 
-function compressBralidus(
-  evidence: BralidusEvidence[],
-  alerts: BraliduAlert[],
-  dataFreshness: Record<string, string> | null,
-): string {
-  if (evidence.length === 0 && alerts.length === 0) return '';
-  const criticalWarning = alerts
-    .filter(a => a.severity === 'critical' || a.severity === 'warning')
-    .map(a => `  [${a.severity.toUpperCase()}] ${a.title}`)
-    .join('\n');
-  // Evidencia citable: top-N por relevance, cap ~600 tokens (~2400 chars).
-  // Shape 'financial' → cita fechada; shape 'doctrine' → referencia sin fecha.
-  const evLines: string[] = [];
-  let budget = 2400;
-  for (const ev of evidence) {
-    let line: string;
-    if (ev.shape === 'financial') {
-      const val = typeof ev.value === 'number' ? ev.value.toLocaleString('es-CL') : String(ev.value ?? '');
-      const ind = ev.indicator ? ` (${ev.indicator})` : '';
-      const src = ev.source ? ` - fuente: ${ev.source}` : '';
-      const url = ev.source_url ? ` <${ev.source_url}>` : '';
-      line = `  - [DATO ${ev.date}] ${ev.claim}${ind}: ${val}${ev.unit ?? ''}${src}${url}`;
-    } else {
-      const dim = ev.dimension ? ` / ${ev.dimension}` : '';
-      const thr = ev.threshold !== undefined ? ` (umbral: ${ev.threshold})` : '';
-      line = `  - [DOCTRINA] ${ev.entity_value ?? ev.claim}${dim}${thr}`;
-    }
-    if (budget - line.length < 0) break;
-    budget -= line.length;
-    evLines.push(line);
-  }
-  const freshnessNote = dataFreshness
-    ? `  Frescura de datos: ${Object.entries(dataFreshness).map(([k, v]) => `${k}=${v}`).join(', ')}`
-    : '';
-  return [
-    '[BRALIDUSPÝ — Inteligencia GraphRAG (FRED + Familia A Normativa)]',
-    criticalWarning || '  (Sin alertas Familia A para este perfil)',
-    '',
-    '  EVIDENCIA CITABLE (cita estas fuentes y fechas al ajustar un score):',
-    ...evLines,
-    freshnessNote,
-  ].filter(Boolean).join('\n');
-}
+// compressBralidus vive ahora en ../_shared/bralidus.ts (importada arriba).
 
 // â”€â”€ Schema validator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Valida que la respuesta de Claude tenga la estructura exacta de DueDiligenceScore

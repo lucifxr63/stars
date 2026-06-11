@@ -169,6 +169,39 @@ Desempleo Chile 8,93% (2026-03-01, EconDB), IPSA 10.453 pts (2026-06-10), CPI US
 todos con URL de fuente. Sin deploy (Fase 0) no corre en prod; el circuit breaker degrada a vacío.
 **Falta:** `deno check`/lint en CI (no hay deno local) antes del merge.
 
+## 6d. Fase 2 — Código implementado (2026-06-11, rama feat/bralidus-wizard)
+
+Inyección de Bralidus en el wizard `ai-validate`, con la orquestación en 4 capas aprobada.
+
+**Refactor DRY:** todo el bridge Bralidus se movió a `supabase/functions/_shared/bralidus.ts`
+(tipos, `callBralidusMoE`, `nodeToEvidence`, `compressBralidus`, `fetchBralidusBundle`,
+`BRALIDUS_CITE_DIRECTIVE`). `assemble-mega-prompt` ahora importa de ahí (Fase 1 sin duplicar).
+
+**Caché (migración `20260611010000_bralidus_context_cache.sql`):** tabla por 4-tupla
+`(scope, industry, stage, geography)`, RLS deny-all, RPC `bump_bralidus_cache_hit`. TTL
+lazy-on-read + UPSERT (sin pg_cron).
+
+**Orquestación (`fetchBralidusContextForPrompt`):**
+- Capa 1 — gating `BRALIDUS_BY_PROMPT`: prompts ausentes no llaman a Bralidus (retorno null sin red).
+- Capa 2 — caché por perfil: read-on-read (`expires_at > now()`), miss → pull → UPSERT no bloqueante.
+- Capa 3 — pull dirigido simple (sin doble pull): `macroForce` → entity_override macro; doctrina → `queryHint`.
+- Capa 4 — disparo concurrente con el pre-pass Haiku en `ai-validate` → latencia oculta.
+- Inyección: `enrichedContext.bralidus_context` + `ragSystemOverride` (+ `BRALIDUS_CITE_DIRECTIVE`);
+  evidencia adjunta en `parsed._bralidus` (auditable, insumo EvidenceWall Fase 3); telemetría
+  `bralidus_used`/`bralidus_cached`. Degrada a null ante cualquier fallo.
+
+**Alcance acotado por validación empírica (2026-06-11) — NO los 6 prompts originales:**
+- ✅ **Incluidos**: `market_sizing`, `risk_analysis`, `risk_checklist` (macro fechado), `unit_economics`
+  (queryHint → enruta a experto `unit_economics`; nodos LTV:CAC/Payback/Burn/CAC correctos).
+- ⏸️ **Diferidos** `governance_assessment`, `compliance_roadmap`, `fundraising_roadmap`,
+  `competitive_analysis`: el smoke test mostró que los nodos-hub de relevancia 1.0 (benchmarks
+  unit-econ) **dominan el top-k incluso con el experto legal/estrategia activo** → el retrieval no
+  surfacea su doctrina específica (SpA, Ley 21.719, Corfo), y alimentarlos sería ruido. Además su
+  SYSTEM_PROMPT ya es doctrina-rico. Re-habilitar requiere `entity_override` por experto (acoplar a
+  títulos del KG) o señales del Radar Forense activas. Follow-up.
+
+**Pendiente:** `deno check`/lint en CI (sin deno local); aplicar la migración en Supabase; deploy Fase 0.
+
 ## 7. Secuencia aprobada
 
 **Fase 0 → Fase 1 primero** (directriz Mesa 2026-06-11): gestión de riesgo (validar infra en flujo acotado
