@@ -11,7 +11,7 @@ test.describe('Landing page', () => {
     await page.goto('/');
   });
 
-  test('carga sin errores JS', async ({ page }) => {
+  test('carga sin errores JS', { tag: '@smoke' }, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.waitForLoadState('networkidle');
@@ -88,7 +88,7 @@ test.describe('Login page', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('muestra el formulario de email/contraseña', async ({ page }) => {
+  test('muestra el formulario de email/contraseña', { tag: '@smoke' }, async ({ page }) => {
     await expect(page.getByPlaceholder('tu@email.com')).toBeVisible();
     await expect(page.getByPlaceholder('••••••••')).toBeVisible();
   });

@@ -1,0 +1,136 @@
+name: frontend-ci
+
+# Barrera de calidad del frontend (validateai/). Corre en cada PR y push a main
+# que toque el código del frontend. Bloquea regresiones de tipos, tests y build
+# (whole-project, ya en verde) antes de que lleguen a Vercel.
+#
+# El LINT corre SOLO sobre los .ts/.tsx cambiados y es ADVISORY (continue-on-error):
+# no bloquea el merge todavía porque src/ arrastra ~68 errores preexistentes
+# (la mayoría de la nueva ruleset react-hooks v7). Surface las anotaciones en el
+# PR para ir limpiando. Flip a bloqueante cuando se cierre el burn-down
+# (backlog "linter estricto progresivo").
+on:
+  pull_request:
+    paths:
+      - 'validateai/**'
+      - '.github/workflows/frontend-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'validateai/**'
+      - '.github/workflows/frontend-ci.yml'
+
+# Cancela runs anteriores del mismo branch/PR para no malgastar minutos de CI.
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: validateai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: validateai/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Lint incremental: solo archivos .ts/.tsx cambiados bajo validateai/src.
+      - name: Detectar archivos cambiados
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          # Rutas relativas a validateai/ (cwd), filtradas a src/*.ts(x).
+          files=$(git diff --name-only "$base" HEAD -- 'validateai/src/**/*.ts' 'validateai/src/**/*.tsx' \
+            | sed 's#^validateai/##' || true)
+          oneline=$(echo "$files" | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+          echo "files=$oneline" >> "$GITHUB_OUTPUT"
+          if [ -z "$oneline" ]; then
+            echo "Sin .ts/.tsx cambiados bajo src/ — nada que lintear."
+          else
+            echo "Linteando:"; printf '  - %s\n' $oneline
+          fi
+
+      - name: Lint (archivos cambiados, advisory)
+        if: steps.changed.outputs.files != ''
+        continue-on-error: true
+        run: npx eslint ${{ steps.changed.outputs.files }}
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      - name: Tests unitarios
+        run: npx vitest run
+
+      - name: Build de producción
+        run: npx vite build
+
+  # Smoke E2E (Escalón 1): solo tests @smoke, chromium headless, Edge Functions
+  # mockeadas vía page.route → depende SOLO del artefacto del frontend.
+  # Objetivo: < 2 min. Corre en paralelo al job `build`.
+  smoke-e2e:
+    runs-on: ubuntu-latest
+    # El frontend construye el cliente Supabase al boot con estas vars; sin ellas
+    # createClient() lanza y la app no renderiza (white screen → todo falla).
+    # El smoke mockea TODA la red vía page.route contra este host exacto
+    # (e2e/fixtures/mockSupabase.ts), así que la URL debe coincidir literal y el
+    # anon key es un placeholder — ninguna llamada real sale a Supabase.
+    env:
+      VITE_SUPABASE_URL: https://fcdhcntyvsydnvjwopfe.supabase.co
+      VITE_SUPABASE_ANON_KEY: smoke-e2e-mocked-anon-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: validateai/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Caché de los binarios de Playwright, keyed por la versión instalada.
+      - name: Resolver versión de Playwright
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache de browsers Playwright
+        uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # Solo chromium. --with-deps siempre (las libs del SO no se cachean).
+      - name: Instalar chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke E2E (@smoke)
+        run: npx playwright test --project=chromium --grep @smoke
+
+      - name: Subir reporte si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: validateai/playwright-report/
+          retention-days: 7

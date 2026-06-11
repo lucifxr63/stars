@@ -120,6 +120,22 @@ export async function mockAuth(page: Page) {
   await page.route(`${SUPABASE_URL}/rest/v1/founder_profiles**`, (route) =>
     json(route, []),
   );
+
+  // Edge Functions de Deno: el smoke E2E debe depender SOLO del artefacto del
+  // frontend — ninguna llamada sale a la red real (Supabase/AI).
+  await mockEdgeFunctions(page);
+}
+
+/**
+ * Catch-all para las Edge Functions de Deno (`/functions/v1/**`).
+ * Devuelve un stub benigno para cualquier función no mockeada explícitamente,
+ * garantizando aislamiento total del backend en los tests.
+ * Llamar DESPUÉS de los mocks específicos de functions si se quiere overridear.
+ */
+export async function mockEdgeFunctions(page: Page) {
+  await page.route(`${SUPABASE_URL}/functions/v1/**`, (route) =>
+    json(route, { status: 'mock', mocked: true }),
+  );
 }
 
 /**

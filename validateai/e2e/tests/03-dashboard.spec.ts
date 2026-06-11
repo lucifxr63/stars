@@ -14,14 +14,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Dashboard con usuario autenticado', () => {
-  test('carga sin errores JS', async ({ page }) => {
+  test('carga sin errores JS', { tag: '@smoke' }, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.waitForTimeout(500);
     expect(errors).toHaveLength(0);
   });
 
-  test('muestra el saludo con el nombre del usuario', async ({ page }) => {
+  test('muestra el saludo con el nombre del usuario', { tag: '@smoke' }, async ({ page }) => {
     // Nombre "Founder Test" → firstName = "Founder"
     await expect(page.getByText(/hola.*founder/i)).toBeVisible();
   });

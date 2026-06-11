@@ -16,7 +16,7 @@ const PROTECTED_ROUTES = [
 ];
 
 for (const route of PROTECTED_ROUTES) {
-  test(`${route} redirige a /login sin autenticación`, async ({ page }) => {
+  test(`${route} redirige a /login sin autenticación`, { tag: '@smoke' }, async ({ page }) => {
     await mockUnauthenticated(page);
     await page.goto(route);
     await page.waitForURL(/\/login/, { timeout: 5_000 });

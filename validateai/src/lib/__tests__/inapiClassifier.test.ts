@@ -19,7 +19,7 @@ function makeRecord(
 
 describe('normalizeText', () => {
   it('convierte a mayúsculas', () => {
-    expect(normalizeText('Validus')).toBe('Validus');
+    expect(normalizeText('Validus')).toBe('VALIDUS');
   });
 
   it('elimina tildes', () => {

@@ -9,6 +9,7 @@ import {
 } from 'recharts'
 import { TrendingUp, TrendingDown, Minus, ArrowLeft, RefreshCw, ShieldAlert, Info, Map } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { MarketSizing } from '@/types/validation'
 
 const ChileMarketMap = lazy(() =>
@@ -371,16 +372,27 @@ export function MarketStudy() {
                     La altura representa el tamaño relativo. Arrastra para rotar.
                   </p>
                   <div className="hidden sm:block rounded-xl overflow-hidden" style={{ height: '460px' }}>
-                    <Suspense
+                    <ErrorBoundary
+                      label="Mapa 3D"
                       fallback={
-                        <div className="w-full h-full bg-[#030712] dark:bg-[#0A0A0F] rounded-xl flex flex-col items-center justify-center gap-3 text-gray-500 text-sm">
-                          <div className="w-8 h-8 border-2 border-gray-700 border-t-teal-500 rounded-full animate-spin" />
-                          Cargando mapa 3D…
+                        <div className="w-full h-full bg-[#030712] dark:bg-[#0A0A0F] rounded-xl flex flex-col items-center justify-center gap-2 text-center px-6 text-gray-400 text-xs">
+                          <ShieldAlert className="w-6 h-6 text-gray-500" />
+                          No se pudo cargar el mapa 3D en este dispositivo.
+                          <span className="text-gray-500">El resto del estudio de mercado sigue disponible.</span>
                         </div>
                       }
                     >
-                      <ChileMarketMap marketSizing={marketSizing} industry={industry} />
-                    </Suspense>
+                      <Suspense
+                        fallback={
+                          <div className="w-full h-full bg-[#030712] dark:bg-[#0A0A0F] rounded-xl flex flex-col items-center justify-center gap-3 text-gray-500 text-sm">
+                            <div className="w-8 h-8 border-2 border-gray-700 border-t-teal-500 rounded-full animate-spin" />
+                            Cargando mapa 3D…
+                          </div>
+                        }
+                      >
+                        <ChileMarketMap marketSizing={marketSizing} industry={industry} />
+                      </Suspense>
+                    </ErrorBoundary>
                   </div>
                   {/* Mobile: mapa no disponible */}
                   <div className="sm:hidden bg-gray-50 dark:bg-[#0A0A0F] rounded-xl p-6 text-center text-xs text-gray-400">

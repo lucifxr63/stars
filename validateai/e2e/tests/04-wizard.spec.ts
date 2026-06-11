@@ -38,7 +38,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Wizard — carga inicial', () => {
-  test('carga sin errores JS', async ({ page }) => {
+  test('carga sin errores JS', { tag: '@smoke' }, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.waitForTimeout(500);
@@ -50,7 +50,7 @@ test.describe('Wizard — carga inicial', () => {
     await expect(page.getByText('Validus').first()).toBeVisible();
   });
 
-  test('step indicator visible — muestra el paso 1', async ({ page }) => {
+  test('step indicator visible — muestra el paso 1', { tag: '@smoke' }, async ({ page }) => {
     // El wizard tiene una barra de progreso o indicador de paso
     await expect(page.getByText(/paso 1|step 1|análisis rápido|validación profunda/i).first()).toBeVisible();
   });

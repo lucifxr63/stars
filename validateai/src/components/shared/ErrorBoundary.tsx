@@ -1,5 +1,6 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { captureError } from '@/lib/sentry';
+import { isChunkLoadError, reloadForStaleChunk } from '@/lib/chunkReload';
 
 interface Props {
   children: ReactNode;
@@ -20,6 +21,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // Stale deploy: un chunk lazy con hash viejo no se pudo cargar.
+    // Recargamos (una vez) en lugar de mostrar un fallback inútil.
+    if (isChunkLoadError(error) && reloadForStaleChunk()) return;
+
     console.error(
       `[ErrorBoundary:${this.props.label ?? 'unknown'}]`,
       error.message,

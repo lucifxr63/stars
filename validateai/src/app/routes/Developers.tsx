@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { KnowledgeGraph } from '@/components/developers/KnowledgeGraph';
 import { MacroIntelligence } from '@/components/developers/MacroIntelligence';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
   Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
@@ -506,7 +507,9 @@ export function Developers() {
 
         {/* ── Tab: Financial Intelligence ─────────────────────────────────── */}
         {activeTab === 'financial' && (
-          <MacroIntelligence />
+          <ErrorBoundary label="Inteligencia financiera">
+            <MacroIntelligence />
+          </ErrorBoundary>
         )}
 
         {/* ── Tab: Servicios ──────────────────────────────────────────────── */}
@@ -896,7 +899,9 @@ export function Developers() {
 
         {/* ── Tab: Knowledge Graph ────────────────────────────────────────── */}
         {activeTab === 'graph' && (
-          <KnowledgeGraph />
+          <ErrorBoundary label="Knowledge Graph">
+            <KnowledgeGraph />
+          </ErrorBoundary>
         )}
 
         {/* ── Tab: API Keys ───────────────────────────────────────────────── */}
