@@ -20,6 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { User } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { buildGoldenValidation, buildGoldenAgentsLog, GOLDEN_IDEA_NAME } from './golden-mediconnect';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
@@ -79,12 +80,14 @@ const ACCOUNTS: DemoAccount[] = [
     founder_pitch: 'Telemedicina para zonas rurales con cobertura limitada.',
   },
   {
+    // Mismo sujeto que Pro (MediConnect) para el recurso narrativo del pitch:
+    // "misma idea, mirá lo que desbloquea Premium" (gobernanza + fundraising + EvidenceWall).
     email: 'demo_premium@validus.lat',
     tier: 'premium',
     full_name: 'Tomás Premium',
-    startup_name: 'CarbonTrace',
-    startup_sector: 'Climatech / B2B',
-    founder_pitch: 'Medición y reporte automático de huella de carbono para exportadoras.',
+    startup_name: 'MediConnect',
+    startup_sector: 'Healthtech',
+    founder_pitch: 'Telemedicina offline-first para la atención primaria rural en Chile.',
   },
 ];
 
@@ -151,6 +154,36 @@ async function upsertProfile(id: string, acc: DemoAccount): Promise<void> {
   console.log(`  ✓ profile → tier=${acc.tier}, onboarding=done`);
 }
 
+/**
+ * Siembra la Golden Validation (MediConnect) para las cuentas pro/premium.
+ * Idempotente: borra primero cualquier validación previa del usuario (el log de
+ * agentes cae por ON DELETE CASCADE) y luego inserta la golden fresca.
+ */
+async function seedGoldenValidation(userId: string, tier: 'pro' | 'premium'): Promise<void> {
+  // Limpieza idempotente — wipe de validaciones de la cuenta demo.
+  const { error: delErr } = await admin.from('validations').delete().eq('user_id', userId);
+  if (delErr) throw new Error(`limpieza de validations falló: ${delErr.message}`);
+
+  const row = buildGoldenValidation(userId, tier);
+  const { data: inserted, error: insErr } = await admin
+    .from('validations')
+    .insert(row)
+    .select('id')
+    .single();
+  if (insErr) throw new Error(`insert golden validation falló: ${insErr.message}`);
+  const validationId = inserted!.id as string;
+  console.log(`  ✓ golden validation "${GOLDEN_IDEA_NAME}" (${tier}) → ${validationId}`);
+
+  // EvidenceWall: solo Premium lleva el log de agentes (Reddit + Trends).
+  if (tier === 'premium') {
+    const { error: logErr } = await admin
+      .from('validation_agents_log')
+      .insert(buildGoldenAgentsLog(validationId, userId));
+    if (logErr) throw new Error(`insert agents_log falló: ${logErr.message}`);
+    console.log('  ✓ validation_agents_log (EvidenceWall) sembrado');
+  }
+}
+
 async function deleteAccount(acc: DemoAccount): Promise<void> {
   const existing = await findUserByEmail(acc.email);
   if (!existing) return;
@@ -175,6 +208,9 @@ async function main() {
     console.log(`• ${acc.tier.toUpperCase()} — ${acc.email}`);
     const id = await ensureAuthUser(acc);
     await upsertProfile(id, acc);
+    if (acc.tier === 'pro' || acc.tier === 'premium') {
+      await seedGoldenValidation(id, acc.tier);
+    }
   }
 
   console.log('\n────────────────────────────────────────────');
