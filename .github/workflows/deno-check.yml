@@ -42,6 +42,9 @@ jobs:
         if: steps.changed.outputs.files != ''
         run: deno check ${{ steps.changed.outputs.files }}
 
+      # Se excluyen reglas incompatibles con las Supabase Edge Functions:
+      #   - no-import-prefix: las edge functions usan imports URL (https://) por convención.
+      #   - no-inner-declarations: patrón legacy (helpers declarados dentro del handler).
       - name: deno lint
         if: steps.changed.outputs.files != ''
-        run: deno lint ${{ steps.changed.outputs.files }}
+        run: deno lint --rules-exclude=no-import-prefix,no-inner-declarations ${{ steps.changed.outputs.files }}
