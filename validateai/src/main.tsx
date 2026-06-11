@@ -8,10 +8,14 @@ import App from './App.tsx';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { initAnalytics } from '@/hooks/useAnalytics';
 import { initSentry } from '@/lib/sentry';
+import { installChunkReloadHandler } from '@/lib/chunkReload';
 
 // Sentry antes que todo — captura errores de inicialización también
 initSentry();
 initAnalytics();
+
+// Recupera de "stale deploy": si un chunk lazy falla por hash viejo, recarga.
+installChunkReloadHandler();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
