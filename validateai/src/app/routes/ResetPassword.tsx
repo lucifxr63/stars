@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { markDeliberateLogout } from '@/lib/session';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 function Logo({ className = 'w-7 h-9' }: { className?: string }) {
@@ -63,6 +64,10 @@ export function ResetPassword() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       // Cerramos la sesión de recovery y forzamos login limpio con la nueva clave.
+      // Marcamos el signOut como deliberado: es el cierre del flujo de reset, no
+      // una expiración — evita un falso toast "sesión expiró" si esta vista llega
+      // a montarse bajo un layout con el listener de auth.
+      markDeliberateLogout();
       await supabase.auth.signOut();
       toast.success('Contraseña actualizada. Inicia sesión con tu nueva contraseña.');
       navigate('/login', { replace: true });
