@@ -29,3 +29,7 @@ dist-ssr
 
 .vercel
 __pycache__/
+
+# Playwright (artefactos de test generados)
+playwright-report/
+test-results/

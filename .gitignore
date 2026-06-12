@@ -7,3 +7,6 @@ dist/
 validateai-knowledge-vault/
 docs/*.exe
 validateai/pnpm-lock.yaml
+*.log
+playwright-report/
+test-results/
