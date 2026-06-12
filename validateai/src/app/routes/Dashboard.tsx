@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
 import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
+import { GenerationStatusWidget } from '@/components/dashboard/GenerationStatusWidget';
 
 interface RecentValidation {
   id: string;
@@ -83,6 +84,9 @@ export function Dashboard() {
           Bienvenido a tu panel de validación de ideas.
         </p>
       </div>
+
+      {/* Estado de generación en curso (redirect asíncrono del wizard) */}
+      <GenerationStatusWidget />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-8">
