@@ -1177,6 +1177,32 @@ async function preprocessIdea(rawDescription: string): Promise<StructuredIdea | 
 
 // â”€â”€ Providers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// ── Defensa Nivel 1: ruteo de modelo + throttle dinámico de costo ─────────────
+// Centraliza la selección de modelo (antes inline en callAnthropic). Permite un
+// downgrade dinámico ante picos de burn rate SIN redeploy: Ops setea
+// THROTTLE_MODE=on y los prompts estándar no-premium caen a Haiku.
+// Default 'off' → comportamiento IDÉNTICO a producción actual (switch inerte).
+// Sonnet queda reservado al flujo premium (premium-validate, función aparte) y a
+// los prompts con web_search (bajo volumen, calidad de búsqueda crítica).
+const MODEL_SONNET = 'claude-sonnet-4-20250514';
+const MODEL_HAIKU  = 'claude-haiku-4-5-20251001';
+const THROTTLE_MODE = (Deno.env.get('THROTTLE_MODE') ?? 'off') as 'on' | 'off';
+
+function usesWebSearch(promptType: PromptType): boolean {
+  return promptType === 'competitive_analysis'
+    || promptType === 'market_sizing'
+    || promptType === 'market_signals';
+}
+
+function selectModel(promptType: PromptType, tier?: 'free' | 'basic' | 'pro'): string {
+  // Regla base (inmutable): free y summary_quick ya usan Haiku por estrategia de coste.
+  if (tier === 'free' || promptType === 'summary_quick') return MODEL_HAIKU;
+  // Throttle dinámico: bajo presión de caja, basic/pro estándar → Haiku.
+  // Los prompts con web_search se mantienen en Sonnet (bajo volumen, calidad crítica).
+  if (THROTTLE_MODE === 'on' && !usesWebSearch(promptType)) return MODEL_HAIKU;
+  return MODEL_SONNET;
+}
+
 async function callAnthropic(
   promptType: PromptType,
   context: Record<string, unknown>,
@@ -1187,12 +1213,8 @@ async function callAnthropic(
     throw new Error('ANTHROPIC_API_KEY no estÃ¡ configurada en los secrets de Supabase.');
   }
 
-  const useWebSearch = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
-
-  // summary_quick siempre usa Haiku — estrategia de coste definida por Mesa Directiva.
-  const selectedModel = (tier === 'free' || promptType === 'summary_quick')
-    ? 'claude-haiku-4-5-20251001'
-    : 'claude-sonnet-4-20250514';
+  const useWebSearch = usesWebSearch(promptType);
+  const selectedModel = selectModel(promptType, tier);
 
   const body: Record<string, unknown> = {
     model: selectedModel,
@@ -1317,7 +1339,7 @@ async function callAI(
   tier?: 'free' | 'basic' | 'pro',
 ): Promise<AIResult> {
   // Prompts que idealmente usan web_search (solo Anthropic), pero si no hay crÃ©ditos caen a OpenAI
-  const requiresAnthropic = promptType === 'competitive_analysis' || promptType === 'market_sizing' || promptType === 'market_signals';
+  const requiresAnthropic = usesWebSearch(promptType);
 
   if (requiresAnthropic && ANTHROPIC_API_KEY) {
     try {
