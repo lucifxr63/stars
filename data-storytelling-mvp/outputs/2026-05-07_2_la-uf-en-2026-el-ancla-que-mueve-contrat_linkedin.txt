@@ -19,8 +19,8 @@ Fuente: Banco Central de Chile | Dato al 07-05-2026.
 ¿Tu stack de contratos B2B ya está indexado a UF, o todavía estás negociando en pesos fijos y asumiendo el riesgo inflacionario solo?
 
 
-🔎 ¿Querés ver dónde está parada *tu* startup contra estos benchmarks?
-Generamos un diagnóstico con IA (score + mercado + competencia) sobre tu idea. Mirá un reporte de ejemplo real acá 👇
+🔎 ¿Querés saber cómo este escenario impacta la viabilidad de tu startup?
+Generamos un diagnóstico macro y competitivo con IA sobre tu idea. Mirá un reporte de ejemplo real acá 👇
 validus.scouttech.lat/demo
 
 #StartupsLatAm #SaaS #B2BChile #VentureCapital #GrowthB2B

@@ -21,8 +21,8 @@ Revisa el gráfico adjunto para ver el benchmark actual y las zonas de referenci
 ¿Estás modelando el impacto de la TPM en tu runway antes de firmar cualquier instrumento de deuda, o sigues tomando esa decisión basado en el monto disponible y no en el costo real del capital?
 
 
-🔎 ¿Querés ver dónde está parada *tu* startup contra estos benchmarks?
-Generamos un diagnóstico con IA (score + mercado + competencia) sobre tu idea. Mirá un reporte de ejemplo real acá 👇
+🔎 ¿Querés saber cómo este escenario impacta la viabilidad de tu startup?
+Generamos un diagnóstico macro y competitivo con IA sobre tu idea. Mirá un reporte de ejemplo real acá 👇
 validus.scouttech.lat/demo
 
 #StartupsLatAm #VentureCapital #SaaS #FinanciamientoStartups #EcosistemaChile
