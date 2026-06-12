@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
+import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
+import { GenerationStatusWidget } from '@/components/dashboard/GenerationStatusWidget';
 
 interface RecentValidation {
   id: string;
@@ -83,6 +85,9 @@ export function Dashboard() {
         </p>
       </div>
 
+      {/* Estado de generación en curso (redirect asíncrono del wizard) */}
+      <GenerationStatusWidget />
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         {[
@@ -124,6 +129,11 @@ export function Dashboard() {
         >
           Comenzar →
         </button>
+      </div>
+
+      {/* Widget secundario: Inteligencia de Mercado (Bralidus) */}
+      <div className="mb-8">
+        <MarketSignalsWidget />
       </div>
 
       {/* Últimas validaciones */}

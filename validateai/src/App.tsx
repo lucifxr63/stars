@@ -30,6 +30,7 @@ const Results           = lazy(() => import('@/app/routes/Results').then((m) => 
 const ValidationDetail  = lazy(() => import('@/app/routes/ValidationDetail').then((m) => ({ default: m.ValidationDetail })));
 const IdeaHistory       = lazy(() => import('@/app/routes/IdeaHistory').then((m) => ({ default: m.IdeaHistory })));
 const MarketStudy       = lazy(() => import('@/app/routes/MarketStudy').then((m) => ({ default: m.MarketStudy })));
+const MarketIntelligence = lazy(() => import('@/app/routes/MarketIntelligence').then((m) => ({ default: m.MarketIntelligence })));
 const MyStartup         = lazy(() => import('@/app/routes/MyStartup').then((m) => ({ default: m.MyStartup })));
 const Profile           = lazy(() => import('@/app/routes/Profile').then((m) => ({ default: m.Profile })));
 const Developers        = lazy(() => import('@/app/routes/Developers').then((m) => ({ default: m.Developers })));
@@ -101,6 +102,7 @@ export default function App() {
                 <Route element={<AppLayout />}>
                   <Route path="/validate" element={<Validate />} />
                   <Route path="/dashboard"              element={<Dashboard />} />
+                  <Route path="/market-intelligence"    element={<MarketIntelligence />} />
                   <Route path="/results"                element={<Results />} />
                   <Route path="/results/:id"            element={<ValidationDetail />} />
                   <Route path="/results/:id/history"    element={<IdeaHistory />} />

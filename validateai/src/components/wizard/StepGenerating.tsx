@@ -4,8 +4,9 @@ import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, type UserTier } from '@/hooks/useUserTier';
 import { toast } from 'sonner';
-import { trackWizardStep, trackValidationCompleted } from '@/hooks/useAnalytics';
+import { trackWizardStep } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent } from '@/lib/telemetry';
+import { startBackgroundGeneration } from '@/lib/generationService';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type GenerationStatus = 'pending' | 'loading' | 'success' | 'error';
@@ -487,20 +488,11 @@ export function StepGenerating() {
       }
       // ── Fin rama Premium ─────────────────────────────────────────────────────
 
-      // Guard: si el row ya está completado no gastar tokens, solo redirigir
-      if (validationId) {
-        const { data: existing } = await supabase
-          .from('validations')
-          .select('id, status')
-          .eq('id', validationId)
-          .single();
-        if (existing?.status === 'completed') {
-          useValidationStore.getState().reset();
-          navigate(`/results/${existing.id}`, { replace: true });
-          return;
-        }
-      }
-
+      // ── Rama no-premium (quick / detailed): fire-and-forget + redirect ────────
+      // El backend ya persiste progreso (generation_progress + status). Disparamos
+      // el job en background y redirigimos YA al Dashboard, donde el
+      // GenerationStatusWidget muestra el avance. El fundador explora el ecosistema
+      // (Bralidus) mientras Claude trabaja — sin bloqueo síncrono del frontend.
       let context: any = {};
       if (currentMode === 'detailed') {
         context = {
@@ -511,7 +503,6 @@ export function StepGenerating() {
         };
       } else {
         // Flujo rápido: usar directamente los campos capturados en StepIdeaQuick.
-        // No se llama a customer_analysis — el usuario ya proveyó quick_icp y business_model.
         context = {
           idea_name: stepIdeaQuick.idea_name ?? stepIdea.idea_name,
           idea_description: stepIdeaQuick.idea_description ?? stepIdea.idea_description,
@@ -527,92 +518,25 @@ export function StepGenerating() {
         return;
       }
 
-      // Guardar o crear la validación inicial
-      let currentId = validationId;
-      if (!currentId) {
-        const { data, error } = await supabase.from('validations').insert({
-          user_id: session.user.id,
-          status: 'in_progress',
-          current_step: 4,
-          validation_mode: currentMode,
-          ...context,
-        }).select('id').single();
-        if (error || !data?.id) throw error ?? new Error('No id returned');
-        currentId = data.id as string;
-        setValidationId(currentId);
-      } else {
-        await supabase.from('validations').update({
-          ...context,
-          validation_mode: currentMode,
-          current_step: 4,
-        }).eq('id', currentId);
-      }
+      const job = await startBackgroundGeneration({
+        tier,
+        mode: currentMode === 'quick' ? 'quick' : 'detailed',
+        validationId,
+        context,
+      });
 
-      // Verificar progreso previo para reanudar en lugar de reiniciar
-      const { data: existing } = await supabase
-        .from('validations')
-        .select('generation_progress')
-        .eq('id', currentId)
-        .single();
-      const prevProgress = (existing?.generation_progress ?? {}) as Record<string, string>;
+      trackWizardStep(4, 'Generación', currentMode);
+      useValidationStore.getState().reset();
 
-      const tierTasks = getTasksForTier(tier, currentMode);
-
-      // Restaurar estado visual de tasks ya completados
-      setTasks(tierTasks.map(t => ({
-        ...t,
-        status: prevProgress[t.id] === 'success' ? 'success'
-          : prevProgress[t.id] === 'error' ? 'pending' // retry errores
-            : 'loading',
-      })));
-
-      // Solo correr los tasks que no completaron en sesiones anteriores
-      const pendingTasks = tierTasks.filter(t => prevProgress[t.id] !== 'success');
-
-      if (pendingTasks.length === 0) {
-        await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId!);
-        useValidationStore.getState().reset();
-        navigate(`/results/${currentId}`);
+      // Reanudación sin tasks pendientes → saltar directo al resultado.
+      if (job.status === 'completed') {
+        navigate(`/results/${job.validationId}`, { replace: true });
         return;
       }
 
-      const runAI = async (task: GenerationTask) => {
-        try {
-          const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-validate`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ validation_id: currentId, step: 4, prompt_type: task.type, context }),
-          });
-
-          if (!res.ok) throw new Error('Failed');
-          await res.json();
-
-          // Persistir progreso atómicamente — sobrevive recargas
-          await supabase.rpc('merge_generation_progress', {
-            p_id: currentId, p_key: task.id, p_status: 'success',
-          });
-          updateTaskStatus(task.id, 'success');
-        } catch {
-          await supabase.rpc('merge_generation_progress', {
-            p_id: currentId, p_key: task.id, p_status: 'error',
-          });
-          updateTaskStatus(task.id, 'error');
-        }
-      };
-
-      await Promise.allSettled(pendingTasks.map(runAI));
-
-      await supabase.from('validations').update({ status: 'completed' }).eq('id', currentId!);
-
-      trackWizardStep(4, 'Generación', validationMode);
-      trackValidationCompleted(currentId!, 0, context.idea_industry as string ?? '', tier);
-
-      toast.success('Análisis completado');
-      useValidationStore.getState().reset();
-      navigate(`/results/${currentId}`);
+      toast.success('Tu validación se está generando. Te llevamos a tu panel.');
+      navigate('/dashboard', { replace: true });
+      return;
 
     } catch (error) {
       console.error(error);
