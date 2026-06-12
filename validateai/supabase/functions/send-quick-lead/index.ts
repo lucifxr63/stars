@@ -9,7 +9,10 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_KEY   = Deno.env.get('RESEND_API_KEY') ?? '';
 const APP_URL      = Deno.env.get('APP_URL') ?? 'https://validus.scouttech.lat';
-const FROM_EMAIL   = 'ValidateAI <hola@validateai.cl>';
+// Remitente sobre scouttech.lat (dominio ya controlado) mientras validateai.cl
+// no esté comprado/verificado. Override por env FROM_EMAIL si se quiere cambiar
+// sin redeploy. Verificar este dominio en Resend (SPF/DKIM/DMARC) para salir de spam.
+const FROM_EMAIL   = Deno.env.get('FROM_EMAIL') ?? 'Validus <hola@scouttech.lat>';
 
 const ALLOWED_ORIGINS = [
   'https://validus.scouttech.lat',
