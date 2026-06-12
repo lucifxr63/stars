@@ -963,7 +963,7 @@ export function ValidationDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-        <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-10 space-y-4">
+        <div className="flex-1 max-w-[88rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-[#12121A] rounded-2xl border border-white/[0.06] p-6 animate-pulse">
               <div className="h-4 bg-white/5 rounded w-1/3 mb-3" />
@@ -993,7 +993,7 @@ export function ValidationDetail() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-      <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12">
+      <div className="flex-1 max-w-[88rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
           <Link to="/results" className="hover:text-[#0EB5C6] transition">Mis validaciones</Link>
@@ -1440,7 +1440,7 @@ export function ValidationDetail() {
                           <ScoreGauge score={displayScore} />
                           <div className="flex-1 text-center sm:text-left">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
-                            <p className="text-gray-700 dark:text-[#BDBDCF] leading-relaxed text-sm">
+                            <p className="text-gray-700 dark:text-[#BDBDCF] leading-relaxed text-sm max-w-2xl">
                               {summary?.feedback ??
                                 data.playbook_analysis?.funding_verdict ??
                                 'Análisis Premium completado.'}
@@ -2266,7 +2266,7 @@ export function ValidationDetail() {
 
       {/* Inline report feedback — Mom Test */}
       {data && (
-        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pb-6">
+        <div className="max-w-[88rem] mx-auto w-full px-4 sm:px-6 lg:px-8 pb-6">
           {!reportFeedback ? (
             <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 shadow-sm">
               <p className="text-xs text-gray-500 dark:text-[#8B8AA0] flex-1 leading-snug">
