@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import posthog from 'posthog-js';
 import type { UserTier } from '@/hooks/useUserTier';
+import { WaitlistModal } from '@/components/shared/WaitlistModal';
 
 // Evento despachado por useAI.ts cuando el backend retorna 429 con error de tier/cuota.
 export const PAYWALL_HIT_EVENT = 'validateai:paywall-hit';
@@ -67,6 +68,7 @@ export function reasonText(detail: PaywallHitDetail): string {
 
 export function UpgradeModal() {
   const [detail, setDetail] = useState<PaywallHitDetail | null>(null);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -76,7 +78,20 @@ export function UpgradeModal() {
     return () => window.removeEventListener(PAYWALL_HIT_EVENT, handler);
   }, []);
 
+  const closeAll = () => { setWaitlistOpen(false); setDetail(null); };
+
+  // Contingencia de ingresos (LemonSqueezy bloqueado): el CTA de upgrade
+  // no enruta a checkout, abre la waitlist Early Bird para capturar el lead BoFu.
+  const handleReserve = () => {
+    if (detail) posthog.capture('checkout_waitlist_hit', { tier: detail.tier_needed });
+    setWaitlistOpen(true);
+  };
+
   if (!detail) return null;
+
+  if (waitlistOpen) {
+    return <WaitlistModal tier={detail.tier_needed} onClose={closeAll} />;
+  }
 
   const tierInfo = TIER_INFO[detail.tier_needed];
   const featureName = FEATURE_NAME[detail.prompt_type] ?? detail.prompt_type;
@@ -139,13 +154,12 @@ export function UpgradeModal() {
 
         {/* CTAs */}
         <div className="flex flex-col gap-2.5">
-          <Link
-            to={`/pricing`}
-            onClick={() => setDetail(null)}
+          <button
+            onClick={handleReserve}
             className="block w-full text-center py-3 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] active:scale-[0.98] transition-all shadow-lg shadow-[#0EB5C6]/25"
           >
-            Ver planes y precios →
-          </Link>
+            Reservar Acceso {tierInfo.label} (Early Bird) →
+          </button>
           <button
             onClick={() => setDetail(null)}
             className="w-full py-2.5 text-sm text-gray-500 dark:text-[#8B8AA0] hover:text-gray-700 dark:hover:text-[#C4C4D4] transition-colors"

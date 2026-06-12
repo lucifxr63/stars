@@ -1,8 +1,8 @@
 ﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import posthog from 'posthog-js';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { WaitlistModal } from '@/components/shared/WaitlistModal';
 
 type Tier = 'free' | 'basic' | 'pro' | 'premium';
 
@@ -58,7 +58,7 @@ const PLANS = [
       'Export PDF estándar',
       '5 análisis de mercado (TAM/SAM/SOM)',
     ],
-    cta: 'Empezar con Basic',
+    cta: 'Reservar acceso (Early Bird)',
   },
   {
     tier: 'pro' as Tier,
@@ -76,7 +76,7 @@ const PLANS = [
       'Founder Fit + recomendación de equipo',
       'PDF multitema investor-ready',
     ],
-    cta: 'Empezar con Pro',
+    cta: 'Reservar acceso (Early Bird)',
   },
   {
     tier: 'premium' as Tier,
@@ -94,39 +94,22 @@ const PLANS = [
       'API acceso completo',
       'Soporte prioritario en español',
     ],
-    cta: 'Empezar con Premium',
+    cta: 'Reservar acceso (Early Bird)',
   },
 ] as const;
 
 export function Pricing() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<Tier | null>(null);
+  const [waitlistTier, setWaitlistTier] = useState<Tier | null>(null);
 
-  const handleCheckout = async (tier: Tier) => {
+  // Contingencia de ingresos: LemonSqueezy bloqueado por Legal. El trigger de
+  // create-checkout queda DORMANTE; el intento de compra se redirige a la
+  // waitlist Early Bird (captura de lead BoFu de alta intención).
+  // Re-habilitar el cobro = revertir este commit cuando la pasarela esté activa.
+  const handleReserve = (tier: Tier) => {
     if (tier === 'free') { navigate('/login'); return; }
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/login', { state: { redirectAfter: `/pricing?tier=${tier}` } });
-      return;
-    }
-    setLoading(tier);
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify({ tier, success_url: `${window.location.origin}/checkout/success`, cancel_url: `${window.location.origin}/pricing` }),
-        }
-      );
-      const data = await res.json() as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Error al crear sesión de pago');
-      window.location.href = data.url;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error al iniciar el pago');
-      setLoading(null);
-    }
+    posthog.capture('checkout_waitlist_hit', { tier });
+    setWaitlistTier(tier);
   };
 
   return (
@@ -203,13 +186,13 @@ export function Pricing() {
               </div>
 
               <div className="px-7 pb-7">
-                <button onClick={() => handleCheckout(plan.tier)} disabled={loading !== null}
-                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-150 disabled:opacity-60 cursor-pointer"
+                <button onClick={() => handleReserve(plan.tier)}
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer"
                   style={plan.highlight
                     ? { background: '#0EB5C6', color: '#fff' }
                     : { background: 'transparent', color: plan.color, border: `1.5px solid ${plan.color}` }
                   }>
-                  {loading === plan.tier ? 'Redirigiendo...' : plan.cta}
+                  {plan.cta}
                 </button>
               </div>
             </div>
@@ -230,7 +213,7 @@ export function Pricing() {
         {/* Trust */}
         <div className="mt-10 grid sm:grid-cols-3 gap-4">
           {[
-            { label: 'Pago seguro', sub: 'Procesado por Lemon Squeezy' },
+            { label: 'Early Bird', sub: 'Cupos limitados de lanzamiento' },
             { label: 'Cancela cuando quieras', sub: 'Sin penalidades ni contratos' },
             { label: 'Precios en CLP', sub: 'Sin conversión ni sorpresas' },
           ].map((t) => (
@@ -255,6 +238,10 @@ export function Pricing() {
           </a>
         </p>
       </main>
+
+      {waitlistTier && (
+        <WaitlistModal tier={waitlistTier} onClose={() => setWaitlistTier(null)} />
+      )}
     </div>
   );
 }
