@@ -423,3 +423,8 @@ verify_jwt = false
 
 [functions.posthog-proxy]
 verify_jwt = false
+
+# Captura de leads anónima (soft-wall /demo + waitlist /pricing). El front llama
+# sin Authorization → debe ser público o el gateway responde 401 y se pierde el lead.
+[functions.send-quick-lead]
+verify_jwt = false
