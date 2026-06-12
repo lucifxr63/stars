@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
+import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
 
 interface RecentValidation {
   id: string;
@@ -124,6 +125,11 @@ export function Dashboard() {
         >
           Comenzar →
         </button>
+      </div>
+
+      {/* Widget secundario: Inteligencia de Mercado (Bralidus) */}
+      <div className="mb-8">
+        <MarketSignalsWidget />
       </div>
 
       {/* Últimas validaciones */}
