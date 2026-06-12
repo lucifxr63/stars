@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { ScoreGauge } from '@/components/shared/ScoreGauge';
 import { MarketFunnel } from '@/components/shared/MarketFunnel';
 import { CompetitiveAnalysis } from '@/components/shared/CompetitiveAnalysis';
 import { ScoreBreakdown } from '@/components/shared/ScoreBreakdown';
@@ -1003,13 +1002,13 @@ export function ValidationDetail() {
 
         {/* Banner: Nuevos módulos disponibles */}
         {hasNewModulesToGenerate && !generatingNewModules && (
-          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#0EB5C6]/10 border border-[#0EB5C6]/25">
+          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
             <div className="flex items-start gap-3">
-              <svg className="w-4 h-4 text-[#38D5E3] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4 text-[#8B8AA0] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               <div>
-                <p className="text-sm font-bold text-[#38D5E3]">Nuevos módulos disponibles</p>
+                <p className="text-sm font-bold text-[#F0EFF8]">Nuevos módulos disponibles</p>
                 <p className="text-xs text-[#8B8AA0] mt-0.5">
                   Haz clic en <strong>Re-analizar Idea</strong> para generar tu Roadmap Legal, Financiero y de MVP con la versión más reciente de la IA.
                 </p>
@@ -1024,9 +1023,9 @@ export function ValidationDetail() {
           </div>
         )}
         {generatingNewModules && (
-          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-[#0EB5C6]/10 border border-[#0EB5C6]/25">
+          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
             <div className="w-4 h-4 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
-            <p className="text-sm font-bold text-[#38D5E3]">Generando nuevos módulos con la IA más reciente...</p>
+            <p className="text-sm font-bold text-[#F0EFF8]">Generando nuevos módulos con la IA más reciente...</p>
           </div>
         )}
 
@@ -1255,15 +1254,8 @@ export function ValidationDetail() {
               {data.ai_feedback && (
                 <p className="text-sm text-[#8B8AA0] leading-relaxed line-clamp-2">{data.ai_feedback}</p>
               )}
-              {data.score_breakdown && (
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                  {(Object.entries(data.score_breakdown) as [string, number][]).slice(0, 5).map(([key, val]) => (
-                    <span key={key} className="text-xs text-[#8B8AA0] capitalize">
-                      <span className="font-semibold text-[#F0EFF8] tabular-nums">{val}</span> {key}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Dimensiones del score viven en el ScoreBreakdown del tab Veredicto
+                  (barras) — evitamos duplicarlas aquí como números sueltos. */}
             </div>
             <div className="shrink-0 w-full sm:w-auto">
               {isGood ? (
@@ -1437,7 +1429,6 @@ export function ValidationDetail() {
                     {displayScore != null && (
                       <div className={`rounded-3xl border-2 p-6 flex items-center ${scoreBg}`}>
                         <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
-                          <ScoreGauge score={displayScore} />
                           <div className="flex-1 text-center sm:text-left">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
                             <p className="text-gray-700 dark:text-[#BDBDCF] leading-relaxed text-sm max-w-2xl">
