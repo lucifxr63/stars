@@ -1,6 +1,6 @@
 # Documento de Mesa Directiva: Estructura Sprint A y Lógica de Negocio
 
-**Producto:** ValidateAI
+**Producto:** Validus
 **Fecha:** 01 de Junio 2026
 
 Aprobamos el inicio del ciclo de desarrollo. Para mantener la estabilidad del sistema en producción alojado en Vercel y Supabase, la ejecución debe ser quirúrgica. A continuación, se detalla la estructuración del **Sprint A**, la definición de la lógica condicional para el frontend, y el acta de decisiones estratégicas acordadas.

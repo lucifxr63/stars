@@ -1,8 +1,8 @@
-﻿# ValidateAI â€” Estado actual del proyecto (Mayo 2026)
+﻿# Validus â€” Estado actual del proyecto (Mayo 2026)
 
 ## QuÃ© es
 
-ValidateAI es una SPA que guÃ­a a emprendedores a travÃ©s de un wizard de 4 pasos (Idea, Mercado, Fundador, GeneraciÃ³n) para validar ideas de negocio usando IA. Al final genera un score (0â€“100), feedback y mÃºltiples entregables avanzados, incluyendo un mapa 3D interactivo del mercado chileno.
+Validus es una SPA que guÃ­a a emprendedores a travÃ©s de un wizard de 4 pasos (Idea, Mercado, Fundador, GeneraciÃ³n) para validar ideas de negocio usando IA. Al final genera un score (0â€“100), feedback y mÃºltiples entregables avanzados, incluyendo un mapa 3D interactivo del mercado chileno.
 
 **URL producciÃ³n:** https://validus.scouttech.lat  
 **Stack:** React 19 + Vite + TypeScript + Tailwind CSS + shadcn/ui + Supabase + Vercel

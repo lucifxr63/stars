@@ -289,7 +289,7 @@ function CoverPage({ data }: { data: PDFData }) {
           gap: 6,
         }}>
           <Text style={{ fontSize: 7, color: '#ffffff', fontWeight: 'bold', letterSpacing: 0.5 }}>
-            âœ“ AUDITED BY VALIDATEAI PRO Â· validus.scouttech.lat
+            âœ“ AUDITED BY VALIDUS PRO Â· validus.scouttech.lat
           </Text>
           <Text style={{ fontSize: 7, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>
             DD Score: {data.due_diligence.total}/100
@@ -736,7 +736,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
         {/* Stamp */}
         <View style={{ marginTop: 20, padding: 8, backgroundColor: '#0EB5C6', borderRadius: 4, alignItems: 'center' }}>
           <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#ffffff', letterSpacing: 0.5 }}>
-            âœ“ AUDITED BY VALIDATEAI PRO Â· validus.scouttech.lat
+            âœ“ AUDITED BY VALIDUS PRO Â· validus.scouttech.lat
           </Text>
         </View>
       </View>

@@ -70,7 +70,7 @@ function buildUserPrompt(center: string, customData: string, adminData: Record<s
   const data = JSON.stringify(adminData, null, 2);
 
   const centerPrompts: Record<string, string> = {
-    metrics: `Genera un carrusel sobre el ESTADO ACTUAL DE LA PLATAFORMA ValidateAI y el ecosistema de validaciÃ³n de startups en LatAm.
+    metrics: `Genera un carrusel sobre el ESTADO ACTUAL DE LA PLATAFORMA Validus y el ecosistema de validaciÃ³n de startups en LatAm.
 Usa estas mÃ©tricas reales:
 ${data}
 Ãngulo: los datos de la plataforma revelan tendencias sorprendentes sobre cÃ³mo los fundadores validan sus ideas hoy.`,

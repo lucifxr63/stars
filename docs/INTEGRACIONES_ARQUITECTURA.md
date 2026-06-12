@@ -1,4 +1,4 @@
-# ValidateAI — Mapa de Integraciones y Arquitectura de Datos
+# Validus — Mapa de Integraciones y Arquitectura de Datos
 
 > Documento técnico para revisión de equipo.  
 > Fecha: 2026-05-24 | Rama analizada: `main` (commit `1585bcb`)

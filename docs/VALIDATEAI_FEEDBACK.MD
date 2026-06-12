@@ -1,6 +1,6 @@
 ### 1. Resumen Ejecutivo
 
-Implementación de un pipeline de telemetría y retroalimentación comportamental integrado nativamente en el Wizard de ValidateAI. La solución utilizará PostHog para el tracking de eventos, Zod para la validación estricta de esquemas de datos, y Zustand (`validationStore`) para el manejo del estado, recolectando micro-feedback (basado en *The Mom Test*) de forma no intrusiva en `StepGenerating` y `Results.tsx` para guiar el product-market fit con evidencia, no con opiniones.
+Implementación de un pipeline de telemetría y retroalimentación comportamental integrado nativamente en el Wizard de Validus. La solución utilizará PostHog para el tracking de eventos, Zod para la validación estricta de esquemas de datos, y Zustand (`validationStore`) para el manejo del estado, recolectando micro-feedback (basado en *The Mom Test*) de forma no intrusiva en `StepGenerating` y `Results.tsx` para guiar el product-market fit con evidencia, no con opiniones.
 
 ---
 

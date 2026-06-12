@@ -1,4 +1,4 @@
-# ValidateAI — Guía Frontend para Desarrolladores
+# Validus — Guía Frontend para Desarrolladores
 
 > Generado: 2026-06-04 | Stack: React 19 + TypeScript + Vite + Tailwind + shadcn/ui
 
@@ -81,7 +81,7 @@ Header.tsx (src/components/layout/Header.tsx)
 └── Usado en: Landing, Login, Pricing, Demo y rutas públicas (NO en AppLayout)
 
 DESKTOP:
-  - Logo ValidateAI
+  - Logo Validus
   - "Mis validaciones"  →  /results
   - "Perfil"            →  /profile
   - "API & Devs"        →  /developers

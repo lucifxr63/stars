@@ -273,7 +273,7 @@ competidor_frecuencia = {
 -- Top 5 competidores por frecuencia de aparición conjunta
 ```
 
-**Uso:** Cruzar con el propio perfil de ValidateAI de esos competidores para
+**Uso:** Cruzar con el propio perfil de Validus de esos competidores para
 comparación directa (benchmarking de riesgo).
 
 ---
@@ -296,7 +296,7 @@ oportunidades = Licitaciones[estado='Publicada']
   AND FechaCierre > hoy
 ```
 
-**Uso:** Para el pitch de ValidateAI — mostrar al cliente startup cuánto mercado
+**Uso:** Para el pitch de Validus — mostrar al cliente startup cuánto mercado
 fiscal está disponible en su sector que no está aprovechando.
 
 ---

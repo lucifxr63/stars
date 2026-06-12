@@ -6,7 +6,7 @@ Este documento cierra la auditoría técnica profunda del repositorio, abordando
 
 ## 1. Esquema de Base de Datos y Políticas de Seguridad (RLS)
 
-Ambos proyectos principales (FacturaIA y ValidateAI) utilizan **Supabase PostgreSQL**. La seguridad es crítica, especialmente en FacturaIA por tratarse de una Fintech sujeta a regulaciones (Ley 19.628 y CMF).
+Ambos proyectos principales (FacturaIA y Validus) utilizan **Supabase PostgreSQL**. La seguridad es crítica, especialmente en FacturaIA por tratarse de una Fintech sujeta a regulaciones (Ley 19.628 y CMF).
 
 ### FacturaIA: Seguridad y Cumplimiento
 - **Esquema Relacional:** 
@@ -19,7 +19,7 @@ Ambos proyectos principales (FacturaIA y ValidateAI) utilizan **Supabase Postgre
   - **Roles:** Existe un rol especial `admin_facturaia` para la "Mesa Directiva", que tiene una política RLS que permite `SELECT` global para armar el panel analítico de LTV y CAC.
   - **Edge Functions:** La escritura en `risk_assessments` está bloqueada para los clientes. Solo la función `sii-risk-evaluator` puede insertar resultados usando el `SERVICE_ROLE_KEY` (bypass de RLS).
 
-### ValidateAI: Migraciones y Vectorización
+### Validus: Migraciones y Vectorización
 - Usa un esquema más complejo gestionado a lo largo de 30 migraciones `.sql`.
 - Destacan las tablas `market_ai_insights`, `economic_knowledge`, `ai_interactions` y el soporte pesado a **pgvector** para el caché semántico (`001_rag_competitors.sql`, `20260424_rag_cache.sql`).
 
@@ -33,7 +33,7 @@ Ambos proyectos principales (FacturaIA y ValidateAI) utilizan **Supabase Postgre
 
 ---
 
-## 3. Orquestación del Generador de PDF en ValidateAI
+## 3. Orquestación del Generador de PDF en Validus
 
 El botón "Descargar Dossier" del Bento Box (`ValidationDetail.tsx`) utiliza la librería **jsPDF**.
 - **Mecanismo:** El código (típicamente aislado en un archivo como `pdf.ts` o `ExportPDF.tsx`) inyecta todo el estado de React (`validationStore`) y los JSONs retornados por la IA. 
@@ -53,9 +53,9 @@ El script maestro del "Venture Studio" para marketing de contenidos no solo escu
 
 ---
 
-## 5. Arquitectura de Prompts de ValidateAI (Los 18 Entregables)
+## 5. Arquitectura de Prompts de Validus (Los 18 Entregables)
 
-En lugar de un solo prompt masivo, ValidateAI tiene los prompts atomizados en la base de datos (migraciones como `006_market_sizing.sql` o `008_mentors.sql`). 
+En lugar de un solo prompt masivo, Validus tiene los prompts atomizados en la base de datos (migraciones como `006_market_sizing.sql` o `008_mentors.sql`). 
 
 La función `ai-validate` actúa como un **Router LLM**:
 1. El usuario hace clic en el dashboard en un botón on-demand (ej. "Generar Hoja de Ruta Legal").

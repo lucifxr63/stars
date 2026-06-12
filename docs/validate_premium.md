@@ -1,5 +1,5 @@
 Documento de Mesa Directiva: Cierre de Flujo Rápido y Análisis Arquitectónico Modalidad "Premium"
-Producto: ValidateAI
+Producto: Validus
 Fecha: 01 de Junio 2026
 
 Recibimos el reporte final de integración del Sprint Q-D. La implementación de la tabla email_leads con políticas RLS estrictas y el uso de service_role demuestra la madurez arquitectónica que exigimos para el manejo de datos en producción. Asimismo, la decisión de utilizar un silent fail en la interfaz de usuario para errores de envío es una excelente práctica de UX que evita frustraciones innecesarias en el momento de mayor vulnerabilidad (la intención de salida).

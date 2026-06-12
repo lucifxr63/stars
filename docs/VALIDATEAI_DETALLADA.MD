@@ -1,9 +1,9 @@
 # Documento de Mesa Directiva: Optimización del Wizard "Detallado"
 
-**Producto:** ValidateAI
+**Producto:** Validus
 **Fecha:** 01 de Junio 2026
 
-Como Mesa Directiva, consideramos que optimizar el flujo "Detallado" es una jugada estratégica crucial. Actualmente, este flujo consta de cuatro pasos: Idea, Mercado, Fundador y Generación. Si mejoramos la captura de datos aquí, no solo aumentamos el valor del reporte para el usuario (justificando la conversión a pago), sino que construimos un "data moat" (foso defensivo de datos) para ValidateAI con tendencias macroeconómicas de startups en LatAm.
+Como Mesa Directiva, consideramos que optimizar el flujo "Detallado" es una jugada estratégica crucial. Actualmente, este flujo consta de cuatro pasos: Idea, Mercado, Fundador y Generación. Si mejoramos la captura de datos aquí, no solo aumentamos el valor del reporte para el usuario (justificando la conversión a pago), sino que construimos un "data moat" (foso defensivo de datos) para Validus con tendencias macroeconómicas de startups en LatAm.
 
 A continuación, se presenta el análisis estratégico y el plano estructurado para rediseñar la modalidad **Detallada**.
 
@@ -11,7 +11,7 @@ A continuación, se presenta el análisis estratégico y el plano estructurado p
 
 ## 1. Estrategia de Captura de Datos (Valor Interno vs. Privacidad)
 
-Para nutrir el sistema de ValidateAI sin infringir normativas de protección de datos, debemos separar la información en dos capas: **Datos transaccionales (para el usuario)** y **Datos analíticos (para nuestro sistema)**.
+Para nutrir el sistema de Validus sin infringir normativas de protección de datos, debemos separar la información en dos capas: **Datos transaccionales (para el usuario)** y **Datos analíticos (para nuestro sistema)**.
 
 ### Qué guardar anonimizado para nuestro sistema
 

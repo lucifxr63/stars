@@ -93,7 +93,7 @@ serve(async (req) => {
             product_options: {
               redirect_url: success_url,
               receipt_button_text: 'Ir al dashboard',
-              receipt_thank_you_note: 'Â¡Gracias por confiar en ValidateAI! Tu plan ya estÃ¡ activo.',
+              receipt_thank_you_note: 'Â¡Gracias por confiar en Validus! Tu plan ya estÃ¡ activo.',
             },
             checkout_options: {
               button_color: '#7C6FF7',

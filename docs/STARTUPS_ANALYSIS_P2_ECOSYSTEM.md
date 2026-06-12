@@ -1,6 +1,6 @@
 # Análisis Detallado: FacturaIA y Data Storytelling MVP
 
-Este documento complementa el análisis de ValidateAI (Parte 1), cubriendo el resto del repositorio y sus productos derivados enfocados en el mercado B2B y automatización de marketing.
+Este documento complementa el análisis de Validus (Parte 1), cubriendo el resto del repositorio y sus productos derivados enfocados en el mercado B2B y automatización de marketing.
 
 ---
 
@@ -56,7 +56,7 @@ El foco aquí no es una app web reactiva, sino flujos de línea de comandos para
   1. Define una interfaz estructurada `CanvaRow` que contiene los campos: `titulo_post`, `metrica_nombre`, `benchmark_latam`, `estado_saludable`, `estado_peligro`.
   2. Contiene un dataset de Benchmarks SaaS en LatAm 2026 (ej: LTV:CAC de 3:1, Payback period 12-15 meses, Net Revenue Retention > 110%).
   3. Exporta esto vía `csv-writer` al archivo local `canva_bulk_data.csv`.
-  4. **Fin de la automatización:** El usuario importa este `.csv` directamente en la función **"Bulk Create" de Canva**, permitiendo que de un solo clic se generen decenas de carruseles de LinkedIn o posts de Instagram orientados a educar al mercado B2B, reduciendo el CAC (Costo de Adquisición de Clientes) de ValidateAI y FacturaIA casi a cero mediante Growth Hacking.
+  4. **Fin de la automatización:** El usuario importa este `.csv` directamente en la función **"Bulk Create" de Canva**, permitiendo que de un solo clic se generen decenas de carruseles de LinkedIn o posts de Instagram orientados a educar al mercado B2B, reduciendo el CAC (Costo de Adquisición de Clientes) de Validus y FacturaIA casi a cero mediante Growth Hacking.
 
 ### B. Costos y Casos de Uso
 - **Costos:** Al ser scripts Node que se ejecutan localmente o en GitHub Actions, el costo de cómputo es nulo. Solo se consumen tokens de la API de Anthropic para la ingesta de las tendencias de Google, lo cual es residual.

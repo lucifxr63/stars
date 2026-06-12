@@ -6,10 +6,10 @@ dotenv.config({ path: '.env.local' })
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const API_KEY = process.env.VALIDATEAI_TEST_API_KEY!
+const API_KEY = process.env.VALIDUS_TEST_API_KEY!
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !API_KEY) {
-  console.error('Missing required env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VALIDATEAI_TEST_API_KEY')
+  console.error('Missing required env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VALIDUS_TEST_API_KEY')
   process.exit(1)
 }
 

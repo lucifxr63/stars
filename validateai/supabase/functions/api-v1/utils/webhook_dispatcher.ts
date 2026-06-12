@@ -66,7 +66,7 @@ export async function dispatchWebhook(eventName: string, payload: any, targetPro
         headers: {
           'Content-Type': 'application/json',
           'x-webhook-signature': signature,
-          'User-Agent': 'ValidateAI-RaaS-Webhook/1.0'
+          'User-Agent': 'Validus-RaaS-Webhook/1.0'
         },
         body: payloadString,
         // Short timeout for webhooks to not block our processes

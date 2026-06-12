@@ -1,4 +1,4 @@
-# ValidateAI — MVP Technical Specification
+# Validus — MVP Technical Specification
 
 ## Para Claude Code: Guía de implementación priorizada
 
@@ -789,7 +789,7 @@ export function generateValidationPDF(data: Partial<Validation> & { summary: any
   // Header
   doc.setFontSize(24);
   doc.setTextColor(2, 195, 154); // teal accent
-  doc.text('ValidateAI', margin, y);
+  doc.text('Validus', margin, y);
   y += 10;
   doc.setFontSize(10);
   doc.setTextColor(100);
@@ -837,7 +837,7 @@ export function generateValidationPDF(data: Partial<Validation> & { summary: any
     );
   }
 
-  doc.save(`ValidateAI_${data.idea_name?.replace(/\s+/g, '_') ?? 'reporte'}.pdf`);
+  doc.save(`Validus_${data.idea_name?.replace(/\s+/g, '_') ?? 'reporte'}.pdf`);
 }
 ```
 

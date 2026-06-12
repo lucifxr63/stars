@@ -498,7 +498,7 @@ function buildMegaPrompt(
 ): { system: string; user: string } {
   // Techo de cristal: se aplica cuando ninguna fuente financiera verificada (SII o Fintoc)
   // aportÃ³ datos reales. Sin esto, mÃ©tricas auto-reportadas inflatadas producen scores
-  // de "Listo para Ronda" que no tienen ningÃºn respaldo externo, exponiendo a ValidateAI
+  // de "Listo para Ronda" que no tienen ningÃºn respaldo externo, exponiendo a Validus
   // a riesgo reputacional y legal si el reporte llega a un fondo de VC.
   const glassCeilingBlock = !hasVerifiedFinancialData
     ? `
@@ -545,7 +545,7 @@ Responde SOLO con JSON vÃ¡lido, sin texto adicional, sin markdown.`;
     : '';
 
   const ragBlock = knowledgeChunks
-    ? `\n[CONTEXTO REGULATORIO Y METODOLÃ”GICO â€” base de conocimiento ValidateAI]\n${knowledgeChunks}\n`
+    ? `\n[CONTEXTO REGULATORIO Y METODOLÃ”GICO â€” base de conocimiento Validus]\n${knowledgeChunks}\n`
     : '';
 
   const bralidusPYBlock = bralidusPYContext

@@ -1,7 +1,7 @@
-# PYMENGINE → ValidateAI — API de Integración B2G
+# PYMENGINE → Validus — API de Integración B2G
 
 **Para:** Equipo de desarrollo PYMENGINE  
-**De:** Equipo ValidateAI  
+**De:** Equipo Validus  
 **Fecha:** 2026-06-08  
 **Prioridad:** Alta
 
@@ -9,7 +9,7 @@
 
 ## Contexto
 
-ValidateAI es una plataforma de due diligence de startups chilenas. Cuando analizamos una empresa,
+Validus es una plataforma de due diligence de startups chilenas. Cuando analizamos una empresa,
 uno de los ángulos más valiosos es su posición en el mercado público: ¿vende al Estado?, ¿cuánto?,
 ¿cómo le está yendo comparado con el mercado?
 
@@ -17,7 +17,7 @@ PYMENGINE ya tiene esta inteligencia construida. Nosotros estamos intentando rec
 cero llamando directamente a la API de Mercado Público, con todos los problemas que eso implica
 (timeouts, rate limiting, sin historial agregado, sin buyer intelligence).
 
-**La propuesta:** PYMENGINE expone dos endpoints. ValidateAI los consume como fuente de datos
+**La propuesta:** PYMENGINE expone dos endpoints. Validus los consume como fuente de datos
 verificada B2G. No duplicamos trabajo, compartimos inteligencia.
 
 ---
@@ -258,16 +258,16 @@ No necesita OAuth — ambos son servicios internos nuestros.
 Header: Authorization: Bearer pymengine_validateai_<hash>
 ```
 
-ValidateAI llama desde una Edge Function de Supabase con la key en variables de entorno.
+Validus llama desde una Edge Function de Supabase con la key en variables de entorno.
 PYMENGINE valida en un middleware simple antes del router.
 
 ---
 
 ## Prioridad de implementación
 
-Ordenado por impacto para ValidateAI y esfuerzo estimado para PYMENGINE:
+Ordenado por impacto para Validus y esfuerzo estimado para PYMENGINE:
 
-| # | Endpoint | Impacto ValidateAI | Esfuerzo PYMENGINE | Depende de OCs |
+| # | Endpoint | Impacto Validus | Esfuerzo PYMENGINE | Depende de OCs |
 |---|----------|-------------------|-------------------|----------------|
 | 1 | `GET /v1/mercado/benchmarks` | 🔴 Crítico | Bajo — query de agregación | No |
 | 2 | `GET /v1/proveedor/{rut}` | 🔴 Crítico | Bajo — datos ya existen | Parcial (montos aproximados) |
@@ -286,7 +286,7 @@ Una vez que OCs funcione, nos interesa:
 1. **Actualizar el Endpoint 1** — Los campos `monto_adjudicado_clp` y `ticket_*` pasan a ser
    exactos (basados en OCs reales, no en adjudicaciones de licitaciones).
 
-2. **Webhook opcional** — Si una empresa que está en una validación activa de ValidateAI recibe
+2. **Webhook opcional** — Si una empresa que está en una validación activa de Validus recibe
    o gana una OC, podemos recibir una notificación para actualizar su perfil de riesgo en tiempo real.
    No es urgente, pero es el paso natural siguiente.
 
@@ -300,12 +300,12 @@ Esto no es una petición unilateral:
   Ley 21.634, reglamentos de compra. PYMENGINE puede consultarlo vía nuestro endpoint
   `POST /api/v1/rag/query` para enriquecer el análisis de compliance o la generación de ofertas.
 
-- **Founder + empresa score** — cuando un usuario de PYMENGINE valide su startup en ValidateAI,
+- **Founder + empresa score** — cuando un usuario de PYMENGINE valide su startup en Validus,
   podemos compartir el score de due diligence vía webhook, que podría usar para personalizar
   las recomendaciones de licitaciones (ej: no mostrar LP > 5000 UTM a una empresa con score bajo
   en "capacidad operativa").
 
-- **Cross-referral** — si ValidateAI detecta que una startup tiene potencial B2G, la derivamos
+- **Cross-referral** — si Validus detecta que una startup tiene potencial B2G, la derivamos
   activamente a PYMENGINE.
 
 ---
@@ -330,5 +330,5 @@ Esto no es una petición unilateral:
 ## Contacto y repo
 
 - **Slack/Discord:** coordinar canal compartido
-- **Repo ValidateAI:** el código de integración irá en `validateai/supabase/functions/pymengine-fetch/`
+- **Repo Validus:** el código de integración irá en `validateai/supabase/functions/pymengine-fetch/`
 - **Env var que agregaremos:** `PYMENGINE_API_KEY` + `PYMENGINE_BASE_URL`

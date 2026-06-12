@@ -9,7 +9,7 @@
 ## 0. Objetivo
 
 Inyectar Bralidus (`validateai-financial-worker`, GraphRAG macro/legal/unit-econ) en el workflow de
-validación de ValidateAI para producir resultados **mejores** y **comprobables/respaldados** — donde cada
+validación de Validus para producir resultados **mejores** y **comprobables/respaldados** — donde cada
 ajuste de score arrastra evidencia citable (indicador, valor, fecha, fuente).
 
 ## 1. Diagnóstico (estado al 2026-06-11)

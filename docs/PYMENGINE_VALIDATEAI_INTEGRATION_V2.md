@@ -1,4 +1,4 @@
-# PYMENGINE → ValidateAI — Respuesta a preguntas técnicas
+# PYMENGINE → Validus — Respuesta a preguntas técnicas
 
 **Fecha:** 2026-06-08  
 **Contexto:** Respuesta al análisis del codebase de PYMENGINE
@@ -19,7 +19,7 @@ no estimados desde adjudicaciones de licitaciones. Arranquemos desde ahí.
 
 ### Q1 — Taxonomía de sectores
 
-**Respuesta: el filtro vive en ValidateAI, no en PYMENGINE.**
+**Respuesta: el filtro vive en Validus, no en PYMENGINE.**
 
 No construyan una tabla de mapeo. Añade complejidad innecesaria a su lado.
 
@@ -91,7 +91,7 @@ No es un problema — tenemos otras señales más directas desde las OCs.
 No integren ChileProveedores ni ninguna fuente externa para esto. Es una deuda técnica
 que cada sistema debería resolver por separado — no la compartan.
 
-ValidateAI tiene integración con SII que cubre parte del compliance tributario.
+Validus tiene integración con SII que cubre parte del compliance tributario.
 Para compliance previsional/laboral arbitrario, lo agregaremos a nuestra lista de integraciones
 pendientes independientemente de esta integración.
 
@@ -106,7 +106,7 @@ más completos disponibles (aunque no los expongan). Eso solo, ya nos ayuda.
 **Respuesta: Endpoint 2 (benchmarks) primero, no el 3.**
 
 El Endpoint 3 (activas) es el más fácil pero el que menos valor entrega a corto plazo.
-El Endpoint 2 (benchmarks) es el que desbloquea el motor de scoring de ValidateAI
+El Endpoint 2 (benchmarks) es el que desbloquea el motor de scoring de Validus
 para **todas** las startups que analizamos, no solo las que ya venden al Estado.
 
 **Orden recomendado:**
@@ -265,15 +265,15 @@ API key estática en header, validada con un middleware antes del router:
 // middleware/apiKeyAuth.ts
 export function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
   const key = req.headers['x-api-key'] ?? req.headers['authorization']?.replace('Bearer ', '');
-  if (key !== process.env.VALIDATEAI_API_KEY) {
+  if (key !== process.env.VALIDUS_API_KEY) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   next();
 }
 ```
 
-ValidateAI configura `PYMENGINE_API_KEY` y `PYMENGINE_BASE_URL` en sus Edge Functions.
-PYMENGINE configura `VALIDATEAI_API_KEY` en su `.env`.
+Validus configura `PYMENGINE_API_KEY` y `PYMENGINE_BASE_URL` en sus Edge Functions.
+PYMENGINE configura `VALIDUS_API_KEY` en su `.env`.
 
 No necesitan Supabase JWT ni ningún sistema de tokens rotativos — esto es comunicación
 server-to-server entre sistemas que controlamos nosotros.
@@ -290,4 +290,4 @@ que corresponden a:**
 3. Fecha de la OC → `created_at`? ¿`issue_date`?
 4. Código UNSPSC → ¿en `purchase_orders` directamente o via join a `opportunity_items`?
 
-Con eso armamos el `pymengine-fetch` en ValidateAI sin necesitar más idas y vueltas.
+Con eso armamos el `pymengine-fetch` en Validus sin necesitar más idas y vueltas.

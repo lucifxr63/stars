@@ -1,4 +1,4 @@
-# Caso de Estudio: Motor de Due Diligence Adversarial ValidateAI
+# Caso de Estudio: Motor de Due Diligence Adversarial Validus
 ## "Startup Gamma" — Fintech B2C Chile · Seed · USD $500K
 
 **Clasificación:** Demo — Datos de stress test certificado (2026-06-09)  
@@ -17,7 +17,7 @@ El equipo fundador presenta métricas sólidas: 2.400 usuarios activos, CAC de $
 
 ---
 
-## Lo que ValidateAI detectó en 12 segundos
+## Lo que Validus detectó en 12 segundos
 
 El motor BralidusPY procesó el perfil de la startup contra el grafo de conocimiento regulatorio y financiero de Chile. Resultado: **7 alertas adversariales**, 3 de ellas críticas.
 
@@ -35,7 +35,7 @@ El motor BralidusPY procesó el perfil de la startup contra el grafo de conocimi
 - La multa potencial supera el **117% del monto del round** que se está levantando
 - El costo de corrección post-financiamiento (auditoría legal + implementación CMP + retroactividad de datos) se estima en USD $25.000–$40.000 adicionales
 
-**Sin ValidateAI:** el analista asume compliance estándar. El riesgo permanece invisible hasta que llega la primera notificación del Consejo para la Transparencia.
+**Sin Validus:** el analista asume compliance estándar. El riesgo permanece invisible hasta que llega la primera notificación del Consejo para la Transparencia.
 
 ---
 
@@ -51,7 +51,7 @@ El motor BralidusPY procesó el perfil de la startup contra el grafo de conocimi
 - Las transacciones procesadas durante el período no registrado pueden ser declaradas nulas
 - Bloquea acceso al sistema SFA, eliminando la propuesta de valor diferencial del producto
 
-**Sin ValidateAI:** el analista puede no conocer el umbral exacto de actividad que activa la obligación de registro bajo la Ley 21.521.
+**Sin Validus:** el analista puede no conocer el umbral exacto de actividad que activa la obligación de registro bajo la Ley 21.521.
 
 ---
 
@@ -127,15 +127,15 @@ El motor BralidusPY procesó el perfil de la startup contra el grafo de conocimi
 
 ---
 
-## ¿Qué hace diferente a ValidateAI?
+## ¿Qué hace diferente a Validus?
 
-Un analista senior con acceso a Google y Ley 21.719 podría detectar el riesgo de compliance en 2–3 días de due diligence. **ValidateAI lo hace en 12 segundos, antes del primer café de la reunión de pitch.**
+Un analista senior con acceso a Google y Ley 21.719 podría detectar el riesgo de compliance en 2–3 días de due diligence. **Validus lo hace en 12 segundos, antes del primer café de la reunión de pitch.**
 
 Para un fondo que recibe 200 solicitudes al año y convierte el 2%, esto significa:
-- **196 pitches rechazados** con due diligence mínimo → ValidateAI elimina el 80% del tiempo de análisis en la etapa de filtro
+- **196 pitches rechazados** con due diligence mínimo → Validus elimina el 80% del tiempo de análisis en la etapa de filtro
 - **4 inversiones reales** con due diligence profundo → el analista llega a esa reunión ya sabiendo exactamente qué preguntar
 
-**Propuesta de valor B2B:** ValidateAI Premium como primer filtro de Deal Flow para fondos ángeles, aceleradoras y family offices con foco en startups chilenas y LatAm.
+**Propuesta de valor B2B:** Validus Premium como primer filtro de Deal Flow para fondos ángeles, aceleradoras y family offices con foco en startups chilenas y LatAm.
 
 ---
 
@@ -150,5 +150,5 @@ Para un fondo que recibe 200 solicitudes al año y convierte el 2%, esto signifi
 
 ---
 
-*ValidateAI · ScoutTech · contacto@scouttech.lat*  
+*Validus · ScoutTech · contacto@scouttech.lat*  
 *Este caso de estudio fue generado a partir del stress test certificado del motor BralidusPY (2026-06-09). Los datos del perfil de startup son sintéticos y no corresponden a ninguna empresa real.*

@@ -1,5 +1,5 @@
 /**
- * Seed script — Corpus Piloto ValidateAI
+ * Seed script — Corpus Piloto Validus
  *
  * Ingesta documentos regulatorios y metodológicos en la tabla knowledge_base.
  * Genera embeddings con text-embedding-3-small (1536d) vía OpenAI.
@@ -184,7 +184,7 @@ Recomendación: Usar la plataforma Funder.cl o el modelo de SAFE de YCombinator 
   // ── GTM: Go-to-Market Chile ───────────────────────────────────────────────
   {
     title: 'Go-to-Market B2B en Chile — Estrategia para Startups',
-    source: 'ValidateAI GTM Playbook v1.0',
+    source: 'Validus GTM Playbook v1.0',
     category: 'gtm',
     tags: ['gtm', 'go-to-market', 'b2b', 'ventas', 'chile', 'startup', 'saas'],
     content: `Guía de Go-to-Market B2B para startups en Chile:
@@ -218,7 +218,7 @@ Prospección → Demo (30 min) → Prueba gratuita (14-30 días) → Propuesta �
   },
   {
     title: 'Estrategia de Precios para SaaS en Chile — Modelos y Benchmarks',
-    source: 'ValidateAI GTM Playbook v1.0',
+    source: 'Validus GTM Playbook v1.0',
     category: 'gtm',
     tags: ['pricing', 'saas', 'chile', 'gtm', 'revenue', 'monetizacion'],
     content: `Modelos de precios más efectivos para SaaS en el mercado chileno:
@@ -249,7 +249,7 @@ Errores comunes en pricing chileno:
   // ── METODOLOGÍA ───────────────────────────────────────────────────────────
   {
     title: 'Metodología Lean Startup — Validación de Ideas en Chile',
-    source: 'ValidateAI Methodology Playbook v2.0',
+    source: 'Validus Methodology Playbook v2.0',
     category: 'methodology',
     tags: ['lean-startup', 'validacion', 'mvp', 'hipotesis', 'metodologia', 'startup'],
     content: `Marco de validación Lean Startup adaptado al contexto latinoamericano:
@@ -281,7 +281,7 @@ Errores comunes en pricing chileno:
   },
   {
     title: 'Unit Economics para Startups — CAC, LTV y Payback en el Mercado Chileno',
-    source: 'ValidateAI Finance Playbook v1.0',
+    source: 'Validus Finance Playbook v1.0',
     category: 'methodology',
     tags: ['unit-economics', 'cac', 'ltv', 'payback', 'finanzas', 'startup', 'chile'],
     content: `Guía de Unit Economics para startups en Chile:
@@ -355,7 +355,7 @@ async function batchEmbeddings(texts: string[]): Promise<number[][]> {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🌱 ValidateAI — Seed Corpus Piloto\n')
+  console.log('🌱 Validus — Seed Corpus Piloto\n')
 
   // Check for existing entries (idempotency)
   const { data: existing } = await supabase

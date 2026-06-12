@@ -1,4 +1,4 @@
-# ValidateAI — Guía de Ingesta INAPI (TOON → Supabase)
+# Validus — Guía de Ingesta INAPI (TOON → Supabase)
 
 > **Audiencia:** Desarrollador externo integrando datos de INAPI (marcas y patentes chilenas).  
 > **Formato fuente:** Archivos TOON con registros `RECORD_START / RECORD_END`, ~500 MB c/u.  
@@ -211,7 +211,7 @@ RECORD_END
 
 ## 4. Pipeline de Ingesta
 
-La ingesta **no pasa por la API pública de ValidateAI** — va directo a Supabase con la service role key. Esto evita los rate limits del API gateway y es mucho más rápido para bulk.
+La ingesta **no pasa por la API pública de Validus** — va directo a Supabase con la service role key. Esto evita los rate limits del API gateway y es mucho más rápido para bulk.
 
 ```
 archivo.toon (500 MB)
@@ -582,7 +582,7 @@ FROM inapi_records;
 
 ---
 
-## 8. Cómo usar la búsqueda desde ValidateAI
+## 8. Cómo usar la búsqueda desde Validus
 
 Una vez cargados los datos, el sistema puede consultar `inapi_records` directamente desde cualquier Edge Function:
 

@@ -281,7 +281,7 @@ create index on public.aduanas_movimientos(rut, mes desc);
 ## 5. OpenSanctions + OFAC — Compliance Global
 
 ### Por qué es crítico para enterprise
-Sin este módulo, ValidateAI no puede ser usado por bancos ni aseguradoras para KYC/AML.
+Sin este módulo, Validus no puede ser usado por bancos ni aseguradoras para KYC/AML.
 Es el requisito de entrada al segmento enterprise (10x pricing vs. startup tier).
 
 ### Dato a extraer

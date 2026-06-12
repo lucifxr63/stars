@@ -6,7 +6,7 @@ Concepto: "Centros de Información"
 Los datos del admin son las fuentes. Cada centro produce un contexto diferente para la IA:
 
 Centro	Datos que aporta	Tipo de contenido que genera
-Métricas de plataforma	Usuarios activos, tasa de completación, score promedio, tendencias 14 días	"ValidateAI en números: lo que está pasando"
+Métricas de plataforma	Usuarios activos, tasa de completación, score promedio, tendencias 14 días	"Validus en números: lo que está pasando"
 Tendencias de mercado	Industrias más validadas, países, modelos de negocio, score por sector	"Las ideas que más se validan en LatAm hoy"
 Patrones de validación	Riesgos recurrentes, unit economics, founder fit promedio	"Los errores más comunes de los founders"
 AI Usage	Prompts más usados, tokens, modelos, costo por análisis	Contenido técnico sobre el uso de IA en startups

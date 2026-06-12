@@ -1,4 +1,4 @@
-# Lemon Squeezy — Setup de Pagos para ValidateAI
+# Lemon Squeezy — Setup de Pagos para Validus
 
 > Estado: **Pendiente de configuración**  
 > Las edge functions `create-checkout` y `lemonsqueezy-webhook` ya están implementadas.  
@@ -37,9 +37,9 @@ Para cada tier, crear un **Product** de tipo **Subscription**:
 
 | Tier    | Nombre          | Precio sugerido | Billing  |
 |---------|-----------------|-----------------|----------|
-| Basic   | ValidateAI Basic   | $11 USD / mes   | Monthly  |
-| Pro     | ValidateAI Pro     | $22 USD / mes   | Monthly  |
-| Premium | ValidateAI Premium | $33 USD / mes   | Monthly  |
+| Basic   | Validus Basic   | $11 USD / mes   | Monthly  |
+| Pro     | Validus Pro     | $22 USD / mes   | Monthly  |
+| Premium | Validus Premium | $33 USD / mes   | Monthly  |
 
 > **Nota sobre precios en CLP:** Lemon Squeezy maneja precios en USD. Si quieres mostrar CLP en la landing, usa los equivalentes aproximados. El cobro real será en USD.
 
@@ -70,7 +70,7 @@ Para cada tier, crear un **Product** de tipo **Subscription**:
 ## Paso 5 — Obtener la API Key
 
 1. Settings → **API** → New API Key
-2. Nombre: `ValidateAI Production`
+2. Nombre: `Validus Production`
 3. Copiar la key (empieza con `eyJ...`)
 
 ---

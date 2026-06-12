@@ -1,5 +1,5 @@
 1. Resumen Ejecutivo
-Para transformar el desarrollo de ValidateAI de "reactivo" a "proactivo", hemos rediseñado el prompt para obligar al modelo a realizar un Análisis de Contexto Sistémico antes de emitir cualquier instrucción técnica. Este cambio asegura que cada línea de código tenga un propósito claro, mitigue fricciones de usuario identificadas y esté alineada con KPIs de éxito concretos.
+Para transformar el desarrollo de Validus de "reactivo" a "proactivo", hemos rediseñado el prompt para obligar al modelo a realizar un Análisis de Contexto Sistémico antes de emitir cualquier instrucción técnica. Este cambio asegura que cada línea de código tenga un propósito claro, mitigue fricciones de usuario identificadas y esté alineada con KPIs de éxito concretos.
 
 2. Análisis por Agentes
 Product Owner (PO): La clave es pasar del "Qué hacemos" al "Qué valor aporta esto al ecosistema". Necesitamos asegurar que cada agente de IA y cada flujo de onboarding esté alineado con el objetivo de convertir a un fundador en etapa de Idea a MVP.

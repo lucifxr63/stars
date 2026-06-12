@@ -74,7 +74,7 @@ async function fetchFreshRedditToken(): Promise<string> {
     headers: {
       'Authorization': `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'ValidateAI/1.0',
+      'User-Agent': 'Validus/1.0',
     },
     body: 'grant_type=client_credentials',
   });
@@ -102,7 +102,7 @@ async function fetchRedditReal(idea: string): Promise<unknown> {
     {
       headers: {
         'Authorization': `Bearer ${token}`,
-        'User-Agent': 'ValidateAI/1.0 by Luciano',
+        'User-Agent': 'Validus/1.0 by Luciano',
       },
     },
   );

@@ -66,7 +66,7 @@ function buildEmailHtml(params: {
 
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#7C6FF7,#A78BFA);padding:28px 32px">
-      <p style="margin:0;font-size:13px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px">ValidateAI</p>
+      <p style="margin:0;font-size:13px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px">Validus</p>
       <h1 style="margin:8px 0 0;font-size:22px;color:#fff;font-weight:800">Tu análisis rápido está listo</h1>
     </div>
 
@@ -99,7 +99,7 @@ function buildEmailHtml(params: {
     <!-- Footer -->
     <div style="padding:16px 32px;border-top:1px solid #f3f4f6;background:#fafafa">
       <p style="margin:0;color:#9ca3af;font-size:11px;line-height:1.5">
-        ValidateAI · Este email fue solicitado desde el flujo de análisis rápido.
+        Validus · Este email fue solicitado desde el flujo de análisis rápido.
         <a href="${APP_URL}/profile" style="color:#7C6FF7;text-decoration:none">Gestionar preferencias</a>
       </p>
     </div>

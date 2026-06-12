@@ -1,7 +1,7 @@
-# Estado Actual: ValidateAI V3 — Mayo 2026
+# Estado Actual: Validus V3 — Mayo 2026
 
 > Fuente de verdad del estado de implementación. Actualizar al cerrar cada sprint.
-> Plan completo: `docs/VALIDATEAI_V3_NEW.MD` | Guía técnica: `validateai/CLAUDE.md`
+> Plan completo: `docs/VALIDUS_V3_NEW.MD` | Guía técnica: `validateai/CLAUDE.md`
 
 ---
 

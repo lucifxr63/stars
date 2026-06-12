@@ -1,6 +1,6 @@
 ﻿// Edge Function: survey-analyze
 // Procesa respuestas cualitativas con LLM usando Structured Outputs.
-// Implementa el paradigma descrito en VALIDATEAI_CLIENTES.MD:
+// Implementa el paradigma descrito en VALIDUS_CLIENTES.MD:
 //   - ExtracciÃ³n semÃ¡ntica: problema central, severidad, soluciones actuales, WTP, friction score
 //   - Pipeline de privacidad: marca submissions como 'pseudonymized' despuÃ©s del anÃ¡lisis
 // POST /survey-analyze body: { form_id }  (procesa todas las submissions 'raw' del form)

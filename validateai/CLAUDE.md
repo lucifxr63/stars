@@ -15,7 +15,7 @@ No test suite exists yet (known gap â€” see ESTADO_ACTUAL.md).
 
 ## Architecture Overview
 
-**ValidateAI** is a React 19 SPA that guides entrepreneurs through a 4-step AI-powered business validation wizard (Idea, Mercado, Fundador, GeneraciÃ³n), producing a score (0â€“100), qualitative feedback, and advanced deliverables.
+**Validus** is a React 19 SPA that guides entrepreneurs through a 4-step AI-powered business validation wizard (Idea, Mercado, Fundador, GeneraciÃ³n), producing a score (0â€“100), qualitative feedback, and advanced deliverables.
 
 **Production:** https://validus.scouttech.lat  
 **Stack:** React 19 + Vite + TypeScript + Tailwind CSS v4 + shadcn/ui + Supabase + Vercel

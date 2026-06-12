@@ -10,7 +10,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_KEY   = Deno.env.get('RESEND_API_KEY') ?? '';
-const FROM_EMAIL   = 'ValidateAI <hola@validateai.cl>';
+const FROM_EMAIL   = 'Validus <hola@validateai.cl>';
 
 interface EligibleUser {
   user_id: string;
@@ -44,7 +44,7 @@ async function sendFollowupEmail(user: EligibleUser): Promise<boolean> {
         Ver planes â†’
       </a>
       <p style="color:#999;font-size:12px;margin-top:32px">
-        ValidateAI Â· <a href="https://validus.scouttech.lat/profile">Gestionar preferencias</a>
+        Validus Â· <a href="https://validus.scouttech.lat/profile">Gestionar preferencias</a>
       </p>
     </div>
   `;
@@ -58,7 +58,7 @@ async function sendFollowupEmail(user: EligibleUser): Promise<boolean> {
     body: JSON.stringify({
       from: FROM_EMAIL,
       to: [user.email],
-      subject: `Â¿CÃ³mo va ${ideaName}? Tu anÃ¡lisis de ValidateAI`,
+      subject: `Â¿CÃ³mo va ${ideaName}? Tu anÃ¡lisis de Validus`,
       html,
     }),
   });

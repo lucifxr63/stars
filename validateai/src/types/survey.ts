@@ -1,5 +1,5 @@
 // Tipos del módulo de Encuestas de Customer Development
-// Basado en arquitectura JSONB descrita en VALIDATEAI_CLIENTES.MD
+// Basado en arquitectura JSONB descrita en VALIDUS_CLIENTES.MD
 
 export type FieldType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'scale' | 'date' | 'select';
 

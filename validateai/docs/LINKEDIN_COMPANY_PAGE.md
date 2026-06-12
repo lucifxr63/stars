@@ -23,7 +23,7 @@ pertenezca a un Developer Portal con una Company Page verificada. Sin ella:
 1. Inicia sesión en LinkedIn con la cuenta de la organización (o tu cuenta personal si es una empresa unipersonal).
 2. Ve a: `https://www.linkedin.com/company/setup/new/`
 3. Rellena:
-   - **Nombre de la empresa**: `ValidateAI` (o `Scouttech` si se publica bajo esa marca)
+   - **Nombre de la empresa**: `Validus` (o `Scouttech` si se publica bajo esa marca)
    - **LinkedIn Public URL**: `linkedin.com/company/validateai-cl` (o el slug que esté disponible)
    - **Industria**: Technology, Information and Internet
    - **Tamaño**: 1–10 empleados
@@ -39,7 +39,7 @@ pertenezca a un Developer Portal con una Company Page verificada. Sin ella:
 ### 2. Vincular la Company Page al Developer App de LinkedIn
 
 1. Ve a `https://developer.linkedin.com/` → Apps.
-2. Selecciona la app de ValidateAI (o crea una nueva con el botón **Create App**).
+2. Selecciona la app de Validus (o crea una nueva con el botón **Create App**).
 3. En la sección **App Settings**, en el campo **LinkedIn Page**, busca y selecciona la página recién creada.
 4. LinkedIn te pedirá que **verifiques** que eres admin de esa página. Haz click en "Verify" — te llegará una notificación en LinkedIn o deberás confirmar con tu cuenta.
 
@@ -58,7 +58,7 @@ En el Developer App, tab **Products**, solicita:
 Para **Sign In with LinkedIn**, la aprobación es casi inmediata (< 24h).
 Para `w_member_social`, LinkedIn pide una descripción del caso de uso — usar:
 
-> "ValidateAI permite a founders chilenos validar sus startups. Usamos LinkedIn OAuth para
+> "Validus permite a founders chilenos validar sus startups. Usamos LinkedIn OAuth para
 > autenticar la identidad profesional del founder y obtener su experiencia laboral y educación,
 > que alimentan el score de founder fit. No publicamos contenido sin acción explícita del usuario."
 

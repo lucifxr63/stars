@@ -68,7 +68,7 @@ const SEGMENTS = [
     ),
     target: 'Platanus Ventures · Start-Up Chile',
     pain: 'El cuello de botella del volumen',
-    pitch: 'Reciben +1.000 postulaciones. ValidateAI escanea el 100% del batch en minutos, levantando banderas rojas regulatorias y de Unit Economics antes de que su equipo pierda horas en entrevistas.',
+    pitch: 'Reciben +1.000 postulaciones. Validus escanea el 100% del batch en minutos, levantando banderas rojas regulatorias y de Unit Economics antes de que su equipo pierda horas en entrevistas.',
   },
   {
     icon: (
@@ -88,7 +88,7 @@ const SEGMENTS = [
     ),
     target: 'Family Offices Santiago',
     pain: 'Capital disponible, expertise técnico limitado',
-    pitch: 'ValidateAI es su Analista Técnico y Legal de Venture Capital automatizado. No firmen un cheque sin correr el perfil de la startup por el motor de Due Diligence.',
+    pitch: 'Validus es su Analista Técnico y Legal de Venture Capital automatizado. No firmen un cheque sin correr el perfil de la startup por el motor de Due Diligence.',
   },
 ];
 
@@ -100,7 +100,7 @@ export function VCDiligence() {
       <nav className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between px-5 py-3 bg-[#12121A]/90 backdrop-blur-md border border-white/[0.07] rounded-2xl max-w-5xl mx-auto">
         <Link to="/" className="flex items-center gap-2.5">
           <Logo />
-          <span className="text-sm font-bold tracking-tight hidden sm:block">ValidateAI</span>
+          <span className="text-sm font-bold tracking-tight hidden sm:block">Validus</span>
         </Link>
         <div className="flex items-center gap-3">
           <Link to="/" className="text-xs text-[#8B8AA0] hover:text-[#F0EFF8] transition-colors hidden sm:block">
@@ -211,7 +211,7 @@ export function VCDiligence() {
                 <tr className="border-b border-white/[0.06] bg-[#12121A]">
                   <th className="text-left px-5 py-3.5 text-[11px] font-bold text-[#8B8AA0] uppercase tracking-wider">Dimensión</th>
                   <th className="text-left px-5 py-3.5 text-[11px] font-bold text-[#8B8AA0] uppercase tracking-wider">Lo que decía el deck</th>
-                  <th className="text-left px-5 py-3.5 text-[11px] font-bold text-[#8B8AA0] uppercase tracking-wider">Lo que detectó ValidateAI</th>
+                  <th className="text-left px-5 py-3.5 text-[11px] font-bold text-[#8B8AA0] uppercase tracking-wider">Lo que detectó Validus</th>
                 </tr>
               </thead>
               <tbody>
@@ -296,12 +296,12 @@ export function VCDiligence() {
               "No me creas. Toma la startup que tengas hoy en el tope de tu funnel."
             </h2>
             <p className="text-[#8B8AA0] text-sm max-w-xl mx-auto leading-relaxed">
-              Envíanos su deck o su web. Te devolvemos el reporte de Due Diligence de ValidateAI en 15 minutos sin costo.
+              Envíanos su deck o su web. Te devolvemos el reporte de Due Diligence de Validus en 15 minutos sin costo.
               Compáralo con lo que vio tu equipo.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <a
-                href="mailto:contacto@scouttech.lat?subject=Quiero probar ValidateAI con una startup de mi portafolio&body=Hola, me interesa probar el motor de due diligence con una startup. Adjunto el deck / web:"
+                href="mailto:contacto@scouttech.lat?subject=Quiero probar Validus con una startup de mi portafolio&body=Hola, me interesa probar el motor de due diligence con una startup. Adjunto el deck / web:"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0EB5C6] hover:bg-[#0EB5C6]/80 text-white font-bold rounded-xl transition-colors text-sm"
               >
                 Enviar startup para análisis gratuito
@@ -362,7 +362,7 @@ export function VCDiligence() {
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <Logo className="w-6 h-6" />
-            <span className="text-xs text-[#4A495E]">ValidateAI · ScoutTech · contacto@scouttech.lat</span>
+            <span className="text-xs text-[#4A495E]">Validus · ScoutTech · contacto@scouttech.lat</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-[#4A495E]">
             <Link to="/privacy-policy" className="hover:text-[#8B8AA0] transition-colors">Privacidad</Link>

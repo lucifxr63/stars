@@ -1,4 +1,4 @@
-# Auditoría Profunda: Backend ↔ Frontend — ValidateAI
+# Auditoría Profunda: Backend ↔ Frontend — Validus
 
 > Fecha: Mayo 2, 2026
 

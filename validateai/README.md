@@ -1,7 +1,7 @@
 ﻿<div align="center">
-  <img src="https://via.placeholder.com/150/0F172A/10B981?text=ValidateAI" alt="ValidateAI Logo" width="120" style="border-radius: 20px;" />
+  <img src="https://via.placeholder.com/150/0F172A/10B981?text=Validus" alt="Validus Logo" width="120" style="border-radius: 20px;" />
 
-  # ValidateAI
+  # Validus
   
   **La plataforma SaaS definitiva para validar ideas de negocio con Inteligencia Artificial.**
 
@@ -22,7 +22,7 @@
 
 ## ðŸ“– Sobre el Proyecto
 
-ValidateAI guÃ­a a emprendedores e inversores a travÃ©s de un **wizard interactivo de 4 pasos**, generando una validaciÃ³n exhaustiva de ideas de negocio en minutos. Al finalizar, el sistema entrega un **Score (0-100)**, feedback cualitativo y hasta **18 entregables avanzados**, incluyendo:
+Validus guÃ­a a emprendedores e inversores a travÃ©s de un **wizard interactivo de 4 pasos**, generando una validaciÃ³n exhaustiva de ideas de negocio en minutos. Al finalizar, el sistema entrega un **Score (0-100)**, feedback cualitativo y hasta **18 entregables avanzados**, incluyendo:
 - ðŸ“Š AnÃ¡lisis competitivo impulsado por *Web Search*.
 - ðŸ’° Proyecciones financieras (*Unit Economics*).
 - ðŸ§‘â€ðŸ¤â€ðŸ§‘ AnÃ¡lisis de *Founder-Market Fit*.
@@ -174,5 +174,5 @@ Para una vista detallada de los prÃ³ximos sprints, revisa el documento [SPRINT
 Este es un proyecto cerrado en etapa temprana. Para reportar bugs, solicitar nuevas caracterÃ­sticas o proponer un *pull request*, por favor contacta al lÃ­der tÃ©cnico o crea un Issue documentado en el repositorio.
 
 <div align="center">
-  <p>Creado con â¤ï¸ por el equipo de ValidateAI.</p>
+  <p>Creado con â¤ï¸ por el equipo de Validus.</p>
 </div>

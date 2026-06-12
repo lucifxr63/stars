@@ -1,6 +1,6 @@
 Estimado Equipo Técnico y de Producto,
 
-Como Mesa Directiva, hemos revisado en detalle el "Mapa de Integraciones y Arquitectura de Datos" de ValidateAI (commit 1585bcb). Agradecemos la exhaustividad y transparencia de esta auditoría técnica. Es fundamental tener esta visibilidad antes de escalar la plataforma.
+Como Mesa Directiva, hemos revisado en detalle el "Mapa de Integraciones y Arquitectura de Datos" de Validus (commit 1585bcb). Agradecemos la exhaustividad y transparencia de esta auditoría técnica. Es fundamental tener esta visibilidad antes de escalar la plataforma.
 
 Si bien celebramos los avances en el pipeline principal (SII + Claude + RAG) y la implementación de telemetría y facturación, estamos sumamente preocupados por los hallazgos de seguridad y riesgo reputacional.
 
@@ -64,4 +64,4 @@ Confiamos en la capacidad del equipo para subsanar estos baches operativos y dej
 
 Atentamente,
 
-Mesa Directiva ValidateAI
+Mesa Directiva Validus

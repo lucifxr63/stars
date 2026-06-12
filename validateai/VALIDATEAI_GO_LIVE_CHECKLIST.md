@@ -1,6 +1,6 @@
-# ValidateAI — Go-Live Checklist
+# Validus — Go-Live Checklist
 **Fecha de emisión:** 2026-05-25  
-**Auditor:** Sistema de Ingeniería ValidateAI  
+**Auditor:** Sistema de Ingeniería Validus  
 **Estado general:** 🟡 READY WITH CONDITIONS — 2 secretos de producción pendientes de configurar
 
 ---
@@ -208,4 +208,4 @@ Total estimado: ~$2.80 USD/mes → costo marginal seguro para Beta
 
 ---
 
-*Documento generado por el sistema de ingeniería ValidateAI — auditoría Sprint 7 + Go-Live.*
+*Documento generado por el sistema de ingeniería Validus — auditoría Sprint 7 + Go-Live.*

@@ -11,7 +11,7 @@
 LinkedIn exige que toda Developer App estÃ© asociada a una **LinkedIn Company Page** verificada.
 
 **Pasos a completar primero:**
-1. Crear la LinkedIn Company Page de ValidateAI
+1. Crear la LinkedIn Company Page de Validus
 2. Ir a [linkedin.com/developers/apps/new](https://www.linkedin.com/developers/apps/new)
 3. Crear la app asociada a esa Company Page
 4. En la pestaÃ±a **Products** â†’ solicitar **"Sign In with LinkedIn using OpenID Connect"**
@@ -319,4 +319,4 @@ Para acelerar la implementaciÃ³n, estos archivos son la base directa:
 
 ---
 
-*Documento generado: 2026-05-25 â€” ValidateAI Sprint 1.5-B*
+*Documento generado: 2026-05-25 â€” Validus Sprint 1.5-B*

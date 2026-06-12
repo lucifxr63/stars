@@ -1,8 +1,8 @@
-# Análisis Detallado: ValidateAI
+# Análisis Detallado: Validus
 
 ## 1. Stack Tecnológico
 
-ValidateAI es una plataforma SaaS moderna, orientada al rendimiento y fuertemente integrada con Inteligencia Artificial.
+Validus es una plataforma SaaS moderna, orientada al rendimiento y fuertemente integrada con Inteligencia Artificial.
 
 ### Frontend
 - **Framework & Build:** React 19 + Vite.
@@ -50,7 +50,7 @@ Un flujo veloz que omite pasos manuales asumiendo datos.
 
 ## 3. APIs Consumidas y Orquestación de IA
 
-ValidateAI no solo usa modelos generativos de IA, sino que se enriquece consumiendo datos duros de mercado mediante APIs gubernamentales de Chile, orquestados en sus Edge Functions.
+Validus no solo usa modelos generativos de IA, sino que se enriquece consumiendo datos duros de mercado mediante APIs gubernamentales de Chile, orquestados en sus Edge Functions.
 
 ### API de Inteligencia Artificial (LLMs)
 - **OpenAI (`text-embedding-3-small`):** API consumida para generar vectores semánticos del texto del usuario y buscar similitudes en la base de datos (Cache semántico umbral `0.92`).

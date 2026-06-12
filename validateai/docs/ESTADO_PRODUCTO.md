@@ -1,4 +1,4 @@
-# Estado del Producto — ValidateAI
+# Estado del Producto — Validus
 **Fecha:** 3 de junio de 2026 · **Elaborado por:** Auditoría CTO/PM · **Confidencial**
 
 ---
@@ -88,7 +88,7 @@ Stack de producción robusto y sin riesgo técnico de escala inmediata:
 
 > **"Validá tu idea de negocio con IA antes de gastar un peso."**
 
-ValidateAI convierte 20 minutos de respuestas en un reporte investment-ready: score cuantificado en 5 dimensiones, análisis competitivo con datos chilenos reales, unit economics proyectados, roadmap de MVP y fit fundador-mercado. Lo que antes requería contratar un consultor por $300.000 CLP, hoy cuesta $9.990 CLP al mes.
+Validus convierte 20 minutos de respuestas en un reporte investment-ready: score cuantificado en 5 dimensiones, análisis competitivo con datos chilenos reales, unit economics proyectados, roadmap de MVP y fit fundador-mercado. Lo que antes requería contratar un consultor por $300.000 CLP, hoy cuesta $9.990 CLP al mes.
 
 **El diferenciador real vs. herramientas genéricas:** datos macroeconómicos del Banco Central e INE integrados nativamente. No es IA genérica con contexto chileno pegado encima — es un sistema construido para el ecosistema LATAM.
 

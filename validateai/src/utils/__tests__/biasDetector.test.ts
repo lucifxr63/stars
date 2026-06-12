@@ -70,8 +70,8 @@ describe('detectBias — exposición prematura de la solución', () => {
     expect(r.hasBias).toBe(true);
   });
 
-  it('ValidateAI por nombre → expone solución', () => {
-    const r = detectBias('¿Usarías ValidateAI para validar tu startup?');
+  it('Validus por nombre → expone solución', () => {
+    const r = detectBias('¿Usarías Validus para validar tu startup?');
     expect(r.hasBias).toBe(true);
     expect(r.patterns.some(p => p.includes('nombre'))).toBe(true);
   });

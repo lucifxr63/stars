@@ -1,6 +1,6 @@
 # Variables de Entorno — Checklist completo
 
-Estado de todas las variables requeridas por ValidateAI en producción (Supabase Edge Functions + Vercel).
+Estado de todas las variables requeridas por Validus en producción (Supabase Edge Functions + Vercel).
 
 Última revisión: 2026-06-08
 

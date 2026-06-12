@@ -1,4 +1,4 @@
-# ValidateAI — Roadmap de Sprints
+# Validus — Roadmap de Sprints
 
 > Documento vivo. Actualizar estado de cada caso al completarlo.
 > Fecha de inicio: Mayo 2026 · Estado actual: MVP funcional en producción.

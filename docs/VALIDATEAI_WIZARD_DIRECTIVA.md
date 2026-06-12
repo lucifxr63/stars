@@ -1,15 +1,15 @@
-# ValidateAI — Análisis Estructural del Wizard de Validación
+# Validus — Análisis Estructural del Wizard de Validación
 ### Documento para Mesa Directiva
 **Fecha:** 01 de Junio 2026  
 **Versión:** v1.0  
-**Producto:** ValidateAI — Plataforma de validación de startups  
+**Producto:** Validus — Plataforma de validación de startups  
 **URL producción:** https://validus.scouttech.lat
 
 ---
 
 ## 1. RESUMEN EJECUTIVO
 
-ValidateAI es una plataforma SaaS que guía a emprendedores a través de un wizard de 3–4 pasos para evaluar la viabilidad de su startup mediante IA. El producto procesa la descripción de la idea, el contexto de mercado y el perfil del fundador, y genera un score 0–100 con análisis profundos en hasta 15 dimensiones.
+Validus es una plataforma SaaS que guía a emprendedores a través de un wizard de 3–4 pasos para evaluar la viabilidad de su startup mediante IA. El producto procesa la descripción de la idea, el contexto de mercado y el perfil del fundador, y genera un score 0–100 con análisis profundos en hasta 15 dimensiones.
 
 **Stack tecnológico:** React 19 + Supabase (PostgreSQL + Edge Functions Deno) + Anthropic Claude (Haiku / Sonnet) + Vercel
 
@@ -324,4 +324,4 @@ El sistema registra los siguientes eventos de comportamiento:
 
 ---
 
-*Documento generado el 01/06/2026. Para consultas técnicas: equipo de ingeniería ValidateAI.*
+*Documento generado el 01/06/2026. Para consultas técnicas: equipo de ingeniería Validus.*

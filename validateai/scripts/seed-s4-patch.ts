@@ -80,7 +80,7 @@ Fintechs exentas de inscripción RPSF: Las startups en etapa de prototipo o prue
   // ── BRECHA 2: Análisis de Cohortes ─────────────────────────────────────────
   {
     title: 'Análisis de Cohortes para SaaS — Métricas de Retención y Churn',
-    source: 'Guía de Unit Economics SaaS — Metodología ValidateAI',
+    source: 'Guía de Unit Economics SaaS — Metodología Validus',
     category: 'methodology' as const,
     tags: ['cohort', 'cohorte', 'retencion', 'churn', 'saas', 'metricas', 'unit-economics'],
     content: `El análisis de cohortes es la metodología fundamental para medir retención real de usuarios en productos SaaS y startups de tecnología. Una cohorte es un grupo de usuarios que realizaron su primera acción (registro, pago, activación) en el mismo período.
@@ -122,7 +122,7 @@ Herramientas para análisis de cohortes: Mixpanel, Amplitude, ChartMogul (para S
   },
   {
     title: 'Retención, Engagement y Churn — Estrategias para Startups',
-    source: 'Playbook de Crecimiento SaaS — Metodología ValidateAI',
+    source: 'Playbook de Crecimiento SaaS — Metodología Validus',
     category: 'methodology' as const,
     tags: ['cohort', 'cohorte', 'retencion', 'churn', 'engagement', 'saas', 'growth'],
     content: `La retención es la métrica más importante de un negocio SaaS. Sin retención, el crecimiento es un balde con fugas: por más que se invierta en adquisición, el negocio no escala.

@@ -1,6 +1,6 @@
 // Detector de sesgo de validación basado en "The Mom Test" (Rob Fitzpatrick)
 // Detecta preguntas hipotéticas, sugestivas y que presentan la solución prematuramente.
-// Implementa el "supervisor metodológico" descrito en VALIDATEAI_CLIENTES.MD.
+// Implementa el "supervisor metodológico" descrito en VALIDUS_CLIENTES.MD.
 
 import type { BiasDetectionResult } from '@/types/survey';
 
@@ -25,7 +25,7 @@ const SOLUTION_EXPOSURE_PATTERNS = [
   { re: /nuestra\s+(app|aplicaci[oó]n|plataforma|soluci[oó]n|herramienta|producto)/i, label: 'Presenta la solución propia ("nuestra app/plataforma...")' },
   { re: /nuestro\s+(producto|sistema|servicio|software)/i,                            label: 'Presenta la solución propia ("nuestro producto/sistema...")' },
   { re: /nuestra\s+idea/i,                                                             label: 'Presenta la idea propia ("nuestra idea...")' },
-  { re: /\bValidateAI\b/i,                                                             label: 'Menciona el producto por nombre' },
+  { re: /\bValidus\b/i,                                                             label: 'Menciona el producto por nombre' },
   { re: /ahorra\s+\d+/i,                                                               label: 'Promesa de ahorro cuantificada (sesgo de anclaje)' },
   { re: /automatizar[áa]\s/i,                                                           label: 'Promesa de automatización (ancla expectativas)' },
 ];
