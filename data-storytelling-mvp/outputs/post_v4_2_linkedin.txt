@@ -23,4 +23,9 @@ Meta y Google Ads construyen audiencias. WhatsApp API abre conversaciones. En et
 **Para founders y operadores de Go-to-Market:**
 ¿Están midiendo el CAC por canal de forma independiente, o todavía lo están promediando en un solo número que esconde qué canales están destruyendo eficiencia?
 
+
+🔎 ¿Querés ver dónde está parada *tu* startup contra estos benchmarks?
+Generamos un diagnóstico con IA (score + mercado + competencia) sobre tu idea. Mirá un reporte de ejemplo real acá 👇
+validus.scouttech.lat/demo
+
 #StartupsLatAm #B2BSaaS #GrowthMarketing #VentureCapital #GoToMarket

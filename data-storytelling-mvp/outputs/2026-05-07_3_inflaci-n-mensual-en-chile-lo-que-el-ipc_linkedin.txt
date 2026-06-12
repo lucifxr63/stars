@@ -21,4 +21,9 @@ Y si operás con un equipo mixto entre Chile y otro país de LatAm, la presión 
 **La pregunta para los que operan en Chile:**
 ¿Cuándo fue la última vez que ajustaron sus supuestos de costo de equipo usando el IPC acumulado, y no solo la inflación del mes? ¿Lo tienen mapeado por escenarios o lo resuelven cuando llega el conflicto?
 
+
+🔎 ¿Querés ver dónde está parada *tu* startup contra estos benchmarks?
+Generamos un diagnóstico con IA (score + mercado + competencia) sobre tu idea. Mirá un reporte de ejemplo real acá 👇
+validus.scouttech.lat/demo
+
 #StartupsLatAm #SaaS #VentureCapital #FoundersMindset #OperacionesB2B
