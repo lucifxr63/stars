@@ -63,16 +63,20 @@ test.describe('Pricing page', () => {
     await expect(page.getByText(/20\.000/)).toBeVisible();
   });
 
-  test('tiene botón de CTA para cada plan de pago', async ({ page }) => {
-    await expect(page.getByRole('button', { name: /empezar con basic/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /empezar con pro/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /empezar con premium/i })).toBeVisible();
+  test('los planes pagos exponen el CTA de waitlist Early Bird', async ({ page }) => {
+    // Contingencia de ingresos: los botones de compra están secuestrados a la
+    // waitlist mientras LemonSqueezy está bloqueado por Legal (commit cd40a15).
+    const reservar = page.getByRole('button', { name: /reservar acceso/i });
+    await expect(reservar.first()).toBeVisible();
+    expect(await reservar.count()).toBe(3); // basic, pro, premium
+    await expect(page.getByRole('button', { name: /comenzar gratis/i })).toBeVisible();
   });
 
-  test('menciona Lemon Squeezy (no Stripe)', async ({ page }) => {
-    await expect(page.getByText(/lemon squeezy/i)).toBeVisible();
-    const stripeText = await page.getByText(/procesado por stripe/i).count();
-    expect(stripeText).toBe(0);
+  test('NO expone pasarela de pago activa (waitlist Early Bird)', async ({ page }) => {
+    // El cobro está dormante: no debe prometerse "pago seguro" ni proveedor.
+    await expect(page.getByText(/cupos limitados de lanzamiento/i)).toBeVisible();
+    expect(await page.getByText(/lemon squeezy/i).count()).toBe(0);
+    expect(await page.getByText(/procesado por stripe/i).count()).toBe(0);
   });
 });
 
