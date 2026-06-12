@@ -115,4 +115,61 @@ test.describe('Fase 3 · MoFu Command Center', () => {
     // las fuentes de las señales (párrafos).
     await expect(page.getByRole('heading', { name: 'Inteligencia de Mercado' })).toBeVisible();
   });
+
+  test('flujo quick: submit del wizard redirige DURO a /dashboard (asincronía #3)', { tag: '@smoke' }, async ({ page }) => {
+    await mockAuth(page);
+
+    // Consentimiento ya aceptado → evita el ConsentModal (z-9999) que intercepta clicks.
+    await page.route('**/rest/v1/consent_logs**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'consent-smoke' }) }),
+    );
+    // Onboarding del wizard ya visto → evita el OnboardingOverlay (z-50).
+    await page.addInitScript(() => localStorage.setItem('validateai_onboarded', '1'));
+
+    // validations: insert con .select().single() → objeto con id; listas → array
+    // con una fila in_progress+step4 (para que el widget la muestre tras el redirect).
+    await page.route('**/rest/v1/validations**', async (route) => {
+      const accept = route.request().headers()['accept'] ?? '';
+      const row = {
+        id: 'val-smoke-async',
+        idea_name: 'SmokeIdea',
+        status: 'in_progress',
+        current_step: 4,
+        generation_progress: {},
+        validation_score: null,
+        created_at: '2026-06-12T00:00:00Z',
+      };
+      const wantsSingle = accept.includes('vnd.pgrst.object');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(wantsSingle ? row : [row]),
+      });
+    });
+    // RPC de progreso del job en background (fire-and-forget) — evita red real.
+    await page.route('**/rest/v1/rpc/merge_generation_progress**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }),
+    );
+
+    await page.goto('/validate');
+
+    // Entrar a modo Rápido vía FlowSelector (StepIdea trae el selector).
+    await page.getByRole('button', { name: /análisis rápido/i }).click();
+
+    // Completar el formulario quick (cumple StepIdeaQuickSchema: desc ≥100 chars).
+    await page.getByPlaceholder(/FreshBox/i).fill('SmokeIdea');
+    await page.getByPlaceholder(/Una app que conecta/i).fill(
+      'Plataforma que conecta a pymes chilenas con contadores certificados en menos de 24 horas, ' +
+      'eliminando la fricción de conseguir asesoría tributaria confiable y a tiempo para el SII.',
+    );
+    await page.getByPlaceholder(/Clínicas dentales medianas/i).fill('Pymes chilenas de servicios');
+    await page.getByRole('button', { name: 'B2B', exact: true }).click();
+    await page.locator('label:has(input[name="idea_industry"])').first().click();
+
+    // Submit → la asincronía híbrida NO debe quedarse cargando: redirect duro.
+    await page.getByRole('button', { name: /analizar idea/i }).click();
+
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+    await expect(page.getByText(/validus ai está procesando/i)).toBeVisible();
+  });
 });
