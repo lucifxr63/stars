@@ -26,8 +26,8 @@ export function Header() {
   const [previewTier, setPreviewTierState] = useState<UserTier | null>(() => getPreviewTier());
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setIsAdmin(data.user?.email === ADMIN_EMAIL);
+    supabase.auth.getSession().then(({ data }) => {
+      setIsAdmin(data.session?.user?.email === ADMIN_EMAIL);
     });
   }, []);
 

@@ -433,7 +433,8 @@ export function Validate() {
     if (prefillReady) return;
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
         if (!user) return;
         const { data: profile } = await supabase
           .from('profiles')

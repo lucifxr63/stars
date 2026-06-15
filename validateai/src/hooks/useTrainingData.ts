@@ -15,7 +15,8 @@ export function useTrainingData() {
 
     try {
       // Verificar consentimiento del usuario actual
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return;
 
       const { data: profile } = await supabase
@@ -45,7 +46,8 @@ export function useTrainingData() {
   };
 
   const updateConsent = async (consent: boolean) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) return;
 
     await supabase

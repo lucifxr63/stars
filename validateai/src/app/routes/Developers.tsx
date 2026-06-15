@@ -171,7 +171,8 @@ export function Developers() {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) return;
     const [keysRes, logsRes] = await Promise.all([
       supabase.from('api_keys').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }),
@@ -220,7 +221,8 @@ export function Developers() {
     if (!keyName.trim()) { toast.error('El nombre es requerido'); return; }
     setCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('No user');
       const plainKey = generateApiKey();
       const hashedKey = await hashApiKey(plainKey);

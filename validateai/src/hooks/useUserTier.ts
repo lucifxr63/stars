@@ -44,7 +44,8 @@ export function useUserTier() {
     const preview = getPreviewTier();
     if (preview) { setLoading(false); return; }
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const user = session?.user;
       if (!user) { setLoading(false); return; }
       supabase
         .from('profiles')
@@ -69,7 +70,8 @@ export function useUserTier() {
       } else {
         // Preview cleared — reload real tier
         setLoading(true);
-        supabase.auth.getUser().then(({ data: { user } }) => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          const user = session?.user;
           if (!user) { setLoading(false); return; }
           supabase.from('profiles').select('tier').eq('id', user.id).maybeSingle()
             .then(({ data }) => {

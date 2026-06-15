@@ -257,8 +257,8 @@ export function Admin() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email !== ADMIN_EMAIL) navigate('/validate', { replace: true });
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user?.email !== ADMIN_EMAIL) navigate('/validate', { replace: true });
     });
   }, [navigate]);
 

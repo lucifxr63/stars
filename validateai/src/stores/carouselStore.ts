@@ -143,7 +143,8 @@ export const useCarouselStore = create<CarouselState>()(
           const { campaign } = get();
           if (!campaign) return;
 
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user;
           if (!user) return;
 
           const payload = {
