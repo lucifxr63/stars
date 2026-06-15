@@ -33,9 +33,14 @@ export function AuthCallback() {
       const name = meta?.full_name ?? meta?.name ?? null;
       const avatar = meta?.avatar_url ?? null;
       if (name || avatar) {
+        // upsert (no update): si el trigger handle_new_user no creó la fila,
+        // un .update() sería un no-op silencioso y el usuario quedaría sin
+        // profile → 406 en toda la app. upsert garantiza que la fila exista.
         await supabase.from('profiles')
-          .update({ full_name: name, avatar_url: avatar, updated_at: new Date().toISOString() })
-          .eq('id', session.user.id);
+          .upsert(
+            { id: session.user.id, full_name: name, avatar_url: avatar, updated_at: new Date().toISOString() },
+            { onConflict: 'id' },
+          );
       }
 
       navigate('/dashboard', { replace: true });

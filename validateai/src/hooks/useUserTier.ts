@@ -50,7 +50,7 @@ export function useUserTier() {
         .from('profiles')
         .select('tier')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
           const t = data?.tier as UserTier | undefined;
           setTier(t && (VALID_TIERS as readonly string[]).includes(t) ? t : 'free');
@@ -71,7 +71,7 @@ export function useUserTier() {
         setLoading(true);
         supabase.auth.getUser().then(({ data: { user } }) => {
           if (!user) { setLoading(false); return; }
-          supabase.from('profiles').select('tier').eq('id', user.id).single()
+          supabase.from('profiles').select('tier').eq('id', user.id).maybeSingle()
             .then(({ data }) => {
               const t = data?.tier as UserTier | undefined;
               setTier(t && (VALID_TIERS as readonly string[]).includes(t) ? t : 'free');
