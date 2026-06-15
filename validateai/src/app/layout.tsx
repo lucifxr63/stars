@@ -41,7 +41,14 @@ export function ProtectedLayout() {
         toast.error('Tu sesión expiró. Inicia sesión nuevamente.', { duration: 6000 });
       }
 
-      setUser(u);
+      // Solo actualizar cuando cambia la identidad. onAuthStateChange dispara
+      // TOKEN_REFRESHED frecuentemente; sin este guard cada refresh crea un
+      // nuevo objeto User → re-dispara el efecto [user] → query de profiles en
+      // bucle (que con un JWT en rate-limit devuelve 406). Ver fix login storm.
+      setUser((prev) => {
+        if (prev === undefined) return u;          // resolución inicial
+        return prev?.id === u?.id ? prev : u;       // ignorar refreshes sin cambio de identidad
+      });
       if (!u) clearSentryUser();
     });
     return () => subscription.unsubscribe();
@@ -53,7 +60,7 @@ export function ProtectedLayout() {
       .from('profiles')
       .select('onboarding_completed, tier')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
       .then(({ data, error }) => {
         setOnboardingDone(error ? true : (data?.onboarding_completed ?? true));
         // Setear contexto Sentry con ID anónimo + tier (sin PII)
