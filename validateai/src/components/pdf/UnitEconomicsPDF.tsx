@@ -43,7 +43,7 @@ function MrrChart({ projection }: { projection: FinancialProjection['monthly_pro
 
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+      <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
         Proyección MRR — 12 meses (USD)
       </Text>
       <Svg width={W} height={H}>
@@ -76,7 +76,7 @@ function CacLtvBars({ ue }: { ue: UnitEconomics }) {
 
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+      <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
         Relación CAC / LTV
       </Text>
       {[
@@ -86,7 +86,7 @@ function CacLtvBars({ ue }: { ue: UnitEconomics }) {
         <View key={label} style={{ marginBottom: 8 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
             <Text style={{ fontSize: 9, color: colors.muted }}>{label}</Text>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color }}>{currency} {val.toLocaleString('es-CL')}</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color }}>{currency} {val.toLocaleString('es-CL')}</Text>
           </View>
           <View style={{ height: 8, backgroundColor: '#2A3A52', borderRadius: 4 }}>
             <View style={{ width: `${pct}%` as never, height: 8, backgroundColor: color, borderRadius: 4 }} />
@@ -95,7 +95,7 @@ function CacLtvBars({ ue }: { ue: UnitEconomics }) {
       ))}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
         <Text style={{ fontSize: 9, color: colors.muted }}>Ratio LTV/CAC</Text>
-        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: assessmentColor(ue.ltvCacRatio.assessment) }}>
+        <Text style={{ fontSize: 11, fontFamily: 'IBM Plex Sans Bold', color: assessmentColor(ue.ltvCacRatio.assessment) }}>
           {ue.ltvCacRatio.value.toFixed(1)}x — {ue.ltvCacRatio.assessment.toUpperCase()}
         </Text>
       </View>
@@ -108,13 +108,13 @@ function CacLtvBars({ ue }: { ue: UnitEconomics }) {
 function CashFlowTable({ projection, breakEven }: { projection: FinancialProjection['monthly_projection']; breakEven: number }) {
   return (
     <View>
-      <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+      <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
         Tabla de Flujo de Caja — 12 Meses
       </Text>
       {/* Header */}
       <View style={{ flexDirection: 'row', backgroundColor: '#0F1728', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6, marginBottom: 2 }}>
         {['Mes', 'MRR (USD)', 'Usuarios', 'CAC Spend', 'Balance'].map((h) => (
-          <Text key={h} style={{ flex: 1, fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase' }}>{h}</Text>
+          <Text key={h} style={{ flex: 1, fontSize: 7.5, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase' }}>{h}</Text>
         ))}
       </View>
       {projection.map((p, i) => {
@@ -130,13 +130,13 @@ function CashFlowTable({ projection, breakEven }: { projection: FinancialProject
             borderRadius: isBreakEven ? 4 : 0,
             marginBottom: 1,
           }}>
-            <Text style={{ flex: 1, fontSize: 8.5, color: isBreakEven ? colors.green : colors.white, fontFamily: isBreakEven ? 'Helvetica-Bold' : 'Helvetica' }}>
+            <Text style={{ flex: 1, fontSize: 8.5, color: isBreakEven ? colors.green : colors.white, fontFamily: isBreakEven ? 'IBM Plex Sans Bold' : 'IBM Plex Sans' }}>
               M{p.month}{isBreakEven ? ' ✓' : ''}
             </Text>
             <Text style={{ flex: 1, fontSize: 8.5, color: '#CBD5E1' }}>${p.mrr_usd.toLocaleString()}</Text>
             <Text style={{ flex: 1, fontSize: 8.5, color: '#CBD5E1' }}>{p.users}</Text>
             <Text style={{ flex: 1, fontSize: 8.5, color: '#CBD5E1' }}>${p.cac_spend_usd.toLocaleString()}</Text>
-            <Text style={{ flex: 1, fontSize: 8.5, color: balance >= 0 ? colors.green : colors.red, fontFamily: 'Helvetica-Bold' }}>
+            <Text style={{ flex: 1, fontSize: 8.5, color: balance >= 0 ? colors.green : colors.red, fontFamily: 'IBM Plex Sans Bold' }}>
               {balance >= 0 ? '+' : ''}${balance.toLocaleString()}
             </Text>
           </View>
@@ -210,7 +210,7 @@ export function UnitEconomicsPDF({ data }: Props) {
               </Text>
               <Text style={styles.cardBody}>{fp.strategy_rationale}</Text>
               <View style={{ marginTop: 8 }}>
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Supuestos clave</Text>
+                <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Supuestos clave</Text>
                 {fp.key_assumptions.map((a, i) => (
                   <View key={i} style={styles.listItem}>
                     <Text style={[styles.bullet, { color: colors.accent }]}>›</Text>
@@ -233,7 +233,7 @@ export function UnitEconomicsPDF({ data }: Props) {
               ].map(({ label, val, sub, color }) => (
                 <View key={label} style={{ flex: 1, backgroundColor: '#1E2B3E', borderRadius: 8, padding: 12, borderTopWidth: 3, borderTopColor: color, alignItems: 'center' }}>
                   <Text style={{ fontSize: 7, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>{label}</Text>
-                  <Text style={{ fontSize: 13, fontFamily: 'Helvetica-Bold', color }}>{val}</Text>
+                  <Text style={{ fontSize: 13, fontFamily: 'IBM Plex Sans Bold', color }}>{val}</Text>
                   <Text style={{ fontSize: 7.5, color: colors.muted, marginTop: 2 }}>{sub}</Text>
                 </View>
               ))}
@@ -262,7 +262,7 @@ export function UnitEconomicsPDF({ data }: Props) {
                 <CacLtvBars ue={ue} />
                 {ue.assumptions.length > 0 && (
                   <View style={{ backgroundColor: '#1E2B3E', borderRadius: 8, padding: 12 }}>
-                    <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Supuestos Unit Economics</Text>
+                    <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Supuestos Unit Economics</Text>
                     {ue.assumptions.slice(0, 4).map((a, i) => (
                       <View key={i} style={styles.listItem}>
                         <Text style={[styles.bullet, { color: colors.muted }]}>·</Text>
@@ -277,8 +277,8 @@ export function UnitEconomicsPDF({ data }: Props) {
             {fp && (
               <View style={{ flex: 1 }}>
                 <View style={{ backgroundColor: fp.model_verdict === 'strong' ? colors.green + '15' : fp.model_verdict === 'moderate' ? colors.amber + '15' : colors.red + '15', borderRadius: 8, padding: 14, borderWidth: 1, borderColor: verdictColor(fp.model_verdict) + '40' }}>
-                  <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: verdictColor(fp.model_verdict), textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Veredicto del Modelo</Text>
-                  <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: verdictColor(fp.model_verdict), marginBottom: 8 }}>{verdictLabel(fp.model_verdict)}</Text>
+                  <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: verdictColor(fp.model_verdict), textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Veredicto del Modelo</Text>
+                  <Text style={{ fontSize: 11, fontFamily: 'IBM Plex Sans Bold', color: verdictColor(fp.model_verdict), marginBottom: 8 }}>{verdictLabel(fp.model_verdict)}</Text>
                   <Text style={{ fontSize: 9.5, color: '#CBD5E1', lineHeight: 1.5 }}>{fp.model_verdict_reason}</Text>
                 </View>
               </View>

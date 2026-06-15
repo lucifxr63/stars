@@ -39,6 +39,7 @@ interface SharedValidation {
   unit_economics: UnitEconomics | null;
   fundraising_roadmap: FundraisingRoadmap | null;
   completed_at: string | null;
+  share_visibility: Record<string, boolean> | null;
 }
 
 
@@ -91,17 +92,33 @@ export function SharedValidation() {
     : isMid
       ? 'bg-[#F7C56C]/8 border-[#F7C56C]/20'
       : 'bg-[#F87171]/8 border-[#F87171]/20';
+  const verdictLabel = isGood ? 'Idea con buen potencial' : isMid ? 'Requiere ajustes clave' : 'Necesita revisión profunda';
+  const verdictColor = isGood ? 'text-[#34D399]' : isMid ? 'text-[#F7C56C]' : 'text-[#F87171]';
+  const completedLabel = data.completed_at
+    ? new Date(data.completed_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })
+    : null;
+  // null o clave ausente = visible (retrocompatible). Solo `false` oculta.
+  const isVisible = (section: string) => data.share_visibility?.[section] !== false;
 
   return (
     <div className="min-h-screen bg-[#F8F7FF] dark:bg-[#0A0A0F] flex flex-col">
-      {/* Header */}
-      <div className="bg-white dark:bg-[#12121A] border-b border-gray-100 dark:border-white/[0.06] px-4 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+      {/* Header sticky — branding + CTA de conversión temprano */}
+      <div className="sticky top-0 z-30 bg-white/90 dark:bg-[#0A0A0F]/85 backdrop-blur-md border-b border-gray-100 dark:border-white/[0.06] px-4 py-3">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <Link to="/" className="flex items-center gap-2 min-w-0">
             <Logo />
             <span className="font-heading font-bold text-gray-900 dark:text-[#F0EFF8] text-sm">Validus</span>
+            <span className="hidden sm:inline text-[11px] text-gray-400 dark:text-[#8B8AA0] bg-gray-100 dark:bg-white/[0.05] px-2 py-0.5 rounded-full">Reporte compartido</span>
           </Link>
-          <span className="text-xs text-gray-500 dark:text-[#8B8AA0] bg-gray-100 dark:bg-white/[0.05] px-2.5 py-1 rounded-full">Reporte compartido</span>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0EB5C6] text-white text-xs font-bold rounded-lg hover:bg-[#6B5EE6] transition active:scale-[0.97] shrink-0"
+          >
+            Validá tu idea gratis
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </Link>
         </div>
       </div>
 
@@ -112,7 +129,7 @@ export function SharedValidation() {
           <div className="flex flex-wrap gap-2 mt-2">
             {data.idea_industry && <span className="text-xs px-2.5 py-1 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-[#8B8AA0] rounded-full">{data.idea_industry}</span>}
             {data.target_country && <span className="text-xs px-2.5 py-1 bg-[#34D399]/10 text-[#34D399] rounded-full border border-[#34D399]/20">{data.target_country}</span>}
-            {data.business_model && <span className="text-xs px-2.5 py-1 bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#38D5E3] rounded-full border border-[#0EB5C6]/20 uppercase">{data.business_model}</span>}
+            {data.business_model && <span className="text-xs px-2.5 py-1 bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#38D5E3] rounded-full border border-[#0EB5C6]/20 capitalize">{data.business_model.replace(/_/g, ' ')}</span>}
             {data.business_stage && <span className="text-xs px-2.5 py-1 bg-[#F7C56C]/10 text-[#F7C56C] rounded-full border border-[#F7C56C]/20">{data.business_stage}</span>}
           </div>
           {data.idea_description && (
@@ -126,8 +143,14 @@ export function SharedValidation() {
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <ScoreGauge score={data.validation_score} />
               <div className="flex-1 text-center sm:text-left">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Análisis general</p>
+                <p className={`text-sm font-black uppercase tracking-wide mb-1.5 ${verdictColor}`}>{verdictLabel}</p>
                 <p className="text-gray-700 dark:text-[#C4C4D4] leading-relaxed text-sm">{summary.feedback}</p>
+                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-gray-400 dark:text-[#8B8AA0]">
+                  <svg className="w-3.5 h-3.5 text-[#0EB5C6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  Validado con IA{completedLabel ? ` · ${completedLabel}` : ''}
+                </p>
               </div>
             </div>
           </div>
@@ -143,7 +166,7 @@ export function SharedValidation() {
         {data.competitive_analysis && <CompetitiveAnalysis data={data.competitive_analysis} />}
 
         {/* Unit Economics — KPIs clave para inversores */}
-        {data.unit_economics && (() => {
+        {data.unit_economics && isVisible('unit_economics') && (() => {
           const ue = data.unit_economics!;
           const fmtCurrency = (n: number, c: 'CLP' | 'USD') =>
             c === 'CLP' ? `$${n.toLocaleString('es-CL')}` : `USD ${n.toLocaleString('en-US')}`;
@@ -173,7 +196,7 @@ export function SharedValidation() {
         })()}
 
         {/* Fundraising Readiness */}
-        {data.fundraising_roadmap && (() => {
+        {data.fundraising_roadmap && isVisible('fundraising_roadmap') && (() => {
           const fr = data.fundraising_roadmap!;
           const readinessColor = fr.readiness_score >= 70 ? '#34D399' : fr.readiness_score >= 40 ? '#F7C56C' : '#F87171';
           const instrLabels: Record<string, string> = {

@@ -1,9 +1,10 @@
-﻿import {
+import {
   Document,
   Page,
   View,
   Text,
   Svg,
+  Path,
   Polygon,
   Line,
   Circle,
@@ -18,7 +19,7 @@ import type {
   CapitalEfficiency,
 } from '@/types/validation';
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function scoreColor(score: number): string {
   if (score >= 70) return colors.green;
@@ -35,17 +36,17 @@ function scoreLabel(score: number): string {
 function formatTier(tier: MarketSizingTier): string {
   const lo = tier.value_low.toLocaleString('es-CL');
   const hi = tier.value_high.toLocaleString('es-CL');
-  return `${tier.currency} ${lo} â€“ ${hi}`;
+  return `${tier.currency} ${lo} – ${hi}`;
 }
 
-// â”€â”€ Radar Chart (SVG) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Radar Chart (SVG) ─────────────────────────────────────────────────────────
 
 const RADAR_KEYS: { key: keyof ScoreBreakdown; label: string }[] = [
   { key: 'problem',     label: 'Problema' },
   { key: 'market',      label: 'Mercado' },
   { key: 'competition', label: 'Competencia' },
-  { key: 'solution',    label: 'SoluciÃ³n' },
-  { key: 'execution',   label: 'EjecuciÃ³n' },
+  { key: 'solution',    label: 'Solución' },
+  { key: 'execution',   label: 'Ejecución' },
 ];
 
 const CX = 80;
@@ -116,10 +117,11 @@ function RadarChart({ sb }: { sb: ScoreBreakdown }) {
           );
         })}
 
-        {/* Data polygon â€” filled area */}
+        {/* Data polygon — filled area */}
         <Polygon
           points={dataPolygon}
-          fill={`${colors.accent}33`}
+          fill={colors.accent}
+          fillOpacity={0.2}
           stroke={colors.accent}
           strokeWidth={1.5}
         />
@@ -154,12 +156,27 @@ function RadarChart({ sb }: { sb: ScoreBreakdown }) {
   );
 }
 
-// â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+// Logo Validus (mismo path que la marca web). En fondo oscuro el wordmark va blanco
+// y los acentos en teal de marca.
+function ValidusLogo({ size = 14 }: { size?: number }) {
+  return (
+    <Svg viewBox="0 0 500 500" width={size} height={size}>
+      <Path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" fill={colors.white} />
+      <Path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill={colors.accent} />
+      <Path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill={colors.accent} />
+    </Svg>
+  );
+}
 
 function Footer({ pageLabel }: { pageLabel: string }) {
   return (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>Validus Â· Investment Dossier</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        <ValidusLogo size={9} />
+        <Text style={styles.footerText}>Validus · Investment Dossier</Text>
+      </View>
       <Text style={styles.footerText}>{pageLabel}</Text>
     </View>
   );
@@ -170,7 +187,7 @@ function BulletList({ items }: { items: string[] }) {
     <View>
       {items.map((item, i) => (
         <View key={i} style={styles.listItem}>
-          <Text style={styles.bullet}>â€º</Text>
+          <Text style={styles.bullet}>›</Text>
           <Text style={styles.listText}>{item}</Text>
         </View>
       ))}
@@ -179,7 +196,7 @@ function BulletList({ items }: { items: string[] }) {
 }
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
-  // ScoreBreakdown values are 0â€“100
+  // ScoreBreakdown values are 0–100
   const display = Math.round(Math.min(value, 100));
   const color = scoreColor(display);
   return (
@@ -195,7 +212,7 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-// â”€â”€ Cover Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Cover Page ─────────────────────────────────────────────────────────────────
 
 function CoverPage({ data }: { data: PDFData }) {
   const score = data.validation_score ?? 0;
@@ -209,7 +226,13 @@ function CoverPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.coverPage}>
       {/* Hero banner */}
       <View style={styles.coverHero}>
-        <Text style={styles.coverBadge}>Investment Dossier Â· Validus</Text>
+        {/* Brand lockup */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 22 }}>
+          <ValidusLogo size={22} />
+          <Text style={{ fontSize: 17, fontFamily: 'IBM Plex Sans Bold', color: colors.white, letterSpacing: 0.3 }}>Validus</Text>
+        </View>
+
+        <Text style={styles.coverBadge}>Investment Dossier</Text>
 
         <Text style={styles.coverTitle}>{data.idea_name ?? 'Startup Report'}</Text>
 
@@ -251,7 +274,7 @@ function CoverPage({ data }: { data: PDFData }) {
           <View style={styles.coverMetaItem}>
             <Text style={styles.coverMetaLabel}>Mercado</Text>
             <Text style={styles.coverMetaValue}>
-              {data.target_country}{data.target_region ? ` Â· ${data.target_region}` : ''}
+              {data.target_country}{data.target_region ? ` · ${data.target_region}` : ''}
             </Text>
           </View>
         )}
@@ -275,7 +298,7 @@ function CoverPage({ data }: { data: PDFData }) {
         </View>
       </View>
 
-      {/* "Audited by Validus Pro" stamp â€” PLG watermark */}
+      {/* "Audited by Validus Pro" stamp — PLG watermark */}
       {data.due_diligence && (
         <View style={{
           marginHorizontal: 40,
@@ -289,7 +312,7 @@ function CoverPage({ data }: { data: PDFData }) {
           gap: 6,
         }}>
           <Text style={{ fontSize: 7, color: '#ffffff', fontWeight: 'bold', letterSpacing: 0.5 }}>
-            âœ“ AUDITED BY VALIDUS PRO Â· validus.scouttech.lat
+            ✓ AUDITED BY VALIDUS PRO · validus.scouttech.lat
           </Text>
           <Text style={{ fontSize: 7, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>
             DD Score: {data.due_diligence.total}/100
@@ -300,7 +323,7 @@ function CoverPage({ data }: { data: PDFData }) {
   );
 }
 
-// â”€â”€ Executive Summary Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Executive Summary Page ─────────────────────────────────────────────────────
 
 function ExecutiveSummaryPage({ data }: { data: PDFData }) {
   const summary    = data.summary as Record<string, unknown> | undefined;
@@ -314,10 +337,10 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Resumen Ejecutivo</Text>
-        <Text style={styles.pageLabel}>01 Â· Executive Summary</Text>
+        <Text style={styles.pageLabel}>01 · Executive Summary</Text>
       </View>
 
-      {/* Score Breakdown â€” radar + bars side by side */}
+      {/* Score Breakdown — radar + bars side by side */}
       <View style={[styles.card, { marginBottom: 16 }]} wrap={false}>
         <Text style={styles.cardTitle}>Score Breakdown</Text>
         {sb ? (
@@ -331,8 +354,8 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
               <ScoreBar label="Problema"    value={sb.problem} />
               <ScoreBar label="Mercado"     value={sb.market} />
               <ScoreBar label="Competencia" value={sb.competition} />
-              <ScoreBar label="SoluciÃ³n"    value={sb.solution} />
-              <ScoreBar label="EjecuciÃ³n"   value={sb.execution} />
+              <ScoreBar label="Solución"    value={sb.solution} />
+              <ScoreBar label="Ejecución"   value={sb.execution} />
             </View>
           </View>
         ) : (
@@ -345,7 +368,7 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
       {/* Feedback */}
       {feedback ? (
         <View style={styles.card} wrap={false}>
-          <Text style={styles.cardTitle}>EvaluaciÃ³n General</Text>
+          <Text style={styles.cardTitle}>Evaluación General</Text>
           <Text style={styles.cardBody}>{feedback}</Text>
         </View>
       ) : null}
@@ -368,17 +391,17 @@ function ExecutiveSummaryPage({ data }: { data: PDFData }) {
 
       {nextSteps.length > 0 && (
         <View style={styles.card} wrap={false}>
-          <Text style={styles.cardTitle}>PrÃ³ximos Pasos</Text>
+          <Text style={styles.cardTitle}>Próximos Pasos</Text>
           <BulletList items={nextSteps} />
         </View>
       )}
 
-      <Footer pageLabel="01 Â· Resumen Ejecutivo" />
+      <Footer pageLabel="01 · Resumen Ejecutivo" />
     </Page>
   );
 }
 
-// â”€â”€ Market & Competition Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Market & Competition Page ──────────────────────────────────────────────────
 
 function MarketPage({ data }: { data: PDFData }) {
   const ms = data.market_sizing;
@@ -388,13 +411,13 @@ function MarketPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Mercado y Competencia</Text>
-        <Text style={styles.pageLabel}>02 Â· Market & Competition</Text>
+        <Text style={styles.pageLabel}>02 · Market & Competition</Text>
       </View>
 
       <View style={styles.twoCol}>
         {/* Market Sizing */}
         <View style={styles.col}>
-          <Text style={styles.sectionTitle}>TamaÃ±o de Mercado</Text>
+          <Text style={styles.sectionTitle}>Tamaño de Mercado</Text>
           {ms ? (
             <>
               {[
@@ -404,7 +427,7 @@ function MarketPage({ data }: { data: PDFData }) {
               ].map(({ label, tier, color, size }) => (
                 <View key={label} style={styles.card} wrap={false}>
                   <Text style={styles.cardTitle}>{label}</Text>
-                  <Text style={{ fontSize: size, fontFamily: 'Helvetica-Bold', color, marginBottom: 4 }}>
+                  <Text style={{ fontSize: size, fontFamily: 'IBM Plex Sans Bold', color, marginBottom: 4 }}>
                     {formatTier(tier)}
                   </Text>
                   <Text style={styles.cardBody}>{tier.description}</Text>
@@ -422,18 +445,18 @@ function MarketPage({ data }: { data: PDFData }) {
 
         {/* Competitive Analysis */}
         <View style={styles.col}>
-          <Text style={styles.sectionTitle}>AnÃ¡lisis Competitivo</Text>
+          <Text style={styles.sectionTitle}>Análisis Competitivo</Text>
           {ca ? (
             <>
               {ca.competitors?.slice(0, 3).map((c: CompetitorEntry, i: number) => (
                 <View key={i} style={styles.card} wrap={false}>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.white, marginBottom: 3 }}>
+                  <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginBottom: 3 }}>
                     {c.name}
                   </Text>
                   <Text style={styles.cardBody}>{c.description}</Text>
                   {c.strengths?.length > 0 && (
                     <Text style={[styles.cardBody, { color: colors.green, marginTop: 4 }]}>
-                      + {c.strengths.join(' Â· ')}
+                      + {c.strengths.join(' · ')}
                     </Text>
                   )}
                 </View>
@@ -448,7 +471,7 @@ function MarketPage({ data }: { data: PDFData }) {
           ) : (
             <View style={styles.card}>
               <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>AnÃ¡lisis competitivo no disponible</Text>
+                <Text style={styles.placeholderText}>Análisis competitivo no disponible</Text>
               </View>
             </View>
           )}
@@ -463,12 +486,12 @@ function MarketPage({ data }: { data: PDFData }) {
         </View>
       )}
 
-      <Footer pageLabel="02 Â· Mercado y Competencia" />
+      <Footer pageLabel="02 · Mercado y Competencia" />
     </Page>
   );
 }
 
-// â”€â”€ Financials Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Financials Page ────────────────────────────────────────────────────────────
 
 function FinancialsPage({ data }: { data: PDFData }) {
   const ue = data.unit_economics;
@@ -480,7 +503,7 @@ function FinancialsPage({ data }: { data: PDFData }) {
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Finanzas y Riesgos</Text>
-        <Text style={styles.pageLabel}>03 Â· Financials & Risk</Text>
+        <Text style={styles.pageLabel}>03 · Financials & Risk</Text>
       </View>
 
       <View style={styles.twoCol}>
@@ -490,16 +513,16 @@ function FinancialsPage({ data }: { data: PDFData }) {
             <Text style={styles.sectionTitle}>Unit Economics</Text>
             <View style={styles.card} wrap={false}>
               {[
-                ['CAC',          `${ue.cac.currency} ${ue.cac.min.toLocaleString()} â€“ ${ue.cac.max.toLocaleString()}`],
-                ['LTV',          `${ue.ltv.currency} ${ue.ltv.min.toLocaleString()} â€“ ${ue.ltv.max.toLocaleString()}`],
+                ['CAC',          `${ue.cac.currency} ${ue.cac.min.toLocaleString()} – ${ue.cac.max.toLocaleString()}`],
+                ['LTV',          `${ue.ltv.currency} ${ue.ltv.min.toLocaleString()} – ${ue.ltv.max.toLocaleString()}`],
                 ['LTV/CAC',      `${ue.ltvCacRatio.value.toFixed(1)}x (${ue.ltvCacRatio.assessment})`],
-                ['Payback',      `${ue.paybackMonths.min}â€“${ue.paybackMonths.max} meses`],
+                ['Payback',      `${ue.paybackMonths.min}–${ue.paybackMonths.max} meses`],
                 ['Break-even',   `${ue.breakEvenUsers.toLocaleString()} usuarios`],
                 ['Churn mensual',`${ue.monthlyChurnEstimate}%`],
               ].map(([label, val], i) => (
                 <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                   <Text style={{ fontSize: 9, color: colors.muted }}>{label}</Text>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.white }}>{val}</Text>
+                  <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>{val}</Text>
                 </View>
               ))}
             </View>
@@ -519,14 +542,14 @@ function FinancialsPage({ data }: { data: PDFData }) {
             <View style={styles.card} wrap={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
                 <Text style={{ fontSize: 9, color: colors.muted }}>Score Global de Riesgo</Text>
-                <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold', color: scoreColor(100 - ra.overallRiskScore) }}>
+                <Text style={{ fontSize: 14, fontFamily: 'IBM Plex Sans Bold', color: scoreColor(100 - ra.overallRiskScore) }}>
                   {ra.overallRiskScore}/100
                 </Text>
               </View>
               {Object.entries(ra.dimensions).map(([key, dim]) => (
                 <View key={key} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.white }}>{dim.label}</Text>
+                    <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>{dim.label}</Text>
                     <Text style={{ fontSize: 9, color: colors.muted }}>{dim.score}/100</Text>
                   </View>
                   <Text style={styles.cardBody}>{dim.description}</Text>
@@ -543,12 +566,12 @@ function FinancialsPage({ data }: { data: PDFData }) {
         )}
       </View>
 
-      <Footer pageLabel="03 Â· Finanzas y Riesgos" />
+      <Footer pageLabel="03 · Finanzas y Riesgos" />
     </Page>
   );
 }
 
-// â”€â”€ Investment Strategy Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Investment Strategy Page ───────────────────────────────────────────────────
 
 function InvestmentPage({ data }: { data: PDFData }) {
   const fr = data.fundraising_roadmap;
@@ -560,13 +583,13 @@ function InvestmentPage({ data }: { data: PDFData }) {
   return (
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Estrategia de InversiÃ³n</Text>
-        <Text style={styles.pageLabel}>04 Â· Investment Strategy</Text>
+        <Text style={styles.pageTitle}>Estrategia de Inversión</Text>
+        <Text style={styles.pageLabel}>04 · Investment Strategy</Text>
       </View>
 
       {pa?.funding_verdict && (
         <View style={[styles.card, { borderColor: colors.green + '44', borderWidth: 1.5 }]} wrap={false}>
-          <Text style={[styles.cardTitle, { color: colors.green }]}>Veredicto de InversiÃ³n</Text>
+          <Text style={[styles.cardTitle, { color: colors.green }]}>Veredicto de Inversión</Text>
           <Text style={styles.cardBody}>{pa.funding_verdict}</Text>
         </View>
       )}
@@ -578,12 +601,12 @@ function InvestmentPage({ data }: { data: PDFData }) {
             <Text style={styles.sectionTitle}>Fundraising</Text>
             <View style={styles.card} wrap={false}>
               <Text style={styles.cardTitle}>Instrumento</Text>
-              <Text style={[styles.cardBody, { fontSize: 13, fontFamily: 'Helvetica-Bold', color: colors.accent, marginBottom: 6 }]}>
+              <Text style={[styles.cardBody, { fontSize: 13, fontFamily: 'IBM Plex Sans Bold', color: colors.accent, marginBottom: 6 }]}>
                 {fr.recommended_instrument.replace(/_/g, ' ').toUpperCase()}
               </Text>
               <Text style={styles.cardTitle}>Ticket Size</Text>
-              <Text style={[styles.cardBody, { fontFamily: 'Helvetica-Bold', color: colors.white }]}>
-                {fr.suggested_ticket_size.currency} {fr.suggested_ticket_size.min.toLocaleString()} â€“ {fr.suggested_ticket_size.max.toLocaleString()}
+              <Text style={[styles.cardBody, { fontFamily: 'IBM Plex Sans Bold', color: colors.white }]}>
+                {fr.suggested_ticket_size.currency} {fr.suggested_ticket_size.min.toLocaleString()} – {fr.suggested_ticket_size.max.toLocaleString()}
               </Text>
             </View>
             {fr.pitch_narrative && (
@@ -607,7 +630,7 @@ function InvestmentPage({ data }: { data: PDFData }) {
             <Text style={styles.sectionTitle}>Founder-Market Fit</Text>
             <View style={styles.card} wrap={false}>
               <Text style={styles.cardTitle}>Score Global</Text>
-              <Text style={[styles.cardBody, { fontSize: 20, fontFamily: 'Helvetica-Bold', color: scoreColor(ff.score), marginBottom: 8 }]}>
+              <Text style={[styles.cardBody, { fontSize: 20, fontFamily: 'IBM Plex Sans Bold', color: scoreColor(ff.score), marginBottom: 8 }]}>
                 {ff.score}/100
               </Text>
               {ff.assessment && <Text style={styles.cardBody}>{ff.assessment}</Text>}
@@ -618,7 +641,7 @@ function InvestmentPage({ data }: { data: PDFData }) {
                 {Object.entries(ff.dimensions).map(([key, val]) => (
                   <View key={key} style={styles.scoreRow}>
                     <Text style={[styles.scoreLabel, { width: 90, fontSize: 8 }]}>
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                      {key.replace(/([A-Z])/g, ' $1').trim().replace(/^./, (c) => c.toUpperCase())}
                     </Text>
                     <View style={styles.scoreBar}>
                       <View style={[styles.scoreBarFill, { width: `${val}%`, backgroundColor: scoreColor(val) }]} />
@@ -638,12 +661,12 @@ function InvestmentPage({ data }: { data: PDFData }) {
         )}
       </View>
 
-      <Footer pageLabel="04 Â· InversiÃ³n" />
+      <Footer pageLabel="04 · Inversión" />
     </Page>
   );
 }
 
-// â”€â”€ Due Diligence Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Due Diligence Page ─────────────────────────────────────────────────────────
 
 function DueDiligencePage({ data }: { data: PDFData }) {
   const dd = data.due_diligence!;
@@ -658,7 +681,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
     { key: 'legal',      label: 'Legal'      },
     { key: 'mercado',    label: 'Mercado'    },
     { key: 'equipo',     label: 'Equipo'     },
-    { key: 'traccion',   label: 'TracciÃ³n'   },
+    { key: 'traccion',   label: 'Tracción'   },
   ];
 
   return (
@@ -669,7 +692,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
           DUE DILIGENCE SCORE
         </Text>
         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff' }}>
-          PreparaciÃ³n para Ronda de InversiÃ³n
+          Preparación para Ronda de Inversión
         </Text>
       </View>
 
@@ -685,15 +708,15 @@ function DueDiligencePage({ data }: { data: PDFData }) {
               <Text style={{ fontSize: 8, fontWeight: 'bold', color: scoreCol }}>{readinessLabel}</Text>
             </View>
             <Text style={{ fontSize: 8.5, color: '#475569', lineHeight: 1.5 }}>
-              Score de preparaciÃ³n evaluado en 5 dimensiones: Financiero, Legal, Mercado, Equipo y TracciÃ³n.
-              Un score de 80+ indica readiness para primera reuniÃ³n con inversores VC.
+              Score de preparación evaluado en 5 dimensiones: Financiero, Legal, Mercado, Equipo y Tracción.
+              Un score de 80+ indica readiness para primera reunión con inversores VC.
             </Text>
           </View>
         </View>
 
         {/* Dimension bars */}
         <Text style={{ fontSize: 8, fontWeight: 'bold', color: colors.muted, letterSpacing: 0.8, marginBottom: 10 }}>
-          DESGLOSE POR DIMENSIÃ“N
+          DESGLOSE POR DIMENSIÓN
         </Text>
         {DIMS.map(({ key, label }) => {
           const dim = dd.dimensions[key];
@@ -709,7 +732,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
               </View>
               {dim.gaps.length > 0 && (
                 <Text style={{ fontSize: 6.5, color: colors.muted, marginTop: 2 }}>
-                  {dim.gaps.slice(0, 2).join(' Â· ')}
+                  {dim.gaps.slice(0, 2).join(' · ')}
                 </Text>
               )}
             </View>
@@ -720,7 +743,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
         {dd.topGaps.length > 0 && (
           <View style={{ marginTop: 16 }}>
             <Text style={{ fontSize: 8, fontWeight: 'bold', color: colors.muted, letterSpacing: 0.8, marginBottom: 8 }}>
-              GAPS CRÃTICOS â€” QUÃ‰ EXIGIRÃ UN INVERSOR
+              GAPS CRÍTICOS — QUÉ EXIGIRÁ UN INVERSOR
             </Text>
             {dd.topGaps.slice(0, 5).map((gap, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
@@ -736,7 +759,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
         {/* Stamp */}
         <View style={{ marginTop: 20, padding: 8, backgroundColor: '#0EB5C6', borderRadius: 4, alignItems: 'center' }}>
           <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#ffffff', letterSpacing: 0.5 }}>
-            âœ“ AUDITED BY VALIDUS PRO Â· validus.scouttech.lat
+            ✓ AUDITED BY VALIDUS PRO · validus.scouttech.lat
           </Text>
         </View>
       </View>
@@ -744,7 +767,7 @@ function DueDiligencePage({ data }: { data: PDFData }) {
   );
 }
 
-// â”€â”€ Root Document â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Root Document ──────────────────────────────────────────────────────────────
 
 // ── Advanced Risk Page (Sprint 7) ─────────────────────────────────────────────
 
@@ -753,7 +776,7 @@ function RegulatoryBadge({ label, compliant }: { label: string; compliant: boole
   const fg = compliant ? colors.green : colors.amber;
   return (
     <View style={{ backgroundColor: bg, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3, marginRight: 6, marginBottom: 4 }}>
-      <Text style={{ fontSize: 7.5, color: fg, fontFamily: 'Helvetica-Bold' }}>
+      <Text style={{ fontSize: 7.5, color: fg, fontFamily: 'IBM Plex Sans Bold' }}>
         {compliant ? '+ ' : '! '}{label}
       </Text>
     </View>
@@ -764,7 +787,7 @@ function MetricRow({ label, value, highlight }: { label: string; value: string; 
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 7, paddingBottom: 5, borderBottomWidth: 0.5, borderBottomColor: colors.border }}>
       <Text style={{ fontSize: 9, color: colors.muted }}>{label}</Text>
-      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: highlight ? colors.amber : colors.white }}>{value}</Text>
+      <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: highlight ? colors.amber : colors.white }}>{value}</Text>
     </View>
   );
 }
@@ -802,7 +825,7 @@ function AdvancedRiskPage({ data }: { data: PDFData }) {
   return (
     <Page size="A4" style={styles.contentPage}>
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Alertas Criticas</Text>
+        <Text style={styles.pageTitle}>Alertas Críticas</Text>
         <Text style={styles.pageLabel}>05 · Red Flags & Risk Matrix</Text>
       </View>
 
@@ -811,7 +834,7 @@ function AdvancedRiskPage({ data }: { data: PDFData }) {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <Text style={styles.cardTitle}>Riesgo Regulatorio</Text>
           <View style={{ backgroundColor: riskColor + '22', borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2 }}>
-            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: riskColor }}>
+            <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: riskColor }}>
               {regulatoryRisk.toUpperCase()}
             </Text>
           </View>
@@ -858,7 +881,7 @@ function AdvancedRiskPage({ data }: { data: PDFData }) {
 
         {/* Retencion & Revenue Quality */}
         <View style={styles.col}>
-          <Text style={styles.sectionTitle}>Retencion & Revenue Quality</Text>
+          <Text style={styles.sectionTitle}>Retención & Revenue Quality</Text>
           <View style={styles.card} wrap={false}>
             <MetricRow label="NRR (Net Revenue Retention)" value={nrrVal}
               highlight={ce?.nrr_pct !== undefined && ce.nrr_pct < 100} />
@@ -899,7 +922,7 @@ function AdvancedRiskPage({ data }: { data: PDFData }) {
         </View>
       )}
 
-      <Footer pageLabel="05 · Alertas Criticas" />
+      <Footer pageLabel="05 · Alertas Críticas" />
     </Page>
   );
 }
@@ -916,9 +939,9 @@ export function InvestmentDossier({ data }: { data: PDFData }) {
       <ExecutiveSummaryPage data={data} />
       <MarketPage data={data} />
       <FinancialsPage data={data} />
+      <InvestmentPage data={data} />
       <AdvancedRiskPage data={data} />
       {data.due_diligence && <DueDiligencePage data={data} />}
-      <InvestmentPage data={data} />
     </Document>
   );
 }

@@ -44,9 +44,9 @@ function SectionHeader({ number, title, color }: { number: string; title: string
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 4 }}>
       <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#fff' }}>{number}</Text>
+        <Text style={{ fontSize: 12, fontFamily: 'IBM Plex Sans Bold', color: '#fff' }}>{number}</Text>
       </View>
-      <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold', color: colors.white }}>{title}</Text>
+      <Text style={{ fontSize: 14, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>{title}</Text>
     </View>
   );
 }
@@ -56,14 +56,14 @@ function LawCard({ law }: { law: ComplianceLaw }) {
   return (
     <View style={{ backgroundColor: '#1E2B3E', borderRadius: 8, borderLeftWidth: 4, borderLeftColor: c, padding: 14, marginBottom: 10 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <Text style={{ flex: 1, fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.white, marginRight: 8 }}>{law.law}</Text>
+        <Text style={{ flex: 1, fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginRight: 8 }}>{law.law}</Text>
         <View style={{ backgroundColor: c + '22', borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3 }}>
-          <Text style={{ fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: c }}>{riskLabel(law.risk_level)}</Text>
+          <Text style={{ fontSize: 7.5, fontFamily: 'IBM Plex Sans Bold', color: c }}>{riskLabel(law.risk_level)}</Text>
         </View>
       </View>
       <Text style={{ fontSize: 9, color: '#CBD5E1', lineHeight: 1.5, marginBottom: 6 }}>{law.description}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
-        <Text style={{ fontSize: 9, color: colors.accent, fontFamily: 'Helvetica-Bold' }}>→</Text>
+        <Text style={{ fontSize: 9, color: colors.accent, fontFamily: 'IBM Plex Sans Bold' }}>→</Text>
         <Text style={{ fontSize: 9, color: colors.accent, flex: 1, lineHeight: 1.4 }}>{law.action_required}</Text>
       </View>
     </View>
@@ -131,13 +131,13 @@ export function ComplianceRoadmapPDF({ data }: Props) {
           {/* Section 1: Constitution */}
           <SectionHeader number="1" title="Constitución Societaria" color={colors.accent} />
           <View style={styles.card}>
-            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.white, marginBottom: 8 }}>
+            <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginBottom: 8 }}>
               {roadmap.constitution.recommended_entity}
             </Text>
             {roadmap.constitution.steps.map((step, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
                 <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent + '33', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-                  <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.accent }}>{i + 1}</Text>
+                  <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.accent }}>{i + 1}</Text>
                 </View>
                 <Text style={{ flex: 1, fontSize: 9.5, color: '#CBD5E1', lineHeight: 1.5 }}>{step}</Text>
               </View>
@@ -169,7 +169,7 @@ export function ComplianceRoadmapPDF({ data }: Props) {
         {/* Checklist */}
         {roadmap.regulatory.checklist.length > 0 && (
           <View style={{ marginTop: 16 }}>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
               Checklist de Cumplimiento
             </Text>
             {roadmap.regulatory.checklist.map((item, i) => {
@@ -177,10 +177,10 @@ export function ComplianceRoadmapPDF({ data }: Props) {
               return (
                 <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 8, paddingBottom: 8, borderBottomWidth: i < roadmap.regulatory.checklist.length - 1 ? 1 : 0, borderBottomColor: '#2A3A52' }}>
                   <View style={{ backgroundColor: pc + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginTop: 1 }}>
-                    <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: pc }}>{priorityLabel(item.priority)}</Text>
+                    <Text style={{ fontSize: 7, fontFamily: 'IBM Plex Sans Bold', color: pc }}>{priorityLabel(item.priority)}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.white, marginBottom: 2 }}>{item.item}</Text>
+                    <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginBottom: 2 }}>{item.item}</Text>
                     <Text style={{ fontSize: 9, color: '#CBD5E1', lineHeight: 1.4 }}>{item.description}</Text>
                   </View>
                 </View>
@@ -203,24 +203,24 @@ export function ComplianceRoadmapPDF({ data }: Props) {
 
         <View style={[styles.card, { marginBottom: 16 }]}>
           <Text style={styles.cardTitle}>Recomendación de Vesting</Text>
-          <Text style={[styles.cardBody, { fontSize: 11, fontFamily: 'Helvetica-Bold', color: colors.white, marginBottom: 8 }]}>
+          <Text style={[styles.cardBody, { fontSize: 11, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginBottom: 8 }]}>
             {roadmap.shareholders.vesting_recommendation}
           </Text>
           <View style={{ flexDirection: 'row', gap: 16, marginTop: 8 }}>
             <View style={{ flex: 1, backgroundColor: '#0F1728', borderRadius: 8, padding: 12, alignItems: 'center' }}>
               <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Cliff</Text>
-              <Text style={{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: colors.blue }}>{roadmap.shareholders.cliff_months}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'IBM Plex Sans Bold', color: colors.blue }}>{roadmap.shareholders.cliff_months}</Text>
               <Text style={{ fontSize: 8, color: colors.muted }}>meses</Text>
             </View>
             <View style={{ flex: 1, backgroundColor: '#0F1728', borderRadius: 8, padding: 12, alignItems: 'center' }}>
               <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Drag-along</Text>
-              <Text style={{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: roadmap.shareholders.drag_along ? colors.green : colors.red }}>
+              <Text style={{ fontSize: 20, fontFamily: 'IBM Plex Sans Bold', color: roadmap.shareholders.drag_along ? colors.green : colors.red }}>
                 {roadmap.shareholders.drag_along ? 'SÍ' : 'NO'}
               </Text>
             </View>
             <View style={{ flex: 1, backgroundColor: '#0F1728', borderRadius: 8, padding: 12, alignItems: 'center' }}>
               <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Tag-along</Text>
-              <Text style={{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: roadmap.shareholders.tag_along ? colors.green : colors.red }}>
+              <Text style={{ fontSize: 20, fontFamily: 'IBM Plex Sans Bold', color: roadmap.shareholders.tag_along ? colors.green : colors.red }}>
                 {roadmap.shareholders.tag_along ? 'SÍ' : 'NO'}
               </Text>
             </View>
@@ -236,10 +236,10 @@ export function ComplianceRoadmapPDF({ data }: Props) {
         <View style={{ backgroundColor: colors.amber + '15', borderRadius: 8, padding: 16, borderWidth: 1, borderColor: colors.amber + '40', marginTop: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 14 }}>⚠️</Text>
-            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.amber }}>Aviso Legal Importante</Text>
+            <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.amber }}>Aviso Legal Importante</Text>
           </View>
           <Text style={{ fontSize: 9, color: '#CBD5E1', lineHeight: 1.6 }}>
-            Este documento es una <Text style={{ fontFamily: 'Helvetica-Bold', color: colors.white }}>recomendación estratégica generada por Inteligencia Artificial</Text> para orientar decisiones de planificación. No constituye asesoría legal formal ni reemplaza la consulta con un abogado especializado en derecho societario y regulatorio chileno. Validus no asume responsabilidad por decisiones tomadas basándose exclusivamente en este reporte.
+            Este documento es una <Text style={{ fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>recomendación estratégica generada por Inteligencia Artificial</Text> para orientar decisiones de planificación. No constituye asesoría legal formal ni reemplaza la consulta con un abogado especializado en derecho societario y regulatorio chileno. Validus no asume responsabilidad por decisiones tomadas basándose exclusivamente en este reporte.
           </Text>
         </View>
 
