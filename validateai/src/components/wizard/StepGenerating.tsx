@@ -378,7 +378,16 @@ export function StepGenerating() {
     if (!session) return;
 
     const { stepIdea, stepMarket, stepFounder } = useValidationStore.getState();
-    const context = { ...stepIdea, ...stepMarket, founder_context: stepFounder };
+    const context = {
+      ...stepIdea,
+      ...stepMarket,
+      founder_context: stepFounder,
+      // Fix B: exponer los campos del fundador también al nivel raíz para que
+      // buildMarketContext / founder_fit los lean (no quedan solo anidados).
+      team_composition: stepFounder?.team_composition ?? null,
+      tech_level: stepFounder?.tech_level ?? null,
+      traction_status: stepFounder?.traction_status ?? null,
+    };
 
     updateTaskStatus(task.id, 'loading');
     try {
@@ -503,7 +512,10 @@ export function StepGenerating() {
           ...stepIdea,
           ...stepMarket,
           founder_context: stepFounder,
+          // Fix B: exponer los campos del fundador al nivel raíz para founder_fit.
+          team_composition: stepFounder?.team_composition ?? null,
           tech_level: stepFounder?.tech_level ?? null,
+          traction_status: stepFounder?.traction_status ?? null,
         };
       } else {
         // Flujo rápido: usar directamente los campos capturados en StepIdeaQuick.
