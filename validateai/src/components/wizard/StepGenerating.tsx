@@ -458,6 +458,10 @@ export function StepGenerating() {
               validation_id: currentId,
               idea_description: stepIdea.idea_description ?? stepIdea.idea_name,
             }),
+            // Red de seguridad: el análisis premium (Reddit + SerpAPI + Sonnet) puede
+            // tomar 20-45s. Timeout duro de 60s para que la terminal nunca quede en
+            // carga infinita si el backend cuelga o se demora más de lo esperado.
+            signal: AbortSignal.timeout(60_000),
           },
         );
 
@@ -540,6 +544,21 @@ export function StepGenerating() {
 
     } catch (error) {
       console.error(error);
+      // Fallback UX premium: si el fetch abortó por timeout (60s) o el backend falló,
+      // NO dejamos la terminal en carga infinita. El job premium ya quedó persistido
+      // como in_progress server-side, así que avisamos y mandamos al Dashboard, donde
+      // el GenerationStatusWidget retoma el seguimiento.
+      const isTimeout = error instanceof DOMException &&
+        (error.name === 'TimeoutError' || error.name === 'AbortError');
+      if (isPremium && isTimeout) {
+        toast.info(
+          'El análisis profundo está tomando más de lo esperado. Revisa tu Dashboard en unos minutos — te avisaremos al terminar.',
+          { duration: 8000 },
+        );
+        useValidationStore.getState().reset();
+        navigate('/dashboard', { replace: true });
+        return;
+      }
       toast.error('Ocurrió un error al iniciar la generación.');
     }
   };
