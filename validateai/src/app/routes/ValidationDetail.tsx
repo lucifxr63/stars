@@ -1433,6 +1433,7 @@ export function ValidationDetail() {
                             generating={generatingAdvanced}
                             onRegenerate={handleRegenerateFounderFit}
                             regenerating={regeneratingFounder}
+                            onCompleteProfile={() => navigate('/profile#founder-profile')}
                           />
                           <VerdictMarketTiming
                             data={data.market_signals}

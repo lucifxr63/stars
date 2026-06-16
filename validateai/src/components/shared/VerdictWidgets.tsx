@@ -1,4 +1,4 @@
-﻿import { CheckCircle2, XCircle, UserCheck, Clock, HelpCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+﻿import { CheckCircle2, XCircle, UserCheck, Clock, HelpCircle, AlertTriangle, RefreshCw, UserPlus } from 'lucide-react';
 import type { FounderFit, MarketSignals } from '@/types/validation';
 import { EmptyStateAI } from '@/components/shared/EmptyStateAI';
 
@@ -56,12 +56,14 @@ export function VerdictFounderFit({
   generating,
   onRegenerate,
   regenerating,
+  onCompleteProfile,
 }: {
   data?: FounderFit | null;
   onGenerate?: () => void;
   generating?: boolean;
   onRegenerate?: () => void;
   regenerating?: boolean;
+  onCompleteProfile?: () => void;
 }) {
   if (!data) {
     return (
@@ -111,13 +113,22 @@ export function VerdictFounderFit({
       </div>
 
       {noFounderData ? (
-        <div className="flex flex-col items-center gap-2 py-3 text-center">
+        <div className="flex flex-col items-center gap-3 py-3 text-center">
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
-            Sin datos del fundador para evaluar. Completa el{' '}
-            <strong className="text-[#38D5E3]">Paso Fundador</strong> del wizard (experiencia,
-            equipo, tracción) y vuelve a generar el análisis. Opcional: conecta tu LinkedIn en
-            la pestaña <strong className="text-[#38D5E3]">Inversión</strong> para enriquecer el score.
+            Sin datos del fundador para evaluar. Completa tu{' '}
+            <strong className="text-[#38D5E3]">Perfil de Fundador</strong> (experiencia, equipo,
+            track record o LinkedIn) y vuelve a generar el análisis para obtener un score real.
           </p>
+          {onCompleteProfile && (
+            <button
+              type="button"
+              onClick={onCompleteProfile}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#38D5E3] text-[#0A0A0F] text-xs font-bold hover:bg-[#2bc3d1] transition-colors shadow-sm"
+            >
+              <UserPlus className="w-4 h-4" />
+              Completar perfil de fundador
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-2.5">
