@@ -87,38 +87,36 @@ function buildMarketContext(ctx: Record<string, unknown>): string {
 - Ventaja diferencial del founder (unfair advantage): ${(ctx.founder_context as Record<string,unknown>)?.unfair_advantage ?? 'No especificado'}`;
 }
 
-// Bloque dedicado para founder_fit. Surface explícito de TODOS los campos del
-// fundador (autoreporte del wizard + perfil LinkedIn del Sprint 1.5) para que el
-// LLM no tenga que cazarlos dentro del JSON anidado y devuelva un score real.
+// Bloque dedicado para founder_fit (modelo HÍBRIDO). Surface explícito de dos
+// fuentes complementarias:
+//  1) PERFIL DEL FUNDADOR (nivel usuario, founder_profiles): identidad persistente
+//     del fundador — experiencia, red, track record. Vía LinkedIn o carga manual.
+//     Es la ÚNICA señal disponible en el flujo premium (sin Paso Fundador).
+//  2) DATOS DE ESTA IDEA (wizard, solo flujo detallado): equipo, tracción y
+//     problem-fit específicos de la startup que se está validando.
 function buildFounderContext(ctx: Record<string, unknown>): string {
   const fc = (ctx.founder_context ?? {}) as Record<string, unknown>;
   const pick = (...vals: unknown[]) =>
     vals.find((v) => v !== undefined && v !== null && v !== '') ?? 'No especificado';
 
-  const lines: string[] = [
-    'DATOS DEL FUNDADOR (autoreportados en el wizard — fuente base):',
-    `- ¿Vivió el problema en carne propia? (personallyFacedProblem): ${pick(fc.personallyFacedProblem, ctx.personallyFacedProblem)}`,
-    `- Años de experiencia en la industria (yearsInIndustry): ${pick(fc.yearsInIndustry, ctx.yearsInIndustry)}`,
-    `- Composición del equipo (team_composition): ${pick(ctx.team_composition, fc.team_composition)}`,
-    `- Nivel técnico del equipo (tech_level): ${pick(ctx.tech_level, fc.tech_level)}`,
-    `- Estado de tracción (traction_status): ${pick(ctx.traction_status, fc.traction_status)}`,
-    `- Dedicación al proyecto (commitment_level): ${pick(fc.commitment_level, ctx.commitment_level)}`,
-    `- Entrevistas con clientes (customer_interviews): ${pick(fc.customer_interviews, ctx.customer_interviews)}`,
-    `- Ventaja diferencial (unfair_advantage): ${pick(fc.unfair_advantage, ctx.unfair_advantage)}`,
-  ];
+  const hasProfile =
+    ctx.founder_linkedin_url || ctx.founder_full_name || ctx.founder_competency_scores ||
+    ctx.founder_industry_years;
+  const hasWizard =
+    fc.personallyFacedProblem !== undefined || fc.yearsInIndustry !== undefined ||
+    ctx.team_composition || ctx.traction_status;
 
-  const hasLinkedIn =
-    ctx.founder_linkedin_url || ctx.founder_full_name || ctx.founder_competency_scores;
+  const lines: string[] = [];
 
-  if (hasLinkedIn) {
-    lines.push('');
+  // ── Fuente 1: perfil del fundador a nivel usuario ──────────────────────────
+  if (hasProfile) {
+    const src = ctx.founder_linkedin_url ? 'LinkedIn verificado' : 'carga manual';
     lines.push(
-      'PERFIL LINKEDIN VERIFICADO (Sprint 1.5 — señal de MAYOR confianza que el autoreporte;',
-      'prioriza estos datos cuando entren en conflicto con el wizard):',
+      `PERFIL DEL FUNDADOR (nivel usuario — fuente: ${src}; identidad estable, válida para CUALQUIER idea):`,
       `- Nombre: ${ctx.founder_full_name ?? 'No disponible'}`,
       `- Headline: ${ctx.founder_headline ?? 'No disponible'}`,
       `- Bio: ${ctx.founder_summary_bio ?? 'No disponible'}`,
-      `- Años en la industria (LinkedIn): ${ctx.founder_industry_years ?? 'No disponible'}`,
+      `- Años en la industria: ${ctx.founder_industry_years ?? 'No disponible'}`,
     );
     if (Array.isArray(ctx.founder_skills) && ctx.founder_skills.length) {
       lines.push(`- Skills: ${(ctx.founder_skills as string[]).join(', ')}`);
@@ -128,14 +126,44 @@ function buildFounderContext(ctx: Record<string, unknown>): string {
     }
     if (ctx.founder_competency_scores) {
       lines.push(
-        `- Competency scores pre-calculados desde LinkedIn (0-100): ${JSON.stringify(ctx.founder_competency_scores)}.`,
+        `- Competency scores pre-calculados (0-100): ${JSON.stringify(ctx.founder_competency_scores)}.`,
         '  Úsalos como ancla: visionComercial≈networkStrength, capacidadTecnica≈technicalCapability,',
         '  liderazgo+resilienciaOperativa≈trackRecord, experienciaIndustria≈industryExperience.',
       );
     }
-  } else {
     lines.push('');
-    lines.push('(El fundador NO conectó LinkedIn — evalúa solo con el autoreporte del wizard.)');
+  }
+
+  // ── Fuente 2: datos específicos de esta idea (wizard) ──────────────────────
+  lines.push('DATOS DE ESTA IDEA (autoreporte del wizard — específicos de la startup validada):');
+  lines.push(
+    `- ¿Vivió el problema en carne propia? (personallyFacedProblem): ${pick(fc.personallyFacedProblem, ctx.personallyFacedProblem)}`,
+    `- Años de experiencia en la industria (yearsInIndustry): ${pick(fc.yearsInIndustry, ctx.yearsInIndustry)}`,
+    `- Composición del equipo (team_composition): ${pick(ctx.team_composition, fc.team_composition)}`,
+    `- Nivel técnico del equipo (tech_level): ${pick(ctx.tech_level, fc.tech_level)}`,
+    `- Estado de tracción (traction_status): ${pick(ctx.traction_status, fc.traction_status)}`,
+    `- Dedicación al proyecto (commitment_level): ${pick(fc.commitment_level, ctx.commitment_level)}`,
+    `- Entrevistas con clientes (customer_interviews): ${pick(fc.customer_interviews, ctx.customer_interviews)}`,
+    `- Ventaja diferencial (unfair_advantage): ${pick(fc.unfair_advantage, ctx.unfair_advantage)}`,
+  );
+
+  // ── Guía de fusión híbrida ─────────────────────────────────────────────────
+  lines.push('');
+  if (hasProfile && hasWizard) {
+    lines.push(
+      'FUSIÓN: combina ambas fuentes. El PERFIL define la identidad del fundador (industryExperience,',
+      'networkStrength, technicalCapability, trackRecord de carrera); los DATOS DE ESTA IDEA ajustan',
+      'problemKnowledge, technicalCapability del equipo y trackRecord de tracción de esta startup.',
+    );
+  } else if (hasProfile && !hasWizard) {
+    lines.push(
+      'FUSIÓN: NO hay datos del wizard (flujo premium). Evalúa con el PERFIL del fundador como fuente',
+      'principal — usa los competency scores y la experiencia laboral para estimar las 5 dimensiones.',
+    );
+  } else {
+    lines.push(
+      'FUSIÓN: NO hay perfil de fundador a nivel usuario. Evalúa solo con los DATOS DE ESTA IDEA del wizard.',
+    );
   }
 
   return lines.join('\n');
@@ -419,15 +447,17 @@ Valores válidos para your_cac_vs_benchmark / your_ltv_vs_benchmark: "below" | "
 IMPORTANTE: Responde siempre en espaÃ±ol.
 Score de 0-100 donde 100 = fit perfecto.
 
-FUENTES DE DATOS: el mensaje incluye un bloque "DATOS DEL FUNDADOR" con los campos
-autoreportados en el wizard y, si está presente, un bloque "PERFIL LINKEDIN VERIFICADO".
-Cuando el perfil LinkedIn esté disponible, trátalo como la fuente de MAYOR confianza:
-usa sus competency_scores pre-calculados como ancla de cada dimensión y su experiencia
-laboral real para validar o corregir el autoreporte. Si NO hay LinkedIn, evalúa con el
-autoreporte del wizard.
-REGLA ANTI-CERO: solo asigna 0 a una dimensión si literalmente NO hay ningún dato para
-estimarla. Si existe cualquier señal (años, equipo, tracción, problema vivido), produce
-un score honesto > 0. Nunca devuelvas las 5 dimensiones en 0 cuando hay datos del wizard.
+FUENTES DE DATOS (modelo HÍBRIDO): el mensaje puede incluir dos bloques complementarios:
+"PERFIL DEL FUNDADOR" (identidad a nivel usuario — experiencia, red y track record de
+carrera; vía LinkedIn o carga manual; persiste entre ideas) y "DATOS DE ESTA IDEA"
+(autoreporte del wizard — equipo, tracción y problem-fit de la startup validada). Lee la
+línea "FUSIÓN" al final del contexto: te indica si debes combinar ambas fuentes, usar solo
+el perfil (flujo premium sin wizard) o solo el wizard (sin perfil). El PERFIL ancla las
+dimensiones de carrera; los DATOS DE ESTA IDEA ajustan lo específico de la startup.
+REGLA ANTI-CERO: solo asigna 0 a una dimensión si literalmente NO hay NINGÚN dato (ni
+perfil ni wizard) para estimarla. Si existe cualquier señal (años, skills, experiencia
+laboral, equipo, tracción, problema vivido), produce un score honesto > 0. Nunca devuelvas
+las 5 dimensiones en 0 cuando hay datos en cualquiera de las dos fuentes.
 
 Evalúa estas 5 dimensiones (score 0-100 cada una):
 
