@@ -1,5 +1,19 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/shared/:token",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|LinkedInBot|Twitterbot|WhatsApp|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Embedly|vkShare|W3C_Validator|Googlebot|bingbot|Applebot|SkypeUriPreview|Bitrix).*"
+        }
+      ],
+      "missing": [{ "type": "query", "key": "r" }],
+      "destination": "/api/share-meta?token=:token"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

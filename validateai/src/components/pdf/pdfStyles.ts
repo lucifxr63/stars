@@ -1,11 +1,19 @@
 import { StyleSheet, Font } from '@react-pdf/renderer';
 
+// Tipografía institucional IBM Plex Sans (recomendación skill UI/UX para finanzas/
+// inversión). TTF servidos desde /public/fonts. Se registran como familias-alias
+// que mapean 1:1 a los nombres que el código ya usaba (Helvetica → regular,
+// Helvetica-Bold → bold), para un swap por valor sin tocar fontWeight.
+// ?v=2 = cache-bust tras quitar la tabla GSUB (las ligaturas "fi" rompían el render).
+Font.register({ family: 'IBM Plex Sans', src: '/fonts/IBMPlexSans-Regular.ttf?v=2' });
+Font.register({ family: 'IBM Plex Sans Bold', src: '/fonts/IBMPlexSans-Bold.ttf?v=2' });
+
 // Register a safe built-in font fallback — react-pdf bundles Helvetica
 Font.registerHyphenationCallback((word) => [word]);
 
 const DARK_BG   = '#0F1728';
 const DARK_CARD = '#1E2B3E';
-const ACCENT    = '#0D9488'; // teal-600
+const ACCENT    = '#0EB5C6'; // teal de marca Validus
 const ACCENT_LT = '#CCFBF1'; // teal-100
 const WHITE     = '#FFFFFF';
 const MUTED     = '#94A3B8';
@@ -33,7 +41,7 @@ export const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 32,
     paddingHorizontal: 0,
-    fontFamily: 'Helvetica',
+    fontFamily: 'IBM Plex Sans',
     color: WHITE,
   },
 
@@ -43,6 +51,8 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 0,
     paddingBottom: 0,
+    fontFamily: 'IBM Plex Sans',
+    color: WHITE,
   },
   coverHero: {
     backgroundColor: DARK_CARD,
@@ -57,7 +67,7 @@ export const styles = StyleSheet.create({
     backgroundColor: ACCENT,
     color: WHITE,
     fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     letterSpacing: 2,
     paddingVertical: 4,
     paddingHorizontal: 10,
@@ -68,7 +78,7 @@ export const styles = StyleSheet.create({
   },
   coverTitle: {
     fontSize: 32,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     color: WHITE,
     marginBottom: 8,
     lineHeight: 1.15,
@@ -87,7 +97,7 @@ export const styles = StyleSheet.create({
   },
   coverScoreBig: {
     fontSize: 72,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     lineHeight: 1,
   },
   coverScoreLabel: {
@@ -123,7 +133,7 @@ export const styles = StyleSheet.create({
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 3,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
   },
   coverMetaValue: {
     fontSize: 11,
@@ -136,7 +146,7 @@ export const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 32,
     paddingHorizontal: 40,
-    fontFamily: 'Helvetica',
+    fontFamily: 'IBM Plex Sans',
     color: WHITE,
   },
   pageHeader: {
@@ -150,7 +160,7 @@ export const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     color: WHITE,
   },
   pageLabel: {
@@ -158,7 +168,7 @@ export const styles = StyleSheet.create({
     color: MUTED,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
   },
 
   // ── Two-column layout ─────────────────────────────────────────────────────
@@ -181,7 +191,7 @@ export const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     color: ACCENT,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -196,7 +206,7 @@ export const styles = StyleSheet.create({
   // ── Section heading ───────────────────────────────────────────────────────
   sectionTitle: {
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     color: WHITE,
     marginBottom: 10,
     marginTop: 4,
@@ -208,7 +218,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     alignSelf: 'flex-start',
   },
 
@@ -236,7 +246,7 @@ export const styles = StyleSheet.create({
   },
   scoreValue: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'IBM Plex Sans Bold',
     width: 28,
     textAlign: 'right',
   },

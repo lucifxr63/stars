@@ -17,7 +17,7 @@ import { MentorRecommendations } from '@/components/shared/MentorRecommendations
 import { CorfoFunds } from '@/components/shared/CorfoFunds';
 import { DeliverableTabs } from '@/components/shared/DeliverableTabs';
 import { RegulatoryRoadmap } from '@/components/shared/RegulatoryRoadmap';
-import { generateValidationPDF, generatePitchDeckPDF, PDF_THEMES } from '@/lib/pdf';
+import { generatePitchDeckPDF, PDF_THEMES } from '@/lib/pdf';
 import type { PDFTheme } from '@/lib/pdf';
 import { ReanalyzeModal } from '@/components/shared/ReanalyzeModal';
 import { PDFExportModal } from '@/components/shared/PDFExportModal';
@@ -104,6 +104,7 @@ interface ValidationFull {
   traction_status: string | null;
   team_composition: string | null;
   share_token: string | null;
+  share_visibility: Record<string, boolean> | null;
   created_at: string;
   completed_at: string | null;
   version: number;
@@ -185,6 +186,45 @@ function QuickDimensionPaywall({
   );
 }
 
+// ── Botón único para disparar handleGenerateAdvanced ──────────────────────────
+// Unifica copy ("Generar Análisis Pro"), ícono y el guard de cuota (`remaining`)
+// en todos los empty-states. Antes cada tab tenía su propia variante con copy/color
+// distintos y Fundraising omitía el guard (footgun: chocaba con el rate-limit).
+function GenerateAdvancedButton({
+  generating,
+  remaining,
+  onGenerate,
+  variant = 'teal',
+}: {
+  generating: boolean;
+  remaining: number;
+  onGenerate: () => void;
+  variant?: 'teal' | 'amber';
+}) {
+  const atLimit = remaining === 0;
+  const palette = variant === 'amber'
+    ? { bg: 'bg-[#F7C56C] text-gray-900 hover:bg-[#F7C56C]/90', spinner: 'border-gray-900/30 border-t-gray-900' }
+    : { bg: 'bg-[#0EB5C6] text-white hover:bg-[#6B5EE6]', spinner: 'border-white/30 border-t-white' };
+
+  return (
+    <button
+      onClick={atLimit ? undefined : onGenerate}
+      disabled={generating || atLimit}
+      title={atLimit ? 'Límite mensual alcanzado' : undefined}
+      className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl transition disabled:opacity-50 ${palette.bg}`}
+    >
+      {generating ? (
+        <span className={`w-3.5 h-3.5 border-2 rounded-full animate-spin ${palette.spinner}`} />
+      ) : (
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      )}
+      {generating ? 'Generando…' : atLimit ? 'Límite alcanzado' : 'Generar Análisis Pro'}
+    </button>
+  );
+}
+
 const DASHBOARD_TABS = ['Veredicto', 'Validación', 'Estrategia', 'Finanzas', 'Hoja de Ruta', 'Inversión', 'Due Diligence'] as const;
 type DashboardTab = typeof DASHBOARD_TABS[number];
 
@@ -216,11 +256,15 @@ export function ValidationDetail() {
   const navigate = useNavigate();
   const [data, setData] = useState<ValidationFull | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updatePdfLoading, setUpdatePdfLoading] = useState(false);
   const [pitchDeckLoading, setPitchDeckLoading] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  // Popover de Compartir controlado por React. Antes usaba <details> nativo +
+  // removeAttribute('open') imperativo; al togglear visibilidad, el setData
+  // re-renderizaba el subárbol mientras el DOM se mutaba por fuera de React →
+  // removeChild sobre nodo huérfano → pantalla en blanco. Estado controlado = sin race.
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [showReanalyzeModal, setShowReanalyzeModal] = useState(false);
   const [showPivotModal, setShowPivotModal] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
@@ -404,14 +448,8 @@ export function ValidationDetail() {
   };
   const hasAdvancedToGenerate = Object.values(missingAdvanced).some(Boolean);
 
-  // Nuevos módulos PDF (lean_roadmap, financial_projection, compliance_roadmap)
-  const missingNewModules = {
-    lean_roadmap: !data?.lean_roadmap,
-    financial_projection: !data?.financial_projection,
-    compliance_roadmap: !data?.compliance_roadmap,
-  };
-  const hasNewModulesToGenerate = Object.values(missingNewModules).some(Boolean);
-  const [generatingNewModules, setGeneratingNewModules] = useState(false);
+  // Los módulos PDF (lean_roadmap, financial_projection, compliance_roadmap) se
+  // generan on-demand dentro de PDFExportModal / DeliverableTabs al descargarlos.
   const [generatingDueDiligence, setGeneratingDueDiligence] = useState(false);
 
   // Sprint 6: audit trail del último análisis de Due Diligence
@@ -489,51 +527,6 @@ export function ValidationDetail() {
       toast.error('Ocurrió un error al generar tu Due Diligence Score.');
     } finally {
       setGeneratingDueDiligence(false);
-    }
-  };
-
-  const handleGenerateNewModules = async () => {
-    if (!data) return;
-    setGeneratingNewModules(true);
-    try {
-      const ctx: Record<string, unknown> = {
-        idea_name: data.idea_name,
-        idea_description: data.idea_description,
-        idea_industry: data.idea_industry,
-        target_country: data.target_country,
-        target_region: data.target_region ?? null,
-        business_model: data.business_model,
-        business_stage: data.business_stage,
-        pricing_range: data.pricing_range,
-        known_competitors: data.known_competitors ?? [],
-        customer_segment: data.customer_segment,
-        customer_pain_points: data.customer_pain_points,
-        value_proposition: data.value_proposition,
-        differentiator: data.differentiator,
-        mvp_type: data.mvp_type,
-        mvp_features: data.mvp_features,
-        questions_answers: data.questions_answers,
-      };
-
-      const [leanResult, financialResult, complianceResult] = await Promise.all([
-        missingNewModules.lean_roadmap ? callAI<LeanRoadmap>(data.id, 6, 'lean_roadmap', ctx) : Promise.resolve(null),
-        missingNewModules.financial_projection ? callAI<FinancialProjection>(data.id, 6, 'financial_projection', ctx) : Promise.resolve(null),
-        missingNewModules.compliance_roadmap ? callAI<ComplianceRoadmap>(data.id, 6, 'compliance_roadmap', ctx) : Promise.resolve(null),
-      ]);
-
-      const localUpdates: Record<string, unknown> = {};
-      if (leanResult) localUpdates.lean_roadmap = leanResult;
-      if (financialResult) localUpdates.financial_projection = financialResult;
-      if (complianceResult) localUpdates.compliance_roadmap = complianceResult;
-
-      if (Object.keys(localUpdates).length > 0) {
-        setData((prev) => prev ? { ...prev, ...localUpdates } : prev);
-        toast.success('Nuevos módulos generados correctamente');
-      }
-    } catch {
-      toast.error('No se pudieron generar los nuevos módulos. Intenta de nuevo.');
-    } finally {
-      setGeneratingNewModules(false);
     }
   };
 
@@ -735,6 +728,34 @@ export function ValidationDetail() {
     navigate('/validate');
   };
 
+  // CTA de score medio: lleva al desglose por dimensión (mismo tab Veredicto, no gateado),
+  // que es lo accionable para entender "qué frenó el score". El tab puede no estar activo,
+  // así que lo activamos y hacemos scroll tras el re-render que monta el ScoreBreakdown.
+  const handleViewScoreBreakdown = () => {
+    setActiveTab('Veredicto');
+    setTimeout(() => {
+      document.getElementById('score-breakdown')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  };
+
+  // Fase B: el dueño elige qué secciones sensibles quedan visibles en el link público.
+  const updateShareVisibility = async (section: string, visible: boolean) => {
+    if (!data) return;
+    const id = data.id;
+    const prevVisibility = data.share_visibility ?? null;
+    const next = { ...(prevVisibility ?? {}), [section]: visible };
+    // Updater funcional → sin closures stale ni objetos `data` recreados fuera de React.
+    setData((d) => (d ? { ...d, share_visibility: next } : d));
+    try {
+      const { error } = await supabase.from('validations').update({ share_visibility: next }).eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('[share-visibility] update failed:', err);
+      toast.error('No se pudo actualizar la visibilidad.');
+      setData((d) => (d ? { ...d, share_visibility: prevVisibility } : d));
+    }
+  };
+
   const handleShare = async () => {
     if (!data) return;
     if (data.share_token) {
@@ -791,111 +812,6 @@ export function ValidationDetail() {
       '_blank',
       'noopener,noreferrer',
     );
-  };
-
-  /** Actualiza el análisis de IA y luego descarga el PDF con los datos frescos */
-  const handleUpdateAndExportPDF = async () => {
-    if (!data) return;
-    setUpdatePdfLoading(true);
-    try {
-      // 1 — Re-correr análisis (igual que runReanalysis pero inline, para capturar el estado actualizado)
-      const ctx: Record<string, unknown> = {
-        idea_name: data.idea_name,
-        idea_description: data.idea_description,
-        idea_industry: data.idea_industry,
-        target_country: data.target_country,
-        target_region: data.target_region ?? null,
-        business_model: data.business_model,
-        business_stage: data.business_stage,
-        pricing_range: data.pricing_range,
-        known_competitors: data.known_competitors ?? [],
-        customer_segment: data.customer_segment,
-        customer_pain_points: data.customer_pain_points,
-        value_proposition: data.value_proposition,
-        differentiator: data.differentiator,
-        mvp_type: data.mvp_type,
-        mvp_features: data.mvp_features,
-        questions_answers: data.questions_answers,
-      };
-
-      const [competitiveResult, sizingResult, summaryResult] = await Promise.all([
-        callAI<CompetitiveAnalysisType>(data.id, 3, 'competitive_analysis', ctx),
-        callAI<MarketSizing>(data.id, 5, 'market_sizing', ctx),
-        callAI<{ score: number; score_breakdown: ScoreBreakdownType; feedback: string; strengths: string[]; weaknesses: string[]; next_steps: string[] }>(data.id, 6, 'summary', ctx),
-      ]);
-
-      const updates: Record<string, unknown> = {};
-      if (competitiveResult) updates.competitive_analysis = competitiveResult;
-      if (sizingResult) updates.market_sizing = sizingResult;
-      if (summaryResult) {
-        updates.score_breakdown = summaryResult.score_breakdown;
-        updates.validation_score = summaryResult.score;
-        updates.ai_feedback = summaryResult.feedback;
-        updates.summary_json = summaryResult;
-      }
-
-      if (Object.keys(updates).length > 0) {
-        await supabase.from('validations').update(updates).eq('id', data.id);
-      }
-
-      // Estado actualizado para el PDF
-      const freshData: typeof data = {
-        ...data,
-        ...(competitiveResult ? { competitive_analysis: competitiveResult } : {}),
-        ...(sizingResult ? { market_sizing: sizingResult } : {}),
-        ...(summaryResult ? {
-          score_breakdown: summaryResult.score_breakdown,
-          validation_score: summaryResult.score,
-          ai_feedback: summaryResult.feedback,
-          summary_json: summaryResult,
-        } : {}),
-      };
-
-      // Actualizar UI
-      setData(freshData);
-
-      // 2 — Descargar PDF con datos frescos
-      await generateValidationPDF({
-        idea_name: freshData.idea_name ?? undefined,
-        idea_description: freshData.idea_description ?? undefined,
-        idea_industry: freshData.idea_industry ?? undefined,
-        target_country: freshData.target_country ?? undefined,
-        target_region: freshData.target_region ?? undefined,
-        business_model: freshData.business_model ?? undefined,
-        business_stage: freshData.business_stage ?? undefined,
-        pricing_range: freshData.pricing_range ?? undefined,
-        known_competitors: freshData.known_competitors ?? undefined,
-        questions_answers: freshData.questions_answers ?? undefined,
-        customer_segment: freshData.customer_segment ?? undefined,
-        customer_pain_points: freshData.customer_pain_points ?? undefined,
-        value_proposition: freshData.value_proposition ?? undefined,
-        differentiator: freshData.differentiator ?? undefined,
-        mvp_type: freshData.mvp_type ?? undefined,
-        mvp_features: freshData.mvp_features ?? undefined,
-        mvp_user_flow: freshData.mvp_user_flow ?? undefined,
-        summary: (freshData.summary_json ?? {}) as Record<string, unknown>,
-        market_sizing: freshData.market_sizing ?? null,
-        competitive_analysis: freshData.competitive_analysis ?? null,
-        score_breakdown: freshData.score_breakdown ?? null,
-        risk_analysis: freshData.risk_analysis ?? null,
-        unit_economics: freshData.unit_economics ?? null,
-        founder_fit: freshData.founder_fit ?? null,
-        market_signals: freshData.market_signals ?? null,
-        governance_assessment: freshData.governance_assessment ?? null,
-        fundraising_roadmap: freshData.fundraising_roadmap ?? null,
-        playbook_analysis: freshData.playbook_analysis ?? null,
-        mentors: mentors.length ? mentors : undefined,
-        validation_score: freshData.validation_score ?? null,
-        due_diligence: freshData.due_diligence_score ?? null,
-      }, pdfTheme);
-
-      trackDeliverableDownloaded('pdf_fresh', pdfTheme);
-      toast.success('Análisis actualizado y PDF descargado');
-    } catch {
-      toast.error('No se pudo actualizar el PDF. Intenta de nuevo.');
-    } finally {
-      setUpdatePdfLoading(false);
-    }
   };
 
 
@@ -981,13 +897,9 @@ export function ValidationDetail() {
   const displayScore = data.validation_score ?? data.playbook_analysis?.viability_score ?? null;
   const isGood = (displayScore ?? 0) >= 70;
   const isMid = (displayScore ?? 0) >= 40;
-  const scoreBg = displayScore == null
-    ? 'bg-white/5 border-white/10'
-    : isGood
-      ? 'bg-[#34D399]/10 border-[#34D399]/30 shadow-sm shadow-[#34D399]/10'
-      : isMid
-        ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30 shadow-sm shadow-[#F7C56C]/10'
-        : 'bg-[#F87171]/10 border-[#F87171]/30 shadow-sm shadow-[#F87171]/10';
+  // El veredicto cualitativo vive únicamente en el Snapshot Hero (dejó de duplicarse
+  // en la tarjeta "Score de Viabilidad VC" del tab Veredicto).
+  const heroFeedback = data.ai_feedback ?? data.playbook_analysis?.funding_verdict ?? null;
 
 
   return (
@@ -999,35 +911,6 @@ export function ValidationDetail() {
           <span>›</span>
           <span className="text-gray-700 dark:text-[#C4C4D4] font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
         </div>
-
-        {/* Banner: Nuevos módulos disponibles */}
-        {hasNewModulesToGenerate && !generatingNewModules && (
-          <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
-            <div className="flex items-start gap-3">
-              <svg className="w-4 h-4 text-[#8B8AA0] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <div>
-                <p className="text-sm font-bold text-[#F0EFF8]">Nuevos módulos disponibles</p>
-                <p className="text-xs text-[#8B8AA0] mt-0.5">
-                  Haz clic en <strong>Re-analizar Idea</strong> para generar tu Roadmap Legal, Financiero y de MVP con la versión más reciente de la IA.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleGenerateNewModules}
-              className="shrink-0 px-4 py-2 bg-[#0EB5C6] hover:bg-[#6B5EE6] text-white text-xs font-bold rounded-xl transition"
-            >
-              Re-analizar Idea
-            </button>
-          </div>
-        )}
-        {generatingNewModules && (
-          <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
-            <div className="w-4 h-4 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
-            <p className="text-sm font-bold text-[#F0EFF8]">Generando nuevos módulos con la IA más reciente...</p>
-          </div>
-        )}
 
         {/* Header */}
         <div className="mb-6 space-y-4">
@@ -1090,34 +973,73 @@ export function ValidationDetail() {
                 <span className="hidden xs:inline">Descargar </span>Dossier
               </button>
 
-              {/* Compartir — copiar link */}
-              <button
-                onClick={handleShare}
-                disabled={sharing}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#0EB5C6]/30 text-[#38D5E3] bg-[#0EB5C6]/5 text-xs font-bold rounded-xl hover:bg-[#0EB5C6]/10 active:scale-[0.98] transition disabled:opacity-50"
-              >
-                {sharing ? (
-                  <div className="w-3.5 h-3.5 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin" />
-                ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                )}
-                Compartir
-              </button>
+              {/* Compartir — popover unificado controlado por React (sin <details> nativo) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShareMenuOpen((o) => !o)}
+                  aria-expanded={shareMenuOpen}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#0EB5C6]/30 text-[#38D5E3] bg-[#0EB5C6]/5 text-xs font-bold rounded-xl hover:bg-[#0EB5C6]/10 active:scale-[0.98] transition cursor-pointer outline-none focus:ring-2 focus:ring-[#0EB5C6]/50"
+                >
+                  {sharing ? (
+                    <div className="w-3.5 h-3.5 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  )}
+                  Compartir <span className={`transition-transform opacity-50 ${shareMenuOpen ? 'rotate-180' : ''}`}>▾</span>
+                </button>
 
-              {/* Compartir en LinkedIn */}
-              <button
-                onClick={handleShareLinkedIn}
-                disabled={sharing}
-                title="Compartir en LinkedIn"
-                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#0A66C2]/30 text-[#0A66C2] dark:text-[#5BA4F5] bg-[#0A66C2]/5 text-xs font-bold rounded-xl hover:bg-[#0A66C2]/10 active:scale-[0.98] transition disabled:opacity-50"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                </svg>
-                LinkedIn
-              </button>
+                {shareMenuOpen && (
+                  <>
+                    {/* Backdrop para cerrar al clic afuera (sin mutación imperativa de DOM) */}
+                    <div className="fixed inset-0 z-40" onClick={() => setShareMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1A1A24] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 dark:border-white/10 p-2 flex flex-col gap-1 z-50">
+                      {/* Fase B: control de visibilidad de secciones sensibles en el link público */}
+                      {(data.unit_economics || data.fundraising_roadmap) && (
+                        <>
+                          <p className="px-2 pt-1 pb-1 text-[10px] font-black uppercase tracking-wider text-[#8B8AA0]">Visible en el link</p>
+                          {[
+                            ...(data.unit_economics ? [{ key: 'unit_economics', label: 'Unit Economics (CAC/LTV)' }] : []),
+                            ...(data.fundraising_roadmap ? [{ key: 'fundraising_roadmap', label: 'Fundraising Readiness' }] : []),
+                          ].map((s) => {
+                            const visible = data.share_visibility?.[s.key] !== false;
+                            return (
+                              <label key={s.key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl hover:bg-white/5 cursor-pointer">
+                                <span className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4]">{s.label}</span>
+                                <input type="checkbox" className="sr-only peer" checked={visible} onChange={(e) => updateShareVisibility(s.key, e.target.checked)} />
+                                <span className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-gray-300 dark:bg-white/10 peer-checked:bg-[#0EB5C6] transition-colors after:absolute after:left-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-4" />
+                              </label>
+                            );
+                          })}
+                          <div className="h-px bg-white/5 my-1" />
+                        </>
+                      )}
+                      <button
+                        onClick={() => { setShareMenuOpen(false); handleShare(); }}
+                        disabled={sharing}
+                        className="flex items-center gap-2 px-3 py-2 hover:bg-[#0EB5C6]/10 rounded-xl text-xs font-bold text-[#38D5E3] text-left transition disabled:opacity-50"
+                      >
+                        <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                        </svg>
+                        Copiar link
+                      </button>
+                      <button
+                        onClick={() => { setShareMenuOpen(false); handleShareLinkedIn(); }}
+                        disabled={sharing}
+                        className="flex items-center gap-2 px-3 py-2 hover:bg-[#0A66C2]/10 rounded-xl text-xs font-bold text-[#0A66C2] dark:text-[#5BA4F5] text-left transition disabled:opacity-50"
+                      >
+                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                        </svg>
+                        Compartir en LinkedIn
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               {/* Dropdown de Más Opciones */}
               <details
@@ -1203,17 +1125,6 @@ export function ValidationDetail() {
                     </button>
                   )}
 
-                  <button onClick={handleUpdateAndExportPDF} disabled={updatePdfLoading} className="flex items-center gap-2 px-3 py-2 hover:bg-[#0EB5C6]/10 rounded-xl text-xs font-bold text-[#38D5E3] text-left transition disabled:opacity-50">
-                    {updatePdfLoading ? (
-                      <div className="w-4 h-4 border-2 border-[#0EB5C6]/40 border-t-[#0EB5C6] rounded-full animate-spin shrink-0" />
-                    ) : (
-                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                      </svg>
-                    )}
-                    {updatePdfLoading ? 'Actualizando PDF...' : 'PDF Fresco (Act. + PDF)'}
-                  </button>
-
                   <div className="h-px bg-white/5 my-1" />
 
                   {/* Acciones de Versión */}
@@ -1237,12 +1148,12 @@ export function ValidationDetail() {
         </div>
 
         {/* ── SNAPSHOT HERO ── */}
-        {data.validation_score != null && (
+        {displayScore != null && (
           <div className="mb-6 bg-[#12121A] rounded-2xl border border-white/[0.06] p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className={`shrink-0 w-16 h-16 rounded-2xl border-2 flex flex-col items-center justify-center font-heading
               ${isGood ? 'bg-[#34D399]/10 border-[#34D399]/30' : isMid ? 'bg-[#F7C56C]/10 border-[#F7C56C]/30' : 'bg-[#F87171]/10 border-[#F87171]/30'}`}>
               <span className={`font-black text-2xl ${isGood ? 'text-[#34D399]' : isMid ? 'text-[#F7C56C]' : 'text-[#F87171]'}`}>
-                {data.validation_score}
+                {displayScore}
               </span>
               <span className="text-[10px] font-bold text-[#8B8AA0]">/100</span>
             </div>
@@ -1251,11 +1162,11 @@ export function ValidationDetail() {
                 ${isGood ? 'text-[#34D399]' : isMid ? 'text-[#F7C56C]' : 'text-[#F87171]'}`}>
                 {isGood ? 'Idea con buen potencial' : isMid ? 'Requiere ajustes clave' : 'Necesita revisión profunda'}
               </p>
-              {data.ai_feedback && (
-                <p className="text-sm text-[#8B8AA0] leading-relaxed line-clamp-2">{data.ai_feedback}</p>
+              {/* Veredicto cualitativo — único lugar donde se muestra (antes se duplicaba
+                  en la tarjeta "Score de Viabilidad VC" del tab Veredicto). */}
+              {heroFeedback && (
+                <p className="text-sm text-[#8B8AA0] leading-relaxed">{heroFeedback}</p>
               )}
-              {/* Dimensiones del score viven en el ScoreBreakdown del tab Veredicto
-                  (barras) — evitamos duplicarlas aquí como números sueltos. */}
             </div>
             <div className="shrink-0 w-full sm:w-auto">
               {isGood ? (
@@ -1271,13 +1182,13 @@ export function ValidationDetail() {
                 </button>
               ) : isMid ? (
                 <button
-                  onClick={() => setActiveTab('Veredicto')}
+                  onClick={handleViewScoreBreakdown}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F7C56C]/10 text-[#F7C56C] border border-[#F7C56C]/30 text-sm font-bold rounded-xl hover:bg-[#F7C56C]/20 transition-all cursor-pointer"
                 >
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
-                  Ver análisis completo
+                  Ver qué frenó tu score
                 </button>
               ) : (
                 <button
@@ -1423,26 +1334,10 @@ export function ValidationDetail() {
                     </p>
                   </div>
 
-                  {/* Left Column: Score & Breakdown */}
+                  {/* Left Column: Breakdown — el score y su veredicto viven en el Snapshot Hero */}
                   <div className="md:col-span-7 flex flex-col gap-4">
-                    {/* Score — visible for both detailed (summary_json) and premium (playbook viability_score) */}
-                    {displayScore != null && (
-                      <div className={`rounded-3xl border-2 p-6 flex items-center ${scoreBg}`}>
-                        <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
-                          <div className="flex-1 text-center sm:text-left">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Score de Viabilidad VC</p>
-                            <p className="text-gray-700 dark:text-[#BDBDCF] leading-relaxed text-sm max-w-2xl">
-                              {summary?.feedback ??
-                                data.playbook_analysis?.funding_verdict ??
-                                'Análisis Premium completado.'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {data.score_breakdown && (
-                      <div className="space-y-3">
+                      <div id="score-breakdown" className="space-y-3 scroll-mt-24">
                         <ScoreBreakdown data={data.score_breakdown} />
                         {isQuickMode && (
                           <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#0EB5C6]/8 border border-[#0EB5C6]/20">
@@ -1493,21 +1388,6 @@ export function ValidationDetail() {
                   <div className="md:col-span-5 flex flex-col gap-4">
                     <div className="h-full">
                       <PlaybookAnalysisCard data={data.playbook_analysis} />
-                    </div>
-
-                    <div className="flex justify-end mt-auto">
-                      <button
-                        onClick={() => {
-                          setData((prev) => prev ? { ...prev, playbook_analysis: null } : prev);
-                          setVerdictGenerated(false);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 transition"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Regenerar veredicto
-                      </button>
                     </div>
                   </div>
                 </>
@@ -1671,11 +1551,9 @@ export function ValidationDetail() {
                   <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5">
                     <div className="flex items-center justify-between mb-4">
                       <p className="text-xs font-bold text-[#8B8AA0] uppercase tracking-wide">Evidencia de Mercado</p>
-                      {isPremium ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0EB5C6]/10 text-[#38D5E3] border border-[#0EB5C6]/20">
-                          En Desarrollo — Beta
-                        </span>
-                      ) : (
+                      {/* El estado real lo comunica EvidenceWall por fuente (Conectado / No disponible);
+                          un badge "Beta" subvendía Trends, que en prod ya entrega datos reales. */}
+                      {!isPremium && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-[#8B8AA0] border border-white/10">
                           Premium
                         </span>
@@ -1872,25 +1750,12 @@ export function ValidationDetail() {
                         CAC, LTV, break-even y proyección de crecimiento. Se genera con tus datos del análisis Detallado.
                       </p>
                     </div>
-                    <button
-                      onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
-                      disabled={generatingAdvanced || remaining === 0}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#F7C56C] text-gray-900 text-xs font-bold rounded-xl hover:bg-[#F7C56C]/90 transition disabled:opacity-50"
-                      title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
-                    >
-                      {generatingAdvanced ? (
-                        <span className="w-3.5 h-3.5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      )}
-                      {generatingAdvanced
-                        ? 'Generando…'
-                        : remaining === 0
-                          ? 'Límite alcanzado'
-                          : 'Generar Análisis Pro'}
-                    </button>
+                    <GenerateAdvancedButton
+                      generating={generatingAdvanced}
+                      remaining={remaining}
+                      onGenerate={handleGenerateAdvanced}
+                      variant="amber"
+                    />
                   </div>
                 )}
 
@@ -2086,18 +1951,11 @@ export function ValidationDetail() {
                 ) : (
                   <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
                     <p className="text-sm text-[#8B8AA0] mb-3">Análisis de gobernanza no generado aún</p>
-                    <button
-                      onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
-                      disabled={generatingAdvanced || remaining === 0}
-                      className="px-4 py-2 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition disabled:opacity-50"
-                      title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
-                    >
-                      {generatingAdvanced
-                        ? 'Generando...'
-                        : remaining === 0
-                          ? 'Límite alcanzado'
-                          : 'Generar Análisis Pro'}
-                    </button>
+                    <GenerateAdvancedButton
+                      generating={generatingAdvanced}
+                      remaining={remaining}
+                      onGenerate={handleGenerateAdvanced}
+                    />
                   </div>
                 )}
 
@@ -2114,13 +1972,11 @@ export function ValidationDetail() {
                 ) : (
                   <div className="bg-[#0A0A0F] border-2 border-dashed border-white/10 rounded-2xl p-8 text-center">
                     <p className="text-sm text-[#8B8AA0] mb-3">Hoja de ruta de fundraising no generada aún</p>
-                    <button
-                      onClick={handleGenerateAdvanced}
-                      disabled={generatingAdvanced}
-                      className="px-4 py-2 bg-[#34D399] text-[#0A0A0F] text-sm font-bold rounded-xl hover:bg-[#2BBD87] transition disabled:opacity-50"
-                    >
-                      {generatingAdvanced ? 'Generando...' : 'Generar Análisis Premium'}
-                    </button>
+                    <GenerateAdvancedButton
+                      generating={generatingAdvanced}
+                      remaining={remaining}
+                      onGenerate={handleGenerateAdvanced}
+                    />
                   </div>
                 )}
 

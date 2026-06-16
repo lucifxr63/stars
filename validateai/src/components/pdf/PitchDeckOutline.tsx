@@ -36,11 +36,11 @@ function Slide({
     <Page size="A4" orientation="landscape" style={styles.page}>
       {/* Slide number badge */}
       <View style={{ position: 'absolute', top: 18, right: 32, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ fontSize: 7, color: colors.muted, fontFamily: 'Helvetica-Bold', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+        <Text style={{ fontSize: 7, color: colors.muted, fontFamily: 'IBM Plex Sans Bold', letterSpacing: 1.5, textTransform: 'uppercase' }}>
           {label}
         </Text>
         <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 9, color: colors.white, fontFamily: 'Helvetica-Bold' }}>{number}</Text>
+          <Text style={{ fontSize: 9, color: colors.white, fontFamily: 'IBM Plex Sans Bold' }}>{number}</Text>
         </View>
       </View>
 
@@ -60,7 +60,7 @@ function Slide({
 
 function SlideTitle({ children }: { children: React.ReactNode }) {
   return (
-    <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: colors.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>
+    <Text style={{ fontSize: 11, fontFamily: 'IBM Plex Sans Bold', color: colors.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>
       {children}
     </Text>
   );
@@ -68,7 +68,7 @@ function SlideTitle({ children }: { children: React.ReactNode }) {
 
 function Headline({ children }: { children: React.ReactNode }) {
   return (
-    <Text style={{ fontSize: 28, fontFamily: 'Helvetica-Bold', color: colors.white, lineHeight: 1.2, marginBottom: 16 }}>
+    <Text style={{ fontSize: 28, fontFamily: 'IBM Plex Sans Bold', color: colors.white, lineHeight: 1.2, marginBottom: 16 }}>
       {children}
     </Text>
   );
@@ -85,7 +85,7 @@ function Body({ children }: { children: React.ReactNode }) {
 function Pill({ text, color }: { text: string; color: string }) {
   return (
     <View style={{ backgroundColor: color + '22', borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 8 }}>
-      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color }}>{text}</Text>
+      <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color }}>{text}</Text>
     </View>
   );
 }
@@ -125,19 +125,19 @@ export function PitchDeckOutline({ data }: Props) {
           {data.target_country && (
             <View>
               <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1 }}>Mercado</Text>
-              <Text style={{ fontSize: 12, color: colors.white, fontFamily: 'Helvetica-Bold', marginTop: 3 }}>{data.target_country}</Text>
+              <Text style={{ fontSize: 12, color: colors.white, fontFamily: 'IBM Plex Sans Bold', marginTop: 3 }}>{data.target_country}</Text>
             </View>
           )}
           {data.business_model && (
             <View>
               <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1 }}>Modelo</Text>
-              <Text style={{ fontSize: 12, color: colors.white, fontFamily: 'Helvetica-Bold', marginTop: 3 }}>{data.business_model.toUpperCase()}</Text>
+              <Text style={{ fontSize: 12, color: colors.white, fontFamily: 'IBM Plex Sans Bold', marginTop: 3 }}>{data.business_model.toUpperCase()}</Text>
             </View>
           )}
           {score > 0 && (
             <View>
               <Text style={{ fontSize: 8, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1 }}>Score Validus</Text>
-              <Text style={{ fontSize: 12, color: score >= 70 ? colors.green : score >= 40 ? colors.amber : colors.red, fontFamily: 'Helvetica-Bold', marginTop: 3 }}>{score}/100</Text>
+              <Text style={{ fontSize: 12, color: score >= 70 ? colors.green : score >= 40 ? colors.amber : colors.red, fontFamily: 'IBM Plex Sans Bold', marginTop: 3 }}>{score}/100</Text>
             </View>
           )}
         </View>
@@ -153,7 +153,7 @@ export function PitchDeckOutline({ data }: Props) {
         </View>
         {(data.customer_pain_points?.length ?? 0) > 0 && (
           <View style={{ flex: 1, backgroundColor: '#1E2B3E', borderRadius: 8, padding: 16, borderLeftWidth: 3, borderLeftColor: colors.red }}>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.red, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Pain Points</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.red, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Pain Points</Text>
             <BulletList items={(data.customer_pain_points ?? []).slice(0, 4)} />
           </View>
         )}
@@ -168,17 +168,17 @@ export function PitchDeckOutline({ data }: Props) {
           <Body>{deck?.solution_statement ?? data.idea_description ?? '—'}</Body>
           {data.differentiator && (
             <View style={{ marginTop: 16, backgroundColor: colors.accent + '18', borderRadius: 8, padding: 12, borderLeftWidth: 3, borderLeftColor: colors.accent }}>
-              <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Diferenciador</Text>
+              <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Diferenciador</Text>
               <Text style={{ fontSize: 10, color: '#CBD5E1', lineHeight: 1.5 }}>{data.differentiator}</Text>
             </View>
           )}
         </View>
         {data.mvp_features && data.mvp_features.length > 0 && (
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Funcionalidades MVP</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Funcionalidades MVP</Text>
             {data.mvp_features.slice(0, 4).map((f, i) => (
               <View key={i} style={{ backgroundColor: '#1E2B3E', borderRadius: 6, padding: 10, marginBottom: 8 }}>
-                <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.white, marginBottom: 3 }}>{f.name}</Text>
+                <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginBottom: 3 }}>{f.name}</Text>
                 <Text style={{ fontSize: 9, color: colors.muted, lineHeight: 1.4 }}>{f.description}</Text>
               </View>
             ))}
@@ -199,8 +199,8 @@ export function PitchDeckOutline({ data }: Props) {
             { label: 'SOM', tier: data.market_sizing.som, color: colors.green },
           ].map(({ label, tier, color }) => (
             <View key={label} style={{ flex: 1, backgroundColor: '#1E2B3E', borderRadius: 8, padding: 16, borderTopWidth: 3, borderTopColor: color }}>
-              <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>{label}</Text>
-              <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: colors.white, marginBottom: 4 }}>
+              <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>{label}</Text>
+              <Text style={{ fontSize: 16, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginBottom: 4 }}>
                 {tier.currency} {(tier.value_high / 1_000_000).toFixed(0)}M
               </Text>
               <Text style={{ fontSize: 8.5, color: colors.muted, lineHeight: 1.4 }}>{tier.description}</Text>
@@ -223,24 +223,24 @@ export function PitchDeckOutline({ data }: Props) {
             {data.pricing_range && (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#2A3A52', paddingVertical: 8 }}>
                 <Text style={{ fontSize: 10, color: colors.muted }}>Precio</Text>
-                <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.white }}>{data.pricing_range}</Text>
+                <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>{data.pricing_range}</Text>
               </View>
             )}
             {data.business_model && (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#2A3A52', paddingVertical: 8 }}>
                 <Text style={{ fontSize: 10, color: colors.muted }}>Modelo</Text>
-                <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.white }}>{data.business_model.toUpperCase()}</Text>
+                <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>{data.business_model.toUpperCase()}</Text>
               </View>
             )}
           </View>
         </View>
         {data.unit_economics && (
           <View style={{ flex: 1, backgroundColor: '#1E2B3E', borderRadius: 8, padding: 16 }}>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.amber, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Unit Economics</Text>
-            <Text style={{ fontSize: 10, color: colors.muted, marginBottom: 4 }}>CAC: <Text style={{ color: colors.white, fontFamily: 'Helvetica-Bold' }}>${data.unit_economics.cac.min}–{data.unit_economics.cac.max} {data.unit_economics.cac.currency}</Text></Text>
-            <Text style={{ fontSize: 10, color: colors.muted, marginBottom: 4 }}>LTV: <Text style={{ color: colors.white, fontFamily: 'Helvetica-Bold' }}>${data.unit_economics.ltv.min}–{data.unit_economics.ltv.max} {data.unit_economics.ltv.currency}</Text></Text>
-            <Text style={{ fontSize: 10, color: colors.muted, marginBottom: 4 }}>Ratio LTV/CAC: <Text style={{ color: data.unit_economics.ltvCacRatio.assessment === 'viable' ? colors.green : colors.amber, fontFamily: 'Helvetica-Bold' }}>{data.unit_economics.ltvCacRatio.value.toFixed(1)}x</Text></Text>
-            <Text style={{ fontSize: 10, color: colors.muted }}>Payback: <Text style={{ color: colors.white, fontFamily: 'Helvetica-Bold' }}>{data.unit_economics.paybackMonths.min}–{data.unit_economics.paybackMonths.max} meses</Text></Text>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.amber, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Unit Economics</Text>
+            <Text style={{ fontSize: 10, color: colors.muted, marginBottom: 4 }}>CAC: <Text style={{ color: colors.white, fontFamily: 'IBM Plex Sans Bold' }}>${data.unit_economics.cac.min}–{data.unit_economics.cac.max} {data.unit_economics.cac.currency}</Text></Text>
+            <Text style={{ fontSize: 10, color: colors.muted, marginBottom: 4 }}>LTV: <Text style={{ color: colors.white, fontFamily: 'IBM Plex Sans Bold' }}>${data.unit_economics.ltv.min}–{data.unit_economics.ltv.max} {data.unit_economics.ltv.currency}</Text></Text>
+            <Text style={{ fontSize: 10, color: colors.muted, marginBottom: 4 }}>Ratio LTV/CAC: <Text style={{ color: data.unit_economics.ltvCacRatio.assessment === 'viable' ? colors.green : colors.amber, fontFamily: 'IBM Plex Sans Bold' }}>{data.unit_economics.ltvCacRatio.value.toFixed(1)}x</Text></Text>
+            <Text style={{ fontSize: 10, color: colors.muted }}>Payback: <Text style={{ color: colors.white, fontFamily: 'IBM Plex Sans Bold' }}>{data.unit_economics.paybackMonths.min}–{data.unit_economics.paybackMonths.max} meses</Text></Text>
           </View>
         )}
         {!data.unit_economics && (
@@ -260,7 +260,7 @@ export function PitchDeckOutline({ data }: Props) {
         </View>
         {data.competitive_analysis?.competitive_advantage_suggestion && (
           <View style={{ backgroundColor: '#1E2B3E', borderRadius: 8, padding: 16 }}>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Oportunidad de Mercado</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Oportunidad de Mercado</Text>
             <Text style={{ fontSize: 10, color: '#CBD5E1', lineHeight: 1.5 }}>{data.competitive_analysis.competitive_advantage_suggestion}</Text>
           </View>
         )}
@@ -272,7 +272,7 @@ export function PitchDeckOutline({ data }: Props) {
       <SlideTitle>Tracción & Roadmap</SlideTitle>
       <View style={{ flexDirection: 'row', gap: 32 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: colors.white, marginBottom: 12 }}>Hitos</Text>
+          <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: colors.white, marginBottom: 12 }}>Hitos</Text>
           {(deck?.traction_milestones?.length ?? 0) > 0
             ? <BulletList items={deck!.traction_milestones} />
             : <Text style={{ fontSize: 10, color: colors.muted }}>Design Partners · LOIs · Beta users</Text>
@@ -280,7 +280,7 @@ export function PitchDeckOutline({ data }: Props) {
         </View>
         {data.fundraising_roadmap?.next_milestones && data.fundraising_roadmap.next_milestones.length > 0 && (
           <View style={{ flex: 1, backgroundColor: '#1E2B3E', borderRadius: 8, padding: 16 }}>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.green, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Próximos Hitos</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.green, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Próximos Hitos</Text>
             <BulletList items={data.fundraising_roadmap.next_milestones.slice(0, 4)} />
           </View>
         )}
@@ -298,19 +298,19 @@ export function PitchDeckOutline({ data }: Props) {
           <View style={{ flexDirection: 'row', gap: 16 }}>
             <View style={{ flex: 1, backgroundColor: colors.accent + '15', borderRadius: 8, padding: 14, alignItems: 'center' }}>
               <Text style={{ fontSize: 9, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Instrumento</Text>
-              <Text style={{ fontSize: 13, fontFamily: 'Helvetica-Bold', color: colors.white }}>
+              <Text style={{ fontSize: 13, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>
                 {data.fundraising_roadmap.recommended_instrument?.replace(/_/g, ' ').toUpperCase()}
               </Text>
             </View>
             <View style={{ flex: 1, backgroundColor: colors.accent + '15', borderRadius: 8, padding: 14, alignItems: 'center' }}>
               <Text style={{ fontSize: 9, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Ticket</Text>
-              <Text style={{ fontSize: 13, fontFamily: 'Helvetica-Bold', color: colors.white }}>
+              <Text style={{ fontSize: 13, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>
                 ${(data.fundraising_roadmap.suggested_ticket_size.min / 1000).toFixed(0)}K–${(data.fundraising_roadmap.suggested_ticket_size.max / 1000).toFixed(0)}K {data.fundraising_roadmap.suggested_ticket_size.currency}
               </Text>
             </View>
             <View style={{ flex: 1, backgroundColor: colors.accent + '15', borderRadius: 8, padding: 14, alignItems: 'center' }}>
               <Text style={{ fontSize: 9, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Readiness</Text>
-              <Text style={{ fontSize: 13, fontFamily: 'Helvetica-Bold', color: data.fundraising_roadmap.readiness_score >= 60 ? colors.green : colors.amber }}>
+              <Text style={{ fontSize: 13, fontFamily: 'IBM Plex Sans Bold', color: data.fundraising_roadmap.readiness_score >= 60 ? colors.green : colors.amber }}>
                 {data.fundraising_roadmap.readiness_score}/100
               </Text>
             </View>

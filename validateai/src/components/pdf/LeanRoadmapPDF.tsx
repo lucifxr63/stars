@@ -34,13 +34,13 @@ function SprintCard({ sprint, index }: { sprint: LeanSprint; index: number }) {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#fff' }}>{index + 1}</Text>
+            <Text style={{ fontSize: 10, fontFamily: 'IBM Plex Sans Bold', color: '#fff' }}>{index + 1}</Text>
           </View>
-          <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', color: colors.white }}>{sprint.name}</Text>
+          <Text style={{ fontSize: 12, fontFamily: 'IBM Plex Sans Bold', color: colors.white }}>{sprint.name}</Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ backgroundColor: accent + '22', borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3 }}>
-            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: accent }}>{sprint.duration_weeks} sem.</Text>
+            <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: accent }}>{sprint.duration_weeks} sem.</Text>
           </View>
           <View style={{ backgroundColor: '#2A3A52', borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3 }}>
             <Text style={{ fontSize: 8, color: colors.muted }}>{sprint.stack}</Text>
@@ -50,14 +50,14 @@ function SprintCard({ sprint, index }: { sprint: LeanSprint; index: number }) {
 
       {/* Goal */}
       <View style={{ backgroundColor: '#0F1728', borderRadius: 6, padding: 8, marginBottom: 10 }}>
-        <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Objetivo del Sprint</Text>
+        <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Objetivo del Sprint</Text>
         <Text style={{ fontSize: 9.5, color: '#CBD5E1', lineHeight: 1.5 }}>{sprint.goal}</Text>
       </View>
 
       {/* Two columns */}
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.green, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Must Have</Text>
+          <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.green, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Must Have</Text>
           {sprint.must_haves.map((f, i) => (
             <View key={i} style={styles.listItem}>
               <Text style={[styles.bullet, { color: colors.green }]}>✓</Text>
@@ -67,7 +67,7 @@ function SprintCard({ sprint, index }: { sprint: LeanSprint; index: number }) {
         </View>
         {sprint.nice_to_haves.length > 0 && (
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Nice to Have</Text>
+            <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Nice to Have</Text>
             {sprint.nice_to_haves.map((f, i) => (
               <View key={i} style={styles.listItem}>
                 <Text style={[styles.bullet, { color: colors.muted }]}>○</Text>
@@ -90,7 +90,7 @@ function TimelineBar({ sprints, total }: { sprints: LeanSprint[]; total: number 
   let x = 0;
   return (
     <View style={{ marginBottom: 20 }}>
-      <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+      <Text style={{ fontSize: 8, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
         Timeline — {total} semanas totales
       </Text>
       <Svg width={W} height={H}>
@@ -175,11 +175,11 @@ export function LeanRoadmapPDF({ data }: Props) {
 
           {/* Tools */}
           <View style={{ marginTop: 8 }}>
-            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Stack & Herramientas Recomendadas</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Stack & Herramientas Recomendadas</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {roadmap.recommended_tools.map((t, i) => (
                 <View key={i} style={{ backgroundColor: colors.accent + '22', borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4 }}>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: colors.accent }}>{t}</Text>
+                  <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.accent }}>{t}</Text>
                 </View>
               ))}
             </View>
