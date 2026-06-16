@@ -487,6 +487,16 @@ export function Profile() {
     load();
   }, []);
 
+  // Deep-link: si la URL trae #founder-profile (CTA desde el reporte), hace
+  // scroll a la sección una vez que el contenido terminó de cargar.
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const el = document.getElementById(hash);
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [loading]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0A0A0F]">
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-10 space-y-4">
@@ -513,7 +523,7 @@ export function Profile() {
             <ActivitySection userId={user.id} />
 
             {/* Perfil del Fundador */}
-            <section className="bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+            <section id="founder-profile" className="scroll-mt-24 bg-white dark:bg-[#12121A] rounded-3xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
               <div className="mb-5">
                 <h2 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Perfil del Fundador</h2>
                 <p className="text-xs text-gray-500 dark:text-[#8B8AA0] mt-1">
