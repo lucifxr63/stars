@@ -62,8 +62,8 @@ export function Onboarding() {
   });
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const meta = data.user?.user_metadata;
+    supabase.auth.getSession().then(({ data }) => {
+      const meta = data.session?.user?.user_metadata;
       const name = meta?.full_name ?? meta?.name ?? '';
       if (name) setForm((prev) => ({ ...prev, full_name: name }));
     });

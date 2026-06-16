@@ -35,7 +35,8 @@ export function GenerationStatusWidget() {
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     async function poll() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user || cancelled) return;
 
       const { data } = await supabase

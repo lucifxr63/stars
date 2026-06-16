@@ -97,7 +97,8 @@ export function Results() {
       }
 
       // Cargar consentimiento
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (user) {
         const { data: profile } = await supabase.from('profiles').select('training_consent').eq('id', user.id).single();
         if (profile) setConsent(!!profile.training_consent);

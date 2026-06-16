@@ -71,7 +71,8 @@ export function TractionTracker({ validationId }: Props) {
     if (!form.title.trim()) { toast.error('Agrega un título al hito'); return; }
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('No session');
 
       const { error } = await supabase.from('traction_events').insert({

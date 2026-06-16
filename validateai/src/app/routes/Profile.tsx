@@ -444,7 +444,8 @@ function PrivacySection({ userId, initialConsent }: { userId: string; initialCon
         {/* Cambiar contraseña */}
         <button
           onClick={async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { session } } = await supabase.auth.getSession();
+            const user = session?.user;
             if (!user?.email) return;
             await supabase.auth.resetPasswordForEmail(user.email, {
               redirectTo: `${window.location.origin}/reset-password`,
@@ -471,7 +472,8 @@ export function Profile() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user: u } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const u = session?.user;
       if (!u) { setLoading(false); return; }
       setUser(u);
       const { data } = await supabase

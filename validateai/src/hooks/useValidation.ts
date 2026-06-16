@@ -6,7 +6,8 @@ export function useValidation() {
   const store = useValidationStore();
 
   const createValidation = useCallback(async (): Promise<string> => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) throw new Error('Not authenticated');
 
     const { data, error } = await supabase

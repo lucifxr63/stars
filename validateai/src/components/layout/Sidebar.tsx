@@ -57,8 +57,8 @@ export function Sidebar({ onClose }: SidebarProps) {
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data.user;
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data.session?.user;
       if (!user) return;
       setIsAdmin(user.email === ADMIN_EMAIL);
       const name =

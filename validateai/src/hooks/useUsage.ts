@@ -32,7 +32,11 @@ export function useUsage(tier: UserTier): UseUsageResult {
   const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.free;
 
   const refetch = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    // getSession (local, sin red) en vez de getUser: evita retener el Web Lock
+    // de gotrue durante una llamada a /auth/v1/user. Con varios consumidores
+    // montando a la vez, getUser saturaba el lock → NavigatorLockAcquireTimeout.
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) return;
     const { data } = await supabase.rpc('get_usage_summary', { p_user_id: user.id });
     if (data) setUsage(data as UsageSummary);
