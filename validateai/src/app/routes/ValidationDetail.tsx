@@ -103,6 +103,13 @@ interface ValidationFull {
   idea_problem: string | null;
   traction_status: string | null;
   team_composition: string | null;
+  founder_context: {
+    yearsInIndustry?: number | null;
+    personallyFacedProblem?: boolean | null;
+    commitment_level?: string | null;
+    customer_interviews?: string | null;
+    unfair_advantage?: string | null;
+  } | null;
   share_token: string | null;
   share_visibility: Record<string, boolean> | null;
   created_at: string;
@@ -269,6 +276,7 @@ export function ValidationDetail() {
   const [showPivotModal, setShowPivotModal] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [generatingAdvanced, setGeneratingAdvanced] = useState(false);
+  const [regeneratingFounder, setRegeneratingFounder] = useState(false);
   const [advancedProgress, setAdvancedProgress] = useState<string>('');
   const [generatingVerdict, setGeneratingVerdict] = useState(false);
   // Persiste en sessionStorage por validationId para sobrevivir navegaciones dentro de la sesión
@@ -618,42 +626,77 @@ export function ValidationDetail() {
     }
   };
 
+  /** Contexto base compartido por los análisis avanzados (incluye datos del fundador). */
+  const buildAdvancedCtx = (): Record<string, unknown> => ({
+    idea_name: data!.idea_name,
+    idea_description: data!.idea_description,
+    idea_industry: data!.idea_industry,
+    target_country: data!.target_country,
+    target_region: data!.target_region ?? null,
+    business_model: data!.business_model,
+    business_stage: data!.business_stage,
+    pricing_range: data!.pricing_range,
+    known_competitors: data!.known_competitors ?? [],
+    customer_segment: data!.customer_segment,
+    customer_pain_points: data!.customer_pain_points,
+    value_proposition: data!.value_proposition,
+    differentiator: data!.differentiator,
+    mvp_type: data!.mvp_type,
+    mvp_features: data!.mvp_features,
+    questions_answers: data!.questions_answers,
+    // Fix B: incluir los datos del fundador del wizard para que founder_fit
+    // (y buildMarketContext) tengan señal real en lugar de devolver todo en 0.
+    idea_problem: data!.idea_problem,
+    current_solution: data!.current_solution,
+    acquisition_channel: data!.acquisition_channel,
+    founder_context: data!.founder_context,
+    team_composition: data!.team_composition,
+    tech_level: data!.tech_level,
+    traction_status: data!.traction_status,
+  });
+
+  /** TS-106: enriquece el contexto de founder_fit con el perfil LinkedIn editado. */
+  const buildFounderCtx = (): Record<string, unknown> => {
+    const founderCtx: Record<string, unknown> = buildAdvancedCtx();
+    if (founderProfile) {
+      founderCtx.founder_linkedin_url = founderProfile.linkedin_url;
+      founderCtx.founder_full_name = founderProfile.full_name;
+      founderCtx.founder_headline = founderProfile.headline;
+      founderCtx.founder_summary_bio = founderProfile.summary_bio;
+      founderCtx.founder_industry_years = founderProfile.industry_expertise_years;
+      founderCtx.founder_skills = founderProfile.skills;
+      founderCtx.founder_work_experience = founderProfile.work_experience;
+      founderCtx.founder_competency_scores = founderProfile.competency_scores;
+    }
+    return founderCtx;
+  };
+
+  /** Fuerza el recálculo de founder_fit aunque ya exista (post-fix de contexto). */
+  const handleRegenerateFounderFit = async () => {
+    if (!data) return;
+    setRegeneratingFounder(true);
+    try {
+      const result = await callAI<FounderFit>(data.id, 6, 'founder_fit', buildFounderCtx());
+      if (result) {
+        setData((prev) => (prev ? { ...prev, founder_fit: result } : prev));
+        toast.success('Founder Fit recalculado');
+      } else {
+        toast.error('No se pudo recalcular el Founder Fit.');
+      }
+    } catch {
+      toast.error('No se pudo recalcular el Founder Fit.');
+    } finally {
+      setRegeneratingFounder(false);
+    }
+  };
+
   /** Genera los análisis avanzados (riesgo, unit economics, founder fit, señales) */
   const handleGenerateAdvanced = async () => {
     if (!data) return;
     setGeneratingAdvanced(true);
     try {
-      const ctx: Record<string, unknown> = {
-        idea_name: data.idea_name,
-        idea_description: data.idea_description,
-        idea_industry: data.idea_industry,
-        target_country: data.target_country,
-        target_region: data.target_region ?? null,
-        business_model: data.business_model,
-        business_stage: data.business_stage,
-        pricing_range: data.pricing_range,
-        known_competitors: data.known_competitors ?? [],
-        customer_segment: data.customer_segment,
-        customer_pain_points: data.customer_pain_points,
-        value_proposition: data.value_proposition,
-        differentiator: data.differentiator,
-        mvp_type: data.mvp_type,
-        mvp_features: data.mvp_features,
-        questions_answers: data.questions_answers,
-      };
-
-      // TS-106: enriquecer contexto founder_fit con datos editados de founder_profiles
-      const founderCtx: Record<string, unknown> = { ...ctx };
-      if (founderProfile) {
-        founderCtx.founder_linkedin_url = founderProfile.linkedin_url;
-        founderCtx.founder_full_name = founderProfile.full_name;
-        founderCtx.founder_headline = founderProfile.headline;
-        founderCtx.founder_summary_bio = founderProfile.summary_bio;
-        founderCtx.founder_industry_years = founderProfile.industry_expertise_years;
-        founderCtx.founder_skills = founderProfile.skills;
-        founderCtx.founder_work_experience = founderProfile.work_experience;
-        founderCtx.founder_competency_scores = founderProfile.competency_scores;
-      }
+      const ctx: Record<string, unknown> = buildAdvancedCtx();
+      const founderCtx: Record<string, unknown> = buildFounderCtx();
 
       const advancedTaskDefs: { flag: boolean; label: string; fn: () => Promise<unknown> }[] = [
         { flag: missingAdvanced.risk, label: 'Análisis de Riesgos', fn: () => callAI<RiskAnalysis>(data.id, 6, 'risk_analysis', ctx) },
@@ -1373,6 +1416,8 @@ export function ValidationDetail() {
                             data={data.founder_fit}
                             onGenerate={handleGenerateAdvanced}
                             generating={generatingAdvanced}
+                            onRegenerate={handleRegenerateFounderFit}
+                            regenerating={regeneratingFounder}
                           />
                           <VerdictMarketTiming
                             data={data.market_signals}

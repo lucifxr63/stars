@@ -87,6 +87,69 @@ function buildMarketContext(ctx: Record<string, unknown>): string {
 - Ventaja diferencial del founder (unfair advantage): ${(ctx.founder_context as Record<string,unknown>)?.unfair_advantage ?? 'No especificado'}`;
 }
 
+// Bloque dedicado para founder_fit. Surface explícito de TODOS los campos del
+// fundador (autoreporte del wizard + perfil LinkedIn del Sprint 1.5) para que el
+// LLM no tenga que cazarlos dentro del JSON anidado y devuelva un score real.
+function buildFounderContext(ctx: Record<string, unknown>): string {
+  const fc = (ctx.founder_context ?? {}) as Record<string, unknown>;
+  const pick = (...vals: unknown[]) =>
+    vals.find((v) => v !== undefined && v !== null && v !== '') ?? 'No especificado';
+
+  const lines: string[] = [
+    'DATOS DEL FUNDADOR (autoreportados en el wizard — fuente base):',
+    `- ¿Vivió el problema en carne propia? (personallyFacedProblem): ${pick(fc.personallyFacedProblem, ctx.personallyFacedProblem)}`,
+    `- Años de experiencia en la industria (yearsInIndustry): ${pick(fc.yearsInIndustry, ctx.yearsInIndustry)}`,
+    `- Composición del equipo (team_composition): ${pick(ctx.team_composition, fc.team_composition)}`,
+    `- Nivel técnico del equipo (tech_level): ${pick(ctx.tech_level, fc.tech_level)}`,
+    `- Estado de tracción (traction_status): ${pick(ctx.traction_status, fc.traction_status)}`,
+    `- Dedicación al proyecto (commitment_level): ${pick(fc.commitment_level, ctx.commitment_level)}`,
+    `- Entrevistas con clientes (customer_interviews): ${pick(fc.customer_interviews, ctx.customer_interviews)}`,
+    `- Ventaja diferencial (unfair_advantage): ${pick(fc.unfair_advantage, ctx.unfair_advantage)}`,
+  ];
+
+  const hasLinkedIn =
+    ctx.founder_linkedin_url || ctx.founder_full_name || ctx.founder_competency_scores;
+
+  if (hasLinkedIn) {
+    lines.push('');
+    lines.push(
+      'PERFIL LINKEDIN VERIFICADO (Sprint 1.5 — señal de MAYOR confianza que el autoreporte;',
+      'prioriza estos datos cuando entren en conflicto con el wizard):',
+      `- Nombre: ${ctx.founder_full_name ?? 'No disponible'}`,
+      `- Headline: ${ctx.founder_headline ?? 'No disponible'}`,
+      `- Bio: ${ctx.founder_summary_bio ?? 'No disponible'}`,
+      `- Años en la industria (LinkedIn): ${ctx.founder_industry_years ?? 'No disponible'}`,
+    );
+    if (Array.isArray(ctx.founder_skills) && ctx.founder_skills.length) {
+      lines.push(`- Skills: ${(ctx.founder_skills as string[]).join(', ')}`);
+    }
+    if (Array.isArray(ctx.founder_work_experience) && ctx.founder_work_experience.length) {
+      lines.push(`- Experiencia laboral: ${JSON.stringify(ctx.founder_work_experience)}`);
+    }
+    if (ctx.founder_competency_scores) {
+      lines.push(
+        `- Competency scores pre-calculados desde LinkedIn (0-100): ${JSON.stringify(ctx.founder_competency_scores)}.`,
+        '  Úsalos como ancla: visionComercial≈networkStrength, capacidadTecnica≈technicalCapability,',
+        '  liderazgo+resilienciaOperativa≈trackRecord, experienciaIndustria≈industryExperience.',
+      );
+    }
+  } else {
+    lines.push('');
+    lines.push('(El fundador NO conectó LinkedIn — evalúa solo con el autoreporte del wizard.)');
+  }
+
+  return lines.join('\n');
+}
+
+// Construye el contenido del mensaje de usuario. Para founder_fit antepone el
+// bloque explícito de fundador; el resto de prompts mantienen el comportamiento previo.
+function buildUserContent(promptType: PromptType, context: Record<string, unknown>): string {
+  const base = `${buildMarketContext(context)}\n\n${JSON.stringify(context)}`;
+  return promptType === 'founder_fit'
+    ? `${buildFounderContext(context)}\n\n${base}`
+    : base;
+}
+
 function extractJSON(text: string): string {
   const trimmed = text.trim();
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) return trimmed;
@@ -355,6 +418,16 @@ Valores válidos para your_cac_vs_benchmark / your_ltv_vs_benchmark: "below" | "
   founder_fit: `Eres un evaluador de startups. EvalÃºa quÃ© tan bien posicionado estÃ¡ el fundador para ejecutar esta idea especÃ­fica.
 IMPORTANTE: Responde siempre en espaÃ±ol.
 Score de 0-100 donde 100 = fit perfecto.
+
+FUENTES DE DATOS: el mensaje incluye un bloque "DATOS DEL FUNDADOR" con los campos
+autoreportados en el wizard y, si está presente, un bloque "PERFIL LINKEDIN VERIFICADO".
+Cuando el perfil LinkedIn esté disponible, trátalo como la fuente de MAYOR confianza:
+usa sus competency_scores pre-calculados como ancla de cada dimensión y su experiencia
+laboral real para validar o corregir el autoreporte. Si NO hay LinkedIn, evalúa con el
+autoreporte del wizard.
+REGLA ANTI-CERO: solo asigna 0 a una dimensión si literalmente NO hay ningún dato para
+estimarla. Si existe cualquier señal (años, equipo, tracción, problema vivido), produce
+un score honesto > 0. Nunca devuelvas las 5 dimensiones en 0 cuando hay datos del wizard.
 
 Evalúa estas 5 dimensiones (score 0-100 cada una):
 
@@ -1229,7 +1302,7 @@ async function callAnthropic(
     messages: [
       {
         role: 'user',
-        content: `${buildMarketContext(context)}\n\n${JSON.stringify(context)}`,
+        content: buildUserContent(promptType, context),
       },
     ],
   };
@@ -1303,7 +1376,7 @@ async function callOpenAI(
         },
         {
           role: 'user',
-          content: `${buildMarketContext(context)}\n\n${JSON.stringify(context)}`,
+          content: buildUserContent(promptType, context),
         },
       ],
       response_format: { type: 'json_object' },

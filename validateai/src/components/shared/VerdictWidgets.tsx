@@ -1,4 +1,4 @@
-﻿import { CheckCircle2, XCircle, UserCheck, Clock, HelpCircle, AlertTriangle } from 'lucide-react';
+﻿import { CheckCircle2, XCircle, UserCheck, Clock, HelpCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import type { FounderFit, MarketSignals } from '@/types/validation';
 import { EmptyStateAI } from '@/components/shared/EmptyStateAI';
 
@@ -54,10 +54,14 @@ export function VerdictFounderFit({
   data,
   onGenerate,
   generating,
+  onRegenerate,
+  regenerating,
 }: {
   data?: FounderFit | null;
   onGenerate?: () => void;
   generating?: boolean;
+  onRegenerate?: () => void;
+  regenerating?: boolean;
 }) {
   if (!data) {
     return (
@@ -87,16 +91,32 @@ export function VerdictFounderFit({
           <UserCheck className="w-5 h-5 text-gray-400" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Founder Fit</h3>
         </div>
-        <div className={`text-xs font-black uppercase tracking-wider ${textColor(data.score)} bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-100 dark:border-white/10`}>
-          {fitLabel(data.score)} ({data.score})
+        <div className="flex items-center gap-2">
+          {onRegenerate && (
+            <button
+              type="button"
+              onClick={onRegenerate}
+              disabled={regenerating}
+              title="Recalcular Founder Fit con los datos del fundador"
+              className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-[#8B8AA0] hover:text-[#38D5E3] disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
+              {regenerating ? 'Recalculando…' : 'Regenerar'}
+            </button>
+          )}
+          <div className={`text-xs font-black uppercase tracking-wider ${textColor(data.score)} bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-100 dark:border-white/10`}>
+            {fitLabel(data.score)} ({data.score})
+          </div>
         </div>
       </div>
 
       {noFounderData ? (
         <div className="flex flex-col items-center gap-2 py-3 text-center">
           <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
-            Sin datos del fundador para evaluar. Conecta tu LinkedIn en la pestaña{' '}
-            <strong className="text-[#38D5E3]">Inversión</strong> para obtener un score real.
+            Sin datos del fundador para evaluar. Completa el{' '}
+            <strong className="text-[#38D5E3]">Paso Fundador</strong> del wizard (experiencia,
+            equipo, tracción) y vuelve a generar el análisis. Opcional: conecta tu LinkedIn en
+            la pestaña <strong className="text-[#38D5E3]">Inversión</strong> para enriquecer el score.
           </p>
         </div>
       ) : (
