@@ -46,6 +46,7 @@ import type {
   RiskAnalysis,
   UnitEconomics,
   FounderFit,
+  FounderProfileData,
   MarketSignals,
   GovernanceAssessment,
   FundraisingRoadmap,
@@ -302,6 +303,7 @@ export function ValidationDetail() {
   // Agnóstico al tier — depende solo del modo de análisis, no del plan de suscripción.
   const isQuickMode = data?.validation_mode === 'quick';
   const founderProfile = useValidationStore((s) => s.founderProfile);
+  const setFounderProfile = useValidationStore((s) => s.setFounderProfile);
   const [reportFeedback, setReportFeedback] = useState<string | null>(null);
   const sections = getUserSections(tier);
   const { mentors } = useMentors(data?.idea_description);
@@ -362,9 +364,22 @@ export function ValidationDetail() {
         .limit(1)
         .maybeSingle();
       if (log) setAgentLog(log as typeof agentLog);
+
+      // Híbrido Founder Fit: hidratar el perfil de fundador a nivel usuario desde la DB.
+      // Es la fuente de identidad del fundador (persiste entre validaciones) y la ÚNICA
+      // señal disponible en el flujo premium, que no tiene Paso Fundador en el wizard.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: fp } = await supabase
+          .from('founder_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (fp) setFounderProfile(fp as FounderProfileData);
+      }
     };
     fetch();
-  }, [id, navigate]);
+  }, [id, navigate, setFounderProfile]);
 
   // Auto-genera el playbook la primera vez que el usuario ve Veredicto o Validación.
   // _fallo_elegante: true indica que el RAG no tuvo chunks suficientes (vault vacío /

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, Tooltip,
@@ -709,7 +709,31 @@ function FounderDashboard({
 export function FounderProfileTab() {
   const { founderProfile, setFounderProfile } = useValidationStore();
   const [extracting, setExtracting] = useState(false);
+  const [hydrating, setHydrating] = useState(!founderProfile);
   const [extractError, setExtractError] = useState<string | null>(null);
+
+  // Hidrata el perfil persistido desde la DB si el store está vacío (sesión nueva,
+  // otro dispositivo o store reseteado). Evita mostrar el EmptyState cuando el
+  // usuario ya tiene un perfil guardado.
+  useEffect(() => {
+    if (founderProfile) { setHydrating(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { if (!cancelled) setHydrating(false); return; }
+      const { data: fp } = await supabase
+        .from('founder_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        if (fp) setFounderProfile(fp as FounderProfileData);
+        setHydrating(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleExtract = async (linkedinUrl: string) => {
     setExtracting(true);
@@ -764,7 +788,7 @@ export function FounderProfileTab() {
     setFounderProfile(updated);
   };
 
-  if (extracting) return <FounderSkeleton />;
+  if (extracting || hydrating) return <FounderSkeleton />;
 
   if (!founderProfile) {
     return (
