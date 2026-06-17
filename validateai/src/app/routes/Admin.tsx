@@ -2,7 +2,7 @@
 const ContentStudio = lazy(() => import('@/components/admin/ContentStudio').then(m => ({ default: m.ContentStudio })));
 const FigmaAdminPanel = lazy(() => import('@/components/figma/FigmaAdminPanel').then(m => ({ default: m.FigmaAdminPanel })));
 const SitemapPanel = lazy(() => import('@/components/admin/SitemapPanel').then(m => ({ default: m.SitemapPanel })));
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -13,7 +13,7 @@ import { setPreviewTier, getPreviewTier, type UserTier } from '@/hooks/useUserTi
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
 type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
 
 interface Profile {
@@ -77,6 +77,17 @@ interface AiInteraction {
   model: string;
   tokens_used: number | null;
   created_at: string;
+}
+
+interface ReportFeedbackRow {
+  id: string;
+  validation_id: string;
+  rating: number | null;
+  section: string;
+  dimensions_wrong: string[] | null;
+  free_text: string | null;
+  created_at: string;
+  validation: { idea_name: string | null } | null;
 }
 
 function fmt(date: string) {
@@ -182,6 +193,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
   },
   {
+    id: 'feedback', label: 'Feedback',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+  },
+  {
     id: 'health', label: 'Sistema',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>,
   },
@@ -238,6 +253,7 @@ export function Admin() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [validations, setValidations] = useState<Validation[]>([]);
   const [aiInteractions, setAiInteractions] = useState<AiInteraction[]>([]);
+  const [feedback, setFeedback] = useState<ReportFeedbackRow[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -275,7 +291,7 @@ export function Admin() {
     if (search.trim()) valQuery = valQuery.ilike('idea_name', `%${search.trim()}%`);
     valQuery = valQuery.range(vFrom, vFrom + PAGE_SIZE - 1);
 
-    const [{ data: profs, count: pCount }, { data: vals, count: vCount }, { data: ais, count: aCount }] = await Promise.all([
+    const [{ data: profs, count: pCount }, { data: vals, count: vCount }, { data: ais, count: aCount }, { data: fb }] = await Promise.all([
       supabase.from('profiles')
         .select('id, full_name, avatar_url, tier, created_at, validations(count)', { count: 'exact' })
         .order('created_at', { ascending: false })
@@ -285,6 +301,10 @@ export function Admin() {
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(aFrom, aFrom + PAGE_SIZE - 1),
+      supabase.from('report_feedback')
+        .select('id, validation_id, rating, section, dimensions_wrong, free_text, created_at, validation:validations(idea_name)')
+        .order('created_at', { ascending: false })
+        .limit(100),
     ]);
 
     setProfiles((profs ?? []).map(p => ({
@@ -296,6 +316,7 @@ export function Admin() {
     setValTotal(vCount ?? 0);
     setAiInteractions(ais ?? []);
     setAiTotal(aCount ?? 0);
+    setFeedback((fb ?? []) as unknown as ReportFeedbackRow[]);
     setLastRefresh(new Date());
     setLoading(false);
   }, []);
@@ -564,6 +585,7 @@ export function Admin() {
               {tab === 'users' && `${profiles.length} usuarios · ${usersThisWeek} esta semana`}
               {tab === 'validations' && `${completed.length} completadas · ${inProgress.length} en progreso`}
               {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
+              {tab === 'feedback' && `${feedback.length} respuestas · refinamiento de RAG`}
               {tab === 'health' && `Funnel · Tiers · Prompts · Modelos`}
               {tab === 'finanzas' && `MRR $${mrr.toFixed(0)} · Gastos $${totalCostMonthly.toFixed(0)}/mes · Margen ${grossMargin}%`}
               {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
@@ -1123,6 +1145,93 @@ export function Admin() {
               </Card>
             </>
           )}
+
+          {/* ══ FEEDBACK ═══════════════════════════════════════════════════ */}
+          {tab === 'feedback' && (() => {
+            const rated = feedback.filter(f => f.rating != null);
+            const avgRating = rated.length
+              ? (rated.reduce((s, f) => s + (f.rating ?? 0), 0) / rated.length).toFixed(1)
+              : '—';
+            const lowRatings = rated.filter(f => (f.rating ?? 5) <= 2).length;
+            const dimCounts = feedback
+              .flatMap(f => f.dimensions_wrong ?? [])
+              .reduce<Record<string, number>>((acc, d) => { acc[d] = (acc[d] ?? 0) + 1; return acc; }, {});
+            const topDims = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+            const ratingEmoji = (r: number | null) =>
+              r == null ? '—' : ['😖', '🙁', '😐', '🙂', '🤩'][r - 1] ?? String(r);
+            return (
+              <>
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+                  <KPI label="Respuestas" value={feedback.length} accent="#0EB5C6"
+                    icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
+                  />
+                  <KPI label="Rating promedio" value={avgRating} sub={`${rated.length} con nota`} accent="#10b981"
+                    icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}
+                  />
+                  <KPI label="Ratings bajos (≤2)" value={lowRatings} sub="prioridad de revisión" accent="#ef4444"
+                    icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
+                  />
+                  <KPI label="Correcciones" value={Object.values(dimCounts).reduce((a, b) => a + b, 0)} sub="señales para el RAG" accent="#f59e0b"
+                    icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                  />
+                </div>
+
+                {topDims.length > 0 && (
+                  <Card title="Qué se corrige más (señal para refinar el RAG)">
+                    <div className="flex flex-wrap gap-2">
+                      {topDims.map(([dim, n]) => (
+                        <span key={dim} className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold">
+                          {dim} · {n}
+                        </span>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                <Card title="Feedback reciente">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 dark:border-white/5">
+                          {['Validación', 'Rating', 'Sección', 'Correcciones', 'Comentario', 'Fecha'].map(h => (
+                            <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-6">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {feedback.map(f => (
+                          <tr key={f.id} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition align-top">
+                            <td className="py-3.5 pr-6">
+                              <Link to={`/results/${f.validation_id}`} className="text-xs font-medium text-[#0EB5C6] hover:underline">
+                                {f.validation?.idea_name ?? `${f.validation_id.slice(0, 8)}…`}
+                              </Link>
+                            </td>
+                            <td className="py-3.5 pr-6 text-lg">{ratingEmoji(f.rating)}</td>
+                            <td className="py-3.5 pr-6">
+                              <span className="text-xs px-2 py-1 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] font-mono">{f.section}</span>
+                            </td>
+                            <td className="py-3.5 pr-6 max-w-[14rem]">
+                              <div className="flex flex-wrap gap-1">
+                                {(f.dimensions_wrong ?? []).map((d, i) => (
+                                  <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">{d}</span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-3.5 pr-6 max-w-[18rem] text-xs text-gray-600 dark:text-[#C4C4D4]">{f.free_text ?? '—'}</td>
+                            <td className="py-3.5 text-xs text-gray-400 whitespace-nowrap">{fmt(f.created_at)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {feedback.length === 0 && (
+                      <p className="text-sm text-gray-300 text-center py-12">Sin feedback aún</p>
+                    )}
+                  </div>
+                </Card>
+              </>
+            );
+          })()}
+
           {/* ══ SISTEMA / HEALTH ══════════════════════════════════════════════ */}
           {tab === 'health' && (
             <>
