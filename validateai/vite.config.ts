@@ -25,6 +25,22 @@ export default defineConfig({
       '@react-pdf/renderer',
     ],
   },
+  build: {
+    // Los chunks grandes (react-pdf ~1.4MB, ChileMarketMap/three ~931kB) son lazy
+    // a propósito (await import / lazy route) — no van en el bundle inicial.
+    chunkSizeWarningLimit: 1500,
+    rolldownOptions: {
+      output: {
+        // Vendor estable: el framework core rara vez cambia → su hash se mantiene
+        // entre deploys de la app → mejor cache-hit en visitas recurrentes.
+        manualChunks: (id: string) => {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('react-router') || id.includes('react-dom') || /[\\/]react[\\/]/.test(id)) return 'react-vendor';
+          if (id.includes('@supabase')) return 'supabase-vendor';
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'node',
