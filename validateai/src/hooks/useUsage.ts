@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { UserTier } from '@/hooks/useUserTier';
-import { TIER_LIMITS } from '@/lib/tierLimits';
+import { TIER_LIMITS, resolveLimits } from '@/lib/tierLimits';
 
 export { TIER_LIMITS };
 
@@ -19,6 +19,10 @@ interface UsageSummary {
   total:     number;
   expensive: number;
   reset_at:  string;
+  // Límites devueltos por el servidor (fuente de verdad — RPC tier_limit).
+  // Opcionales por retrocompatibilidad: si faltan, caemos al constant TIER_LIMITS.
+  total_limit?:     number;
+  expensive_limit?: number;
 }
 
 export interface UseUsageResult {
@@ -29,7 +33,8 @@ export interface UseUsageResult {
 
 export function useUsage(tier: UserTier): UseUsageResult {
   const [usage, setUsage] = useState<UsageSummary | null>(null);
-  const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.free;
+  // El servidor es la fuente de verdad; TIER_LIMITS es solo el fallback pre-carga.
+  const limits = resolveLimits(usage, tier);
 
   const refetch = useCallback(async () => {
     // getSession (local, sin red) en vez de getUser: evita retener el Web Lock
