@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Cron diario: obtiene el valor actual de la UF desde mindicador.cl (libre, sin auth)
 // y lo persiste en economic_knowledge (provider='CMF', indicator='uf_diario').
+// (Touch: validación del pipeline CI deno-test + auto-deploy de edge functions.)
 // Toda la aplicación lee de esa fila en lugar de llamar APIs externas en el hot path.
 
 serve(async (_req) => {
