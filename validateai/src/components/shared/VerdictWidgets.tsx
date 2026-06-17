@@ -57,6 +57,7 @@ export function VerdictFounderFit({
   onRegenerate,
   regenerating,
   onCompleteProfile,
+  hasFounderProfile,
 }: {
   data?: FounderFit | null;
   onGenerate?: () => void;
@@ -64,6 +65,7 @@ export function VerdictFounderFit({
   onRegenerate?: () => void;
   regenerating?: boolean;
   onCompleteProfile?: () => void;
+  hasFounderProfile?: boolean;
 }) {
   if (!data) {
     return (
@@ -114,20 +116,51 @@ export function VerdictFounderFit({
 
       {noFounderData ? (
         <div className="flex flex-col items-center gap-3 py-3 text-center">
-          <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
-            Sin datos del fundador para evaluar. Completa tu{' '}
-            <strong className="text-[#38D5E3]">Perfil de Fundador</strong> (experiencia, equipo,
-            track record o LinkedIn) y vuelve a generar el análisis para obtener un score real.
-          </p>
-          {onCompleteProfile && (
-            <button
-              type="button"
-              onClick={onCompleteProfile}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#38D5E3] text-[#0A0A0F] text-xs font-bold hover:bg-[#2bc3d1] transition-colors shadow-sm"
-            >
-              <UserPlus className="w-4 h-4" />
-              Completar perfil de fundador
-            </button>
+          {hasFounderProfile ? (
+            <>
+              <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
+                Tu <strong className="text-[#38D5E3]">Perfil de Fundador</strong> ya está creado,
+                pero este análisis se generó sin esos datos. Recalcula para obtener tu score real.
+              </p>
+              {onRegenerate && (
+                <button
+                  type="button"
+                  onClick={onRegenerate}
+                  disabled={regenerating}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#38D5E3] text-[#0A0A0F] text-xs font-bold hover:bg-[#2bc3d1] disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
+                  {regenerating ? 'Recalculando…' : 'Regenerar análisis'}
+                </button>
+              )}
+              {onCompleteProfile && (
+                <button
+                  type="button"
+                  onClick={onCompleteProfile}
+                  className="text-[11px] font-semibold text-gray-400 hover:text-[#38D5E3] underline underline-offset-2 transition-colors"
+                >
+                  Editar perfil de fundador
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
+                Sin datos del fundador para evaluar. Completa tu{' '}
+                <strong className="text-[#38D5E3]">Perfil de Fundador</strong> (experiencia, equipo,
+                track record o LinkedIn) y vuelve a generar el análisis para obtener un score real.
+              </p>
+              {onCompleteProfile && (
+                <button
+                  type="button"
+                  onClick={onCompleteProfile}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#38D5E3] text-[#0A0A0F] text-xs font-bold hover:bg-[#2bc3d1] transition-colors shadow-sm"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Completar perfil de fundador
+                </button>
+              )}
+            </>
           )}
         </div>
       ) : (
