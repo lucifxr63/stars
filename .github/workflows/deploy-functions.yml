@@ -40,16 +40,23 @@ jobs:
         run: |
           changed=$(git diff --name-only HEAD^ HEAD -- validateai/supabase/functions || true)
           echo "Cambios:"; echo "$changed"
-          # Funciones (dir de primer nivel bajo functions/, excluyendo _shared).
-          funcs=$(echo "$changed" \
-            | sed -nE 's#^validateai/supabase/functions/([^/]+)/.*#\1#p' \
-            | grep -v '^_shared$' | sort -u | tr '\n' ' ')
-          # Si cambió _shared, muchas funciones lo importan → desplegar TODAS.
+          # Funciones cambiadas directamente (dir de primer nivel bajo functions/).
+          cands=$(echo "$changed" \
+            | sed -nE 's#^validateai/supabase/functions/([^/]+)/.*#\1#p' | sort -u)
+          # Si cambió _shared, agregar SOLO las funciones que lo importan (no todas).
           if echo "$changed" | grep -q 'functions/_shared/'; then
-            echo "Cambió _shared → desplegar todas las funciones."
-            funcs=$(ls -d validateai/supabase/functions/*/ \
-              | sed -E 's#.*/functions/([^/]+)/#\1#' | grep -v '^_shared$' | tr '\n' ' ')
+            echo "Cambió _shared → agregando funciones que lo importan."
+            importers=$(grep -rl '\.\./_shared/' validateai/supabase/functions/*/index.ts 2>/dev/null \
+              | sed -E 's#.*/functions/([^/]+)/.*#\1#')
+            cands=$(printf '%s\n%s\n' "$cands" "$importers" | sort -u)
           fi
+          # Filtrar: solo dirs con index.ts (excluye _shared, shared-schemas y otros
+          # módulos sin entrypoint que no son funciones desplegables).
+          funcs=""
+          for f in $cands; do
+            [ -n "$f" ] && [ -f "validateai/supabase/functions/$f/index.ts" ] && funcs="$funcs $f"
+          done
+          funcs=$(echo "$funcs" | sed 's/^ *//;s/ *$//')
           echo "funcs=$funcs" >> "$GITHUB_OUTPUT"
           echo "A desplegar: $funcs"
 
