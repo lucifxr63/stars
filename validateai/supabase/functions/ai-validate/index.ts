@@ -7,6 +7,7 @@ import { type PromptType, SYSTEM_PROMPTS, PLAYBOOK_MASTER_PROMPT } from '../_sha
 import { CAC_MULTIPLIERS_BY_CHANNEL, SECTOR_BENCHMARKS } from '../_shared/benchmarks.ts';
 import { retrieveRelevantCompetitors, retrieveRagPlaybooks, retrieveHybridGraphRAG, checkAnalysisCache, saveAnalysisCache, RAG_TAGS_BY_PROMPT } from '../_shared/rag.ts';
 import { callAI, preprocessIdea } from '../_shared/aiProvider.ts';
+import { validateOutput } from '../_shared/outputSchemas.ts';
 import type { StructuredIdea, AIRequest } from '../_shared/types.ts';
 
 // â”€â”€ Env vars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -281,6 +282,22 @@ serve(async (req) => {
         data_freshness: bralidusResult.context.dataFreshness,
         cached:         bralidusResult.cached,
       };
+    }
+
+    // T3.1 — Validación observe-only de la salida del LLM. Si el shape no cumple el
+    // schema (alucinación de estructura) lo registramos, pero NO bloqueamos: persiste
+    // igual para no romper al usuario por un falso positivo. Con la telemetría se
+    // decide luego si endurecer (rechazar/reintentar).
+    const outputCheck = validateOutput(prompt_type, parsed);
+    if (!outputCheck.ok) {
+      console.error(`[ai-output-invalid] ${prompt_type}: ${outputCheck.error}`);
+      phCapture('ai_output_invalid', user.id, {
+        prompt_type,
+        tier: userTier,
+        model,
+        issue: outputCheck.error,
+        validation_id: validation_id ?? null,
+      });
     }
 
     phCapture('ai_prompt_called', user.id, {
