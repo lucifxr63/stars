@@ -90,6 +90,25 @@ interface ReportFeedbackRow {
   validation: { idea_name: string | null } | null;
 }
 
+// Digest server-side (RPC get_feedback_digest) — agrega TODO el histórico.
+interface FeedbackDigest {
+  total: number;
+  avg_rating: number | null;
+  low_count: number;
+  corrections: number;
+  by_dimension: { dimension: string; count: number }[];
+  by_section: { section: string; count: number; avg_rating: number | null; low_count: number }[];
+  recent_low: {
+    validation_id: string;
+    idea_name: string | null;
+    rating: number | null;
+    dimensions_wrong: string[] | null;
+    free_text: string | null;
+    section: string;
+    created_at: string;
+  }[];
+}
+
 function fmt(date: string) {
   return new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
@@ -254,6 +273,7 @@ export function Admin() {
   const [validations, setValidations] = useState<Validation[]>([]);
   const [aiInteractions, setAiInteractions] = useState<AiInteraction[]>([]);
   const [feedback, setFeedback] = useState<ReportFeedbackRow[]>([]);
+  const [feedbackDigest, setFeedbackDigest] = useState<FeedbackDigest | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -317,6 +337,11 @@ export function Admin() {
     setAiInteractions(ais ?? []);
     setAiTotal(aCount ?? 0);
     setFeedback((fb ?? []) as unknown as ReportFeedbackRow[]);
+    // Digest agregado server-side (todo el histórico). Best-effort: si falla, la UI
+    // cae a la agregación client-side sobre las filas cargadas.
+    supabase.rpc('get_feedback_digest').then(({ data: dg, error: dgErr }) => {
+      if (!dgErr && dg) setFeedbackDigest(dg as unknown as FeedbackDigest);
+    });
     setLastRefresh(new Date());
     setLoading(false);
   }, []);
@@ -1156,22 +1181,33 @@ export function Admin() {
             const dimCounts = feedback
               .flatMap(f => f.dimensions_wrong ?? [])
               .reduce<Record<string, number>>((acc, d) => { acc[d] = (acc[d] ?? 0) + 1; return acc; }, {});
-            const topDims = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
             const ratingEmoji = (r: number | null) =>
               r == null ? '—' : ['😖', '🙁', '😐', '🙂', '🤩'][r - 1] ?? String(r);
+
+            // Preferimos el digest server-side (todo el histórico); si no cargó,
+            // caemos a la agregación client-side sobre las filas visibles.
+            const d = feedbackDigest;
+            const kpiTotal   = d?.total ?? feedback.length;
+            const kpiAvg     = d?.avg_rating ?? (avgRating === '—' ? null : avgRating);
+            const kpiLow     = d?.low_count ?? lowRatings;
+            const kpiCorr    = d?.corrections ?? Object.values(dimCounts).reduce((a, b) => a + b, 0);
+            const topDims: [string, number][] = d
+              ? d.by_dimension.map(x => [x.dimension, x.count] as [string, number])
+              : Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+            const worklist = d?.recent_low ?? [];
             return (
               <>
                 <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
-                  <KPI label="Respuestas" value={feedback.length} accent="#0EB5C6"
+                  <KPI label="Respuestas" value={kpiTotal} accent="#0EB5C6"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
                   />
-                  <KPI label="Rating promedio" value={avgRating} sub={`${rated.length} con nota`} accent="#10b981"
+                  <KPI label="Rating promedio" value={kpiAvg ?? '—'} sub="todo el histórico" accent="#10b981"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}
                   />
-                  <KPI label="Ratings bajos (≤2)" value={lowRatings} sub="prioridad de revisión" accent="#ef4444"
+                  <KPI label="Ratings bajos (≤2)" value={kpiLow} sub="prioridad de revisión" accent="#ef4444"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
                   />
-                  <KPI label="Correcciones" value={Object.values(dimCounts).reduce((a, b) => a + b, 0)} sub="señales para el RAG" accent="#f59e0b"
+                  <KPI label="Correcciones" value={kpiCorr} sub="señales para el RAG" accent="#f59e0b"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                   />
                 </div>
@@ -1184,6 +1220,44 @@ export function Admin() {
                           {dim} · {n}
                         </span>
                       ))}
+                    </div>
+                  </Card>
+                )}
+
+                {worklist.length > 0 && (
+                  <Card title="Worklist — reportes a revisar (rating bajo o con comentario)">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-100 dark:border-white/5">
+                            {['Validación', 'Rating', 'Sección', 'Correcciones', 'Comentario', 'Fecha'].map(h => (
+                              <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-6">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {worklist.map((w, i) => (
+                            <tr key={i} className="hover:bg-gray-50 dark:bg-[#0A0A0F]/50 transition align-top">
+                              <td className="py-3.5 pr-6">
+                                <Link to={`/results/${w.validation_id}`} className="text-xs font-medium text-[#0EB5C6] hover:underline">
+                                  {w.idea_name ?? `${w.validation_id.slice(0, 8)}…`}
+                                </Link>
+                              </td>
+                              <td className="py-3.5 pr-6 text-lg">{ratingEmoji(w.rating)}</td>
+                              <td className="py-3.5 pr-6"><span className="text-xs px-2 py-1 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-[#8B8AA0] font-mono">{w.section}</span></td>
+                              <td className="py-3.5 pr-6 max-w-[14rem]">
+                                <div className="flex flex-wrap gap-1">
+                                  {(w.dimensions_wrong ?? []).map((dm, j) => (
+                                    <span key={j} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">{dm}</span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="py-3.5 pr-6 max-w-[18rem] text-xs text-gray-600 dark:text-[#C4C4D4]">{w.free_text ?? '—'}</td>
+                              <td className="py-3.5 text-xs text-gray-400 whitespace-nowrap">{fmt(w.created_at)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </Card>
                 )}
