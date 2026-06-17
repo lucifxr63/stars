@@ -1434,6 +1434,7 @@ export function ValidationDetail() {
                             onRegenerate={handleRegenerateFounderFit}
                             regenerating={regeneratingFounder}
                             onCompleteProfile={() => navigate('/profile#founder-profile')}
+                            hasFounderProfile={!!founderProfile}
                           />
                           <VerdictMarketTiming
                             data={data.market_signals}
@@ -1980,6 +1981,9 @@ export function ValidationDetail() {
                   <FounderFitCard
                     data={data.founder_fit}
                     onCompleteProfile={() => navigate('/profile#founder-profile')}
+                    onRegenerate={handleRegenerateFounderFit}
+                    regenerating={regeneratingFounder}
+                    hasFounderProfile={!!founderProfile}
                   />
                 ) : !sections.includes('founderFit') ? (
                   <LockedSection
