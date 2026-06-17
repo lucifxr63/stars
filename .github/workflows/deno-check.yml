@@ -48,3 +48,11 @@ jobs:
       - name: deno lint
         if: steps.changed.outputs.files != ''
         run: deno lint --rules-exclude=no-import-prefix,no-inner-declarations ${{ steps.changed.outputs.files }}
+
+      # Tests unitarios de los módulos _shared (prompts, rag, aiProvider, etc.).
+      # Corre la suite COMPLETA ante cualquier cambio bajo functions/ — así un cambio
+      # en un módulo que rompe el test de otro se atrapa (no solo los archivos del diff).
+      # --allow-env: rag.ts/aiProvider.ts leen Deno.env al cargar el módulo.
+      - name: deno test (_shared)
+        if: steps.changed.outputs.files != ''
+        run: deno test --allow-env validateai/supabase/functions/_shared/
