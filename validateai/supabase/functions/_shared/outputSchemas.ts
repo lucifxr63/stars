@@ -7,7 +7,9 @@
 // Modo OBSERVE-ONLY: el handler loguea + telemetría en fallo pero persiste igual
 // (cero riesgo de romper al usuario por un falso positivo). Con los datos que
 // junte, se puede endurecer (rechazar/reintentar) más adelante.
-import { z } from 'npm:zod';
+// Import URL (esm.sh) — convención del repo para deps de edge functions. Evita el
+// requisito de node_modules de `npm:zod` que rompe `deno check` en CI.
+import { z } from 'https://esm.sh/zod@3.23.8';
 import type { PromptType } from './prompts.ts';
 
 const num = z.number();
