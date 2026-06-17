@@ -1,4 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// useUserTier importa @/lib/supabase, que llama createClient() al cargar el módulo
+// y revienta sin VITE_SUPABASE_URL (caso de CI). Mockeamos el cliente para testear
+// la lógica pura de gating sin tocar la red ni depender de env vars.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }));
+
 import { getUserSections, ALL_SECTIONS } from '@/hooks/useUserTier';
 
 /**
