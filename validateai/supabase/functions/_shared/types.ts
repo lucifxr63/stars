@@ -11,3 +11,10 @@ export interface StructuredIdea {
   stage: string;
   geography: string;
 }
+
+export interface AIResult {
+  parsed: Record<string, unknown>;
+  inputTokens: number;
+  outputTokens: number;
+  model: string;
+}
