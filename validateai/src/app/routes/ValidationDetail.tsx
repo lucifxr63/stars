@@ -1410,17 +1410,10 @@ export function ValidationDetail() {
           {/* ── VEREDICTO ──────────────────────────────────────────────────── */}
           {activeTab === 'Veredicto' && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {generatingVerdict && (
-                <div className="md:col-span-12 rounded-2xl border border-white/10 bg-white/5 p-10 flex flex-col items-center gap-4 text-center">
-                  <div className="w-10 h-10 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
-                  <div>
-                    <p className="font-bold text-[#F0EFF8] mb-1">Analizando tu idea con el Playbook VC…</p>
-                    <p className="text-sm text-[#8B8AA0]">Mom Test · JTBD · Unit Economics · Legal Chile</p>
-                  </div>
-                </div>
-              )}
-
-              {!generatingVerdict && data.playbook_analysis && (
+              {/* No-bloqueante (#6): la columna de score/widgets se muestra apenas hay
+                  datos (score_breakdown ya viene del wizard); solo el Playbook espera
+                  con un loader inline en su columna, sin tapar todo el tab. */}
+              {!verdictBlocked && (data.playbook_analysis || generatingVerdict || data.score_breakdown) && (
                 <>
                   <div className="md:col-span-12 rounded-xl border border-[#0EB5C6]/30 bg-[#0EB5C6]/10 px-4 py-3 flex items-center gap-3">
                     <svg className="w-4 h-4 text-[#38D5E3] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1488,7 +1481,27 @@ export function ValidationDetail() {
                   {/* Right Column: Playbook Analysis / Alertas */}
                   <div className="md:col-span-5 flex flex-col gap-4">
                     <div className="h-full">
-                      <PlaybookAnalysisCard data={data.playbook_analysis} />
+                      {data.playbook_analysis ? (
+                        <PlaybookAnalysisCard data={data.playbook_analysis} />
+                      ) : generatingVerdict ? (
+                        <div className="h-full min-h-[16rem] rounded-2xl border border-white/10 bg-white/5 p-8 flex flex-col items-center justify-center gap-4 text-center">
+                          <div className="w-10 h-10 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
+                          <div>
+                            <p className="font-bold text-[#F0EFF8] mb-1">Analizando tu idea con el Playbook VC…</p>
+                            <p className="text-sm text-[#8B8AA0]">Mom Test · JTBD · Unit Economics · Legal Chile</p>
+                          </div>
+                        </div>
+                      ) : verdictGenerated ? (
+                        <div className="h-full min-h-[16rem] rounded-2xl border border-white/10 bg-white/5 p-8 flex flex-col items-center justify-center gap-4 text-center">
+                          <p className="text-sm text-gray-400">No se pudo generar el veredicto.</p>
+                          <button
+                            onClick={() => setVerdictGenerated(false)}
+                            className="px-4 py-2 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition"
+                          >
+                            Reintentar
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </>
@@ -1525,9 +1538,10 @@ export function ValidationDetail() {
                 </div>
               )}
 
-              {/* Fallo técnico (no cuota) — sí permite reintentar */}
-              {!generatingVerdict && !data.playbook_analysis && verdictGenerated && !verdictBlocked && (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-8 flex flex-col items-center gap-4 text-center">
+              {/* Fallo técnico sin score_breakdown (caso borde donde el bloque principal
+                  no se renderiza): el error/retry de la columna derecha cubre el caso normal. */}
+              {!generatingVerdict && !data.playbook_analysis && !data.score_breakdown && verdictGenerated && !verdictBlocked && (
+                <div className="md:col-span-12 rounded-2xl border border-white/10 bg-white/5 p-8 flex flex-col items-center gap-4 text-center">
                   <p className="text-sm text-gray-400">No se pudo generar el veredicto.</p>
                   <button
                     onClick={() => setVerdictGenerated(false)}
