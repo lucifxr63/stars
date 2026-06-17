@@ -1,4 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+// Tipos de DB generados disponibles en @/lib/database.types (regen: `npm run gen:types`).
+// El cliente aún NO está tipado con <Database>: hacerlo requiere alinear los tipos de
+// dominio (Validation, ValidationFull, FounderProfileData…) con las Row generadas —
+// migración enfocada pendiente (ver docs/DB_TYPES_ADOPTION.md). Hoy el archivo sirve
+// como fuente de verdad del schema y para tipar queries/RPC nuevas de forma puntual.
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;

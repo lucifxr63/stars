@@ -1,0 +1,66 @@
+name: deploy-functions
+
+# Despliega automáticamente las Supabase Edge Functions al mergear a main.
+# Resuelve el problema "mergeado ≠ desplegado": antes había que correr
+# `supabase functions deploy` a mano y era fácil olvidarlo → prod con código viejo.
+#
+# REQUISITO (acción del equipo, una sola vez):
+#   GitHub → Settings → Secrets and variables → Actions → New repository secret:
+#     SUPABASE_ACCESS_TOKEN = <token de https://supabase.com/dashboard/account/tokens>
+#   El project-ref de prod ya está abajo (fcdhcntyvsydnvjwopfe).
+#
+# Sin el secret, el job falla de forma VISIBLE (no toca prod) — señal de "configurame".
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'validateai/supabase/functions/**'
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_REF: fcdhcntyvsydnvjwopfe
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # para diffear HEAD^..HEAD
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Determinar qué desplegar
+        id: plan
+        run: |
+          changed=$(git diff --name-only HEAD^ HEAD -- validateai/supabase/functions || true)
+          echo "Cambios:"; echo "$changed"
+          # Funciones (dir de primer nivel bajo functions/, excluyendo _shared).
+          funcs=$(echo "$changed" \
+            | sed -nE 's#^validateai/supabase/functions/([^/]+)/.*#\1#p' \
+            | grep -v '^_shared$' | sort -u | tr '\n' ' ')
+          # Si cambió _shared, muchas funciones lo importan → desplegar TODAS.
+          if echo "$changed" | grep -q 'functions/_shared/'; then
+            echo "Cambió _shared → desplegar todas las funciones."
+            funcs=$(ls -d validateai/supabase/functions/*/ \
+              | sed -E 's#.*/functions/([^/]+)/#\1#' | grep -v '^_shared$' | tr '\n' ' ')
+          fi
+          echo "funcs=$funcs" >> "$GITHUB_OUTPUT"
+          echo "A desplegar: $funcs"
+
+      - name: Deploy
+        if: steps.plan.outputs.funcs != ''
+        working-directory: validateai
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -e
+          for fn in ${{ steps.plan.outputs.funcs }}; do
+            echo "── Deploying $fn ──"
+            supabase functions deploy "$fn" --project-ref "$PROJECT_REF"
+          done
