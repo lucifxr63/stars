@@ -4,6 +4,8 @@ import { phCapture } from '../_shared/posthog.ts';
 import { fetchBralidusContextForPrompt, BRALIDUS_CITE_DIRECTIVE } from '../_shared/bralidus.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { type PromptType, SYSTEM_PROMPTS, PLAYBOOK_MASTER_PROMPT } from '../_shared/prompts.ts';
+import { buildUserContent, extractJSON } from '../_shared/promptContext.ts';
+import { CAC_MULTIPLIERS_BY_CHANNEL, SECTOR_BENCHMARKS } from '../_shared/benchmarks.ts';
 
 // â”€â”€ Env vars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
@@ -37,129 +39,6 @@ interface AIResult {
 }
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function buildMarketContext(ctx: Record<string, unknown>): string {
-  return `Contexto de mercado:
-- País objetivo: ${ctx.target_country ?? 'No especificado'}
-- Región: ${ctx.target_region ?? 'No especificada'}
-- Modelo de negocio: ${ctx.business_model ?? 'No especificado'}
-- Etapa: ${ctx.business_stage ?? 'No especificada'}
-- Rango de precio: ${ctx.pricing_range ?? 'No especificado'}
-- Competidores conocidos por el usuario: ${
-    Array.isArray(ctx.known_competitors) && ctx.known_competitors.length
-      ? (ctx.known_competitors as string[]).join(', ')
-      : 'Ninguno'
-  }
-- PROBLEMA DECLARADO (usar como fuente primaria para evaluar dimensión problem): ${ctx.idea_problem ?? 'No especificado'}
-- SOLUCIÓN ACTUAL DE INCUMBENTES (herramientas/métodos que usa el cliente hoy): ${ctx.current_solution ?? 'No especificado'}
-- Canal de adquisición principal: ${ctx.acquisition_channel ?? 'No especificado'}
-- Composición del equipo fundador: ${ctx.team_composition ?? 'No especificado'}
-- Estado de tracción actual: ${ctx.traction_status ?? 'No especificado'}
-- Dedicación del founder al proyecto: ${(ctx.founder_context as Record<string,unknown>)?.commitment_level ?? 'No especificado'}
-- Entrevistas con clientes realizadas: ${(ctx.founder_context as Record<string,unknown>)?.customer_interviews ?? 'No especificado'}
-- Ventaja diferencial del founder (unfair advantage): ${(ctx.founder_context as Record<string,unknown>)?.unfair_advantage ?? 'No especificado'}`;
-}
-
-// Bloque dedicado para founder_fit (modelo HÍBRIDO). Surface explícito de dos
-// fuentes complementarias:
-//  1) PERFIL DEL FUNDADOR (nivel usuario, founder_profiles): identidad persistente
-//     del fundador — experiencia, red, track record. Vía LinkedIn o carga manual.
-//     Es la ÚNICA señal disponible en el flujo premium (sin Paso Fundador).
-//  2) DATOS DE ESTA IDEA (wizard, solo flujo detallado): equipo, tracción y
-//     problem-fit específicos de la startup que se está validando.
-function buildFounderContext(ctx: Record<string, unknown>): string {
-  const fc = (ctx.founder_context ?? {}) as Record<string, unknown>;
-  const pick = (...vals: unknown[]) =>
-    vals.find((v) => v !== undefined && v !== null && v !== '') ?? 'No especificado';
-
-  const hasProfile =
-    ctx.founder_linkedin_url || ctx.founder_full_name || ctx.founder_competency_scores ||
-    ctx.founder_industry_years;
-  const hasWizard =
-    fc.personallyFacedProblem !== undefined || fc.yearsInIndustry !== undefined ||
-    ctx.team_composition || ctx.traction_status;
-
-  const lines: string[] = [];
-
-  // ── Fuente 1: perfil del fundador a nivel usuario ──────────────────────────
-  if (hasProfile) {
-    const src = ctx.founder_linkedin_url ? 'LinkedIn verificado' : 'carga manual';
-    lines.push(
-      `PERFIL DEL FUNDADOR (nivel usuario — fuente: ${src}; identidad estable, válida para CUALQUIER idea):`,
-      `- Nombre: ${ctx.founder_full_name ?? 'No disponible'}`,
-      `- Headline: ${ctx.founder_headline ?? 'No disponible'}`,
-      `- Bio: ${ctx.founder_summary_bio ?? 'No disponible'}`,
-      `- Años en la industria: ${ctx.founder_industry_years ?? 'No disponible'}`,
-    );
-    if (Array.isArray(ctx.founder_skills) && ctx.founder_skills.length) {
-      lines.push(`- Skills: ${(ctx.founder_skills as string[]).join(', ')}`);
-    }
-    if (Array.isArray(ctx.founder_work_experience) && ctx.founder_work_experience.length) {
-      lines.push(`- Experiencia laboral: ${JSON.stringify(ctx.founder_work_experience)}`);
-    }
-    if (ctx.founder_competency_scores) {
-      lines.push(
-        `- Competency scores pre-calculados (0-100): ${JSON.stringify(ctx.founder_competency_scores)}.`,
-        '  Úsalos como ancla: visionComercial≈networkStrength, capacidadTecnica≈technicalCapability,',
-        '  liderazgo+resilienciaOperativa≈trackRecord, experienciaIndustria≈industryExperience.',
-      );
-    }
-    lines.push('');
-  }
-
-  // ── Fuente 2: datos específicos de esta idea (wizard) ──────────────────────
-  lines.push('DATOS DE ESTA IDEA (autoreporte del wizard — específicos de la startup validada):');
-  lines.push(
-    `- ¿Vivió el problema en carne propia? (personallyFacedProblem): ${pick(fc.personallyFacedProblem, ctx.personallyFacedProblem)}`,
-    `- Años de experiencia en la industria (yearsInIndustry): ${pick(fc.yearsInIndustry, ctx.yearsInIndustry)}`,
-    `- Composición del equipo (team_composition): ${pick(ctx.team_composition, fc.team_composition)}`,
-    `- Nivel técnico del equipo (tech_level): ${pick(ctx.tech_level, fc.tech_level)}`,
-    `- Estado de tracción (traction_status): ${pick(ctx.traction_status, fc.traction_status)}`,
-    `- Dedicación al proyecto (commitment_level): ${pick(fc.commitment_level, ctx.commitment_level)}`,
-    `- Entrevistas con clientes (customer_interviews): ${pick(fc.customer_interviews, ctx.customer_interviews)}`,
-    `- Ventaja diferencial (unfair_advantage): ${pick(fc.unfair_advantage, ctx.unfair_advantage)}`,
-  );
-
-  // ── Guía de fusión híbrida ─────────────────────────────────────────────────
-  lines.push('');
-  if (hasProfile && hasWizard) {
-    lines.push(
-      'FUSIÓN: combina ambas fuentes. El PERFIL define la identidad del fundador (industryExperience,',
-      'networkStrength, technicalCapability, trackRecord de carrera); los DATOS DE ESTA IDEA ajustan',
-      'problemKnowledge, technicalCapability del equipo y trackRecord de tracción de esta startup.',
-    );
-  } else if (hasProfile && !hasWizard) {
-    lines.push(
-      'FUSIÓN: NO hay datos del wizard (flujo premium). Evalúa con el PERFIL del fundador como fuente',
-      'principal — usa los competency scores y la experiencia laboral para estimar las 5 dimensiones.',
-    );
-  } else {
-    lines.push(
-      'FUSIÓN: NO hay perfil de fundador a nivel usuario. Evalúa solo con los DATOS DE ESTA IDEA del wizard.',
-    );
-  }
-
-  return lines.join('\n');
-}
-
-// Construye el contenido del mensaje de usuario. Para founder_fit antepone el
-// bloque explícito de fundador; el resto de prompts mantienen el comportamiento previo.
-function buildUserContent(promptType: PromptType, context: Record<string, unknown>): string {
-  const base = `${buildMarketContext(context)}\n\n${JSON.stringify(context)}`;
-  return promptType === 'founder_fit'
-    ? `${buildFounderContext(context)}\n\n${base}`
-    : base;
-}
-
-function extractJSON(text: string): string {
-  const trimmed = text.trim();
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) return trimmed;
-  const jsonBlock = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonBlock) return jsonBlock[1].trim();
-  const start = trimmed.search(/[{[]/);
-  const end = Math.max(trimmed.lastIndexOf('}'), trimmed.lastIndexOf(']'));
-  if (start !== -1 && end !== -1) return trimmed.slice(start, end + 1);
-  return trimmed;
-}
 
 // â”€â”€ System prompts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -563,81 +442,6 @@ async function callAI(
 // ── CAC multipliers by acquisition channel ────────────────────────────────────
 // Source: internal analysis + HubSpot State of Marketing 2024, OpenView PLG 2024.
 // multiplier_vs_benchmark: factor applied on top of the sector CAC baseline.
-const CAC_MULTIPLIERS_BY_CHANNEL: Record<string, {
-  multiplier_vs_benchmark: number;
-  note: string;
-}> = {
-  outbound_linkedin: { multiplier_vs_benchmark: 1.4, note: 'Outbound B2B — CAC alto, leads calificados, ciclos 30-90 días' },
-  ads_meta:          { multiplier_vs_benchmark: 1.1, note: 'Publicidad pagada — CAC moderado, escalable, sensible al CPM' },
-  comunidades_organico: { multiplier_vs_benchmark: 0.4, note: 'Comunidades orgánicas — CAC muy bajo, lento, difícil de escalar' },
-  referidos:         { multiplier_vs_benchmark: 0.3, note: 'Referidos/WOM — CAC más bajo, requiere NPS>50' },
-  alianzas:          { multiplier_vs_benchmark: 0.7, note: 'Alianzas — CAC compartido con el socio, margen reducido' },
-  contenido_seo:     { multiplier_vs_benchmark: 0.5, note: 'Contenido/SEO — CAC bajo a largo plazo, ramp-up 6-18 meses' },
-  eventos_presencial: { multiplier_vs_benchmark: 1.2, note: 'Eventos presenciales — efectivo B2B complejo, CAC moderado-alto' },
-};
-
-// ── Sector benchmarks (CAC / LTV / churn medians by industry + model) ────────
-// Source: Profitwell 2024, ChartMogul Benchmarks 2024, OpenView SaaS 2024
-// All values in USD unless noted. Updated: 2026-05.
-const SECTOR_BENCHMARKS: Record<string, Record<string, {
-  cac_usd: { min: number; max: number };
-  ltv_usd: { min: number; max: number };
-  monthly_churn_pct: { min: number; max: number };
-  payback_months: { min: number; max: number };
-  gross_margin_pct: number;
-  note: string;
-}>> = {
-  saas: {
-    b2b: { cac_usd: { min: 200, max: 800 }, ltv_usd: { min: 1500, max: 6000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 75, note: 'B2B SaaS mediana 2024 â€” ChartMogul' },
-    b2c: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 80, max: 400 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 70, note: 'B2C SaaS mediana 2024 â€” Profitwell' },
-    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 3000 }, monthly_churn_pct: { min: 2, max: 6 }, payback_months: { min: 4, max: 15 }, gross_margin_pct: 72, note: 'SaaS genÃ©rico â€” benchmark promedio 2024' },
-  },
-  fintech: {
-    b2b: { cac_usd: { min: 400, max: 1200 }, ltv_usd: { min: 3000, max: 15000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'Fintech B2B â€” altos costos de compliance y onboarding' },
-    b2c: { cac_usd: { min: 30, max: 120 }, ltv_usd: { min: 150, max: 800 }, monthly_churn_pct: { min: 2, max: 7 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 45, note: 'Fintech B2C LATAM â€” benchmark Kushki/Fintual 2023' },
-    default: { cac_usd: { min: 100, max: 600 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1, max: 5 }, payback_months: { min: 6, max: 20 }, gross_margin_pct: 50, note: 'Fintech genÃ©rico LATAM' },
-  },
-  edtech: {
-    b2b: { cac_usd: { min: 300, max: 900 }, ltv_usd: { min: 2000, max: 8000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 6, max: 15 }, gross_margin_pct: 65, note: 'EdTech B2B â€” ventas institucionales (colegios, empresas)' },
-    b2c: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 300 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 68, note: 'EdTech B2C LATAM â€” churn alto en primeros 3 meses' },
-    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 1500 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 12 }, gross_margin_pct: 66, note: 'EdTech genÃ©rico' },
-  },
-  healthtech: {
-    b2b: { cac_usd: { min: 500, max: 2000 }, ltv_usd: { min: 5000, max: 30000 }, monthly_churn_pct: { min: 0.5, max: 1.5 }, payback_months: { min: 12, max: 36 }, gross_margin_pct: 60, note: 'HealthTech B2B â€” ciclos de venta largos (6-18 meses)' },
-    b2c: { cac_usd: { min: 40, max: 150 }, ltv_usd: { min: 200, max: 1000 }, monthly_churn_pct: { min: 3, max: 8 }, payback_months: { min: 5, max: 15 }, gross_margin_pct: 55, note: 'HealthTech B2C â€” retenciÃ³n alta si genera resultados' },
-    default: { cac_usd: { min: 150, max: 800 }, ltv_usd: { min: 800, max: 8000 }, monthly_churn_pct: { min: 1, max: 6 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 57, note: 'HealthTech genÃ©rico' },
-  },
-  ecommerce: {
-    b2c: { cac_usd: { min: 10, max: 50 }, ltv_usd: { min: 50, max: 350 }, monthly_churn_pct: { min: 5, max: 15 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 35, note: 'E-commerce B2C â€” mÃ¡rgenes bajos, volumen necesario' },
-    marketplace: { cac_usd: { min: 20, max: 80 }, ltv_usd: { min: 100, max: 600 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 2, max: 8 }, gross_margin_pct: 30, note: 'Marketplace â€” take rate 10-20%' },
-    default: { cac_usd: { min: 15, max: 60 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 5, max: 12 }, payback_months: { min: 2, max: 7 }, gross_margin_pct: 32, note: 'E-commerce genÃ©rico LATAM' },
-  },
-  marketplace: {
-    default: { cac_usd: { min: 25, max: 100 }, ltv_usd: { min: 120, max: 700 }, monthly_churn_pct: { min: 3, max: 9 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 30, note: 'Marketplace â€” 2 lados del mercado (supply + demand)' },
-  },
-  logistics: {
-    b2b: { cac_usd: { min: 300, max: 1000 }, ltv_usd: { min: 2500, max: 12000 }, monthly_churn_pct: { min: 1, max: 3 }, payback_months: { min: 8, max: 20 }, gross_margin_pct: 25, note: 'LogÃ­stica B2B â€” mÃ¡rgenes bajos, alto volumen' },
-    default: { cac_usd: { min: 100, max: 500 }, ltv_usd: { min: 500, max: 5000 }, monthly_churn_pct: { min: 1.5, max: 4 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 25, note: 'LogÃ­stica genÃ©rico LATAM' },
-  },
-  foodtech: {
-    b2c: { cac_usd: { min: 8, max: 30 }, ltv_usd: { min: 40, max: 200 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 5 }, gross_margin_pct: 28, note: 'FoodTech B2C â€” altÃ­simo churn, retention es el reto' },
-    b2b: { cac_usd: { min: 200, max: 700 }, ltv_usd: { min: 1500, max: 7000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 5, max: 14 }, gross_margin_pct: 32, note: 'FoodTech B2B (restaurantes, dark kitchens)' },
-    default: { cac_usd: { min: 20, max: 200 }, ltv_usd: { min: 80, max: 2000 }, monthly_churn_pct: { min: 4, max: 15 }, payback_months: { min: 2, max: 10 }, gross_margin_pct: 30, note: 'FoodTech genÃ©rico' },
-  },
-  proptech: {
-    b2b: { cac_usd: { min: 400, max: 1500 }, ltv_usd: { min: 3000, max: 20000 }, monthly_churn_pct: { min: 0.5, max: 2 }, payback_months: { min: 10, max: 30 }, gross_margin_pct: 60, note: 'PropTech B2B â€” ciclos largos, alta retenciÃ³n' },
-    default: { cac_usd: { min: 100, max: 800 }, ltv_usd: { min: 500, max: 8000 }, monthly_churn_pct: { min: 1, max: 4 }, payback_months: { min: 8, max: 24 }, gross_margin_pct: 55, note: 'PropTech genÃ©rico' },
-  },
-  social: {
-    b2c: { cac_usd: { min: 1, max: 15 }, ltv_usd: { min: 5, max: 80 }, monthly_churn_pct: { min: 10, max: 25 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 70, note: 'Social B2C â€” monetizaciÃ³n por ads o freemium' },
-    default: { cac_usd: { min: 2, max: 20 }, ltv_usd: { min: 10, max: 100 }, monthly_churn_pct: { min: 8, max: 20 }, payback_months: { min: 1, max: 6 }, gross_margin_pct: 65, note: 'Social genÃ©rico' },
-  },
-  other: {
-    b2b: { cac_usd: { min: 200, max: 700 }, ltv_usd: { min: 1200, max: 6000 }, monthly_churn_pct: { min: 1.5, max: 5 }, payback_months: { min: 6, max: 18 }, gross_margin_pct: 55, note: 'B2B genÃ©rico â€” ajustar por sector especÃ­fico' },
-    b2c: { cac_usd: { min: 15, max: 80 }, ltv_usd: { min: 60, max: 400 }, monthly_churn_pct: { min: 4, max: 10 }, payback_months: { min: 3, max: 10 }, gross_margin_pct: 50, note: 'B2C genÃ©rico â€” ajustar por producto y precio' },
-    default: { cac_usd: { min: 50, max: 300 }, ltv_usd: { min: 200, max: 2000 }, monthly_churn_pct: { min: 2, max: 8 }, payback_months: { min: 4, max: 14 }, gross_margin_pct: 52, note: 'Benchmarks genÃ©ricos 2024' },
-  },
-};
 
 // â”€â”€ Handler HTTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // â”€â”€ Prompt type whitelist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
