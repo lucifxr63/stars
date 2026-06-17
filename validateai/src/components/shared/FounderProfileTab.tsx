@@ -190,12 +190,19 @@ function ExperienceTimeline({
     onChange(next);
   };
 
+  const addEntry = () => onChange([
+    ...experience,
+    { title: '', company: '', start_date: '', end_date: null, description: '', is_leadership: false, industry: '' },
+  ]);
+
+  const removeEntry = (idx: number) => onChange(experience.filter((_, i) => i !== idx));
+
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/8 p-4 space-y-4">
       <p className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide">
         Trayectoria Crítica
       </p>
-      {experience.length === 0 && (
+      {experience.length === 0 && !editing && (
         <p className="text-sm text-gray-400 italic">Sin experiencia registrada</p>
       )}
       {experience.map((entry, idx) => (
@@ -210,23 +217,49 @@ function ExperienceTimeline({
           <div className={`absolute -left-1.5 top-1 w-3 h-3 rounded-full ${
             entry.is_leadership ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-white/20'
           }`} />
-          {entry.is_leadership && (
+          {entry.is_leadership && !editing && (
             <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
               Liderazgo
             </span>
           )}
           {editing ? (
             <div className="space-y-1.5 mt-1">
-              <input
-                value={entry.title}
-                onChange={(e) => updateEntry(idx, { title: e.target.value })}
-                className="w-full text-sm font-semibold bg-transparent border-b border-gray-200 dark:border-white/10 outline-none focus:border-indigo-400 pb-0.5"
-              />
+              <div className="flex items-center justify-between gap-2">
+                <input
+                  value={entry.title}
+                  onChange={(e) => updateEntry(idx, { title: e.target.value })}
+                  placeholder="Cargo (ej. CTO)"
+                  className="flex-1 text-sm font-semibold bg-transparent border-b border-gray-200 dark:border-white/10 outline-none focus:border-indigo-400 pb-0.5"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeEntry(idx)}
+                  className="shrink-0 text-[10px] font-semibold text-gray-400 hover:text-red-500 transition-colors"
+                  aria-label="Eliminar experiencia"
+                >
+                  × Eliminar
+                </button>
+              </div>
               <input
                 value={entry.company}
                 onChange={(e) => updateEntry(idx, { company: e.target.value })}
+                placeholder="Empresa"
                 className="w-full text-xs text-gray-500 bg-transparent border-b border-gray-200 dark:border-white/10 outline-none focus:border-indigo-400 pb-0.5"
               />
+              <div className="flex gap-2">
+                <input
+                  value={entry.start_date}
+                  onChange={(e) => updateEntry(idx, { start_date: e.target.value })}
+                  placeholder="Desde (ej. 2019)"
+                  className="flex-1 text-xs text-gray-400 bg-transparent border-b border-gray-200 dark:border-white/10 outline-none focus:border-indigo-400 pb-0.5"
+                />
+                <input
+                  value={entry.end_date ?? ''}
+                  onChange={(e) => updateEntry(idx, { end_date: e.target.value.trim() || null })}
+                  placeholder="Hasta (o vacío = Actual)"
+                  className="flex-1 text-xs text-gray-400 bg-transparent border-b border-gray-200 dark:border-white/10 outline-none focus:border-indigo-400 pb-0.5"
+                />
+              </div>
               <div className="flex gap-2">
                 <input
                   value={entry.industry}
@@ -248,6 +281,7 @@ function ExperienceTimeline({
                 value={entry.description}
                 onChange={(e) => updateEntry(idx, { description: e.target.value })}
                 rows={2}
+                placeholder="¿Qué lograste? (logros, escala, métricas)"
                 className="w-full text-xs text-gray-600 dark:text-[#8B8AA0] bg-transparent border border-gray-200 dark:border-white/10 rounded-lg p-2 outline-none focus:border-indigo-400 resize-none"
               />
             </div>
@@ -268,6 +302,15 @@ function ExperienceTimeline({
           )}
         </div>
       ))}
+      {editing && (
+        <button
+          type="button"
+          onClick={addEntry}
+          className="w-full py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 border border-dashed border-indigo-300 dark:border-indigo-500/30 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+        >
+          + Agregar experiencia
+        </button>
+      )}
     </div>
   );
 }
