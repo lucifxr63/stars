@@ -25,6 +25,8 @@ import { SwotMatrix } from '@/components/shared/SwotMatrix';
 import { NextStepsTimeline } from '@/components/shared/NextStepsTimeline';
 import { KanbanMVP } from '@/components/shared/KanbanMVP';
 import { useAI } from '@/hooks/useAI';
+import { dispatchPaywallHit, TIER_INFO, PAYWALL_HIT_EVENT, type PaywallHitDetail } from '@/components/shared/UpgradeModal';
+import { deriveTierNeeded } from '@/lib/rateLimitHelpers';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, getUserSections } from '@/hooks/useUserTier';
 import { useUsage } from '@/hooks/useUsage';
@@ -280,6 +282,10 @@ export function ValidationDetail() {
   const [regeneratingFounder, setRegeneratingFounder] = useState(false);
   const [advancedProgress, setAdvancedProgress] = useState<string>('');
   const [generatingVerdict, setGeneratingVerdict] = useState(false);
+  // Distingue el "fallo por cuota agotada" (→ paywall) del "fallo técnico" (→ reintentar).
+  // Sin esto, agotar las evaluaciones free mostraba el mismo "No se pudo generar… Reintentar"
+  // cuyo botón solo volvía a chocar contra el rate-limit.
+  const [verdictBlocked, setVerdictBlocked] = useState(false);
   // Persiste en sessionStorage por validationId para sobrevivir navegaciones dentro de la sesión
   const verdictSessionKey = `verdict_generated_${id}`;
   const [verdictGenerated, setVerdictGenerated] = useState(
@@ -298,7 +304,9 @@ export function ValidationDetail() {
   } | null>(null);
   const { callAI } = useAI();
   const { tier, isPro: isPremium } = useUserTier();
-  const { remaining } = useUsage(tier);
+  const { remaining, limits, usage } = useUsage(tier);
+  // Tier al que debe subir para recuperar el veredicto cuando agota su cuota mensual.
+  const verdictTierNeeded = deriveTierNeeded('monthly_limit', tier);
   const isProLocked = tier === 'free' || tier === 'basic';
   // Agnóstico al tier — depende solo del modo de análisis, no del plan de suscripción.
   const isQuickMode = data?.validation_mode === 'quick';
@@ -397,7 +405,23 @@ export function ValidationDetail() {
     ) return;
 
     const generate = async () => {
+      // Guard de cuota: si no quedan evaluaciones del mes, no malgastamos un round-trip
+      // que el backend rechazaría con 429. Mostramos el aviso de límite directamente.
+      if (remaining === 0) {
+        setVerdictGenerated(true);
+        setVerdictBlocked(true);
+        dispatchPaywallHit({
+          reason:       'monthly_limit',
+          prompt_type:  'playbook_analysis',
+          tier_current: tier,
+          tier_needed:  verdictTierNeeded,
+          used:         usage?.total ?? limits.total,
+          limit:        limits.total,
+        });
+        return;
+      }
       setGeneratingVerdict(true);
+      setVerdictBlocked(false);
       // Marcar en sessionStorage ANTES de la llamada para evitar doble disparo
       sessionStorage.setItem(verdictSessionKey, 'true');
       setVerdictGenerated(true);
@@ -444,6 +468,21 @@ export function ValidationDetail() {
     };
     generate();
   }, [activeTab, data?.id, playbookReady]);
+
+  // Fuente única de verdad del bloqueo del veredicto: si callAI dispara el paywall
+  // (429 monthly_limit que el pre-check de `remaining` no atrapó por carrera de carga),
+  // marcamos el estado para renderizar el aviso de límite en vez del error genérico.
+  useEffect(() => {
+    const onPaywall = (e: Event) => {
+      const detail = (e as CustomEvent<PaywallHitDetail>).detail;
+      if (detail?.prompt_type === 'playbook_analysis') {
+        setGeneratingVerdict(false);
+        setVerdictBlocked(true);
+      }
+    };
+    window.addEventListener(PAYWALL_HIT_EVENT, onPaywall);
+    return () => window.removeEventListener(PAYWALL_HIT_EVENT, onPaywall);
+  }, []);
 
   // business_stage no se recolecta en ningún paso del wizard — excluido de la condición
   const needsContextModal = isQuickMode
@@ -1455,7 +1494,39 @@ export function ValidationDetail() {
                 </>
               )}
 
-              {!generatingVerdict && !data.playbook_analysis && verdictGenerated && (
+              {/* Cuota agotada — aviso claro de límite + CTA de upgrade (no "Reintentar",
+                  que solo volvería a chocar contra el rate-limit). */}
+              {!generatingVerdict && !data.playbook_analysis && verdictBlocked && (
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-8 flex flex-col items-center gap-3 text-center max-w-md mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/15 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-bold text-[#F0EFF8]">Te quedaste sin evaluaciones gratis</h3>
+                  <p className="text-sm text-[#8B8AA0] leading-relaxed">
+                    Usaste tus {limits.total} análisis del plan {TIER_INFO[tier]?.label ?? tier} este mes.
+                    Tus datos están guardados — el veredicto se generará apenas tengas cuota.
+                    El límite se renueva el 1° del próximo mes.
+                  </p>
+                  <button
+                    onClick={() => dispatchPaywallHit({
+                      reason:       'monthly_limit',
+                      prompt_type:  'playbook_analysis',
+                      tier_current: tier,
+                      tier_needed:  verdictTierNeeded,
+                      used:         usage?.total ?? limits.total,
+                      limit:        limits.total,
+                    })}
+                    className="mt-1 px-5 py-2.5 bg-[#0EB5C6] text-white text-sm font-bold rounded-xl hover:bg-[#6B5EE6] transition"
+                  >
+                    Subir a {TIER_INFO[verdictTierNeeded]?.label ?? verdictTierNeeded} →
+                  </button>
+                </div>
+              )}
+
+              {/* Fallo técnico (no cuota) — sí permite reintentar */}
+              {!generatingVerdict && !data.playbook_analysis && verdictGenerated && !verdictBlocked && (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-8 flex flex-col items-center gap-4 text-center">
                   <p className="text-sm text-gray-400">No se pudo generar el veredicto.</p>
                   <button
