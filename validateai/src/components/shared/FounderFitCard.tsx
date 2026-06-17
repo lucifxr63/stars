@@ -1,9 +1,10 @@
 import type { FounderFit } from '@/types/validation';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { UserCheck, ShieldAlert, ArrowRight } from 'lucide-react';
+import { UserCheck, ShieldAlert, ArrowRight, UserPlus } from 'lucide-react';
 
 interface Props {
   data: FounderFit;
+  onCompleteProfile?: () => void;
 }
 
 const scoreColor = (v: number) =>
@@ -14,7 +15,7 @@ const scoreColor = (v: number) =>
 const fitLabel = (v: number) =>
   v >= 70 ? 'Alto' : v >= 40 ? 'Medio' : 'Bajo';
 
-export function FounderFitCard({ data }: Props) {
+export function FounderFitCard({ data, onCompleteProfile }: Props) {
   const sc = scoreColor(data.score);
   const label = fitLabel(data.score);
 
@@ -25,6 +26,38 @@ export function FounderFitCard({ data }: Props) {
     { subject: 'Red de Contactos', value: data.dimensions.networkStrength },
     { subject: 'Track Record', value: data.dimensions.trackRecord },
   ];
+
+  // Mismo criterio que VerdictFounderFit: todo en 0 = el análisis corrió sin
+  // datos del fundador. En vez del radar plano, mostramos un estado guía con CTA.
+  const noFounderData = chartData.every((d) => d.value === 0);
+
+  if (noFounderData) {
+    return (
+      <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-3xl p-6 relative shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <UserCheck className="w-5 h-5 text-gray-400" />
+          <h3 className="text-base font-bold text-gray-900 dark:text-[#F0EFF8]">Founder-Market Fit</h3>
+        </div>
+        <div className="flex flex-col items-center gap-4 py-6 text-center">
+          <p className="text-sm text-gray-500 dark:text-[#8B8AA0] leading-relaxed max-w-md">
+            Sin datos del fundador para evaluar. Completa tu{' '}
+            <strong className="text-[#38D5E3]">Perfil de Fundador</strong> (experiencia, equipo,
+            track record o LinkedIn) y vuelve a generar el análisis para obtener un score real.
+          </p>
+          {onCompleteProfile && (
+            <button
+              type="button"
+              onClick={onCompleteProfile}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#38D5E3] text-[#0A0A0F] text-sm font-bold hover:bg-[#2bc3d1] transition-colors shadow-sm"
+            >
+              <UserPlus className="w-4 h-4" />
+              Completar perfil de fundador
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-3xl overflow-hidden p-6 relative shadow-sm">

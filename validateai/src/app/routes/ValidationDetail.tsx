@@ -1977,7 +1977,10 @@ export function ValidationDetail() {
 
                 {/* Founder-Market Fit */}
                 {data.founder_fit ? (
-                  <FounderFitCard data={data.founder_fit} />
+                  <FounderFitCard
+                    data={data.founder_fit}
+                    onCompleteProfile={() => navigate('/profile#founder-profile')}
+                  />
                 ) : !sections.includes('founderFit') ? (
                   <LockedSection
                     title="Founder-Market Fit"
