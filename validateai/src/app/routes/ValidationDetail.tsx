@@ -10,7 +10,7 @@ import { UnitEconomicsKpis, UnitEconomicsChart } from '@/components/shared/UnitE
 import { FounderFitCard } from '@/components/shared/FounderFitCard';
 import { FounderProfileTab } from '@/components/shared/FounderProfileTab';
 import { MarketSignalsCard } from '@/components/shared/MarketSignalsCard';
-import { VerdictProsCons, VerdictFounderFit, VerdictMarketTiming } from '@/components/shared/VerdictWidgets';
+import { VerdictProsCons, VerdictMarketTiming } from '@/components/shared/VerdictWidgets';
 import { LockedSection } from '@/components/shared/LockedSection';
 import { PivotModal } from '@/components/shared/PivotModal';
 import { MentorRecommendations } from '@/components/shared/MentorRecommendations';
@@ -1427,7 +1427,7 @@ export function ValidationDetail() {
                         />
                       ) : (
                         <>
-                          <VerdictFounderFit
+                          <FounderFitCard
                             data={data.founder_fit}
                             onGenerate={handleGenerateAdvanced}
                             generating={generatingAdvanced}

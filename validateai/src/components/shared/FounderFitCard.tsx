@@ -1,13 +1,16 @@
 import type { FounderFit } from '@/types/validation';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { UserCheck, ShieldAlert, ArrowRight, UserPlus, RefreshCw } from 'lucide-react';
+import { EmptyStateAI } from '@/components/shared/EmptyStateAI';
 
 interface Props {
-  data: FounderFit;
+  data?: FounderFit | null;
   onCompleteProfile?: () => void;
   onRegenerate?: () => void;
   regenerating?: boolean;
   hasFounderProfile?: boolean;
+  onGenerate?: () => void;
+  generating?: boolean;
 }
 
 const scoreColor = (v: number) =>
@@ -18,7 +21,18 @@ const scoreColor = (v: number) =>
 const fitLabel = (v: number) =>
   v >= 70 ? 'Alto' : v >= 40 ? 'Medio' : 'Bajo';
 
-export function FounderFitCard({ data, onCompleteProfile, onRegenerate, regenerating, hasFounderProfile }: Props) {
+export function FounderFitCard({ data, onCompleteProfile, onRegenerate, regenerating, hasFounderProfile, onGenerate, generating }: Props) {
+  // Estado "aún no analizado": el founder_fit no existe en la DB.
+  if (!data) {
+    return (
+      <EmptyStateAI
+        title="Founder Fit no analizado"
+        description="Genera el análisis Pro para evaluar tu alineación como founder con el problema, industria, capacidad técnica y red de contactos."
+        action={onGenerate ? { label: 'Generar Análisis Pro', onClick: onGenerate, loading: generating } : undefined}
+      />
+    );
+  }
+
   const sc = scoreColor(data.score);
   const label = fitLabel(data.score);
 
@@ -30,7 +44,7 @@ export function FounderFitCard({ data, onCompleteProfile, onRegenerate, regenera
     { subject: 'Track Record', value: data.dimensions.trackRecord },
   ];
 
-  // Mismo criterio que VerdictFounderFit: todo en 0 = el análisis corrió sin
+  // todo en 0 = el análisis corrió sin
   // datos del fundador. En vez del radar plano, mostramos un estado guía con CTA.
   const noFounderData = chartData.every((d) => d.value === 0);
 
