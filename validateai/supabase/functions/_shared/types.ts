@@ -1,6 +1,14 @@
-// Tipos compartidos entre módulos de ai-validate (#5 W2).
-// StructuredIdea es el contrato entre el pre-pass (preprocessIdea, capa AI) y la
-// recuperación RAG (retrieveRelevantCompetitors) — por eso vive en un módulo neutral.
+// Tipos compartidos entre módulos de ai-validate.
+// Contratos neutrales: StructuredIdea (pre-pass ↔ RAG), AIResult (capa AI),
+// AIRequest (body del handler).
+import type { PromptType } from './prompts.ts';
+
+export interface AIRequest {
+  validation_id: string;
+  step: number;
+  prompt_type: PromptType;
+  context: Record<string, unknown>;
+}
 
 export interface StructuredIdea {
   problem: string;
