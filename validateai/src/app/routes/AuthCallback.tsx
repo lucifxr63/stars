@@ -6,28 +6,17 @@ export function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function handleCallback() {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
+    let settled = false;
 
-      let session = null;
+    // El cliente Supabase (detectSessionInUrl) intercambia el ?code= del redirect
+    // OAuth al inicializarse. NO hacemos exchangeCodeForSession aquí: sería un
+    // segundo intercambio del mismo code (de un solo uso) → falla y rebotaba a
+    // /login?error=auth_failed aunque el login fuera exitoso. Solo esperamos la
+    // sesión resultante, igual que ResetPassword.
 
-      if (code) {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-        if (error) {
-          navigate('/login?error=auth_failed', { replace: true });
-          return;
-        }
-        session = data.session;
-      } else {
-        const { data } = await supabase.auth.getSession();
-        session = data.session;
-      }
-
-      if (!session?.user) {
-        navigate('/login', { replace: true });
-        return;
-      }
+    async function onSession(session: import('@supabase/supabase-js').Session) {
+      if (settled) return;
+      settled = true;
 
       const meta = session.user.user_metadata;
       const name = meta?.full_name ?? meta?.name ?? null;
@@ -46,7 +35,24 @@ export function AuthCallback() {
       navigate('/dashboard', { replace: true });
     }
 
-    handleCallback();
+    // SIGNED_IN se emite cuando el cliente termina de intercambiar el code.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) onSession(session);
+    });
+
+    // Fallback: el code pudo procesarse antes de montar el listener. Damos un
+    // margen y comprobamos la sesión activa; si no hay, el login falló.
+    const timer = setTimeout(async () => {
+      if (settled) return;
+      const { data } = await supabase.auth.getSession();
+      if (data.session) onSession(data.session);
+      else {
+        settled = true;
+        navigate('/login?error=auth_failed', { replace: true });
+      }
+    }, 2500);
+
+    return () => { subscription.unsubscribe(); clearTimeout(timer); };
   }, [navigate]);
 
   return (
