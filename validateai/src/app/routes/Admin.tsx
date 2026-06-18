@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { setPreviewTier, getPreviewTier, type UserTier } from '@/hooks/useUserTier';
 
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
+const WIZARD_STEPS = 4; // Idea, Mercado, Fundador, Generación
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
 type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
@@ -869,10 +870,21 @@ export function Admin() {
                                 disabled={savingTier[p.id]}
                                 onChange={async (e) => {
                                   const newTier = e.target.value as UserTier;
+                                  const prevTier = p.tier;
                                   setSavingTier(s => ({ ...s, [p.id]: true }));
-                                  await supabase.from('profiles').update({ tier: newTier }).eq('id', p.id);
-                                  setProfiles(prev => prev.map(u => u.id === p.id ? { ...u, tier: newTier } : u));
+                                  const { data, error } = await supabase
+                                    .from('profiles')
+                                    .update({ tier: newTier })
+                                    .eq('id', p.id)
+                                    .select('id');
                                   setSavingTier(s => ({ ...s, [p.id]: false }));
+                                  if (error || !data || data.length === 0) {
+                                    // RLS bloqueó la fila o falló: revertir el optimismo y avisar
+                                    setProfiles(prev => prev.map(u => u.id === p.id ? { ...u, tier: prevTier } : u));
+                                    alert(`No se pudo cambiar el tier de ${p.full_name ?? 'este usuario'}.${error ? `\n${error.message}` : '\nLa fila no se actualizó (revisa las policies RLS de profiles).'}`);
+                                    return;
+                                  }
+                                  setProfiles(prev => prev.map(u => u.id === p.id ? { ...u, tier: newTier } : u));
                                 }}
                                 className={`text-xs font-bold px-2 py-1 rounded-lg border cursor-pointer transition-opacity ${savingTier[p.id] ? 'opacity-50' : ''}
                                   ${currentTier === 'premium' ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700/40'
@@ -1019,9 +1031,9 @@ export function Admin() {
                             <td className="py-3.5 pr-4">
                               <div className="flex items-center gap-2">
                                 <div className="w-16 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                  <div className="h-full bg-teal-400 rounded-full" style={{ width: `${(v.current_step / 6) * 100}%` }} />
+                                  <div className="h-full bg-teal-400 rounded-full" style={{ width: `${Math.min(v.current_step / WIZARD_STEPS, 1) * 100}%` }} />
                                 </div>
-                                <span className="text-xs text-gray-400">{v.current_step}/6</span>
+                                <span className="text-xs text-gray-400">{Math.min(v.current_step, WIZARD_STEPS)}/{WIZARD_STEPS}</span>
                               </div>
                             </td>
                             <td className="py-3.5 pr-4 text-xs text-gray-400 whitespace-nowrap">{fmt(v.created_at)}</td>
