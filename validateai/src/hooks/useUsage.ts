@@ -44,7 +44,7 @@ export function useUsage(tier: UserTier): UseUsageResult {
     const user = session?.user;
     if (!user) return;
     const { data } = await supabase.rpc('get_usage_summary', { p_user_id: user.id });
-    if (data) setUsage(data as UsageSummary);
+    if (data) setUsage(data as unknown as UsageSummary);
   }, []);
 
   useEffect(() => { refetch(); }, [refetch]);

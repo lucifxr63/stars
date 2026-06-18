@@ -1875,6 +1875,10 @@ export type Database = {
           similarity: number
         }[]
       }
+      merge_generation_progress: {
+        Args: { p_id: string; p_key: string; p_status: string }
+        Returns: undefined
+      }
       search_cached_analyses: {
         Args: {
           filter_type?: string

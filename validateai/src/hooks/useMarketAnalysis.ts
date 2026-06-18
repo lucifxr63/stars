@@ -34,9 +34,9 @@ export function useMarketAnalysis({
         if (dbErr) console.error('DB error:', dbErr)
 
         if (cached?.insights_json) {
-          setData(cached.insights_json as MarketInsights)
+          setData(cached.insights_json as unknown as MarketInsights)
           setCaenes(cached.caenes_code)
-          setRawSeries((cached.raw_series as RawSeriesPoint[]) ?? [])
+          setRawSeries((cached.raw_series as unknown as RawSeriesPoint[]) ?? [])
           setLoading(false)
           return
         }

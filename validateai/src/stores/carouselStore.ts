@@ -160,12 +160,12 @@ export const useCarouselStore = create<CarouselState>()(
           if (campaign.id) {
             await supabase
               .from('content_campaigns')
-              .update({ ...payload, updated_at: new Date().toISOString() })
+              .update({ ...payload, updated_at: new Date().toISOString() } as never)
               .eq('id', campaign.id);
           } else {
             const { data } = await supabase
               .from('content_campaigns')
-              .insert(payload)
+              .insert(payload as never)
               .select('id')
               .single();
 

@@ -770,7 +770,7 @@ export function FounderProfileTab() {
         .eq('id', user.id)
         .maybeSingle();
       if (!cancelled) {
-        if (fp) setFounderProfile(fp as FounderProfileData);
+        if (fp) setFounderProfile(fp as unknown as FounderProfileData);
         setHydrating(false);
       }
     })();
@@ -825,7 +825,7 @@ export function FounderProfileTab() {
         education:               updated.education,
         competency_scores:       updated.competency_scores,
         extraction_status:       'done',
-      }, { onConflict: 'id' });
+      } as never, { onConflict: 'id' });
 
     if (error) throw new Error(error.message);
     setFounderProfile(updated);

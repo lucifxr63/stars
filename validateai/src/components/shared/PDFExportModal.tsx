@@ -244,7 +244,7 @@ export function PDFExportModal({ data, onClose, onDataUpdate, mentors = [] }: Pr
         if (cachedData) {
           const updates = { [doc.dataKey]: cachedData } as Partial<ValidationData>;
           onDataUpdate(updates);
-          supabase.from('validations').update(updates).eq('id', data.id)
+          supabase.from('validations').update(updates as never).eq('id', data.id)
             .then(({ error }) => { if (error) console.warn(`[${doc.id}] save error:`, error.message); });
         }
       }

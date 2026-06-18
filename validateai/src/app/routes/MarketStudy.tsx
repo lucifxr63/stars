@@ -126,7 +126,7 @@ export function MarketStudy() {
         if (data) {
           setIdeaDescription(data.idea_description ?? data.idea_name)
           setIndustry(data.idea_industry)
-          if (data.market_sizing) setMarketSizing(data.market_sizing as MarketSizing)
+          if (data.market_sizing) setMarketSizing(data.market_sizing as unknown as MarketSizing)
         }
       })
   }, [validationId])

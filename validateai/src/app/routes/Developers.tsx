@@ -191,7 +191,7 @@ export function Developers() {
       const logsRes2 = await supabase
         .from('rag_audit_logs')
         .select('id, run_id, query, category, expected_keyword, has_sources, keyword_found, precision_score, latency_ms, chunks_retrieved, error, created_at')
-        .eq('run_id', latestRunId)
+        .eq('run_id', latestRunId!)
         .order('created_at', { ascending: true });
       if (logsRes2.data) setAuditLogs(logsRes2.data as AuditLog[]);
     }
