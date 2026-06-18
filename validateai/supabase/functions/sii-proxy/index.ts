@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z } from 'npm:zod';
+import { z } from 'https://esm.sh/zod@3.23.8';
 import { SiiEmpresaSchema, RutSchema } from '../shared-schemas/mod.ts';
 
 const corsHeaders = {
@@ -71,6 +71,7 @@ async function fetchSiiEmpresa(rut: string) {
       rut,
       razon_social: raw.razon_social ?? raw.nombre ?? 'Desconocido',
       inicio_actividades: raw.inicio_actividades ?? raw.fecha_inicio_actividades ?? null,
+      // deno-lint-ignore no-explicit-any -- data cruda del SII sin esquema fijo
       actividades_economicas: (raw.actividades_economicas ?? raw.giros ?? []).map((a: any) => ({
         codigo: String(a.codigo ?? a.code ?? ''),
         descripcion: a.descripcion ?? a.description ?? '',

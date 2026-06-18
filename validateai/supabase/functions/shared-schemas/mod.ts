@@ -1,4 +1,4 @@
-import { z } from 'npm:zod';
+import { z } from 'https://esm.sh/zod@3.23.8';
 
 // ─── Input Schemas ────────────────────────────────────────────────────────────
 
