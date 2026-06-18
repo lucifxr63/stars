@@ -103,6 +103,7 @@ async function fetchRedditReal(idea: string): Promise<unknown> {
 // Si las credenciales no están configuradas, la función lanza un error
 // que Promise.allSettled captura como null — el reporte se genera con
 // un aviso de “datos no disponibles” en lugar de datos ficticios.
+// deno-lint-ignore require-await -- el throw debe ser promesa rechazada (Promise.allSettled)
 export async function fetchReddit(idea: string): Promise<unknown> {
   if (!REDDIT_CLIENT_ID || !REDDIT_CLIENT_SECRET) {
     throw new Error('Reddit credentials not configured — set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in Supabase secrets');

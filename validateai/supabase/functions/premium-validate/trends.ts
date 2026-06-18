@@ -41,6 +41,7 @@ async function fetchTrendsReal(idea: string): Promise<unknown> {
   };
 }
 
+// deno-lint-ignore require-await -- el throw debe ser promesa rechazada (Promise.allSettled)
 export async function fetchTrends(idea: string): Promise<unknown> {
   if (!SERPAPI_KEY) {
     throw new Error('SERPAPI_KEY not configured — set SERPAPI_KEY in Supabase secrets');
