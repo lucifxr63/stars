@@ -27,7 +27,7 @@ export function usePaginatedQuery<T>(
     setLoading(true);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let q: any = supabase.from(table).select(select, { count: 'exact' });
+    let q: any = (supabase.from as any)(table).select(select, { count: 'exact' });
 
     Object.entries(filters).forEach(([col, val]) => {
       if (val.trim()) q = q.ilike(col, `%${val}%`);

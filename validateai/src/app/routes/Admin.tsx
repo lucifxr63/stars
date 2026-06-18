@@ -332,9 +332,9 @@ export function Admin() {
       validations_count: (p as Profile).validations?.[0]?.count ?? 0,
     })) as Profile[]);
     setProfTotal(pCount ?? 0);
-    setValidations(vals ?? []);
+    setValidations((vals ?? []) as unknown as Validation[]);
     setValTotal(vCount ?? 0);
-    setAiInteractions(ais ?? []);
+    setAiInteractions((ais ?? []) as unknown as AiInteraction[]);
     setAiTotal(aCount ?? 0);
     setFeedback((fb ?? []) as unknown as ReportFeedbackRow[]);
     // Digest agregado server-side (todo el histórico). Best-effort: si falla, la UI

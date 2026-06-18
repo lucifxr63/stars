@@ -326,7 +326,7 @@ export function ValidationDetail() {
       const { data: row, error } = await supabase
         .from('validations')
         .select('*')
-        .eq('id', id)
+        .eq('id', id!)
         .single();
 
       if (error || !row) {
@@ -334,7 +334,7 @@ export function ValidationDetail() {
         navigate('/results');
         return;
       }
-      setData(row as ValidationFull);
+      setData(row as unknown as ValidationFull);
       setLoading(false);
       if (row.validation_score != null) {
         trackValidationCompleted(row.id, row.validation_score, row.idea_industry ?? '', tier);
@@ -367,7 +367,7 @@ export function ValidationDetail() {
       const { data: log } = await supabase
         .from('validation_agents_log')
         .select('executive_summary, reddit_data, trends_data, reddit_status, trends_status')
-        .eq('validation_id', id)
+        .eq('validation_id', id!)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -383,7 +383,7 @@ export function ValidationDetail() {
           .select('*')
           .eq('id', user.id)
           .maybeSingle();
-        if (fp) setFounderProfile(fp as FounderProfileData);
+        if (fp) setFounderProfile(fp as unknown as FounderProfileData);
       }
     };
     fetch();
@@ -454,7 +454,7 @@ export function ValidationDetail() {
           // Save explícito desde el cliente como fallback al save del edge function
           supabase
             .from('validations')
-            .update({ playbook_analysis: result })
+            .update({ playbook_analysis: result } as never)
             .eq('id', data.id)
             .then(({ error }) => {
               if (error) console.warn('[veredicto] Fallback save error:', error.message);
@@ -844,7 +844,7 @@ export function ValidationDetail() {
     // Updater funcional → sin closures stale ni objetos `data` recreados fuera de React.
     setData((d) => (d ? { ...d, share_visibility: next } : d));
     try {
-      const { error } = await supabase.from('validations').update({ share_visibility: next }).eq('id', id);
+      const { error } = await supabase.from('validations').update({ share_visibility: next }).eq('id', id!);
       if (error) throw error;
     } catch (err) {
       console.error('[share-visibility] update failed:', err);
@@ -937,7 +937,7 @@ export function ValidationDetail() {
         pitchContent = await callAI<PitchDeckContent>(data.id, 6, 'pitch_deck', ctx);
         if (pitchContent) {
           setData((prev) => prev ? { ...prev, pitch_deck_content: pitchContent } : prev);
-          supabase.from('validations').update({ pitch_deck_content: pitchContent }).eq('id', data.id)
+          supabase.from('validations').update({ pitch_deck_content: pitchContent } as never).eq('id', data.id)
             .then(({ error }) => { if (error) console.warn('[pitch-deck] save error:', error.message); });
         }
       }

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/database.types';
 // Tipos de DB generados disponibles en @/lib/database.types (regen: `npm run gen:types`).
 // El cliente aún NO está tipado con <Database>: hacerlo requiere alinear los tipos de
 // dominio (Validation, ValidationFull, FounderProfileData…) con las Row generadas —
@@ -8,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   // detectSessionInUrl (default: true) intercambia el ?code= del redirect — tanto
   // del OAuth de Google (/auth/callback) como del email de recovery (/reset-password).
   // Por eso AuthCallback.tsx NO debe volver a hacer exchangeCodeForSession: el code

@@ -6,6 +6,7 @@ import { useUserTier, type UserTier } from '@/hooks/useUserTier';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { Header } from '@/components/layout/Header';
 import { StepTransition } from '@/components/wizard/StepTransition';
+import type { StepIdea as StepIdeaT, StepMarket as StepMarketT } from '@/types/validation';
 import { StepIdea } from '@/components/wizard/StepIdea';
 import { StepIdeaQuick } from '@/components/wizard/StepIdeaQuick';
 import { StepIdeaPremium } from '@/components/wizard/StepIdeaPremium';
@@ -206,7 +207,7 @@ export function Validate() {
           updateStepIdea({
             idea_name: data.idea_name ?? '',
             idea_description: data.idea_description ?? '',
-            idea_industry: data.idea_industry ?? '',
+            idea_industry: (data.idea_industry ?? '') as unknown as StepIdeaT['idea_industry'],
             current_solution: data.current_solution ?? '',
           });
         }
@@ -215,9 +216,9 @@ export function Validate() {
           updateStepIdeaQuick({
             idea_name: data.idea_name ?? '',
             idea_description: data.idea_description ?? '',
-            idea_industry: data.idea_industry ?? '',
+            idea_industry: (data.idea_industry ?? '') as unknown as StepIdeaT['idea_industry'],
             quick_icp: (data as any).quick_icp ?? '',
-            business_model: data.business_model ?? '',
+            business_model: (data.business_model ?? '') as unknown as StepMarketT['business_model'],
           });
         }
         if (!useValidationStore.getState().stepMarket.target_country && data.target_country) {
@@ -225,7 +226,7 @@ export function Validate() {
             customer_segment: data.customer_segment ?? '',
             target_country: data.target_country ?? '',
             target_region: data.target_region ?? '',
-            business_model: data.business_model ?? '',
+            business_model: (data.business_model ?? '') as unknown as StepMarketT['business_model'],
             pricing_range: data.pricing_range ?? '',
             acquisition_channel: data.acquisition_channel ?? '',
           });
@@ -240,7 +241,7 @@ export function Validate() {
         }
 
         // Posicionar en el step correcto si el store está en step 1
-        if (currentStep === 1 && data.current_step > 1 && data.current_step < 4) {
+        if (currentStep === 1 && data.current_step != null && data.current_step > 1 && data.current_step < 4) {
           setStep(data.current_step as number);
         }
       });
@@ -406,7 +407,7 @@ export function Validate() {
         Object.entries(data).filter(([, v]) => v !== undefined && v !== null && v !== '')
       );
       if (Object.keys(payload).length === 0) return;
-      await supabase.from('validations').update(payload).eq('id', currentId);
+      await supabase.from('validations').update(payload as never).eq('id', currentId);
     }, 30_000);
     return () => clearInterval(interval);
   }, []);

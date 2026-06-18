@@ -513,7 +513,7 @@ export function SurveyResults() {
       if (!formRes.ok) throw new Error('Form not found');
       const { form: f } = await formRes.json();
       setForm(f);
-      setSubmissions((subsRes.data ?? []) as SurveySubmission[]);
+      setSubmissions((subsRes.data ?? []) as unknown as SurveySubmission[]);
     } catch {
       toast.error('Error al cargar los resultados.');
     } finally {

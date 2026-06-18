@@ -92,7 +92,7 @@ export function Onboarding() {
       if (form.founder_pitch) payload.founder_pitch = form.founder_pitch;
     }
 
-    const { error } = await supabase.from('profiles').update(payload).eq('id', user.id);
+    const { error } = await supabase.from('profiles').update(payload as never).eq('id', user.id);
     if (error) {
       toast.error('No se pudo guardar el perfil. Intenta de nuevo.');
       setSaving(false);
