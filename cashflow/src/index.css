@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Tema oscuro fintech (glassmorphism). Acento esmeralda = flujo positivo;
+   violeta = capa "tech". Tokens expuestos como utilidades de Tailwind v4. */
+@theme {
+  --color-background: #0b1120;
+  --color-foreground: #f8fafc;
+  --color-card: #0f172a;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #1e293b;
+  --color-primary: #10b981;
+  --color-primary-foreground: #052e1c;
+  --color-accent: #8b5cf6;
+  --color-danger: #f43f5e;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Respeta usuarios con movimiento reducido. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

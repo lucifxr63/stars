@@ -4,6 +4,8 @@
 
 export const ALLOWED_ORIGINS = [
   'https://validus.scouttech.lat',
+  'https://cashflow.scouttech.lat',
+  'https://cashflow-phi-nine.vercel.app',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
