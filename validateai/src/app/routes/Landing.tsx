@@ -997,7 +997,7 @@ export function Landing() {
       {/* ══ FOOTER ══ */}
       <footer className="border-t border-black/[0.05] dark:border-white/[0.06] py-12 bg-[#F8F7FF] dark:bg-[#0A0A0F]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 mb-10">
             <div className="col-span-2 sm:col-span-1">
               <div className="flex items-center gap-2 mb-3">
                 <Logo className="w-5 h-7" />
@@ -1014,14 +1014,6 @@ export function Landing() {
               <ul className="space-y-2.5">
                 {[{ label: 'Cómo funciona', href: '#how' }, { label: 'Características', href: '#features' }, { label: 'Demo', href: '#demo' }, { label: 'Precios', href: '#pricing' }].map(l => (
                   <li key={l.label}><a href={l.href} className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">{l.label}</a></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wide mb-4">Plataforma</p>
-              <ul className="space-y-2.5">
-                {[{ label: 'API & Developers', to: '/developers' }, { label: 'Admin', to: '/admin' }].map(l => (
-                  <li key={l.label}><Link to={l.to} className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">{l.label}</Link></li>
                 ))}
               </ul>
             </div>
