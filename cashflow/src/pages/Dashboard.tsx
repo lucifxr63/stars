@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Wallet, LogOut, TrendingDown, Timer, Flame, Landmark, Settings, RotateCcw, HelpCircle, LayoutGrid } from 'lucide-react';
+import { Wallet, LogOut, TrendingDown, Timer, Flame, Settings, RotateCcw, HelpCircle, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Kpi } from '@/components/Kpi';
+import { RestrictedCashKpi } from '@/components/RestrictedCashKpi';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { WorkspaceSwitcher } from '@/components/layout/WorkspaceSwitcher';
 import { CashflowChart } from '@/components/CashflowChart';
@@ -171,13 +173,7 @@ export function Dashboard() {
               <Kpi label="Burn mensual" value={kpis.monthlyBurn > 0 ? `${formatCLP(kpis.monthlyBurn)}/mes` : 'Sin quema'} icon={<Flame className="size-4" />} tone={kpis.monthlyBurn > 0 ? 'text-danger' : 'text-primary'} />
               <Kpi label="Runway" value={runwayLabel} icon={<Timer className="size-4" />} tone={kpis.runwayMonths !== null && kpis.runwayMonths < 3 ? 'text-danger' : 'text-foreground'} />
               <Kpi label="Saldo mínimo proyectado" value={formatCLP(kpis.lowestBalance)} sub={kpis.lowestDate ?? undefined} icon={<TrendingDown className="size-4" />} tone={kpis.lowestBalance < 0 ? 'text-danger' : 'text-foreground'} />
-              <Kpi
-                label="Reserva de caja (estimación)"
-                value={formatCLP(restricted)}
-                sub={taxRate > 0 ? `Estimación · ${taxRate}% sobre ingresos` : 'Configura tu tasa en Ajustes'}
-                icon={<Landmark className="size-4" />}
-                tone="text-amber"
-              />
+              <RestrictedCashKpi tenantId={cf.tenant?.id ?? null} heuristicValue={restricted} taxRate={taxRate} />
             </div>
 
             {/* Simulador activo */}
@@ -223,29 +219,6 @@ export function Dashboard() {
           </>
         )}
       </main>
-    </div>
-  );
-}
-
-// Mapea el tono del valor al tinte del cuadro de icono.
-const KPI_TILE: Record<string, string> = {
-  'text-primary': 'bg-primary/15 text-primary',
-  'text-danger': 'bg-danger/15 text-danger',
-  'text-amber': 'bg-amber/15 text-amber',
-  'text-foreground': 'bg-muted text-muted-foreground',
-};
-
-function Kpi({ label, value, sub, icon, tone }: { label: string; value: string; sub?: string; icon: React.ReactNode; tone: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card/60 p-5 backdrop-blur transition-colors hover:border-primary/30">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <span className={`grid size-8 place-items-center rounded-lg ${KPI_TILE[tone] ?? KPI_TILE['text-foreground']}`}>
-          {icon}
-        </span>
-      </div>
-      <p className={`mt-3 font-display text-2xl font-bold tracking-tight ${tone}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
 }
