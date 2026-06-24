@@ -14,7 +14,7 @@ interface Props {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  PENDING: 'bg-amber-500/15 text-amber-400',
+  PENDING: 'bg-amber/15 text-amber',
   PAID: 'bg-primary/15 text-primary',
   CANCELLED: 'bg-muted text-muted-foreground line-through',
 };

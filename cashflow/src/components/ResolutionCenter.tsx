@@ -16,8 +16,8 @@ export function ResolutionCenter({ overdue, onResolve }: Props) {
   return (
     <div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 backdrop-blur">
       <div className="mb-1 flex items-center gap-2">
-        <AlertTriangle className="size-5 text-amber-400" aria-hidden="true" />
-        <h2 className="font-semibold">Resolution Center</h2>
+        <AlertTriangle className="size-5 text-amber" aria-hidden="true" />
+        <h2 className="font-semibold">Centro de resolución</h2>
       </div>
       <p className="mb-4 text-xs text-muted-foreground">
         {overdue.length} cuenta{overdue.length === 1 ? '' : 's'} por cobrar vencida{overdue.length === 1 ? '' : 's'}. No se proyectan hasta que las acciones.

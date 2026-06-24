@@ -1,23 +1,60 @@
 @import "tailwindcss";
 
-/* Tema oscuro fintech (glassmorphism). Acento esmeralda = flujo positivo;
-   violeta = capa "tech". Tokens expuestos como utilidades de Tailwind v4. */
-@theme {
-  --color-background: #0b1120;
-  --color-foreground: #f8fafc;
-  --color-card: #0f172a;
-  --color-muted: #1e293b;
-  --color-muted-foreground: #94a3b8;
-  --color-border: #1e293b;
-  --color-primary: #10b981;
-  --color-primary-foreground: #052e1c;
-  --color-accent: #8b5cf6;
-  --color-danger: #f43f5e;
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+/* Toggle de tema basado en clase `.dark` en <html> (en vez de prefers-color-scheme),
+   para permitir override manual persistente. El hook useTheme aplica la clase. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tokens crudos por tema. LIGHT es el default (:root); DARK los sobrescribe.
+   Acento esmeralda = flujo positivo; violeta = capa "tech"/simulación;
+   ámbar = caja restringida (impuestos). En light se oscurecen para contraste AA. */
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+  --accent: #7c3aed;
+  --danger: #e11d48;
+  --amber: #d97706;
+  color-scheme: light;
 }
 
-html {
+.dark {
+  --background: #0b1120;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #1e293b;
+  --primary: #10b981;
+  --primary-foreground: #052e1c;
+  --accent: #8b5cf6;
+  --danger: #f43f5e;
+  --amber: #fbbf24;
   color-scheme: dark;
+}
+
+/* Mapea los tokens crudos a utilidades de Tailwind v4 (bg-background, text-primary…).
+   `inline` emite la referencia var() en el sitio de uso, de modo que el override
+   de `.dark` se resuelve correctamente. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-amber: var(--amber);
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {

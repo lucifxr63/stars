@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html lang="es-CL"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cashflow - Control Financiero SaaS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {},
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["IBM Plex Sans", "sans-serif"],
+                        "label": ["IBM Plex Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for table */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-body min-h-screen antialiased selection:bg-emerald-100 selection:text-emerald-900">
+<!-- Internal Header (Suppressed Global Nav due to task focus) -->
+<header class="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+<div class="flex items-center gap-6">
+<a class="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_left_alt</span>
+<span class="font-label font-medium text-sm">Dashboard</span>
+</a>
+<div class="h-4 w-px bg-slate-200"></div>
+<div class="flex items-center gap-2 text-slate-900">
+<span class="material-symbols-outlined text-emerald-600">domain</span>
+<span class="font-headline font-bold text-lg tracking-tight">Cashflow <span class="text-slate-400 font-normal">· SaaS</span></span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined text-sm">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-label font-bold text-xs shadow-sm">
+                    AC
+                </div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+<!-- Title Section -->
+<section class="space-y-1">
+<h1 class="font-headline font-bold text-3xl text-slate-900 tracking-tight">Control financiero SaaS</h1>
+<p class="text-slate-500 font-body text-base flex items-center gap-2">
+                Acme SpA 
+                <span class="w-1 h-1 rounded-full bg-slate-300"></span> 
+                aportes, gastos e ingresos
+            </p>
+</section>
+<!-- Analytics Row -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Ingresos -->
+<div class="bg-white rounded-xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-slate-500 font-label text-sm font-medium">Ingresos del mes</h3>
+<span class="material-symbols-outlined text-slate-400 text-lg">trending_up</span>
+</div>
+<div class="mb-3">
+<span class="font-headline font-bold text-2xl text-emerald-600">$12.450.000</span>
+</div>
+<div class="flex flex-col gap-1.5 text-xs font-label">
+<div class="flex justify-between text-slate-600">
+<span>Plan Pro</span>
+<span class="font-medium">$8.000.000</span>
+</div>
+<div class="flex justify-between text-slate-600">
+<span>Plan Básico</span>
+<span class="font-medium">$4.450.000</span>
+</div>
+</div>
+</div>
+<!-- Gastos -->
+<div class="bg-white rounded-xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-slate-500 font-label text-sm font-medium">Gastos del mes</h3>
+<span class="material-symbols-outlined text-slate-400 text-lg">trending_down</span>
+</div>
+<div class="mb-3">
+<span class="font-headline font-bold text-2xl text-rose-600">$4.820.000</span>
+</div>
+<div class="flex flex-col gap-1.5 text-xs font-label">
+<div class="flex justify-between text-slate-600">
+<span>Nómina</span>
+<span class="font-medium">$3.000.000</span>
+</div>
+<div class="flex justify-between text-slate-600">
+<span>SaaS &amp; Cloud</span>
+<span class="font-medium">$1.820.000</span>
+</div>
+</div>
+</div>
+<!-- Resultado Neto -->
+<div class="bg-white rounded-xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<h3 class="text-slate-500 font-label text-sm font-medium">Resultado neto</h3>
+<span class="material-symbols-outlined text-emerald-500 text-lg">account_balance_wallet</span>
+</div>
+<div class="mb-3 relative z-10">
+<span class="font-headline font-bold text-2xl text-slate-900">$7.630.000</span>
+</div>
+<div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-medium font-label relative z-10">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span>Saludable</span>
+</div>
+</div>
+<!-- Aportes de Socios -->
+<div class="bg-white rounded-xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-violet-50 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<h3 class="text-slate-500 font-label text-sm font-medium">Aportes de socios</h3>
+<span class="material-symbols-outlined text-violet-500 text-lg">group_add</span>
+</div>
+<div class="mb-3 relative z-10">
+<span class="font-headline font-bold text-2xl text-violet-600">$20.000.000</span>
+</div>
+<div class="text-xs text-slate-500 font-label relative z-10">
+                    Fondo semilla interno
+                </div>
+</div>
+</section>
+<!-- Forms Section -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+<!-- Ingreso Form -->
+<div class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+<div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+</div>
+<h2 class="font-headline font-semibold text-lg text-slate-900">Registrar ingreso</h2>
+</div>
+<div class="p-6 flex-1 flex flex-col gap-5">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div class="space-y-1.5">
+<label class="text-sm font-label font-medium text-slate-700">Plan</label>
+<select class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 outline-none transition-all cursor-pointer">
+<option>Plan Pro</option>
+<option>Plan Básico</option>
+<option>Custom Enterprise</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-label font-medium text-slate-700">Bruto USD</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">$</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 outline-none transition-all placeholder:text-slate-400" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-label font-medium text-slate-700">Tipo de cambio (USD a CLP)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">$</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 outline-none transition-all" type="number" value="950"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-label font-medium text-slate-700">Comisión pasarela (%)</label>
+<div class="relative">
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-7 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 outline-none transition-all" step="0.1" type="number" value="2.9"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">%</span>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-4 space-y-4">
+<div class="bg-emerald-50/50 border border-emerald-100 rounded-lg p-4 flex items-center justify-between">
+<span class="text-sm font-label font-medium text-emerald-800">Neto estimado CLP</span>
+<span class="font-headline font-bold text-xl text-emerald-700">$0</span>
+</div>
+<button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-label font-medium py-2.5 rounded-lg transition-colors active:scale-[0.98] flex items-center justify-center gap-2">
+<span>Registrar ingreso</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Gasto Form -->
+<div class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+<div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
+<span class="material-symbols-outlined text-[18px]">remove_circle</span>
+</div>
+<h2 class="font-headline font-semibold text-lg text-slate-900">Registrar gasto</h2>
+</div>
+<div class="p-6 flex-1 flex flex-col gap-5">
+<div class="space-y-1.5">
+<label class="text-sm font-label font-medium text-slate-700">Concepto</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-rose-600/20 focus:border-rose-600 outline-none transition-all placeholder:text-slate-400" placeholder="Ej. AWS, Nómina, Marketing..." type="text"/>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div class="space-y-1.5">
+<label class="text-sm font-label font-medium text-slate-700">Neto (CLP)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">$</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-rose-600/20 focus:border-rose-600 outline-none transition-all" placeholder="0" type="number"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-label font-medium text-slate-700">IVA</label>
+<div class="flex items-center gap-4 h-10">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="w-4 h-4 text-rose-600 border-slate-300 focus:ring-rose-600" name="iva_type" type="radio"/>
+<span class="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">Afecto</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 text-rose-600 border-slate-300 focus:ring-rose-600" name="iva_type" type="radio"/>
+<span class="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">Exento</span>
+</label>
+</div>
+</div>
+</div>
+<div class="space-y-2 pt-2 border-t border-slate-100">
+<label class="text-sm font-label font-medium text-slate-700 block">Financiado por</label>
+<div class="flex items-center gap-6">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="w-4 h-4 text-slate-900 border-slate-300 focus:ring-slate-900" name="fund_source" type="radio"/>
+<span class="text-sm text-slate-700 group-hover:text-slate-900">Caja Empresa</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 text-violet-600 border-slate-300 focus:ring-violet-600" name="fund_source" type="radio"/>
+<span class="text-sm text-slate-700 group-hover:text-slate-900">Aporte de Socio</span>
+</label>
+</div>
+</div>
+<div class="mt-auto pt-4 space-y-4">
+<div class="flex items-center justify-between px-2">
+<span class="text-sm font-label font-medium text-slate-500">Total a registrar</span>
+<span class="font-headline font-bold text-xl text-slate-900">$0</span>
+</div>
+<button class="w-full bg-rose-600 hover:bg-rose-700 text-white font-label font-medium py-2.5 rounded-lg transition-colors active:scale-[0.98] flex items-center justify-center gap-2">
+<span>Registrar gasto</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Aporte Form (Full width banner style) -->
+<section class="bg-white rounded-xl border border-violet-200/60 shadow-sm p-6 relative overflow-hidden">
+<div class="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-violet-50 to-transparent pointer-events-none"></div>
+<div class="flex flex-col md:flex-row md:items-center gap-6 relative z-10">
+<div class="flex items-center gap-3 shrink-0 md:w-48">
+<div class="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600">
+<span class="material-symbols-outlined text-[20px]">volunteer_activism</span>
+</div>
+<div>
+<h2 class="font-headline font-semibold text-slate-900">Aporte de socio</h2>
+<p class="text-xs text-slate-500 font-label">Inyección de capital</p>
+</div>
+</div>
+<div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="space-y-1.5">
+<label class="text-xs font-label font-medium text-slate-500 uppercase tracking-wider">Socio</label>
+<select class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-violet-600/20 focus:border-violet-600 outline-none transition-all">
+<option>Juan Pérez</option>
+<option>María Gómez</option>
+<option>Fondo VC Latam</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-label font-medium text-slate-500 uppercase tracking-wider">Monto (CLP)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">$</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-violet-600/20 focus:border-violet-600 outline-none transition-all" placeholder="0" type="number"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-label font-medium text-slate-500 uppercase tracking-wider">Fecha</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-violet-600/20 focus:border-violet-600 outline-none transition-all" type="date"/>
+</div>
+</div>
+<div class="shrink-0 mt-4 md:mt-0 self-end md:self-center">
+<button class="bg-violet-600 hover:bg-violet-700 text-white font-label font-medium px-5 py-2.5 rounded-lg transition-colors active:scale-[0.98] shadow-sm shadow-violet-600/20">
+                        Registrar
+                    </button>
+</div>
+</div>
+</section>
+<!-- Detalle de ingresos Table -->
+<section class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+<div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+<h2 class="font-headline font-semibold text-lg text-slate-900">Detalle de ingresos</h2>
+<button class="text-sm font-label text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                    Filtrar
+                </button>
+</div>
+<div class="overflow-x-auto scrollbar-hide">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-slate-50/50 border-b border-slate-100">
+<th class="px-6 py-3 text-xs font-label font-medium text-slate-500 uppercase tracking-wider w-32">Fecha</th>
+<th class="px-6 py-3 text-xs font-label font-medium text-slate-500 uppercase tracking-wider">Plan</th>
+<th class="px-6 py-3 text-xs font-label font-medium text-slate-500 uppercase tracking-wider text-right">Bruto USD</th>
+<th class="px-6 py-3 text-xs font-label font-medium text-slate-500 uppercase tracking-wider text-right">Bruto CLP</th>
+<th class="px-6 py-3 text-xs font-label font-medium text-slate-500 uppercase tracking-wider text-right">Comisión</th>
+<th class="px-6 py-3 text-xs font-label font-medium text-slate-500 uppercase tracking-wider text-right">Neto CLP</th>
+<th class="px-6 py-3 text-xs font-label font-medium text-slate-500 uppercase tracking-wider text-center w-20">Acciones</th>
+</tr>
+</thead>
+<tbody>
+<!-- Empty State Request -->
+<tr>
+<td class="px-6 py-16" colspan="7">
+<div class="flex flex-col items-center justify-center text-center space-y-3">
+<div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
+<span class="material-symbols-outlined text-3xl">receipt_long</span>
+</div>
+<h3 class="text-sm font-label font-medium text-slate-900">Aún no hay ingresos registrados.</h3>
+<p class="text-xs text-slate-500 max-w-sm">Los ingresos registrados mediante el formulario superior aparecerán detallados aquí para su conciliación.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</body></html>

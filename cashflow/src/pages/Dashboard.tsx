@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Wallet, LogOut, TrendingDown, Timer, Flame, Landmark, Settings, RotateCcw, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { CashflowChart } from '@/components/CashflowChart';
 import { InvoiceForm } from '@/components/InvoiceForm';
 import { MovementForm } from '@/components/MovementForm';
@@ -99,15 +100,16 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <span className="flex items-center gap-2 font-semibold">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-6 py-4 backdrop-blur">
+        <span className="flex items-center gap-2.5 font-semibold">
           <span className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary">
             <Wallet className="size-5" aria-hidden="true" />
           </span>
-          Cashflow
+          <span className="font-display text-lg font-bold">Cashflow</span>
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span>
+          <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={() => setTourOpen(true)} aria-label="Tutorial">
             <HelpCircle className="size-4" aria-hidden="true" />
             <span className="hidden sm:inline">Tutorial</span>
@@ -146,7 +148,7 @@ export function Dashboard() {
         ) : (
           <>
             <div className="mb-8">
-              <h1 className="text-2xl font-semibold">
+              <h1 className="font-display text-3xl font-bold tracking-tight">
                 Hola{user?.user_metadata?.full_name ? `, ${String(user.user_metadata.full_name).split(' ')[0]}` : ''}
               </h1>
               <p className="mt-1 text-muted-foreground">{cf.tenant?.name ?? 'Tu empresa'} · flujo de caja en tiempo real</p>
@@ -163,7 +165,7 @@ export function Dashboard() {
                 value={formatCLP(restricted)}
                 sub={taxRate > 0 ? `${taxRate}% reservado` : 'Configura tu tasa en Ajustes'}
                 icon={<Landmark className="size-4" />}
-                tone="text-amber-400"
+                tone="text-amber"
               />
             </div>
 
@@ -214,14 +216,24 @@ export function Dashboard() {
   );
 }
 
+// Mapea el tono del valor al tinte del cuadro de icono.
+const KPI_TILE: Record<string, string> = {
+  'text-primary': 'bg-primary/15 text-primary',
+  'text-danger': 'bg-danger/15 text-danger',
+  'text-amber': 'bg-amber/15 text-amber',
+  'text-foreground': 'bg-muted text-muted-foreground',
+};
+
 function Kpi({ label, value, sub, icon, tone }: { label: string; value: string; sub?: string; icon: React.ReactNode; tone: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card/60 p-5 backdrop-blur">
-      <div className="flex items-center justify-between text-muted-foreground">
-        <p className="text-xs">{label}</p>
-        {icon}
+    <div className="rounded-xl border border-border bg-card/60 p-5 backdrop-blur transition-colors hover:border-primary/30">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <span className={`grid size-8 place-items-center rounded-lg ${KPI_TILE[tone] ?? KPI_TILE['text-foreground']}`}>
+          {icon}
+        </span>
       </div>
-      <p className={`mt-2 text-xl font-semibold ${tone}`}>{value}</p>
+      <p className={`mt-3 font-display text-2xl font-bold tracking-tight ${tone}`}>{value}</p>
       {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
     </div>
   );

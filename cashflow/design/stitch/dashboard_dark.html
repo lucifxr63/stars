@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es-CL"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cashflow - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            500: '#10b981',
+                        },
+                        violet: {
+                            500: '#8b5cf6',
+                        },
+                        red: {
+                            500: '#f43f5e',
+                        },
+                        amber: {
+                            500: '#fbbf24',
+                        },
+                        slate: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Space Grotesk", "sans-serif"],
+                        display: ["Space Grotesk", "sans-serif"],
+                        body: ["IBM Plex Sans", "sans-serif"],
+                        label: ["IBM Plex Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0f172a; /* deep navy */
+            color: #f1f5f9;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body antialiased min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-500">
+<!-- TopNavBar -->
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 shadow-sm">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<img alt="Cashflow" class="w-8 h-8 rounded-lg" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAFgklEQVR4AexaTYwURRT+XnX3zLDssPIb3U0w/ASjctPEEIOJEhGMaDzgXQ+ezMYDJhww9kEOajy43jwYD57Wm1FhYc0eQE2MV0g0IiZmiQhL3N2B2ZnurrJeLz309Izz17Wzuz10prbrvap67/u+qa6qHhDo5po6sXHjt+6DhfPv7SxMndqVn3H3FqfdfatZ8mfdvYyFMTE2aIzdUGovgOuK4oy7jRMVreExkccmh6jgWLaTC9B+PFb2ytkQjMUhKjA2xpj//tQexgyNvV32VgQI35zcnD/o70KALZyoXbC10p5TtsWYQ+wz7gMaF+nS9NNcAK3chu/csWKhsD0M1nTo2ncy9mKAHUPn3If+bzY0CvDLm07hKey0cxha+xQ7Q2gJDDMnTLq55Ih6ASaPW4Ubo2OOg1yy43q3mVOhiFFojohddQJsGNk3yh1j7ZmqMjfmGCd1T4ALJzfblrMh3pjFeshRc424LQugp0X+dmFr5Mz6PV+1t0SPQijA8MjjW9fTNpf2C+LdgTlzHMHbg0f+CBuDVLwcNjF3gccwlBM2DRJ55hqeYjV3MTyCIXYMYmHuIoCXH0TyzJm5CwWy2RjEwtyFyukXhwFiH6fK3EW4GMS9A1Rn7uE5YIA4N1C9L0CDJAPmMDsDPHqFAnwqfFywAvrVZOGYHFv/0vOyye/IiAA+YZsG94X+4eFDATpMRDtMguRYHJNjW6CPKKDPfQgjL2+Cg6ctOZ8mBOhA2jidjhfA046vPu60f6t+Olar5vZtIpDH9YvEE+17mu0hCAeElK+mjZpaAChxOA5CQp31lDoaWOoRk4Vjcux4rmTuurYOjfQCAI/GcwUWPhE2/oj7TNQ5pm/LibpYCvvr7B6M1AIQ0fZ4Xh3QOPkovqXElajOd5079WKr8XKowS2pBVBKQX9qCprc+5vFihJxTs4d2b3eUwsAEIjQ92s5Z/rEBgToO3ejCQ0IUP8IGEXXIhg/AoBq0WO5qd3f1AIQUd0j0O3eL1XwtpawYedgH7cl40WEdFqdlyKz53tqAXrOfHcgkRgn0O67Zu3GPm6rOVaosuoCrBCvjsOuugBKyQme7knE7OO2pN+0vfoC2OKMtNDw7sA+pdtME07GW3UBkoD6bacWQCl1Iw46ILknbpusJ2Pr3P+kjZ9aAAi6HAdh+2JcBvRw3GeiLn3s5th1sQiX6uwejNQCKKEm43kF6IgDnGt2jk/jc4jOcOx4LinwZdzupS56GRQfo89i01Lhp7ivH3U9/adBuJg2V2oBGIDnqBNSqR+53o8igR+qFt41kcuIALbCTWXj9QDqHT0bzutvJ/XilCSnZ9p1SZjiHMpSb9iEW8k+vdhGBKgltvC1stVb0sbB5Bk+rS0t9Yxeb8ahc9TyGaiYFcAAoH6HuC9AvxVf6Xzdxhd6NdWLarfDstGfuQuq+kE26HTPgrnrf2FSfvdDszGCoHxhwalkg073LJi7KM3jTvdDszGiVEVJ4DLu8GKQDUqds6hKX+GYW+b/KyydKhY6H5qNno6y5zUTFR6ESvOX5gZpFjBX5qwFQCgAXvsqcMoVVoR9mS+5Ev5lztDXsgC6Uvo5P+dVvMzvCH7glRdfcuc05fBTEwCuK5eGnFkv8L2wJYN/PAvV8vxv1/QPKSqid08A9jzr+ktj9myVsnc6rOoT71Lx2mw09Zkul3oB2LPfrVaes6/yVGEzC8Un73blqH0VT37WMLsbBWDG5MryC6f/Wqzibz1i3R6VGfuiKl8vHzo9C82JqSVLcwGiXi+6C0sX8SfKuFX1sW7eGsNHWGMOsT//QcvdrbUA0JfrysVj7s3KEff3xaA0KytY8JRa4sVyLYjCezpjYUyMjTFWDr1/hTHzwq4ZtPz8BwAA///8VUvaAAAABklEQVQDANEh6Ogpc4rrAAAAAElFTkSuQmCC"/>
+<span class="text-xl font-headline font-bold text-emerald-500 tracking-tight">Cashflow</span>
+</div>
+<div class="hidden lg:flex items-center gap-6 mt-1">
+<a class="font-body text-label-md text-emerald-500 font-bold border-b-2 border-emerald-500 pb-4" href="#">Dashboard</a>
+<a class="font-body text-label-md text-slate-400 hover:text-slate-100 pb-4" href="#">Caja</a>
+<a class="font-body text-label-md text-slate-400 hover:text-slate-100 pb-4" href="#">Simulación</a>
+<a class="font-body text-label-md text-slate-400 hover:text-slate-100 pb-4" href="#">Facturas</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="hidden md:block text-sm text-slate-400 font-medium font-body mr-2">luciano@acme.cl</span>
+<button class="hidden md:flex items-center justify-center w-8 h-8 rounded-full text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors duration-200 active:scale-95 transition-transform" title="Tutorial">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+<button class="hidden md:flex items-center justify-center w-8 h-8 rounded-full text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors duration-200 active:scale-95 transition-transform" title="Ajustes">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<button class="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 hover:bg-slate-800 hover:text-red-500 transition-colors duration-200 active:scale-95 transition-transform" title="Salir">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+</button>
+</div>
+</nav>
+<!-- Main Layout -->
+<main class="flex-1 w-full max-w-[1600px] mx-auto pt-24 pb-12 px-6 grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8 items-start">
+<!-- Content Canvas -->
+<div class="flex flex-col gap-8 w-full">
+<!-- Greeting -->
+<header>
+<h1 class="text-3xl md:text-4xl font-headline font-bold text-white tracking-tight">Hola, Luciano</h1>
+<p class="text-slate-400 mt-1 font-body text-lg">Acme SpA · flujo de caja en tiempo real</p>
+</header>
+<!-- Simulation Banner -->
+<div class="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-violet-500">science</span>
+<div>
+<h3 class="text-violet-400 font-semibold text-sm">Simulación activa</h3>
+<p class="text-slate-300 text-sm">2 eventos ocultos de la proyección.</p>
+</div>
+</div>
+<button class="px-4 py-1.5 text-sm font-medium bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 rounded-lg transition-colors whitespace-nowrap">Restablecer</button>
+</div>
+<!-- KPI Row (Horizontal Scroll on Mobile) -->
+<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+<!-- KPI 1 -->
+<div class="bg-slate-800 rounded-xl p-5 flex flex-col justify-between relative overflow-hidden border border-slate-700/50 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-slate-400 text-sm font-medium">Caja actual</h3>
+<span class="material-symbols-outlined text-slate-500 text-[20px]">account_balance_wallet</span>
+</div>
+<div>
+<p class="text-2xl font-headline font-bold text-emerald-500">$4.820.000</p>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-slate-800 rounded-xl p-5 flex flex-col justify-between relative overflow-hidden border border-slate-700/50 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-slate-400 text-sm font-medium">Burn mensual</h3>
+<span class="material-symbols-outlined text-slate-500 text-[20px]">local_fire_department</span>
+</div>
+<div>
+<p class="text-2xl font-headline font-bold text-red-500">-$1.200.000<span class="text-sm text-slate-500 font-medium ml-1">/mes</span></p>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-slate-800 rounded-xl p-5 flex flex-col justify-between relative overflow-hidden border border-slate-700/50 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-slate-400 text-sm font-medium">Runway</h3>
+<span class="material-symbols-outlined text-slate-500 text-[20px]">timer</span>
+</div>
+<div>
+<p class="text-2xl font-headline font-bold text-white">8,5 <span class="text-lg text-slate-400 font-medium">meses</span></p>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-slate-800 rounded-xl p-5 flex flex-col justify-between relative overflow-hidden border border-slate-700/50 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-slate-400 text-sm font-medium">Saldo mín. proyectado</h3>
+<span class="material-symbols-outlined text-slate-500 text-[20px]">trending_down</span>
+</div>
+<div>
+<p class="text-2xl font-headline font-bold text-white">$320.000</p>
+<p class="text-xs text-slate-500 mt-1">12-08</p>
+</div>
+</div>
+<!-- KPI 5 -->
+<div class="bg-slate-800 rounded-xl p-5 flex flex-col justify-between relative overflow-hidden border border-slate-700/50 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-slate-400 text-sm font-medium leading-tight pr-2">Caja Restringida<br/><span class="text-xs text-slate-500">(Impuestos)</span></h3>
+<span class="material-symbols-outlined text-slate-500 text-[20px]">account_balance</span>
+</div>
+<div>
+<p class="text-2xl font-headline font-bold text-amber-500">$910.000</p>
+<p class="text-xs text-slate-500 mt-1">19% reservado</p>
+</div>
+</div>
+</section>
+<!-- Chart Area -->
+<section class="bg-slate-800 rounded-xl p-6 border border-slate-700/50 shadow-sm flex flex-col min-h-[400px]">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+<div>
+<h2 class="text-xl font-headline font-semibold text-white">Proyección de caja</h2>
+<p class="text-sm text-slate-400 mt-1">12 semanas (90 días)</p>
+</div>
+<div class="flex bg-slate-900 rounded-lg p-1 border border-slate-700">
+<button class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-white rounded-md transition-colors">Diaria</button>
+<button class="px-3 py-1.5 text-sm font-medium bg-slate-700 text-white rounded-md shadow-sm">Semanal</button>
+<button class="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-white rounded-md transition-colors">Mensual</button>
+</div>
+</div>
+<!-- Chart Mock (Visual representation) -->
+<div class="flex-1 relative w-full border-b border-slate-700 flex items-end">
+<!-- Zero line dashed -->
+<div class="absolute bottom-[20%] left-0 w-full border-t border-dashed border-slate-600/50 z-0"></div>
+<!-- SVG Area Chart Mock -->
+<svg class="w-full h-full relative z-10" preserveaspectratio="none" viewbox="0 0 100 100">
+<defs>
+<lineargradient id="emeraldGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#10b981" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#10b981" stop-opacity="0.0"></stop>
+</lineargradient>
+<lineargradient id="redGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#f43f5e" stop-opacity="0.0"></stop>
+<stop offset="100%" stop-color="#f43f5e" stop-opacity="0.3"></stop>
+</lineargradient>
+</defs>
+<!-- Positive Area -->
+<path d="M0,80 L0,50 Q10,30 20,45 T40,60 T60,20 T80,70 T100,60 L100,80 Z" fill="url(#emeraldGradient)"></path>
+<!-- Positive Line -->
+<path d="M0,50 Q10,30 20,45 T40,60 T60,20 T80,70 T100,60" fill="none" stroke="#10b981" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<!-- Minimal point marker -->
+<div class="absolute bottom-[20%] left-[80%] flex flex-col items-center -translate-x-1/2 translate-y-1/2 z-20">
+<div class="w-2 h-2 rounded-full bg-slate-400 ring-4 ring-slate-900"></div>
+<span class="text-xs text-slate-400 mt-2 bg-slate-900/80 px-2 py-0.5 rounded backdrop-blur-sm border border-slate-700">mínimo</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Sidebar / Right Column -->
+<aside class="flex flex-col gap-6 w-full">
+<!-- Accounts Panel -->
+<section class="bg-slate-800 rounded-xl border border-slate-700/50 shadow-sm flex flex-col">
+<div class="p-5 border-b border-slate-700 flex justify-between items-center">
+<h2 class="text-base font-headline font-semibold text-white">Cuentas</h2>
+<button class="text-emerald-500 hover:text-emerald-400 p-1 rounded-md hover:bg-emerald-500/10 transition-colors" title="Agregar cuenta">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<div class="flex justify-between items-center group">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-red-500/10 text-red-500 flex items-center justify-center font-bold text-xs">S</div>
+<div>
+<h4 class="text-sm font-medium text-white">Santander Pyme</h4>
+<p class="text-xs text-slate-500">CTA Cte ••••1234</p>
+</div>
+</div>
+<span class="text-sm font-semibold text-white">$4.200.000</span>
+</div>
+<div class="flex justify-between items-center group">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">B</div>
+<div>
+<h4 class="text-sm font-medium text-white">Banco BICE</h4>
+<p class="text-xs text-slate-500">Vista ••••5678</p>
+</div>
+</div>
+<span class="text-sm font-semibold text-white">$620.000</span>
+</div>
+</div>
+</section>
+<!-- Resolution Center Mini -->
+<section class="bg-slate-800 rounded-xl border border-slate-700/50 shadow-sm flex flex-col border-l-4 border-l-red-500">
+<div class="p-4 border-b border-slate-700 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500 text-[20px]">warning</span>
+<h2 class="text-base font-headline font-semibold text-white">Centro de resolución</h2>
+</div>
+<span class="bg-red-500/20 text-red-500 text-xs font-bold px-2 py-0.5 rounded">2</span>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="bg-slate-900 rounded-lg p-3 border border-red-500/20">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="text-sm font-medium text-white truncate max-w-[140px]">Agencia Creativa S.A.</h4>
+<p class="text-xs text-red-400 mt-0.5">Vencida hace 5 días</p>
+</div>
+<span class="text-sm font-semibold text-red-500">-$450.000</span>
+</div>
+<div class="flex gap-2 mt-3">
+<button class="flex-1 py-1.5 px-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 rounded text-xs font-medium transition-colors">Pagada</button>
+<button class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 hover:bg-slate-600 rounded text-xs font-medium transition-colors">Mover</button>
+</div>
+</div>
+</div>
+</section>
+</aside>
+</main>
+</body></html>

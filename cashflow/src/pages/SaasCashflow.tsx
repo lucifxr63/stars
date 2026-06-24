@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Building2, Trash2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { CashflowAnalyticsPanel } from '@/components/CashflowAnalyticsPanel';
 import { PartnerContributionForm } from '@/components/PartnerContributionForm';
 import { ExpenseForm } from '@/components/ExpenseForm';
@@ -33,24 +34,27 @@ export function SaasCashflow() {
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <span className="flex items-center gap-2 font-semibold">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-6 py-4 backdrop-blur">
+        <span className="flex items-center gap-2.5 font-semibold">
           <span className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary">
             <Building2 className="size-5" aria-hidden="true" />
           </span>
-          Cashflow · SaaS
+          <span className="font-display text-lg font-bold">Cashflow · SaaS</span>
         </span>
-        <Link
-          to="/dashboard"
-          className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-transparent px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" /> Dashboard
-        </Link>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
+          <Link
+            to="/dashboard"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-transparent px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" /> Dashboard
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Control financiero SaaS</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Control financiero SaaS</h1>
           <p className="mt-1 text-muted-foreground">{tenant?.name ?? 'Tu empresa'} · aportes, gastos e ingresos</p>
         </div>
 

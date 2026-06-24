@@ -208,7 +208,7 @@ export function InvoiceForm({ onSubmit, onParse, pdfUsed, pdfLimit }: Props) {
             <ul className="mt-1 space-y-0.5 text-muted-foreground">
               {aiInfo.warnings.map((w, i) => (
                 <li key={i} className="flex items-start gap-1">
-                  <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-400" aria-hidden="true" />
+                  <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber" aria-hidden="true" />
                   {w}
                 </li>
               ))}

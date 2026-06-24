@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuth } from '@/store/auth';
+import { useTheme } from '@/store/theme';
 import { ConfirmProvider } from '@/components/ui/confirm';
 import { Landing } from '@/pages/Landing';
 import { Login } from '@/pages/Login';
@@ -13,6 +14,9 @@ import { RequireAuth } from '@/components/RequireAuth';
 export default function App() {
   // Inicializa la sesión y la suscripción a cambios de auth una sola vez.
   useEffect(() => useAuth.getState().init(), []);
+  // Sigue cambios del esquema del sistema cuando el tema es "system".
+  useEffect(() => useTheme.getState().init(), []);
+  const resolvedTheme = useTheme((s) => s.resolved);
 
   return (
     <ConfirmProvider>
@@ -37,7 +41,7 @@ export default function App() {
           }
         />
       </Routes>
-      <Toaster richColors position="top-right" theme="dark" />
+      <Toaster richColors position="top-right" theme={resolvedTheme} />
     </ConfirmProvider>
   );
 }

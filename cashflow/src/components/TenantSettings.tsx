@@ -52,7 +52,7 @@ export function TenantSettings({ tenant, onSave, onClose }: Props) {
               <span className="text-sm text-muted-foreground">%</span>
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
-              Se reserva este % de cada ingreso proyectado (ej. 19 = IVA Chile). <span className="text-amber-400">Estimación bruta</span>, no descuenta crédito fiscal.
+              Se reserva este % de cada ingreso proyectado (ej. 19 = IVA Chile). <span className="text-amber">Estimación bruta</span>, no descuenta crédito fiscal.
             </p>
           </div>
 

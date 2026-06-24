@@ -3,6 +3,7 @@ import {
 } from 'recharts';
 import { formatCLP, formatCLPShort } from '@/lib/utils';
 import { useCashflowAnalytics } from '@/hooks/useCashflowAnalytics';
+import { useTheme } from '@/store/theme';
 
 // Hero del dashboard SaaS (decisión Mesa Directiva): ComposedChart unificado —
 // barras agrupadas Ingresos (net_income_clp) vs Egresos + línea de saldo
@@ -13,11 +14,15 @@ function monthLabel(period: string): string {
   return new Date(y, m - 1, 1).toLocaleDateString('es-CL', { month: 'short' });
 }
 
-const COLORS = { ingresos: '#10b981', egresos: '#f43f5e', saldo: '#38bdf8' };
-
 export function CashflowAnalyticsPanel({ tenantId, months = 6 }: { tenantId: string | null; months?: number }) {
   const { series, latest, loading, error, reload } = useCashflowAnalytics(tenantId, months);
   const m = latest?.metrics;
+
+  // Paleta del gráfico según el tema (recharts no consume utilidades de Tailwind).
+  const dark = useTheme((s) => s.resolved === 'dark');
+  const C = dark
+    ? { ingresos: '#10b981', egresos: '#f43f5e', saldo: '#38bdf8', grid: '#1e293b', axis: '#94a3b8', surface: '#0f172a', zero: '#334155' }
+    : { ingresos: '#059669', egresos: '#e11d48', saldo: '#0284c7', grid: '#e2e8f0', axis: '#64748b', surface: '#ffffff', zero: '#cbd5e1' };
 
   return (
     <div className="rounded-2xl border border-border bg-card/60 p-5 backdrop-blur">
@@ -48,7 +53,7 @@ export function CashflowAnalyticsPanel({ tenantId, months = 6 }: { tenantId: str
           <Metric label="Ingresos netos" value={formatCLP(m.total_revenues)} tone="text-primary" />
           <Metric label="Egresos" value={formatCLP(m.total_expenses)} tone="text-danger" />
           <Metric label="Aportes de socios" value={formatCLP(m.partner_contributions)} tone="text-foreground" />
-          <Metric label="Saldo acumulado" value={formatCLP(m.final_accumulated_balance)} tone="text-sky-400" />
+          <Metric label="Saldo acumulado" value={formatCLP(m.final_accumulated_balance)} tone="text-sky-600 dark:text-sky-400" />
         </div>
       )}
 
@@ -58,30 +63,30 @@ export function CashflowAnalyticsPanel({ tenantId, months = 6 }: { tenantId: str
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={series} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} vertical={false} />
               <XAxis
                 dataKey="period"
                 tickFormatter={monthLabel}
-                tick={{ fill: '#94a3b8', fontSize: 11 }}
-                stroke="#1e293b"
+                tick={{ fill: C.axis, fontSize: 11 }}
+                stroke={C.grid}
               />
               <YAxis
                 tickFormatter={(v) => formatCLPShort(Number(v))}
-                tick={{ fill: '#94a3b8', fontSize: 11 }}
-                stroke="#1e293b"
+                tick={{ fill: C.axis, fontSize: 11 }}
+                stroke={C.grid}
                 width={56}
               />
               <Tooltip
-                contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: '#94a3b8' }}
+                contentStyle={{ background: C.surface, border: `1px solid ${C.grid}`, borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: C.axis }}
                 labelFormatter={(l) => monthLabel(String(l))}
                 formatter={(value, name) => [formatCLP(Number(value)), name as string]}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <ReferenceLine y={0} stroke="#334155" />
-              <Bar dataKey="ingresos" name="Ingresos netos" fill={COLORS.ingresos} radius={[3, 3, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="egresos" name="Egresos" fill={COLORS.egresos} radius={[3, 3, 0, 0]} maxBarSize={28} />
-              <Line type="monotone" dataKey="saldoAcumulado" name="Saldo acumulado" stroke={COLORS.saldo} strokeWidth={2} dot={{ r: 3 }} />
+              <ReferenceLine y={0} stroke={C.zero} />
+              <Bar dataKey="ingresos" name="Ingresos netos" fill={C.ingresos} radius={[3, 3, 0, 0]} maxBarSize={28} />
+              <Bar dataKey="egresos" name="Egresos" fill={C.egresos} radius={[3, 3, 0, 0]} maxBarSize={28} />
+              <Line type="monotone" dataKey="saldoAcumulado" name="Saldo acumulado" stroke={C.saldo} strokeWidth={2} dot={{ r: 3 }} />
             </ComposedChart>
           </ResponsiveContainer>
         )}

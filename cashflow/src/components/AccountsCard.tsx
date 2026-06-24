@@ -88,7 +88,7 @@ export function AccountsCard({ accounts, onAdd, onEdit, onRemove }: Props) {
       </ul>
 
       {mixed && (
-        <p className="mt-2 text-[11px] text-amber-400">
+        <p className="mt-2 text-[11px] text-amber">
           Tienes cuentas en distintas monedas. La proyección las suma sin convertir tipos de cambio (MVP).
         </p>
       )}
