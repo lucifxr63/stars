@@ -172,9 +172,9 @@ export function Dashboard() {
               <Kpi label="Runway" value={runwayLabel} icon={<Timer className="size-4" />} tone={kpis.runwayMonths !== null && kpis.runwayMonths < 3 ? 'text-danger' : 'text-foreground'} />
               <Kpi label="Saldo mínimo proyectado" value={formatCLP(kpis.lowestBalance)} sub={kpis.lowestDate ?? undefined} icon={<TrendingDown className="size-4" />} tone={kpis.lowestBalance < 0 ? 'text-danger' : 'text-foreground'} />
               <Kpi
-                label="Caja Restringida (Impuestos)"
+                label="Reserva de caja (estimación)"
                 value={formatCLP(restricted)}
-                sub={taxRate > 0 ? `${taxRate}% reservado` : 'Configura tu tasa en Ajustes'}
+                sub={taxRate > 0 ? `Estimación · ${taxRate}% sobre ingresos` : 'Configura tu tasa en Ajustes'}
                 icon={<Landmark className="size-4" />}
                 tone="text-amber"
               />

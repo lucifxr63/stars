@@ -5,7 +5,7 @@
   "grid": { "columns": 12 },
   "widgets": [
     { "widgetId": "currentCashWidget", "title": "Caja actual", "span": 4 },
-    { "widgetId": "restrictedCashWidget", "title": "Caja restringida (IVA/PPM)", "span": 4 },
+    { "widgetId": "restrictedCashWidget", "title": "Provisión fiscal (IVA neto + PPM)", "span": 4 },
     { "widgetId": "workingCapitalWidget", "title": "Capital de trabajo", "span": 4 },
     { "widgetId": "liquidityProjectionWidget", "title": "Proyección de liquidez", "span": 8 },
     { "widgetId": "receivablesWidget", "title": "Cuentas por cobrar", "span": 4 }

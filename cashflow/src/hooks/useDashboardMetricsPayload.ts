@@ -92,7 +92,7 @@ function isNotDeployed(error: PostgrestError): boolean {
 const MOCKS: Record<WorkspaceModel, MetricsPayload> = {
   'pyme-tradicional': {
     currentCashWidget: { display: '$12,4M', delta: 0.04, tone: 'positive', note: 'Disponible en cuentas' },
-    restrictedCashWidget: { display: '$3,1M', tone: 'warning', note: '19% IVA + PPM reservado' },
+    restrictedCashWidget: { display: '$3,1M', tone: 'warning', note: 'IVA neto + PPM del período' },
     workingCapitalWidget: { display: '$8,9M', delta: -0.02, tone: 'neutral', note: 'Activo circulante − pasivo' },
     liquidityProjectionWidget: {
       display: 'Saldo mínimo $1,2M',
