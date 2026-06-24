@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { WidgetMetric, MetricTone } from '@/hooks/useDashboardMetricsPayload';
+import { WidgetTrendChart } from '@/components/dashboard/WidgetTrendChart';
 
 // Widgets DUMMY (esqueletos vacíos por ahora). Son stateless: NO hacen fetch.
 // Reciben su `title` desde el layout JSON y su `metric` inyectada por el
@@ -72,7 +73,6 @@ function MetricCard({ title, metric, icon: Icon }: WidgetProps & { icon: LucideI
 function ChartCard({ title, metric, icon: Icon }: WidgetProps & { icon: LucideIcon }) {
   const tone = TONE[metric?.tone ?? 'neutral'];
   const trend = metric?.trend ?? [];
-  const max = Math.max(1, ...trend);
   return (
     <div className="h-full rounded-xl border border-border bg-card/60 p-5 backdrop-blur transition-colors hover:border-primary/30">
       <div className="flex items-center justify-between">
@@ -85,14 +85,8 @@ function ChartCard({ title, metric, icon: Icon }: WidgetProps & { icon: LucideIc
         </span>
       </div>
       {metric && trend.length > 0 ? (
-        <div className="mt-4 flex h-24 items-end gap-1.5" role="img" aria-label={`Tendencia: ${title}`}>
-          {trend.map((v, i) => (
-            <span
-              key={i}
-              className="flex-1 rounded-t bg-primary/30"
-              style={{ height: `${Math.max(6, (v / max) * 100)}%` }}
-            />
-          ))}
+        <div className="mt-4 h-24" role="img" aria-label={`Tendencia: ${title}`}>
+          <WidgetTrendChart series={trend} tone={metric.tone} />
         </div>
       ) : (
         <div className="mt-4 h-24 animate-pulse rounded-lg bg-muted" aria-busy="true" />
