@@ -39,7 +39,7 @@ export function SaasCashflow() {
           <span className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary">
             <Building2 className="size-5" aria-hidden="true" />
           </span>
-          <span className="font-display text-lg font-bold">Cashflow · SaaS</span>
+          <span className="font-display text-lg font-bold">Denarius · SaaS</span>
         </span>
         <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />

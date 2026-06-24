@@ -38,7 +38,7 @@ export function Login() {
           <div className="mb-4 grid size-12 place-items-center rounded-xl bg-primary/15 text-primary">
             <Wallet className="size-6" aria-hidden="true" />
           </div>
-          <h1 className="font-display text-2xl font-bold">Entra a Cashflow</h1>
+          <h1 className="font-display text-2xl font-bold">Entra a Denarius</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Gestiona el flujo de caja de tu negocio en un solo lugar.
           </p>

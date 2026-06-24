@@ -46,7 +46,7 @@ export function Landing() {
           <span className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary">
             <Wallet className="size-5" aria-hidden="true" />
           </span>
-          <span className="font-display text-xl font-bold">Cashflow</span>
+          <span className="font-display text-xl font-bold">Denarius</span>
         </span>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a href="#beneficios" className="transition-colors hover:text-foreground">Beneficios</a>
@@ -79,7 +79,7 @@ export function Landing() {
               El flujo de caja de tu negocio, <span className="text-primary">claro y al instante.</span>
             </h1>
             <p className="mx-auto mb-10 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground md:text-xl">
-              Controla ingresos, egresos y liquidez sin planillas. Cashflow te da una foto en tiempo real
+              Controla ingresos, egresos y liquidez sin planillas. Denarius te da una foto en tiempo real
               de cuánta caja tienes, hoy.
             </p>
             <div className="flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
@@ -177,9 +177,9 @@ export function Landing() {
       </main>
 
       <footer className="relative z-10 flex w-full flex-col items-center justify-between gap-4 border-t border-border px-8 py-12 md:flex-row">
-        <span className="font-display font-bold text-muted-foreground">Cashflow</span>
+        <span className="font-display font-bold text-muted-foreground">Denarius</span>
         <p className="text-center text-xs text-muted-foreground md:text-left">
-          © {new Date().getFullYear()} Cashflow. Producto hermano de Validus.
+          © {new Date().getFullYear()} Denarius. Producto hermano de Validus.
         </p>
         <nav className="flex gap-6 text-xs text-muted-foreground">
           <a href="#" className="transition-colors hover:text-primary">Privacidad</a>

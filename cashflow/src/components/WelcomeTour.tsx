@@ -11,7 +11,7 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     icon: <Wallet className="size-6" />,
-    title: 'Bienvenido a Cashflow',
+    title: 'Bienvenido a Denarius',
     body: 'Tu CFO virtual: proyecta tu Runway y Burn Rate en tiempo real. En un par de minutos sabrás en qué semana podrías quedarte sin caja — y cómo evitarlo.',
   },
   {
@@ -44,7 +44,7 @@ const SLIDES: Slide[] = [
     title: 'Afina tu proyección',
     body: (
       <>
-        En <b>Ajustes</b> define tu tasa de impuestos (ej. 19% IVA): Cashflow aparta ese % de cada ingreso para que tu Runway no mienta
+        En <b>Ajustes</b> define tu tasa de impuestos (ej. 19% IVA): Denarius aparta ese % de cada ingreso para que tu Runway no mienta
         (lo verás en "Caja Restringida"). Y con el <b>ojo 👁</b> en cualquier factura o fijo puedes ocultarlo y simular al instante: <i>"¿y si este cliente no me paga?"</i>.
       </>
     ),
