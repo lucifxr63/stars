@@ -18,6 +18,9 @@ export function getCorsHeaders(req: Request) {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    // PATCH/DELETE/PUT no son métodos "safelisted": deben declararse explícitamente
+    // o el navegador bloquea el preflight (POST/GET/HEAD sí pasan sin listarse).
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
     'Vary': 'Origin',
   };
 }
