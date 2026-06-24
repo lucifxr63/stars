@@ -85,13 +85,16 @@ export function useRestrictedCash(tenantId: string | null): RestrictedCashState 
     (async () => {
       try {
         // Aserción contenida: el cliente tipado aún no expone esta RPC
-        // (resolver con `npm run gen:types` post-despliegue).
-        const rpc = supabase.rpc as unknown as (
-          name: 'metrics_pyme',
-          args: MetricsRpcArgs,
-        ) => { abortSignal: (s: AbortSignal) => PromiseLike<{ data: PymePayload | null; error: PostgrestError | null }> };
+        // (resolver con `npm run gen:types` post-despliegue). Se invoca como MÉTODO
+        // sobre el cliente para preservar `this` (supabase-js usa `this.rest`).
+        const client = supabase as unknown as {
+          rpc: (
+            name: 'metrics_pyme',
+            args: MetricsRpcArgs,
+          ) => { abortSignal: (s: AbortSignal) => PromiseLike<{ data: PymePayload | null; error: PostgrestError | null }> };
+        };
 
-        const { data, error } = await rpc('metrics_pyme', { p_tenant_id: tenantId }).abortSignal(controller.signal);
+        const { data, error } = await client.rpc('metrics_pyme', { p_tenant_id: tenantId }).abortSignal(controller.signal);
         if (ignore) return;
         clearTimeout(timer);
 
