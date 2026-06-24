@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Wallet, LogOut, TrendingDown, Timer, Flame, Landmark, Settings, RotateCcw, HelpCircle } from 'lucide-react';
+import { Wallet, LogOut, TrendingDown, Timer, Flame, Landmark, Settings, RotateCcw, HelpCircle, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { WorkspaceSwitcher } from '@/components/layout/WorkspaceSwitcher';
 import { CashflowChart } from '@/components/CashflowChart';
 import { InvoiceForm } from '@/components/InvoiceForm';
 import { MovementForm } from '@/components/MovementForm';
@@ -108,6 +110,15 @@ export function Dashboard() {
           <span className="font-display text-lg font-bold">Denarius</span>
         </span>
         <div className="flex items-center gap-2 sm:gap-3">
+          <WorkspaceSwitcher />
+          <Link
+            to="/workspace"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-transparent px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            aria-label="Vista por modelo"
+          >
+            <LayoutGrid className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Vista por modelo</span>
+          </Link>
           <span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span>
           <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={() => setTourOpen(true)} aria-label="Tutorial">

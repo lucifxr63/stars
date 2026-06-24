@@ -8,6 +8,7 @@ import { Landing } from '@/pages/Landing';
 import { Login } from '@/pages/Login';
 import { Dashboard } from '@/pages/Dashboard';
 import { SaasCashflow } from '@/pages/SaasCashflow';
+import { Workspace } from '@/pages/Workspace';
 import { AuthCallback } from '@/components/AuthCallback';
 import { RequireAuth } from '@/components/RequireAuth';
 
@@ -37,6 +38,14 @@ export default function App() {
           element={
             <RequireAuth>
               <SaasCashflow />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/workspace"
+          element={
+            <RequireAuth>
+              <Workspace />
             </RequireAuth>
           }
         />
