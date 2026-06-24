@@ -64,14 +64,15 @@ async function callMetricsRpc(
   tenantId: string,
   signal: AbortSignal,
 ): Promise<{ data: MetricsPayload | null; error: PostgrestError | null }> {
-  // Aserción contenida: el cliente tipado todavía no expone estas RPCs.
-  const rpc = supabase.rpc as unknown as (
-    name: MetricsRpcName,
-    args: MetricsRpcArgs,
-  ) => {
-    abortSignal: (s: AbortSignal) => PromiseLike<{ data: MetricsPayload | null; error: PostgrestError | null }>;
+  // Aserción contenida: el cliente tipado todavía no expone estas RPCs. Se invoca
+  // como MÉTODO sobre el cliente para preservar `this` (supabase-js usa `this.rest`).
+  const client = supabase as unknown as {
+    rpc: (
+      name: MetricsRpcName,
+      args: MetricsRpcArgs,
+    ) => { abortSignal: (s: AbortSignal) => PromiseLike<{ data: MetricsPayload | null; error: PostgrestError | null }> };
   };
-  return rpc(fn, { p_tenant_id: tenantId }).abortSignal(signal);
+  return client.rpc(fn, { p_tenant_id: tenantId }).abortSignal(signal);
 }
 
 // Códigos que indican "RPC/columna aún no desplegada" → ÚNICO caso en que se
