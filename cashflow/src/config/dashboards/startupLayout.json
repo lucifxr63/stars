@@ -1,0 +1,13 @@
+{
+  "model": "startup-saas",
+  "title": "Startup SaaS",
+  "subtitle": "Quema, autonomía de caja y crecimiento recurrente",
+  "grid": { "columns": 12 },
+  "widgets": [
+    { "widgetId": "burnRateWidget", "title": "Burn rate", "span": 4 },
+    { "widgetId": "runwayWidget", "title": "Runway", "span": 4 },
+    { "widgetId": "mrrWidget", "title": "MRR", "span": 4 },
+    { "widgetId": "burnTrendWidget", "title": "Tendencia de quema", "span": 8 },
+    { "widgetId": "cashBalanceWidget", "title": "Saldo de caja", "span": 4 }
+  ]
+}

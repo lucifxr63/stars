@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es-CL"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cashflow - El flujo de caja de tu negocio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669', // Primary
+                            700: '#047857',
+                        },
+                        violet: {
+                            100: '#ede9fe',
+                            600: '#7c3aed', // Secondary
+                        },
+                        danger: {
+                            500: '#ef4444',
+                            600: '#e11d48', // Red
+                        },
+                        warning: {
+                            600: '#d97706', // Amber
+                        },
+                        slate: {
+                            50: '#f8fafc', // Light bg
+                            100: '#f1f5f9',
+                            200: '#e2e8f0', // Borders
+                            500: '#64748b', // Muted text
+                            800: '#1e293b', // Text
+                            900: '#0f172a',
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["IBM Plex Sans", "sans-serif"],
+                        "label": ["IBM Plex Sans", "sans-serif"]
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'floating': '0 10px 40px -10px rgba(0, 0, 0, 0.08)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .bg-glow {
+            background: radial-gradient(circle at 50% 0%, rgba(5, 150, 105, 0.08) 0%, rgba(248, 250, 252, 0) 50%);
+        }
+    </style>
+</head>
+<body class="font-body antialiased relative min-h-screen flex flex-col">
+<!-- Navbar: Floating Nav -->
+<nav class="bg-white/80 backdrop-blur-md flex justify-between items-center px-6 py-3 sticky top-4 z-50 rounded-full mt-4 mx-auto max-w-5xl shadow-sm border border-slate-100 shadow-md">
+<div class="text-xl font-headline font-bold text-slate-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-[#059669]" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+            Cashflow
+        </div>
+<div class="hidden md:flex items-center gap-8 font-body text-label-sm font-medium">
+<a class="text-[#059669] font-bold" href="#">Beneficios</a>
+<a class="text-slate-600 hover:text-[#059669] transition-all hover:opacity-80 scale-95 active:scale-90 transition-transform" href="#">Integraciones</a>
+<a class="text-slate-600 hover:text-[#059669] transition-all hover:opacity-80 scale-95 active:scale-90 transition-transform" href="#">Simulación</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden sm:block text-slate-600 font-medium hover:text-[#059669] transition-colors text-sm">Iniciar sesión</button>
+<button class="bg-[#059669] text-white px-5 py-2 rounded-full font-medium text-sm hover:bg-brand-700 transition-colors shadow-sm">Prueba gratis</button>
+</div>
+</nav>
+<main class="flex-grow flex flex-col items-center w-full px-4 sm:px-6 lg:px-8">
+<!-- Hero Section -->
+<section class="w-full max-w-4xl mx-auto mt-24 lg:mt-32 text-center relative z-10 bg-glow pt-8 pb-16">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-600 mb-8 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-brand-600 block"></span>
+                Para PYMEs y startups en LatAm
+            </div>
+<h1 class="text-4xl md:text-5xl lg:text-6xl font-headline font-extrabold text-slate-900 tracking-tight leading-tight mb-6">
+                El flujo de caja de tu negocio, <br class="hidden sm:block"/>
+<span class="text-brand-600 relative inline-block">
+                    claro y al instante.
+                    <svg class="absolute -bottom-2 left-0 w-full h-3 text-brand-100 -z-10" preserveaspectratio="none" viewbox="0 0 100 10">
+<path d="M0,5 Q50,10 100,5" fill="none" stroke="currentColor" stroke-width="4"></path>
+</svg>
+</span>
+</h1>
+<p class="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+                Controla ingresos, egresos y liquidez sin planillas. Cashflow te da una foto en tiempo real de cuánta caja tienes, hoy.
+            </p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+<button class="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand-600 text-white px-8 py-3.5 rounded-full font-medium text-lg hover:bg-brand-700 transition-colors shadow-sm">
+                    Empieza gratis
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+<button class="w-full sm:w-auto flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-8 py-3.5 rounded-full font-medium text-lg hover:bg-slate-50 hover:border-slate-300 transition-colors">
+                    Ver demo
+                </button>
+</div>
+</section>
+<!-- Product Preview Card -->
+<section class="w-full max-w-3xl mx-auto -mt-4 mb-24 relative z-20">
+<div class="bg-white rounded-2xl shadow-floating border border-slate-100 p-6 md:p-8 transform transition-transform hover:-translate-y-1 duration-300">
+<div class="flex justify-between items-start mb-8 border-b border-slate-100 pb-6">
+<div>
+<h3 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Saldo del mes</h3>
+<div class="flex items-baseline gap-3">
+<span class="text-4xl md:text-5xl font-headline font-bold text-slate-900">$4.820.000</span>
+<span class="inline-flex items-center gap-1 bg-brand-50 text-brand-600 px-2 py-1 rounded-md text-sm font-medium">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                                +12,4%
+                            </span>
+</div>
+</div>
+<div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 text-slate-400">
+<span class="material-symbols-outlined text-2xl">monitoring</span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100/50">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
+</div>
+<div>
+<p class="font-medium text-slate-900">Pago cliente — Factura 0212</p>
+<p class="text-xs text-slate-500">Hoy, 10:42 AM</p>
+</div>
+</div>
+<span class="font-headline font-bold text-brand-600">+$1.250.000</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-danger-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</div>
+<div>
+<p class="font-medium text-slate-900">Arriendo oficina</p>
+<p class="text-xs text-slate-500">Ayer</p>
+</div>
+</div>
+<span class="font-headline font-bold text-danger-600">-$680.000</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Feature Grid -->
+<section class="w-full max-w-6xl mx-auto mb-32">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Feature 1 -->
+<div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-soft transition-shadow">
+<div class="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-2xl font-light">swap_horiz</span>
+</div>
+<h3 class="text-xl font-headline font-bold text-slate-900 mb-3">Ingresos y egresos</h3>
+<p class="text-slate-600 leading-relaxed text-sm">
+                        Sincronización automática de tus cuentas. Clasifica tus movimientos al instante para entender exactamente a dónde va tu dinero.
+                    </p>
+</div>
+<!-- Feature 2 -->
+<div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-soft transition-shadow">
+<div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-2xl font-light">speed</span>
+</div>
+<h3 class="text-xl font-headline font-bold text-slate-900 mb-3">Liquidez en tiempo real</h3>
+<p class="text-slate-600 leading-relaxed text-sm">
+                        Proyecta tu flujo de caja a semanas y meses. Anticípate a faltantes de liquidez y toma decisiones con confianza financiera.
+                    </p>
+</div>
+<!-- Feature 3 -->
+<div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-soft transition-shadow">
+<div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-2xl font-light">lock</span>
+</div>
+<h3 class="text-xl font-headline font-bold text-slate-900 mb-3">Datos aislados y seguros</h3>
+<p class="text-slate-600 leading-relaxed text-sm">
+                        Seguridad bancaria. Solo lectura de datos mediante integraciones oficiales. Nunca tocamos ni movemos tus fondos.
+                    </p>
+</div>
+</div>
+</section>
+<!-- Final CTA Band -->
+<section class="w-full max-w-5xl mx-auto mb-32 relative overflow-hidden rounded-3xl">
+<div class="absolute inset-0 bg-gradient-to-br from-brand-50/80 to-violet-50/80 -z-10"></div>
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-violet-100 rounded-full blur-3xl opacity-50 -z-10"></div>
+<div class="absolute -left-20 -bottom-20 w-64 h-64 bg-brand-100 rounded-full blur-3xl opacity-50 -z-10"></div>
+<div class="px-8 py-16 md:py-20 text-center border border-slate-200/60 rounded-3xl">
+<h2 class="text-3xl md:text-4xl font-headline font-bold text-slate-900 mb-4 tracking-tight">
+                    Toma el control de tu caja hoy
+                </h2>
+<p class="text-slate-600 mb-8 max-w-lg mx-auto">
+                    Crea tu cuenta en segundos con Google. Sin tarjeta de crédito requerida para empezar la prueba.
+                </p>
+<button class="bg-brand-600 text-white px-8 py-4 rounded-full font-medium text-lg hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5 duration-200">
+                    Empieza gratis ahora
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-50 w-full py-12 border-t border-slate-200 mt-auto">
+<div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="text-lg font-headline font-bold text-slate-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-[#059669]" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+                Cashflow
+            </div>
+<div class="font-body text-label-xs text-slate-500">
+                © 2026 Cashflow. Producto hermano de Validus
+            </div>
+<div class="flex items-center gap-6 font-body text-label-xs">
+<a class="text-slate-500 hover:text-slate-800 hover:underline transition-opacity" href="#">Privacidad</a>
+<a class="text-slate-500 hover:text-slate-800 hover:underline transition-opacity" href="#">Términos</a>
+<a class="text-slate-500 hover:text-slate-800 hover:underline transition-opacity" href="#">Soporte</a>
+</div>
+</div>
+</footer>
+</body></html>

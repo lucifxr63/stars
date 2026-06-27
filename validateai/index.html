@@ -5,31 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Primary SEO -->
-    <title>Validus — Valida tu idea de startup antes de construirla</title>
-    <meta name="description" content="Un mentor de IA te guía en 6 pasos para descubrir si tu idea de startup tiene potencial real. Obtén un score de validación, perfil de cliente y plan de MVP en 15 minutos." />
-    <meta name="keywords" content="validación de ideas, startup, lean startup, MVP, inteligencia artificial, emprendimiento" />
-    <meta name="author" content="Validus" />
+    <title>Validus — Valida tu idea de startup con un dossier nivel-VC</title>
+    <meta name="description" content="Validus arma el dossier que un VC haría sobre tu startup: en 4 pasos obtienes score, mercado, finanzas, gobernanza y due diligence. En 10 minutos, con IA. Hecho en Chile, para LatAm." />
+    <meta name="keywords" content="validación de ideas, validar startup, dossier de inversión, due diligence startup, unit economics, TAM SAM SOM, founder market fit, startup Chile, startup LatAm, CORFO, inteligencia artificial" />
+    <meta name="author" content="Scouttech" />
     <link rel="canonical" href="https://validus.scouttech.lat" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Validus" />
+    <meta property="og:locale" content="es_CL" />
     <meta property="og:url" content="https://validus.scouttech.lat" />
-    <meta property="og:title" content="Validus — Valida tu idea de startup" />
-    <meta property="og:description" content="Descubre en 15 minutos si tu idea tiene potencial real con ayuda de IA." />
+    <meta property="og:title" content="Validus — El dossier de inversión de tu startup, antes de construirla" />
+    <meta property="og:description" content="Score, mercado, finanzas, gobernanza y due diligence en 10 minutos. Validación de startups con IA, hecha en Chile para LatAm." />
     <meta property="og:image" content="https://validus.scouttech.lat/og-image.png" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Validus — Valida tu idea de startup" />
-    <meta name="twitter:description" content="Descubre en 15 minutos si tu idea tiene potencial real con ayuda de IA." />
+    <meta name="twitter:title" content="Validus — El dossier de inversión de tu startup" />
+    <meta name="twitter:description" content="Valida tu idea con un dossier nivel-VC en 10 minutos. IA entrenada para founders de LatAm." />
     <meta name="twitter:image" content="https://validus.scouttech.lat/og-image.png" />
 
     <!-- Theme -->
     <meta name="theme-color" content="#0EB5C6" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Structured data — SEO / AEO / GEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://scouttech.lat/#org",
+          "name": "Scouttech",
+          "url": "https://scouttech.lat",
+          "slogan": "Mapeamos el terreno. Tú conquistas el mercado.",
+          "description": "Scouttech construye herramientas de IA para emprender en LatAm: Validus (validación de startups), Denarius (flujo de caja) y Bralidus (motor de inteligencia GraphRAG).",
+          "brand": ["Validus", "Denarius", "Bralidus"]
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://validus.scouttech.lat/#app",
+          "name": "Validus",
+          "url": "https://validus.scouttech.lat",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "inLanguage": "es",
+          "description": "Validus valida ideas de startup con IA. En 4 pasos arma un dossier nivel-VC con score, análisis de mercado (TAM/SAM/SOM), unit economics, gobernanza y due diligence. Potenciado por Bralidus, su motor GraphRAG con datos institucionales reales de Chile.",
+          "publisher": { "@id": "https://scouttech.lat/#org" },
+          "offers": [
+            { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD" },
+            { "@type": "Offer", "name": "Basic", "price": "19", "priceCurrency": "USD" },
+            { "@type": "Offer", "name": "Pro", "price": "49", "priceCurrency": "USD" },
+            { "@type": "Offer", "name": "Premium", "price": "149", "priceCurrency": "USD" }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://validus.scouttech.lat/#faq",
+          "mainEntity": [
+            { "@type": "Question", "name": "¿Qué es Validus?", "acceptedAnswer": { "@type": "Answer", "text": "Validus es una plataforma de IA que valida ideas de startup. En 4 pasos arma un dossier nivel-VC con score de viabilidad, análisis de mercado (TAM/SAM/SOM), unit economics, gobernanza y due diligence." } },
+            { "@type": "Question", "name": "¿Cómo funciona Validus?", "acceptedAnswer": { "@type": "Answer", "text": "Describes tu idea, mercado y equipo en lenguaje natural. El motor Bralidus cruza tu caso con datos reales de Chile (Banco Central, CMF, SEIA, INAPI) y playbooks de fundraising para entregarte un dossier en unos 10 minutos." } },
+            { "@type": "Question", "name": "¿Cuánto cuesta Validus?", "acceptedAnswer": { "@type": "Answer", "text": "Hay un plan gratis con 3 validaciones al mes. Los planes pagados van de 19 USD (Basic) a 149 USD (Premium) al mes, con más validaciones, RAG de datos macro, due diligence y acceso a API." } },
+            { "@type": "Question", "name": "¿Para quién es Validus?", "acceptedAnswer": { "@type": "Answer", "text": "Para founders y PYMEs de Chile y LatAm que quieren validar una idea antes de invertir tiempo y capital, y para inversores o aceleradoras que evalúan startups." } },
+            { "@type": "Question", "name": "¿Mis datos están seguros?", "acceptedAnswer": { "@type": "Answer", "text": "Sí. Validus cumple la Ley 21.719 de protección de datos personales de Chile. Los datos se cifran y se anonimizan antes de cualquier análisis agregado." } },
+            { "@type": "Question", "name": "¿Qué es Bralidus?", "acceptedAnswer": { "@type": "Answer", "text": "Bralidus es el motor GraphRAG detrás de Validus: un grafo de conocimiento con 5 expertos (macro, mercados, unit economics, legal y estrategia) que razona con datos institucionales reales y entrega evidencia citable con procedencia." } }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body class="bg-gray-50 text-gray-900 dark:bg-[#0A0A0F] dark:text-[#F0EFF8] transition-colors duration-200">
     <div id="root"></div>
+
+    <!-- Contenido estático para bots y motores de respuesta/generativos sin JS (AEO/GEO) -->
+    <noscript>
+      <main style="max-width:760px;margin:0 auto;padding:40px 20px;font-family:system-ui,sans-serif;line-height:1.6;">
+        <h1>El dossier que un VC haría sobre tu startup, antes de construirla</h1>
+        <p>Validus es una plataforma de IA que valida ideas de startup. En 4 pasos arma un dossier nivel-VC con score de viabilidad, análisis de mercado (TAM/SAM/SOM), unit economics, gobernanza y due diligence — en unos 10 minutos. Hecho en Chile, pensado para founders de LatAm.</p>
+
+        <h2>Cómo funciona (4 pasos)</h2>
+        <ol>
+          <li><strong>Tu idea:</strong> describe el problema y la solución en lenguaje natural.</li>
+          <li><strong>Tu mercado:</strong> segmento (ICP), tamaño y primeros 100 clientes.</li>
+          <li><strong>Tu equipo:</strong> experiencia y founder-market fit.</li>
+          <li><strong>Tu dossier:</strong> score, las 7 secciones y un PDF investor-ready.</li>
+        </ol>
+
+        <h2>El dossier (7 secciones)</h2>
+        <p>Veredicto, Validación, Estrategia, Finanzas, Hoja de Ruta, Inversión y Due Diligence. Potenciado por Bralidus, el motor GraphRAG con datos institucionales reales de Chile (Banco Central, CMF, SEIA, INAPI) y procedencia citable.</p>
+
+        <h2>Precios (USD/mes)</h2>
+        <ul>
+          <li><strong>Free — US$0:</strong> 3 validaciones/mes, score básico.</li>
+          <li><strong>Basic — US$19:</strong> 15 validaciones/mes, reportes estándar.</li>
+          <li><strong>Pro — US$49:</strong> 50 validaciones/mes, RAG de datos macro, entregables avanzados.</li>
+          <li><strong>Premium — US$149:</strong> uso ampliado, due diligence completo y acceso a API.</li>
+        </ul>
+
+        <h2>Preguntas frecuentes</h2>
+        <h3>¿Qué es Validus?</h3>
+        <p>Una plataforma de IA que valida ideas de startup y entrega un dossier nivel-VC con score, mercado, unit economics, gobernanza y due diligence.</p>
+        <h3>¿Cuánto cuesta?</h3>
+        <p>Hay un plan gratis con 3 validaciones al mes; los pagados van de US$19 (Basic) a US$149 (Premium).</p>
+        <h3>¿Para quién es?</h3>
+        <p>Para founders y PYMEs de Chile y LatAm, y para inversores o aceleradoras que evalúan startups.</p>
+        <h3>¿Mis datos están seguros?</h3>
+        <p>Sí. Validus cumple la Ley 21.719 de protección de datos personales de Chile; los datos se cifran y anonimizan.</p>
+
+        <h2>Ecosistema Scouttech</h2>
+        <p><a href="https://validus.scouttech.lat">Validus</a> (validación) · <a href="https://denarius.scouttech.lat">Denarius</a> (flujo de caja e IA financiera) · Bralidus (motor de inteligencia) — productos de <a href="https://scouttech.lat">Scouttech</a>.</p>
+      </main>
+    </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

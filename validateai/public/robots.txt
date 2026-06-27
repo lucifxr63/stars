@@ -1,0 +1,18 @@
+# Validus — https://validus.scouttech.lat
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /checkout-success
+
+# AI / answer engines bienvenidos
+User-agent: GPTBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://validus.scouttech.lat/sitemap.xml
