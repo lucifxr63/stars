@@ -1,11 +1,19 @@
+import type { ReactNode } from 'react';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { getDashboardLayout } from '@/config/dashboards';
 import { useDashboardMetricsPayload } from '@/hooks/useDashboardMetricsPayload';
 import { WIDGET_REGISTRY } from './widgets';
+import {
+  useDashboardSlot,
+  resolveAction,
+  LIST_WIDGET_REGISTRY,
+  ACTION_WIDGET_REGISTRY,
+} from './slotContract';
 
 // Lienzo config-driven. Lee el modelo activo, resuelve su layout JSON e instancia
-// los widgets del registro inyectándoles la métrica que entrega el hook
-// orquestador. No conoce ningún widget en concreto: todo sale de datos.
+// los widgets despachando por `kind`: 'metric' (inyecta la métrica del hook),
+// 'list' (inyecta una colección viva) o 'action-form' (inyecta la acción declarada
+// y resuelta contra el orquestador). No conoce ningún widget en concreto.
 
 // Map estático span → clase de columnas (JIT-safe; las clases dinámicas se purgan).
 const SPAN_CLASS: Record<number, string> = {
@@ -15,10 +23,28 @@ const SPAN_CLASS: Record<number, string> = {
   12: 'lg:col-span-12',
 };
 
+function UnregisteredSlot({ id }: { id: string }) {
+  return (
+    <div className="h-full rounded-xl border border-dashed border-amber/50 bg-amber/5 p-5 text-sm text-amber">
+      Widget no registrado: <code>{id}</code>
+    </div>
+  );
+}
+
+function NeedsProviderSlot({ title }: { title: string }) {
+  return (
+    <div className="h-full rounded-xl border border-dashed border-border bg-card/40 p-5">
+      <p className="text-sm font-medium">{title}</p>
+      <p className="mt-1 text-xs text-muted-foreground">Slot interactivo · requiere DashboardSlotProvider (cableado pendiente)</p>
+    </div>
+  );
+}
+
 export function DashboardCanvas() {
   const model = useWorkspaceStore((s) => s.model);
   const layout = getDashboardLayout(model);
   const { data, loading, error, degraded } = useDashboardMetricsPayload();
+  const slotCtx = useDashboardSlot(); // transporte de deps para slots interactivos (opcional)
 
   return (
     <section>
@@ -44,29 +70,38 @@ export function DashboardCanvas() {
           No hay una empresa configurada todavía. Crea tu empresa en el Dashboard para ver tus métricas por modelo.
         </p>
       ) : (
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {layout.widgets.map((slot, i) => {
-          const Widget = WIDGET_REGISTRY[slot.widgetId];
-          if (!Widget) {
-            // Layout referencia un widgetId no registrado: lo señalamos sin romper.
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {layout.widgets.map((slot, i) => {
+            const kind = slot.kind ?? 'metric';
+            let content: ReactNode;
+
+            if (kind === 'list') {
+              const ListWidget = LIST_WIDGET_REGISTRY[slot.widgetId];
+              if (!ListWidget) content = <UnregisteredSlot id={slot.widgetId} />;
+              else if (!slotCtx || !slot.collection) content = <NeedsProviderSlot title={slot.title} />;
+              else content = <ListWidget title={slot.title} items={slotCtx.collections[slot.collection]} />;
+            } else if (kind === 'action-form') {
+              const ActionWidget = ACTION_WIDGET_REGISTRY[slot.widgetId];
+              if (!ActionWidget) content = <UnregisteredSlot id={slot.widgetId} />;
+              else if (!slotCtx || !slot.binding) content = <NeedsProviderSlot title={slot.title} />;
+              else content = <ActionWidget title={slot.title} action={resolveAction(slotCtx.orchestrator, slot.binding)} />;
+            } else {
+              const MetricWidget = WIDGET_REGISTRY[slot.widgetId];
+              if (!MetricWidget) content = <UnregisteredSlot id={slot.widgetId} />;
+              else {
+                // Mientras carga pasamos metric undefined → el widget muestra su skeleton.
+                const metric = loading ? undefined : data?.[slot.widgetId];
+                content = <MetricWidget title={slot.title} metric={metric} />;
+              }
+            }
+
             return (
-              <div
-                key={`${slot.widgetId}-${i}`}
-                className={`${SPAN_CLASS[slot.span]} rounded-xl border border-dashed border-amber/50 bg-amber/5 p-5 text-sm text-amber`}
-              >
-                Widget no registrado: <code>{slot.widgetId}</code>
+              <div key={`${slot.widgetId}-${i}`} className={SPAN_CLASS[slot.span]}>
+                {content}
               </div>
             );
-          }
-          // Mientras carga (loading) pasamos metric undefined → el widget muestra su skeleton.
-          const metric = loading ? undefined : data?.[slot.widgetId];
-          return (
-            <div key={`${slot.widgetId}-${i}`} className={SPAN_CLASS[slot.span]}>
-              <Widget title={slot.title} metric={metric} />
-            </div>
-          );
-        })}
-      </div>
+          })}
+        </div>
       )}
     </section>
   );

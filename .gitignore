@@ -10,3 +10,11 @@ validateai/pnpm-lock.yaml
 *.log
 playwright-report/
 test-results/
+
+# Material de diseño/referencia (binarios pesados, no parte del producto)
+Design/
+design-preview.html
+cashflow/modelos.md
+
+# Temporales del CLI de Supabase
+validateai/supabase/.temp/
