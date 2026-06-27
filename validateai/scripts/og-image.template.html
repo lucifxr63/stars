@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #0A0A0F;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #F0EFF8;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 64px 72px;
+  }
+  /* grid + glow */
+  .grid { position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 48px 48px; }
+  .glow { position: absolute; top: -120px; right: -80px; width: 720px; height: 560px;
+    background: radial-gradient(circle, rgba(14,181,198,0.22), transparent 70%); filter: blur(40px); }
+  .glow2 { position: absolute; bottom: -160px; left: 200px; width: 520px; height: 420px;
+    background: radial-gradient(circle, rgba(167,139,250,0.14), transparent 70%); filter: blur(40px); }
+  .row { position: relative; z-index: 2; }
+
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand svg { width: 44px; height: 52px; }
+  .brand .name { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 34px; letter-spacing: -0.02em; }
+
+  .badge { display: inline-flex; align-items: center; gap: 10px; padding: 9px 18px; border-radius: 999px;
+    background: rgba(14,181,198,0.12); border: 1px solid rgba(14,181,198,0.3);
+    color: #38D5E3; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+  .dot { width: 8px; height: 8px; border-radius: 999px; background: #0EB5C6; }
+
+  h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 68px; line-height: 1.05;
+    letter-spacing: -0.025em; margin-top: 26px; max-width: 920px; }
+  .grad { background: linear-gradient(135deg, #0EB5C6, #38D5E3); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .sub { font-size: 26px; color: #8B8AA0; margin-top: 22px; max-width: 760px; line-height: 1.4; }
+
+  .foot { display: flex; align-items: center; justify-content: space-between; }
+  .url { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 600; color: #C4C4D4; }
+  .chips { display: flex; gap: 12px; }
+  .chip { padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04); color: #C4C4D4; font-size: 16px; font-weight: 500; }
+  .score { display: flex; align-items: center; gap: 14px; }
+  .scoreCircle { width: 64px; height: 64px; border-radius: 18px; background: #0EB5C6; color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 800; }
+  .scoreCircle .n { font-size: 26px; line-height: 1; }
+  .scoreCircle .d { font-size: 11px; opacity: 0.8; }
+  .scoreTxt { font-size: 16px; color: #34D399; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="glow"></div>
+  <div class="glow2"></div>
+
+  <div class="row" style="display:flex; align-items:center; justify-content:space-between;">
+    <div class="brand">
+      <svg viewBox="0 0 500 500">
+        <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" fill="#F0EFF8" />
+        <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6" />
+        <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6" />
+      </svg>
+      <span class="name">Validus</span>
+    </div>
+    <div class="score">
+      <div class="scoreCircle"><span class="n">78</span><span class="d">/100</span></div>
+      <span class="scoreTxt">Idea con<br/>buen potencial</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="badge"><span class="dot"></span>Validación de startups con IA</span>
+    <h1>El dossier que un VC haría sobre tu startup — <span class="grad">antes de construirla</span></h1>
+    <p class="sub">Score, mercado, finanzas, gobernanza y due diligence. En 10 minutos.</p>
+  </div>
+
+  <div class="row foot">
+    <span class="url">validus.scouttech.lat</span>
+    <div class="chips">
+      <span class="chip">Hecho en Chile, para LatAm</span>
+      <span class="chip">Potenciado por Bralidus</span>
+    </div>
+  </div>
+</body>
+</html>

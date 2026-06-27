@@ -1,0 +1,35 @@
+# Validus
+
+> Validus valida ideas de startup con IA. En 4 pasos arma un dossier nivel-VC con score de viabilidad, análisis de mercado (TAM/SAM/SOM), unit economics, gobernanza y due diligence — en unos 10 minutos. Hecho en Chile, pensado para founders de LatAm.
+
+Validus es un producto de Scouttech (https://scouttech.lat). Su diferenciador es Bralidus, un motor GraphRAG que cruza el caso de cada startup con datos institucionales reales de Chile (Banco Central, CMF, SEIA, INAPI, Mercado Público) y un corpus de doctrina de inversión, devolviendo evidencia citable con procedencia (indicador, valor, fecha y fuente).
+
+## Qué entrega (el dossier, 7 secciones)
+- Veredicto: score VC de 5 dimensiones, "verdad incómoda" y founder-market fit.
+- Validación: premisa, Mom Test, jobs-to-be-done.
+- Estrategia: TAM/SAM/SOM, SWOT, radar de competidores, señales de mercado.
+- Finanzas: unit economics (CAC, LTV, payback) y matriz de riesgos.
+- Hoja de Ruta: sprints de MVP.
+- Inversión: cap table, fundraising y marco legal chileno (Ley 21.719, INAPI, CMF).
+- Due Diligence: score AI-RAG estilo Paul Graham (donde convergen los 5 expertos del motor).
+
+## Cómo funciona
+El usuario describe su idea, mercado y equipo en lenguaje natural a través de un wizard de 4 pasos (Idea → Mercado → Equipo → Generación del dossier). Bralidus enruta cada consulta a expertos especializados (macro, mercados, unit economics, legal y estrategia) mediante un Mixture of Experts.
+
+## Precios (USD/mes)
+- Free: 0 — 3 validaciones/mes, score básico.
+- Basic: 19 — 15 validaciones/mes, reportes estándar.
+- Pro: 49 — 50 validaciones/mes, RAG de datos macro, entregables avanzados.
+- Premium: 149 — uso ampliado, due diligence completo y acceso a API.
+
+## Ecosistema Scouttech
+- Validus (https://validus.scouttech.lat): validación de startups.
+- Denarius (https://denarius.scouttech.lat): métricas, flujo de caja e IA de salud financiera para PYMEs y startups.
+- Bralidus: motor de inteligencia GraphRAG (API B2B en desarrollo).
+
+## Enlaces
+- Sitio: https://validus.scouttech.lat
+- Demo: https://validus.scouttech.lat/demo
+- Precios: https://validus.scouttech.lat/pricing
+- Desarrolladores / motor: https://validus.scouttech.lat/developers
+- Privacidad: https://validus.scouttech.lat/privacy-policy
