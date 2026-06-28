@@ -638,6 +638,60 @@ export function Landing() {
           </div>
         </section>
 
+        {/* ══ TRUST / TRAZABILIDAD ══ */}
+        <section id="confianza" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-white dark:bg-[#12121A]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-4 uppercase tracking-wide">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+                Confianza
+              </span>
+              <h2 className="font-heading text-3xl md:text-4xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-3">
+                Cómo Validus evita inventar información
+              </h2>
+              <p className="text-gray-500 dark:text-[#8B8AA0] max-w-2xl mx-auto text-sm">
+                IA con trazabilidad, no solo respuestas bonitas. Separamos lo que es dato, lo que es inferencia
+                y lo que es supuesto — para que decidas con criterio, no a ciegas.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  title: 'Tú entregas el contexto',
+                  body: 'La descripción de tu idea, mercado y modelo de negocio es el insumo base. La calidad de tu input define la calidad del análisis.',
+                },
+                {
+                  title: 'La IA estructura y analiza',
+                  body: 'Modelos de IA organizan la información, calculan el score y generan recomendaciones. Es interpretación experta, no verdad absoluta.',
+                },
+                {
+                  title: 'Fuentes externas, cuando existen',
+                  body: 'Señales de mercado y tendencias se integran desde fuentes de terceros. Si no están disponibles, lo decimos: nunca rellenamos con datos falsos.',
+                },
+                {
+                  title: 'Supuestos y confianza visibles',
+                  body: 'Buscamos mostrar de dónde viene cada conclusión y con qué nivel de certeza. Lo demo o simulado se etiqueta de forma explícita.',
+                },
+              ].map((c, i) => (
+                <div key={i} className="bg-[#F8F7FF] dark:bg-[#0A0A0F] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5">
+                  <div className="w-8 h-8 rounded-xl bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#38D5E3] flex items-center justify-center font-black text-sm font-heading mb-3">
+                    {i + 1}
+                  </div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] mb-1.5">{c.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-[#8B8AA0] leading-relaxed">{c.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-center text-xs text-gray-400 dark:text-[#afaebb] mt-8 max-w-2xl mx-auto">
+              Validus no reemplaza tu criterio ni el de un asesor profesional: estructura evidencia para tomar
+              mejores decisiones. Conoce más en nuestra{' '}
+              <Link to="/ai-policy" className="text-[#0EB5C6] hover:underline">Política de Uso de IA</Link>.
+            </p>
+          </div>
+        </section>
+
         {/* ══ FAQ — AEO/GEO + conversión ══ */}
         <FaqSection />
 
@@ -698,7 +752,7 @@ export function Landing() {
             <div>
               <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wide mb-4">Producto</p>
               <ul className="space-y-2.5">
-                {[{ label: 'Cómo funciona', href: '#how' }, { label: 'Características', href: '#features' }, { label: 'Demo', href: '#demo' }, { label: 'Precios', href: '#pricing' }].map(l => (
+                {[{ label: 'Cómo funciona', href: '#how' }, { label: 'Características', href: '#features' }, { label: 'Demo', href: '#demo' }, { label: 'Confianza', href: '#confianza' }, { label: 'Precios', href: '#pricing' }].map(l => (
                   <li key={l.label}><a href={l.href} className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">{l.label}</a></li>
                 ))}
               </ul>
@@ -720,8 +774,9 @@ export function Landing() {
             <div>
               <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wide mb-4">Legal</p>
               <ul className="space-y-2.5">
-                <li><span className="text-xs text-gray-500 dark:text-[#8B8AA0]">Términos de uso</span></li>
+                <li><Link to="/terms" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Términos y condiciones</Link></li>
                 <li><Link to="/privacy-policy" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Política de privacidad</Link></li>
+                <li><Link to="/ai-policy" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Política de uso de IA</Link></li>
                 <li><a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-[#0EB5C6] transition-colors">Contacto</a></li>
               </ul>
             </div>

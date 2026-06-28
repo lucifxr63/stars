@@ -275,11 +275,11 @@ export function PrivacyPolicy() {
             © {new Date().getFullYear()} Validus · Hecho en Chile 🇨🇱
           </p>
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
-              Inicio
+            <Link to="/terms" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
+              Términos
             </Link>
-            <Link to="/pricing" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
-              Precios
+            <Link to="/ai-policy" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
+              Uso de IA
             </Link>
             <a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-[#0EB5C6] transition-colors">
               Contacto
