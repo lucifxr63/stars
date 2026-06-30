@@ -846,6 +846,16 @@ export function Landing() {
             <p className="text-xs text-gray-400 dark:text-[#afaebb] mt-8 max-w-xl mx-auto">
               Sin clientes inventados, sin métricas infladas. Cuando haya tracción real, la mostraremos con datos.
             </p>
+            <div className="mt-6">
+              <a
+                href="mailto:contacto@scouttech.lat?subject=Solicitud%20de%20piloto%20%E2%80%94%20Validus&body=Hola%2C%20me%20interesa%20un%20piloto%20de%20Validus.%20Soy%20(founder%20%2F%20aceleradora%20%2F%20equipo%20de%20innovaci%C3%B3n)%3A"
+                onClick={() => trackCtaClick('landing_estado', 'solicitar_piloto')}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#0EB5C6]/30 text-[#0EB5C6] dark:text-[#38D5E3] text-sm font-semibold hover:bg-[#0EB5C6]/5 transition-colors"
+              >
+                ¿Founder, aceleradora o equipo de innovación? Solicita un piloto
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+              </a>
+            </div>
           </div>
         </section>
 

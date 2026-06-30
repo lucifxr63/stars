@@ -33,7 +33,9 @@ Canal de alto apalancamiento: un acuerdo con una aceleradora expone Validus a un
 
 Reclutar un grupo inicial de founders para validar el producto end-to-end, recoger feedback y producir casos de uso reales (con permiso).
 
-> Pendiente: definir criterios de selección, número de pilotos y métricas de éxito del piloto.
+Existe una **base operativa de pilotos** (interna): programa, guion de entrevista de discovery y plantilla de pipeline comercial en [`validateai/ops/`](../ops/PILOT_PROGRAM.md) — con criterios de selección, qué se mide (referenciando la analítica de Fase 8) y cómo convertir piloto → pago cuando el cobro se reactive. Aún **sin pilotos activos ni acuerdos firmados**.
+
+> Pendiente: fijar con el equipo los umbrales de éxito y los números concretos (no inventar). Enriquecer la captura de leads (plan/fuente/segmento en BD) requiere tocar Edge Function/schema — documentado como pendiente en el programa de pilotos.
 
 ## Estrategia de contenido
 

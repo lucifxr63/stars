@@ -19,7 +19,7 @@ Validus es un MVP funcional en producción, **pre-revenue**. La Fase 1 (confianz
 
 ## 60 días — Pilotos, métricas iniciales y Trust Layer
 
-- **Primeros pilotos:** reclutar founders y/o una aceleradora para uso end-to-end; recoger feedback estructurado.
+- **Primeros pilotos:** reclutar founders y/o una aceleradora para uso end-to-end; recoger feedback estructurado. *(Base operativa lista: programa de pilotos, guion de discovery y pipeline en `validateai/ops/`.)*
 - **Métricas iniciales:** instrumentar y empezar a medir activación (wizard completado), tiempo al primer dossier y paywall hits.
 - **Trust Layer v1:** indicador de fuente y nivel de confianza por sección del dossier de forma sistemática.
 - **Mejoras de producto:** generación asíncrona para prompts largos; pulido del dashboard de resultados.

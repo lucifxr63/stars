@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import posthog from 'posthog-js';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { WaitlistModal } from '@/components/shared/WaitlistModal';
+import { trackCtaClick } from '@/lib/analytics';
 
 type Tier = 'free' | 'basic' | 'pro' | 'premium';
 
@@ -213,6 +214,16 @@ export function Pricing() {
               El plan Free es siempre gratis
             </Link>
             {' '}— score básico + feedback IA, sin tarjeta.
+          </p>
+          <p className="text-sm text-gray-500 dark:text-[#8B8AA0] mt-3">
+            ¿Aceleradora, incubadora o equipo de innovación?{' '}
+            <a
+              href="mailto:contacto@scouttech.lat?subject=Solicitud%20de%20piloto%20%E2%80%94%20Validus&body=Hola%2C%20me%20interesa%20un%20piloto%20de%20Validus.%20Contexto%3A"
+              onClick={() => trackCtaClick('pricing', 'solicitar_piloto')}
+              className="text-[#0EB5C6] dark:text-[#38D5E3] hover:underline font-semibold"
+            >
+              Solicita un piloto →
+            </a>
           </p>
         </div>
 
