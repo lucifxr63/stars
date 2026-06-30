@@ -530,8 +530,115 @@ export function Landing() {
           </div>
         </section>
 
+        {/* ══ CASOS DE USO POR SEGMENTO ══ */}
+        <section id="casos-de-uso" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-14">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-5 uppercase tracking-wider">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                Para quién es
+              </span>
+              <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-5">
+                Pensado para cada etapa de tu startup
+              </h2>
+              <p className="text-gray-500 dark:text-[#8B8AA0] max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
+                No es conversación libre: es un análisis estructurado que ordena tu evidencia según
+                dónde estás. Estos son los equipos que lo usan.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-5">
+              {[
+                {
+                  tag: 'Founders early-stage',
+                  result: 'Ordena antes de construir',
+                  body: 'Estructura una idea cruda antes de escribir código, levantar capital o salir a buscar clientes. Hace explícitos el problema, los supuestos y las brechas que aún no ves.',
+                },
+                {
+                  tag: 'Startups pre-seed / seed',
+                  result: 'Evidencia para tu ronda',
+                  body: 'Arma evidencia de mercado, riesgos, unit economics y un roadmap de validación que puedes llevar a una conversación con inversionistas, sin inventar tracción.',
+                },
+                {
+                  tag: 'Aceleradoras e incubadoras',
+                  result: 'Diagnóstico estandarizado',
+                  body: 'Estandariza el diagnóstico de cada proyecto, compara cohortes con el mismo criterio y prepara a tus startups para mentoría o inversión con una base común.',
+                },
+                {
+                  tag: 'Equipos de innovación',
+                  result: 'Decide dónde invertir',
+                  body: 'Evalúa oportunidades, riesgos y supuestos antes de comprometer tiempo y presupuesto. Convierte una intuición en un caso analizado y comparable.',
+                },
+              ].map((s) => (
+                <div key={s.tag} className="bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/[0.06] rounded-3xl p-7 hover:border-[#0EB5C6]/25 hover:shadow-xl dark:hover:shadow-none transition-all duration-300">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0EB5C6]/8 border border-[#0EB5C6]/15 text-[11px] font-bold text-[#0EB5C6] dark:text-[#38D5E3] uppercase tracking-wide mb-4">
+                    {s.result}
+                  </span>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-[#F0EFF8] mb-2">{s.tag}</h3>
+                  <p className="text-sm text-gray-500 dark:text-[#8B8AA0] leading-relaxed">{s.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ══ PRODUCT SHOWCASE — dossier real 7 tabs ══ */}
         <ProductShowcase />
+
+        {/* ══ ENTREGABLES CONCRETOS ══ */}
+        <section id="entregables" className="py-14 sm:py-20 lg:py-28 border-t border-black/[0.05] dark:border-white/[0.06] bg-white dark:bg-[#12121A]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-14">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#34D399]/10 border border-[#34D399]/20 rounded-full text-[11px] font-semibold text-[#34D399] mb-5 uppercase tracking-wider">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Qué te llevas
+              </span>
+              <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-5">
+                Entregables concretos, no un chat
+              </h2>
+              <p className="text-gray-500 dark:text-[#8B8AA0] max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
+                Cada validación produce piezas accionables que puedes guardar, exportar y compartir.
+                Algunos entregables avanzados requieren plan Pro o Premium.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+              {[
+                { label: 'Score de validación (0–100)', tier: 'Free' },
+                { label: 'Resumen ejecutivo + feedback IA', tier: 'Free' },
+                { label: 'Análisis de competidores', tier: 'Free' },
+                { label: 'Export PDF', tier: 'Free' },
+                { label: 'Score detallado 5 dimensiones', tier: 'Basic' },
+                { label: 'Análisis de mercado (TAM/SAM/SOM)', tier: 'Basic' },
+                { label: 'Unit economics (CAC, LTV, Payback)', tier: 'Pro' },
+                { label: 'Gobernanza, Cap Table y Fundraising Roadmap', tier: 'Pro' },
+                { label: 'Founder Fit + recomendación de equipo', tier: 'Pro' },
+                { label: 'Due Diligence (SII + INAPI + CMF)', tier: 'Premium' },
+                { label: 'Data Room PDF para inversores', tier: 'Premium' },
+                { label: 'Riesgos principales y supuestos', tier: 'Según plan' },
+              ].map((d) => {
+                const tierColor = d.tier === 'Free' ? '#34D399' : d.tier === 'Basic' ? '#38D5E3' : d.tier === 'Pro' ? '#0EB5C6' : d.tier === 'Premium' ? '#F7C56C' : '#8B8AA0';
+                return (
+                  <div key={d.label} className="flex items-center gap-3 py-2.5 border-b border-black/[0.04] dark:border-white/[0.04]">
+                    <svg className="w-4 h-4 text-[#0EB5C6] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-sm text-gray-700 dark:text-[#C4C4D4] flex-1">{d.label}</span>
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide shrink-0"
+                      style={{ color: tierColor, borderColor: `${tierColor}30`, backgroundColor: `${tierColor}0f` }}
+                    >
+                      {d.tier}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="text-center text-xs text-gray-400 dark:text-[#afaebb] mt-8 max-w-2xl mx-auto">
+              La disponibilidad y profundidad de cada entregable depende de tu plan. Consulta el detalle en{' '}
+              <a href="#pricing" className="text-[#0EB5C6] hover:underline">Precios</a>.
+            </p>
+          </div>
+        </section>
 
         {/* ══ BRALIDUS — motor de inteligencia ══ */}
         <BralidusEngine />
@@ -577,22 +684,22 @@ export function Landing() {
                 {
                   name: 'Free', tagline: 'Para explorar el potencial.', price: '$0', period: '/mes',
                   accent: '#34D399', popular: false,
-                  features: ['3 validaciones / mes', 'Score básico 5D', 'Demo Command Center', 'Captura de leads'],
+                  features: ['3 validaciones / mes', 'Score 0–100 + feedback IA', 'Análisis básico de competidores', 'Export PDF estándar'],
                 },
                 {
-                  name: 'Basic', tagline: 'Para validar en serie.', price: '$19', period: '/mes',
+                  name: 'Basic', tagline: 'Para validar en serie.', price: '$9.990', period: ' CLP/mes',
                   accent: '#38D5E3', popular: false,
-                  features: ['15 validaciones / mes', 'Reportes estándar', 'Histórico de análisis', 'Score completo 5D'],
+                  features: ['15 validaciones / mes', 'Score detallado 5 dimensiones', 'Competidores completo + propuesta de valor', 'Análisis de mercado (TAM/SAM/SOM)'],
                 },
                 {
-                  name: 'Pro', tagline: 'Para founders que deciden con datos.', price: '$49', period: '/mes',
+                  name: 'Pro', tagline: 'Para founders que deciden con datos.', price: '$20.000', period: ' CLP/mes',
                   accent: '#0EB5C6', popular: true,
-                  features: ['50 validaciones / mes', 'RAG con datos macro CL', 'Entregables avanzados', 'Roadmap + Cap Table'],
+                  features: ['50 validaciones / mes', 'Unit Economics (CAC, LTV, Payback)', 'Gobernanza, Cap Table y Fundraising', 'Founder Fit + PDF investor-ready'],
                 },
                 {
-                  name: 'Premium', tagline: 'Para fondos y aceleradoras.', price: '$149', period: '/mes',
+                  name: 'Premium', tagline: 'Para startups en seed y growth.', price: '$50.000', period: ' CLP/mes',
                   accent: '#F7C56C', popular: false,
-                  features: ['Uso ampliado · multi-proyecto', 'Acceso API (RaaS)', 'Para fondos y aceleradoras', 'Soporte prioritario'],
+                  features: ['Todo lo del plan Pro', 'Due Diligence (SII + INAPI + CMF)', 'Data Room PDF para inversores', 'Acceso API + soporte prioritario'],
                 },
               ].map(plan => (
                 <div key={plan.name}
@@ -612,7 +719,7 @@ export function Landing() {
                   </div>
                   <div className="mb-6 relative z-10">
                     <span className="text-4xl font-extrabold text-gray-900 dark:text-[#F0EFF8] font-heading">{plan.price}</span>
-                    <span className="text-sm text-gray-500 dark:text-[#8B8AA0]"> USD{plan.period}</span>
+                    <span className="text-sm text-gray-500 dark:text-[#8B8AA0]">{plan.period}</span>
                   </div>
                   <button onClick={handleCTA}
                     className={`w-full py-3 font-semibold rounded-xl text-sm mb-6 relative z-10 cursor-pointer transition active:scale-[0.98]
@@ -633,7 +740,7 @@ export function Landing() {
             </div>
 
             <p className="text-center text-xs text-gray-400 dark:text-[#afaebb] mt-8">
-              Infraestructura de cobro: LemonSqueezy · Precios en USD · Todos los planes incluyen Ley 21.719 de Privacidad
+              Infraestructura de cobro: LemonSqueezy · Precios en CLP · Todos los planes incluyen Ley 21.719 de Privacidad
             </p>
           </div>
         </section>
@@ -701,6 +808,41 @@ export function Landing() {
         {/* ══ SCOUTTECH — empresa matriz ══ */}
         <ScouttechSection />
 
+        {/* ══ TRANSPARENCIA DE ETAPA ══ */}
+        <section id="estado" className="py-14 sm:py-20 border-t border-black/[0.05] dark:border-white/[0.06] bg-[#F8F7FF] dark:bg-[#0A0A0F]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0EB5C6]/10 border border-[#0EB5C6]/20 rounded-full text-[11px] font-semibold text-[#0EB5C6] dark:text-[#38D5E3] mb-5 uppercase tracking-wider">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Transparencia de etapa
+            </span>
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
+              Estado actual del producto
+            </h2>
+            <p className="text-gray-500 dark:text-[#8B8AA0] max-w-2xl mx-auto text-sm sm:text-base leading-relaxed mb-10">
+              Validus está en etapa temprana y lo decimos con claridad: preferimos un avance honesto
+              a una promesa inflada. Esto es lo que es real hoy.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3 text-left">
+              {[
+                'MVP funcional en producción',
+                'Construido por Scouttech',
+                'Diseñado para startups chilenas y de LatAm',
+                'En validación con usuarios tempranos',
+                'Preparando pilotos con founders, mentores y equipos de innovación',
+                'Arquitectura lista para integrar fuentes públicas y privadas',
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3 bg-white dark:bg-[#12121A] border border-gray-100 dark:border-white/[0.06] rounded-xl px-4 py-3">
+                  <svg className="w-4 h-4 text-[#34D399] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  <span className="text-sm text-gray-700 dark:text-[#C4C4D4]">{item}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 dark:text-[#afaebb] mt-8 max-w-xl mx-auto">
+              Sin clientes inventados, sin métricas infladas. Cuando haya tracción real, la mostraremos con datos.
+            </p>
+          </div>
+        </section>
+
         {/* ══ FINAL CTA ══ */}
         <section className="py-24 px-4 border-t border-black/[0.05] dark:border-white/[0.06] relative overflow-hidden">
           <div className="absolute inset-0 grid-pattern opacity-40" />
@@ -752,7 +894,7 @@ export function Landing() {
             <div>
               <p className="text-xs font-bold text-gray-900 dark:text-[#F0EFF8] uppercase tracking-wide mb-4">Producto</p>
               <ul className="space-y-2.5">
-                {[{ label: 'Cómo funciona', href: '#how' }, { label: 'Características', href: '#features' }, { label: 'Demo', href: '#demo' }, { label: 'Confianza', href: '#confianza' }, { label: 'Precios', href: '#pricing' }].map(l => (
+                {[{ label: 'Cómo funciona', href: '#how' }, { label: 'Características', href: '#features' }, { label: 'Casos de uso', href: '#casos-de-uso' }, { label: 'Entregables', href: '#entregables' }, { label: 'Demo', href: '#demo' }, { label: 'Confianza', href: '#confianza' }, { label: 'Precios', href: '#pricing' }].map(l => (
                   <li key={l.label}><a href={l.href} className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">{l.label}</a></li>
                 ))}
               </ul>
