@@ -35,9 +35,11 @@ Validus distingue —y comunica— tres tipos de contenido:
 
 **Hoy:** la sección de evidencia muestra la procedencia de las señales externas y **etiqueta explícitamente** cuando una fuente no está disponible o cuando el contenido es demo/simulado — en lugar de presentar datos ficticios como reales.
 
-**Objetivo (Trust Layer):** mostrar de forma sistemática, por cada sección del dossier, la **fuente**, los **supuestos** y un **nivel de confianza**. Esto está **parcialmente** implementado y es un objetivo de roadmap.
+**Trust Layer v1:** Validus ya incorpora una primera capa presentacional de confianza en el dossier: leyenda de interpretación, badges de procedencia, estados de fuente y notas por sección para distinguir entre dato del usuario, fuente externa, inferencia de IA, supuesto, datos demo/no disponibles y contenido que requiere validación humana.
 
-> Pendiente: definir e implementar el indicador de nivel de confianza por sección de forma estándar.
+Esta capa no modifica los resultados generados por IA ni representa una certificación. Su objetivo es ayudar al usuario a interpretar el análisis con mayor contexto y reducir el riesgo de tratar una inferencia como hecho verificado.
+
+> Pendiente: profundizar el Trust Layer para mostrar indicadores de confianza de forma más granular por cada sección del dossier, aprovechar campos como `confidence`, `source_notes`, `assumptions`, `data_sources`, `sources_used`, `sources_skipped` y llevar esta trazabilidad también al export PDF.
 
 ## Riesgos de alucinación
 
