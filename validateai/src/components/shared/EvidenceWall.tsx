@@ -1,5 +1,5 @@
 ﻿import { useEffect, type FC } from 'react';
-import { TrustBadge, SectionTrustNote } from '@/components/shared/TrustLayer';
+import { TrustBadge, SectionTrustNote, SectionTraceability } from '@/components/shared/TrustLayer';
 import { trackEvent } from '@/lib/analytics';
 
 // Sprint P-D: EvidenceWall auditado para resiliencia total ante fallos parciales.
@@ -167,6 +167,20 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reddit_status, trends_status]);
 
+  // Fase 9: resumen agregado de fuentes (Trust Layer v2). Solo estado, nunca contenido.
+  const anyResolved = reddit_status !== 'pending' || trends_status !== 'pending';
+  const connectedSources = [
+    showRedditData && !redditIsDemo ? 'Reddit' : null,
+    showTrendsData && !trendsIsDemo ? 'Google Trends' : null,
+  ].filter(Boolean) as string[];
+  const skippedSources = [
+    showRedditError ? { source: 'Reddit', reason: 'no disponible — no se inventan datos' } : null,
+    showTrendsError ? { source: 'Google Trends', reason: 'no disponible — no se inventan datos' } : null,
+  ].filter(Boolean) as { source: string; reason: string }[];
+  const demoCount = (redditIsDemo ? 1 : 0) + (trendsIsDemo ? 1 : 0);
+  const evidenceConfidence = connectedSources.length >= 2 ? 'alta' : connectedSources.length === 1 ? 'media' : 'baja';
+  const evidenceWarnings = demoCount > 0 ? ['Hay señales demo / simuladas: no representan evidencia real de mercado.'] : [];
+
   return (
     <div className="space-y-6">
 
@@ -184,6 +198,16 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
           <TrustBadge kind="no-disponible" />
           <TrustBadge kind="datos-demo" />
         </div>
+        {anyResolved && (
+          <SectionTraceability
+            title="Resumen de evidencia"
+            confidence={evidenceConfidence}
+            sourcesUsed={connectedSources}
+            sourcesSkipped={skippedSources}
+            dataWarnings={evidenceWarnings}
+            requiresValidation={demoCount > 0 || connectedSources.length === 0}
+          />
+        )}
       </div>
 
       {/* Reddit */}

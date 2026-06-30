@@ -182,3 +182,125 @@ export const TrustLegend: FC<{ className?: string; defaultOpen?: boolean }> = ({
     </div>
   );
 };
+
+// ── SectionTraceability (Trust Layer v2) ──────────────────────────────────────
+// Bloque compacto de trazabilidad por sección del dossier. Superficia los
+// metadatos que la IA YA produce (confidence, fuentes usadas/omitidas, supuestos,
+// advertencias). NO inventa nada: degrada con elegancia y no renderiza nada si no
+// hay metadatos. Pensado para usarse de forma ADITIVA, sin reemplazar los renders
+// existentes de cada card.
+
+type SourceSkippedItem = string | { source: string; reason?: string };
+
+interface SectionTraceabilityProps {
+  title?: string;
+  /** Acepta el set en español ('alta'…) o el del backend ('high'…). */
+  confidence?: ConfidenceLevel | string | null;
+  sourcesUsed?: string[];
+  sourcesSkipped?: SourceSkippedItem[];
+  dataWarnings?: string[];
+  assumptions?: string[];
+  sourceNotes?: string | null;
+  requiresValidation?: boolean;
+  className?: string;
+}
+
+function skippedText(s: SourceSkippedItem): string {
+  if (typeof s === 'string') return s;
+  return s.reason ? `${s.source} — ${s.reason}` : s.source;
+}
+
+export const SectionTraceability: FC<SectionTraceabilityProps> = ({
+  title = 'Trazabilidad de esta sección',
+  confidence,
+  sourcesUsed = [],
+  sourcesSkipped = [],
+  dataWarnings = [],
+  assumptions = [],
+  sourceNotes,
+  requiresValidation,
+  className = '',
+}) => {
+  const conf = confidence != null && confidence !== '' ? normalizeConfidence(String(confidence)) : null;
+  const hasAny =
+    conf != null || sourcesUsed.length > 0 || sourcesSkipped.length > 0 ||
+    dataWarnings.length > 0 || assumptions.length > 0 || !!sourceNotes || requiresValidation;
+  if (!hasAny) return null;
+
+  return (
+    <div className={`rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-[#F8F7FF] dark:bg-[#0A0A0F] p-4 space-y-3 ${className}`}>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-700 dark:text-[#C4C4D4] uppercase tracking-wide">
+          <svg className="w-3.5 h-3.5 text-[#0EB5C6] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+          {title}
+        </span>
+        <span className="flex items-center gap-3">
+          {conf && <ConfidenceIndicator level={conf} />}
+          {requiresValidation && <TrustBadge kind="requiere-validacion" />}
+        </span>
+      </div>
+
+      {sourcesUsed.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold text-gray-400 dark:text-[#afaebb] uppercase tracking-wide mb-1.5">Fuentes usadas</p>
+          <div className="flex flex-wrap gap-1.5">
+            {sourcesUsed.map((s) => (
+              <span key={s} className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#0EB5C6]/25 bg-[#0EB5C6]/10 text-[#0EB5C6] dark:text-[#38D5E3]">{s}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sourcesSkipped.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold text-gray-400 dark:text-[#afaebb] uppercase tracking-wide mb-1.5">Fuentes omitidas</p>
+          <ul className="space-y-1">
+            {sourcesSkipped.map((s, i) => (
+              <li key={i} className="text-[11px] text-gray-500 dark:text-[#8B8AA0] flex items-start gap-1.5">
+                <span className="text-gray-400 mt-px shrink-0">—</span>{skippedText(s)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {assumptions.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold text-gray-400 dark:text-[#afaebb] uppercase tracking-wide mb-1.5">Supuestos</p>
+          <ul className="space-y-1">
+            {assumptions.map((a, i) => (
+              <li key={i} className="text-[11px] text-gray-500 dark:text-[#8B8AA0] flex items-start gap-1.5">
+                <span className="text-[#0EB5C6] mt-px shrink-0">•</span>{a}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {dataWarnings.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1.5">Advertencias de datos</p>
+          <ul className="space-y-1">
+            {dataWarnings.map((w, i) => (
+              <li key={i} className="text-[11px] text-amber-600/90 dark:text-amber-500/80 flex items-start gap-1.5">
+                <span className="mt-px shrink-0">⚠</span>{w}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {sourceNotes && (
+        <p className="text-[11px] text-gray-400 dark:text-[#afaebb] italic leading-relaxed">{sourceNotes}</p>
+      )}
+
+      {requiresValidation && (
+        <p className="text-[11px] text-gray-500 dark:text-[#8B8AA0] leading-relaxed border-t border-gray-100 dark:border-white/[0.06] pt-2.5">
+          Requiere validación humana: contrasta esta información de forma independiente antes de decidir. Es orientativa, no asesoría.
+        </p>
+      )}
+    </div>
+  );
+};
