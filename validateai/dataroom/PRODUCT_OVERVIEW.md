@@ -67,7 +67,7 @@ Bralidus es el motor GraphRAG con arquitectura orientada a proveer evidencia con
 
 - La generación es **síncrona** para algunos flujos, lo que puede bloquear la UI en prompts largos *(deuda técnica conocida)*.
 - Parte de la integración de datos externos depende de credenciales/configuración; sin ellas, la fuente se muestra como "no disponible" en lugar de inventar datos.
-- El **Trust Layer** (mostrar fuente, supuesto y nivel de confianza por sección de forma sistemática) está **parcialmente** implementado y es un objetivo de roadmap.
+- El **Trust Layer** muestra fuente, supuestos, advertencias y nivel de confianza por sección del dossier (v2): cada sección surfacia los metadatos que la IA produce, con un componente reutilizable `SectionTraceability` y un resumen agregado de fuentes en la Evidence Wall. Pendiente: unificar el estilo entre todas las cards y llevarlo al export PDF.
 - Cobertura de tests y analítica de producto en ampliación.
 
 > Pendiente: documentar capturas de pantalla del flujo y del dossier para anexar al data room.

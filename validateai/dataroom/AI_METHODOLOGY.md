@@ -39,7 +39,9 @@ Validus distingue —y comunica— tres tipos de contenido:
 
 Esta capa no modifica los resultados generados por IA ni representa una certificación. Su objetivo es ayudar al usuario a interpretar el análisis con mayor contexto y reducir el riesgo de tratar una inferencia como hecho verificado.
 
-> Pendiente: profundizar el Trust Layer para mostrar indicadores de confianza de forma más granular por cada sección del dossier, aprovechar campos como `confidence`, `source_notes`, `assumptions`, `data_sources`, `sources_used`, `sources_skipped` y llevar esta trazabilidad también al export PDF.
+**Trust Layer v2 (granularidad por sección):** las secciones del dossier ya surfacian los metadatos de confianza que la IA produce —`confidence` y `source_notes` en Mercado (TAM/SAM/SOM), `assumptions` en Unit Economics y Mercado, fuente del competidor (aportado por el usuario vs. detectado por IA) y `data_sources` en Competencia, `omission_warnings` en Gobernanza, y `audit_level` + `sources_used`/`sources_skipped`/`data_warnings` en Due Diligence. Se añadió un componente reutilizable `SectionTraceability` (fuentes usadas/omitidas, supuestos, advertencias, confianza y "requiere validación humana") y un **resumen agregado de fuentes** en la Evidence Wall (conectadas / no disponibles / demo). Todo de forma aditiva, sin inventar fuentes: lo no disponible se etiqueta, no se reemplaza.
+
+> Pendiente: unificar el estilo de trazabilidad entre todas las cards bajo un mismo componente, y llevar la trazabilidad al **export PDF** (diferido para no refactorizar las librerías pesadas de PDF).
 
 ## Riesgos de alucinación
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Swords, ExternalLink, ChevronDown, CheckCircle2, XCircle, Target, Zap } from 'lucide-react';
 import type { CompetitiveAnalysis as CompetitiveAnalysisType } from '@/types/validation';
+import { SectionTraceability } from '@/components/shared/TrustLayer';
 
 const CONFIDENCE_STYLES = {
   high: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20',
@@ -223,6 +224,16 @@ export function CompetitiveAnalysis({ data }: { data: CompetitiveAnalysisType })
                   ))}
                 </ul>
               </div>
+            </div>
+          )}
+
+          {data.data_sources && data.data_sources.length > 0 && (
+            <div className="px-6 pb-6">
+              <SectionTraceability
+                title="Fuentes del análisis competitivo"
+                sourcesUsed={data.data_sources}
+                requiresValidation
+              />
             </div>
           )}
         </div>

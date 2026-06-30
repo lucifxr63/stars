@@ -46,4 +46,4 @@ Validus es un MVP funcional en producción, **pre-revenue**. La Fase 1 (confianz
 - **Fase 1 (integrada en producción):** confianza, legal, políticas, footer legal, transparencia de etapa.
 - **Fase 2 (implementada en rama/PR, pendiente de merge):** narrativa comercial, casos de uso, entregables, coherencia de pricing, SEO/OG.
 - **Fase 3 (este data room):** documentación institucional inicial.
-- **Siguiente:** Trust Layer avanzado, integraciones reales, métricas y modelo financiero.
+- **Siguiente:** Trust Layer v2 (trazabilidad por sección) implementado de forma aditiva; pendiente unificarlo entre todas las cards y llevarlo al export PDF. Continúan: integraciones reales, métricas y modelo financiero.
