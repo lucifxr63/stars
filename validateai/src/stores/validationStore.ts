@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { STORAGE_KEYS, BROADCAST_CHANNEL } from '@/lib/storageKeys';
 import type {
   StepIdea, StepMarket, StepFounder, StepIdeaQuick,
   RiskAnalysis, UnitEconomics, FounderFit, MarketSignals,
@@ -189,7 +190,7 @@ export const useValidationStore = create<ValidationState>()(
           })),
       }),
       {
-        name: 'validateai-session',
+        name: STORAGE_KEYS.session.to,
         version: STORE_VERSION,
         migrate: (_persistedState: unknown, version: number) => {
           if (version < STORE_VERSION) {
@@ -210,7 +211,7 @@ export const useValidationStore = create<ValidationState>()(
 // isApplyingRemoteState previene el loop: tab A → tab B → tab A → ...
 if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   const tabId   = crypto.randomUUID();
-  const channel = new BroadcastChannel('validateai_store');
+  const channel = new BroadcastChannel(BROADCAST_CHANNEL);
   let   isApplyingRemoteState = false;
 
   channel.onmessage = (event: MessageEvent<{ sender: string; state: unknown }>) => {

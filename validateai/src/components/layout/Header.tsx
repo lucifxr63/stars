@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { markDeliberateLogout } from '@/lib/session';
+import { EVENTS } from '@/lib/storageKeys';
 import { useValidationStore } from '@/stores/validationStore';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { getPreviewTier, setPreviewTier, type UserTier } from '@/hooks/useUserTier';
@@ -35,8 +36,8 @@ export function Header() {
     const onPreview = (e: Event) => {
       setPreviewTierState((e as CustomEvent<UserTier | null>).detail);
     };
-    window.addEventListener('validateai:tier-preview', onPreview);
-    return () => window.removeEventListener('validateai:tier-preview', onPreview);
+    window.addEventListener(EVENTS.tierPreview, onPreview);
+    return () => window.removeEventListener(EVENTS.tierPreview, onPreview);
   }, []);
 
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);

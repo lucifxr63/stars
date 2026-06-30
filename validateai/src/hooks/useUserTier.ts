@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { STORAGE_KEYS, EVENTS } from '@/lib/storageKeys';
 
 export type UserTier = 'free' | 'basic' | 'pro' | 'premium' | 'admin';
 
@@ -19,8 +20,8 @@ export function getUserSections(tier: UserTier): string[] {
 }
 
 // ── Preview override (admin only) ────────────────────────────────────────────
-const PREVIEW_TIER_KEY = 'validateai_preview_tier';
-const PREVIEW_EVENT    = 'validateai:tier-preview';
+const PREVIEW_TIER_KEY = STORAGE_KEYS.previewTier.to;
+const PREVIEW_EVENT    = EVENTS.tierPreview;
 const VALID_TIERS      = ['free', 'basic', 'pro', 'premium', 'admin'] as const;
 
 export function getPreviewTier(): UserTier | null {

@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
+import { STORAGE_KEYS } from '@/lib/storageKeys';
 
-const STORAGE_KEY = 'validateai_onboarded';
+const STORAGE_KEY = STORAGE_KEYS.onboarded.to;
 
 const STEPS = [
   {

@@ -2,9 +2,10 @@
 import posthog from 'posthog-js';
 import type { UserTier } from '@/hooks/useUserTier';
 import { WaitlistModal } from '@/components/shared/WaitlistModal';
+import { EVENTS } from '@/lib/storageKeys';
 
 // Evento despachado por useAI.ts cuando el backend retorna 429 con error de tier/cuota.
-export const PAYWALL_HIT_EVENT = 'validateai:paywall-hit';
+export const PAYWALL_HIT_EVENT = EVENTS.paywallHit;
 
 export interface PaywallHitDetail {
   reason: 'tier_blocked' | 'monthly_limit' | 'expensive_limit';

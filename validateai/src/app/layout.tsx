@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { consumeDeliberateLogout } from '@/lib/session';
+import { EVENTS } from '@/lib/storageKeys';
 import { useValidationStore } from '@/stores/validationStore';
 import { useConsentGuard } from '@/hooks/useConsentGuard';
 import { ConsentModal } from '@/components/shared/ConsentModal';
@@ -104,8 +105,8 @@ export function AppLayout() {
     const onPreview = (e: Event) => {
       setPreviewTierState((e as CustomEvent<UserTier | null>).detail);
     };
-    window.addEventListener('validateai:tier-preview', onPreview);
-    return () => window.removeEventListener('validateai:tier-preview', onPreview);
+    window.addEventListener(EVENTS.tierPreview, onPreview);
+    return () => window.removeEventListener(EVENTS.tierPreview, onPreview);
   }, []);
 
   return (
@@ -183,7 +184,7 @@ export function AppLayout() {
         </footer>
       </div>
 
-      {/* Modal global de upgrade — se activa via evento validateai:paywall-hit desde useAI */}
+      {/* Modal global de upgrade — se activa via evento validus:paywall-hit desde useAI */}
       <UpgradeModal />
     </div>
   );

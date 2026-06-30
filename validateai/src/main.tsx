@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client';
 // @ts-ignore
 import '@fontsource-variable/geist';
 import './index.css';
+// Fase 5: shim de migración de storage keys (validateai_* → validus_*).
+// DEBE importarse antes de App: los stores Zustand hidratan al evaluarse su módulo.
+import '@/lib/storageMigration';
 import App from './App.tsx';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { initAnalytics } from '@/hooks/useAnalytics';
