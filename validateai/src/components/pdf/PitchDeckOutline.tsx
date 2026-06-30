@@ -1,5 +1,6 @@
 ﻿import { Document, Page, View, Text } from '@react-pdf/renderer';
 import { styles, colors } from './pdfStyles';
+import { TRUST_DISCLAIMER } from '@/lib/trustCopy';
 import type { PDFData } from '@/lib/pdf';
 import type { PitchDeckContent, MarketSizing, UnitEconomics } from '@/types/validation';
 
@@ -317,6 +318,13 @@ export function PitchDeckOutline({ data }: Props) {
           </View>
         )}
       </View>
+    </Slide>,
+
+    // Slide de cierre: disclaimer canónico (Fase 14 / #6)
+    <Slide key={9} number={9} label="Disclaimer">
+      <SlideTitle>Aviso</SlideTitle>
+      <Headline>Cómo leer este pitch</Headline>
+      <Body>{TRUST_DISCLAIMER}</Body>
     </Slide>,
   ];
 

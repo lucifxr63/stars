@@ -1,5 +1,6 @@
 import type { MarketSizing, CompetitiveAnalysis, ScoreBreakdown, RiskAnalysis, UnitEconomics, FounderFit, MarketSignals, GovernanceAssessment, FundraisingRoadmap, PlaybookAnalysis, MentorMatch, DueDiligenceScore, PitchDeckContent, LeanRoadmap, FinancialProjection, ComplianceRoadmap, CapitalEfficiency } from '@/types/validation';
 import { matchCorfoInstruments } from '@/data/corfoInstruments';
+import { TRUST_LEGEND_TITLE, TRUST_LEGEND_INTRO, TRUST_LEGEND, TRUST_CONFIDENCE_LEVELS, TRUST_DISCLAIMER } from '@/lib/trustCopy';
 
 // ── Public API ────────────────────────────────────────────────────────────────
 export interface PDFData {
@@ -1956,6 +1957,48 @@ export async function generateValidationPDF(data: PDFData, theme: PDFTheme = 'cl
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // FOOTER EN TODAS LAS PÁGINAS
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ── Trust Layer: Cómo leer este dossier + disclaimer (Fase 14 / #6) ──────────
+  // Página de cierre con la leyenda de procedencia y el disclaimer canónico
+  // (mismo texto que la UI vía trustCopy). Aditivo: no toca el resto del layout.
+  doc.addPage();
+  y = MARGIN;
+  sectionHeader(TRUST_LEGEND_TITLE, T.accent);
+
+  y += wrapText(TRUST_LEGEND_INTRO, MARGIN, CON_W, 9, T.bodyMid) * 5 + 4;
+
+  // Leyenda de etiquetas: label (accent, bold) + descripción (muted) por ítem.
+  for (const item of TRUST_LEGEND) {
+    checkPage(11);
+    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.accent);
+    doc.text(item.label, MARGIN, y);
+    y += 4.5;
+    y += wrapText(item.description, MARGIN, CON_W, 8.5, T.bodyMid) * 4.5 + 2.5;
+  }
+
+  // Niveles de confianza como chips.
+  checkPage(16);
+  y += 2;
+  doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...T.bodyFg);
+  doc.text('Nivel de confianza', MARGIN, y);
+  y += 6;
+  let trustCx = MARGIN;
+  for (const level of TRUST_CONFIDENCE_LEVELS) {
+    trustCx += chip(level.label, trustCx, y - 4, T.cardBg, T.bodyMid);
+  }
+  y += 8;
+
+  // Disclaimer canónico en caja.
+  const discLines = doc.splitTextToSize(TRUST_DISCLAIMER, CON_W - 12) as string[];
+  const discBoxH = discLines.length * 4.5 + 10;
+  checkPage(discBoxH + 4);
+  doc.setFillColor(...T.cardBg);
+  doc.setDrawColor(...T.cardBorder);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(MARGIN, y, CON_W, discBoxH, 2, 2, 'FD');
+  doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...T.bodyMid);
+  doc.text(discLines, MARGIN + 6, y + 7);
+  y += discBoxH;
+
   const pageCount = (doc as unknown as { internal: { getNumberOfPages(): number } })
     .internal.getNumberOfPages();
 
