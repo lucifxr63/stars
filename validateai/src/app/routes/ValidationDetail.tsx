@@ -35,6 +35,7 @@ import { trackTelemetryEvent } from '@/lib/telemetry';
 import { useMentors } from '@/hooks/useMentors';
 import { EvidenceWall } from '@/components/shared/EvidenceWall';
 import { TrustLegend, SectionTrustNote } from '@/components/shared/TrustLayer';
+import { STORAGE_KEYS } from '@/lib/storageKeys';
 import { GovernanceCard } from '@/components/shared/GovernanceCard';
 import { FundraisingRoadmapCard } from '@/components/shared/FundraisingRoadmapCard';
 import { TractionTracker } from '@/components/shared/TractionTracker';
@@ -295,7 +296,7 @@ export function ValidationDetail() {
   );
   const [activeTab, setActiveTab] = useState<DashboardTab>('Veredicto');
   const [pdfTheme, setPdfTheme] = useState<PDFTheme>(() => {
-    return (localStorage.getItem('validateai_pdf_theme') as PDFTheme) ?? 'clean';
+    return (localStorage.getItem(STORAGE_KEYS.pdfTheme.to) as PDFTheme) ?? 'clean';
   });
   const [agentLog, setAgentLog] = useState<{
     executive_summary: string | null;
@@ -319,7 +320,7 @@ export function ValidationDetail() {
 
   const handleThemeChange = (t: PDFTheme) => {
     setPdfTheme(t);
-    localStorage.setItem('validateai_pdf_theme', t);
+    localStorage.setItem(STORAGE_KEYS.pdfTheme.to, t);
   };
 
   useEffect(() => {

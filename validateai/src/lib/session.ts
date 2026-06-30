@@ -1,3 +1,5 @@
+import { SESSION_KEYS } from '@/lib/storageKeys';
+
 /**
  * Helpers para distinguir un cierre de sesión deliberado (el usuario hizo clic
  * en "Cerrar sesión") de una expiración inesperada (el refresh token falló y
@@ -7,7 +9,7 @@
  * esta bandera no podríamos saber si mostrar "Sesión cerrada" (intencional) o
  * "Tu sesión expiró" (forzar re-login con gracia).
  */
-const FLAG = 'validateai:deliberate-logout';
+const FLAG = SESSION_KEYS.deliberateLogout.to;
 
 /** Llamar JUSTO antes de supabase.auth.signOut() en los botones de logout. */
 export function markDeliberateLogout(): void {

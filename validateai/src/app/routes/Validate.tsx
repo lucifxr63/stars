@@ -1,5 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { HISTORY_GUARD_KEY } from '@/lib/storageKeys';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, type UserTier } from '@/hooks/useUserTier';
@@ -354,7 +355,7 @@ export function Validate() {
   // se re-ejecuta por cambio de deps (isPremiumMode / isQuickMode / tier).
   useEffect(() => {
     if (!hasInjectedHistoryRef.current) {
-      window.history.pushState({ validateai_guard: true }, '');
+      window.history.pushState({ [HISTORY_GUARD_KEY]: true }, '');
       hasInjectedHistoryRef.current = true;
     }
 
@@ -363,7 +364,7 @@ export function Validate() {
       if (step >= lastStep) return;
 
       // Re-inject guard so repeated back-button presses are caught
-      window.history.pushState({ validateai_guard: true }, '');
+      window.history.pushState({ [HISTORY_GUARD_KEY]: true }, '');
 
       const { stepIdea, stepIdeaQuick } = useValidationStore.getState();
       const hasInteracted = !!stepIdea.idea_name || !!stepIdeaQuick.idea_name;

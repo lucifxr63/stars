@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useRef } from 'react';
+import { STORAGE_KEYS } from '@/lib/storageKeys';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -131,7 +132,7 @@ function PremiumTerminal() {
 
 // ── Micro-feedback (The Mom Test) ─────────────────────────────────────────────
 
-const MF_KEY = 'validateai_mf_generating_v1';
+const MF_KEY = STORAGE_KEYS.mfGenerating.to;
 
 const MICRO_OPTIONS = [
   { label: 'Con Excel / Sheets', value: 'Con Excel o Sheets' },

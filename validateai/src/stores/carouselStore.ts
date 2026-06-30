@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { STORAGE_KEYS } from '@/lib/storageKeys';
 import { supabase } from '@/lib/supabase';
 import type {
   CarouselSlide,
@@ -177,7 +178,7 @@ export const useCarouselStore = create<CarouselState>()(
 
         reset: () => set(initialState),
       }),
-      { name: 'validateai-carousel' }
+      { name: STORAGE_KEYS.carousel.to }
     )
   )
 );

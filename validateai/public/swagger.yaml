@@ -1,6 +1,6 @@
 ﻿openapi: 3.0.3
 info:
-  title: ValidateAI RaaS API
+  title: Validus RaaS API
   version: "1.0.0"
   description: |
     API de ValidaciÃ³n de Ideas de Negocio como Servicio (RAG-as-a-Service).
@@ -20,7 +20,7 @@ info:
     - 100 requests/minuto por API Key
     - Headers de control: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
   contact:
-    name: ValidateAI
+    name: Validus
     url: https://validus.scouttech.lat
   license:
     name: Propietario

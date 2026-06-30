@@ -2,12 +2,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { UserTier } from '@/hooks/useUserTier';
 import { TIER_LIMITS, resolveLimits } from '@/lib/tierLimits';
+import { EVENTS } from '@/lib/storageKeys';
 
 export { TIER_LIMITS };
 
 // Evento custom para invalidar el contador sin prop-drilling.
 // useAI.ts lo dispara tras cada call exitoso; useUsage lo escucha para refetch.
-export const USAGE_UPDATED_EVENT = 'validateai:usage-updated';
+export const USAGE_UPDATED_EVENT = EVENTS.usageUpdated;
 
 /** Dispara el evento desde cualquier parte de la app (ej: useAI.ts). */
 export function dispatchUsageUpdated() {
