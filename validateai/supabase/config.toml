@@ -429,6 +429,16 @@ verify_jwt = false
 [functions.send-quick-lead]
 verify_jwt = false
 
+# Fase 15 (11C): encola jobs de generación. verify_jwt=false → la función valida
+# el JWT del usuario internamente (getUser) y opera con service_role.
+[functions.enqueue-generation]
+verify_jwt = false
+
+# Fase 15 (11C): worker server-side invocado por pg_cron con el service_role key.
+# verify_jwt=false → guard interno por service-role. DORMANTE hasta activar el cron.
+[functions.process-generation-jobs]
+verify_jwt = false
+
 # Pública en prod (verify_jwt=false). Sin esta entrada, un redeploy sin
 # --no-verify-jwt la volvería privada y rompería el flujo Premium.
 [functions.premium-validate]
