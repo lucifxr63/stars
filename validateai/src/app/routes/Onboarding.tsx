@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { INDUSTRIES } from '@/utils/constants';
+import { trackEvent } from '@/lib/analytics';
 
 const ROLES = [
   'CEO / Founder', 'CTO', 'CMO', 'COO', 'Product Manager', 'Otro',
@@ -62,6 +63,7 @@ export function Onboarding() {
   });
 
   useEffect(() => {
+    trackEvent('onboarding_started', { step: 1 });
     supabase.auth.getSession().then(({ data }) => {
       const meta = data.session?.user?.user_metadata;
       const name = meta?.full_name ?? meta?.name ?? '';
@@ -99,6 +101,7 @@ export function Onboarding() {
       return;
     }
 
+    trackEvent('onboarding_completed', { skipped: skipData });
     navigate('/dashboard', { replace: true });
   };
 

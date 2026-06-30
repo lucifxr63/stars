@@ -36,6 +36,7 @@ import { useMentors } from '@/hooks/useMentors';
 import { EvidenceWall } from '@/components/shared/EvidenceWall';
 import { TrustLegend, SectionTrustNote } from '@/components/shared/TrustLayer';
 import { STORAGE_KEYS } from '@/lib/storageKeys';
+import { trackEvent } from '@/lib/analytics';
 import { GovernanceCard } from '@/components/shared/GovernanceCard';
 import { FundraisingRoadmapCard } from '@/components/shared/FundraisingRoadmapCard';
 import { TractionTracker } from '@/components/shared/TractionTracker';
@@ -307,6 +308,12 @@ export function ValidationDetail() {
   } | null>(null);
   const { callAI } = useAI();
   const { tier, isPro: isPremium } = useUserTier();
+
+  // Fase 8: vista del dossier de resultados (una vez por validación cargada).
+  useEffect(() => {
+    if (data?.id) trackEvent('validation_result_viewed', { tier, is_premium: isPremium });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.id]);
   const { remaining, limits, usage } = useUsage(tier);
   // Tier al que debe subir para recuperar el veredicto cuando agota su cuota mensual.
   const verdictTierNeeded = deriveTierNeeded('monthly_limit', tier);

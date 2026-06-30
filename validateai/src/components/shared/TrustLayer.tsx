@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FC, ReactNode } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 // ─── Trust Layer v1 ───────────────────────────────────────────────────────────
 // Capa presentacional de confianza. NO produce datos: solo etiqueta y explica los
@@ -128,7 +129,7 @@ export const TrustLegend: FC<{ className?: string; defaultOpen?: boolean }> = ({
     <div className={`rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-[#12121A] ${className}`}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen((o) => { if (!o) trackEvent('trust_layer_opened', { source: 'dossier' }); return !o; })}
         aria-expanded={open}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left cursor-pointer"
       >

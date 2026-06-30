@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { trackDemoViewed } from '@/hooks/useAnalytics';
+import { trackEvent, trackCtaClick } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { ProductShowcase } from '@/components/landing/ProductShowcase';
@@ -175,6 +176,10 @@ export function Landing() {
   }, [location.search]);
 
   useEffect(() => {
+    trackEvent('landing_viewed', { page: 'landing' });
+  }, []);
+
+  useEffect(() => {
     import('@/lib/supabase').then(({ supabase }) => {
       supabase.from('validations').select('id', { count: 'exact', head: true }).eq('status', 'completed')
         .then(({ count }) => { if (count && count > 0) setValidationCount(count); });
@@ -188,9 +193,10 @@ export function Landing() {
   }, []);
 
   const handleGoogleLogin = async () => {
+    trackCtaClick('landing', 'google_signin');
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } });
   };
-  const handleCTA = () => navigate('/login');
+  const handleCTA = () => { trackCtaClick('landing', 'login'); navigate('/login'); };
 
   const NAV_LINKS = [
     { label: 'Cómo funciona', href: '#how' },
