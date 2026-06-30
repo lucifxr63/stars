@@ -243,8 +243,8 @@ function SubscriptionSection({ profile }: { profile: ProfileRow | null }) {
             <p className="text-xs font-semibold text-gray-700 dark:text-[#C4C4D4] mb-1">Gestionar suscripción</p>
             <p className="text-xs text-gray-400 dark:text-[#8B8AA0] leading-relaxed">
               Para cambios de plan, cancelación o facturación contacta a{' '}
-              <a href="mailto:contacto@validus.scouttech.lat" className="text-indigo-500 hover:underline">
-                contacto@validus.scouttech.lat
+              <a href="mailto:contacto@scouttech.lat" className="text-indigo-500 hover:underline">
+                contacto@scouttech.lat
               </a>
             </p>
           </div>

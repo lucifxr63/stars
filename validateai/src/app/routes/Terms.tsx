@@ -192,8 +192,8 @@ export function Terms() {
           <Section title="14. Contacto">
             <p>
               Para consultas sobre estos términos, escríbenos a{' '}
-              <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
-                contacto@validus.scouttech.lat
+              <a href="mailto:contacto@scouttech.lat" className="text-[#0EB5C6] hover:underline">
+                contacto@scouttech.lat
               </a>.
             </p>
           </Section>
@@ -204,7 +204,7 @@ export function Terms() {
               Documento informativo. No sustituye asesoría legal profesional.
             </p>
             <a
-              href="mailto:contacto@validus.scouttech.lat"
+              href="mailto:contacto@scouttech.lat"
               className="text-xs text-[#0EB5C6] hover:underline whitespace-nowrap"
             >
               ¿Preguntas? Contáctanos →
@@ -226,7 +226,7 @@ export function Terms() {
             <Link to="/ai-policy" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
               Uso de IA
             </Link>
-            <a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-[#0EB5C6] transition-colors">
+            <a href="mailto:contacto@scouttech.lat" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-[#0EB5C6] transition-colors">
               Contacto
             </a>
           </div>

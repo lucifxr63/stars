@@ -84,8 +84,8 @@ export function PrivacyPolicy() {
             </p>
             <p>
               Puedes contactarnos en cualquier momento a través de:{' '}
-              <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
-                contacto@validus.scouttech.lat
+              <a href="mailto:contacto@scouttech.lat" className="text-[#0EB5C6] hover:underline">
+                contacto@scouttech.lat
               </a>
             </p>
           </Section>
@@ -210,8 +210,8 @@ export function PrivacyPolicy() {
             </ul>
             <p>
               Para ejercer cualquiera de estos derechos, escríbenos a{' '}
-              <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
-                contacto@validus.scouttech.lat
+              <a href="mailto:contacto@scouttech.lat" className="text-[#0EB5C6] hover:underline">
+                contacto@scouttech.lat
               </a>{' '}
               indicando tu nombre, el derecho que deseas ejercer y, si aplica, los datos concretos a los que se refiere tu solicitud. Responderemos dentro de los plazos establecidos por la ley.
             </p>
@@ -259,7 +259,7 @@ export function PrivacyPolicy() {
               Esta política fue redactada conforme a la <strong>Ley 21.719</strong> de Protección de Datos Personales de Chile.
             </p>
             <a
-              href="mailto:contacto@validus.scouttech.lat"
+              href="mailto:contacto@scouttech.lat"
               className="text-xs text-[#0EB5C6] hover:underline whitespace-nowrap"
             >
               ¿Preguntas? Contáctanos →
@@ -281,7 +281,7 @@ export function PrivacyPolicy() {
             <Link to="/ai-policy" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">
               Uso de IA
             </Link>
-            <a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-[#0EB5C6] transition-colors">
+            <a href="mailto:contacto@scouttech.lat" className="text-xs text-gray-400 dark:text-[#afaebb] hover:text-[#0EB5C6] transition-colors">
               Contacto
             </a>
           </div>
