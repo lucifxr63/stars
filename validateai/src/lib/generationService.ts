@@ -110,7 +110,9 @@ export async function startBackgroundGeneration(args: StartGenerationArgs): Prom
   }
 
   // 4. Disparar el runner en background (fire-and-forget — NO await).
-  void runTasksInBackground(currentId, pendingTasks, context, session.access_token, tier);
+  //    Pasamos el set COMPLETO del tier (tierTasks) además de los pendientes, para
+  //    que el estado final se calcule sobre la unión (reanudación-aware).
+  void runTasksInBackground(currentId, pendingTasks, tierTasks, context, session.access_token, tier);
 
   return { validationId: currentId, status: 'started' };
 }
@@ -118,6 +120,7 @@ export async function startBackgroundGeneration(args: StartGenerationArgs): Prom
 async function runTasksInBackground(
   validationId: string,
   pending: GenTask[],
+  allTasks: GenTask[],
   context: Record<string, unknown>,
   accessToken: string,
   tier: UserTier,
@@ -149,7 +152,22 @@ async function runTasksInBackground(
     }),
   );
 
-  await supabase.from('validations').update({ status: 'completed' }).eq('id', validationId);
+  // Fase 15 (11B): el estado refleja honestamente el resultado, no siempre 'completed'.
+  // Se evalúa sobre el set COMPLETO del tier usando el generation_progress ya
+  // mergeado (incluye tasks exitosas de corridas previas), de modo que un reintento
+  // que completa lo pendiente promueve a 'completed'.
+  const { data: afterRun } = await supabase
+    .from('validations')
+    .select('generation_progress')
+    .eq('id', validationId)
+    .single();
+  const mergedProgress = (afterRun?.generation_progress ?? {}) as Record<string, string>;
+  const okIds = allTasks.filter((t) => mergedProgress[t.id] === 'success').length;
+  const finalStatus =
+    okIds === allTasks.length ? 'completed'
+    : okIds === 0 ? 'failed'
+    : 'partial';
+  await supabase.from('validations').update({ status: finalStatus }).eq('id', validationId);
 
   // Fase 11: analítica de fiabilidad de generación (solo conteos/duración, nunca contenido).
   const sections_completed = results.filter((r) => r.status === 'fulfilled' && r.value === true).length;
