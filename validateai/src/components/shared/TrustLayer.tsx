@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FC, ReactNode } from 'react';
 import { trackEvent } from '@/lib/analytics';
+import { TRUST_DISCLAIMER, TRUST_SECTION_NOTE } from '@/lib/trustCopy';
 
 // ─── Trust Layer v1 ───────────────────────────────────────────────────────────
 // Capa presentacional de confianza. NO produce datos: solo etiqueta y explica los
@@ -100,10 +101,7 @@ export const SectionTrustNote: FC<{ children?: ReactNode; className?: string }> 
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
     <span>
-      {children ?? (
-        <>Este análisis combina datos del usuario, inferencias de IA y, cuando está disponible, fuentes externas.
-        Es orientativo, no asesoría: valida la información crítica antes de decidir.</>
-      )}
+      {children ?? TRUST_SECTION_NOTE}
     </span>
   </p>
 );
@@ -174,8 +172,7 @@ export const TrustLegend: FC<{ className?: string; defaultOpen?: boolean }> = ({
           </div>
 
           <p className="text-[11px] text-gray-400 dark:text-[#afaebb] leading-relaxed border-t border-gray-100 dark:border-white/[0.06] pt-3">
-            Validus <strong>no entrega asesoría legal, financiera ni de inversión</strong>. La IA puede cometer errores;
-            los resultados son orientativos. Valida la información crítica de forma independiente antes de tomar decisiones.
+            {TRUST_DISCLAIMER}
           </p>
         </div>
       )}

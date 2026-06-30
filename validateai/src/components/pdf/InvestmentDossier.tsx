@@ -11,6 +11,7 @@ import {
   G,
 } from '@react-pdf/renderer';
 import { styles, colors } from './pdfStyles';
+import { TRUST_LEGEND_TITLE, TRUST_LEGEND_INTRO, TRUST_LEGEND, TRUST_DISCLAIMER } from '@/lib/trustCopy';
 import type { PDFData } from '@/lib/pdf';
 import type {
   MarketSizingTier,
@@ -927,6 +928,39 @@ function AdvancedRiskPage({ data }: { data: PDFData }) {
   );
 }
 
+// ── Trust Layer page — Cómo leer + disclaimer canónico (Fase 14 / #6) ─────────
+function TrustPage() {
+  return (
+    <Page size="A4" style={styles.contentPage}>
+      <View style={styles.pageHeader}>
+        <Text style={styles.pageTitle}>{TRUST_LEGEND_TITLE}</Text>
+        <Text style={styles.pageLabel}>Trust Layer · Procedencia</Text>
+      </View>
+
+      <View style={[styles.card, { marginBottom: 16 }]}>
+        <Text style={styles.cardBody}>{TRUST_LEGEND_INTRO}</Text>
+      </View>
+
+      <View style={[styles.card, { marginBottom: 16 }]}>
+        <Text style={styles.cardTitle}>Etiquetas de procedencia</Text>
+        {TRUST_LEGEND.map((item) => (
+          <View key={item.label} style={{ marginBottom: 6 }}>
+            <Text style={{ fontSize: 9, fontFamily: 'IBM Plex Sans Bold', color: colors.accent }}>{item.label}</Text>
+            <Text style={{ fontSize: 8.5, color: colors.muted, marginTop: 1 }}>{item.description}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={[styles.card, { borderColor: colors.amber }]}>
+        <Text style={[styles.cardTitle, { color: colors.amber }]}>Aviso</Text>
+        <Text style={styles.cardBody}>{TRUST_DISCLAIMER}</Text>
+      </View>
+
+      <Footer pageLabel="Trust Layer · Cómo leer este dossier" />
+    </Page>
+  );
+}
+
 export function InvestmentDossier({ data }: { data: PDFData }) {
   return (
     <Document
@@ -942,6 +976,7 @@ export function InvestmentDossier({ data }: { data: PDFData }) {
       <InvestmentPage data={data} />
       <AdvancedRiskPage data={data} />
       {data.due_diligence && <DueDiligencePage data={data} />}
+      <TrustPage />
     </Document>
   );
 }
