@@ -46,7 +46,7 @@ function submitDemoLead(email: string): Promise<boolean> {
   return fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-quick-lead`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, source: 'demo' }),
   })
     .then((res) => res.ok)
     .catch((err) => {

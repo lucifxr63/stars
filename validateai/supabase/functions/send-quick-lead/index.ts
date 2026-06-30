@@ -35,6 +35,15 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
+// Fase 13 (#4): allowlists cerrados para enriquecer el lead sin abrir un campo de
+// texto libre (anti-PII). Cualquier valor fuera del set → NULL.
+const ALLOWED_PLANS = new Set(['basic', 'pro', 'premium']);
+const ALLOWED_SOURCES = new Set(['pricing', 'upgrade_modal', 'demo', 'quick_exit']);
+
+function sanitizeEnum(value: unknown, allowed: Set<string>): string | null {
+  return typeof value === 'string' && allowed.has(value) ? value : null;
+}
+
 function buildEmailHtml(params: {
   ideaName: string;
   score: number | null;
@@ -120,9 +129,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json() as { email?: string; validation_id?: string };
+    const body = await req.json() as { email?: string; validation_id?: string; plan?: string; source?: string };
     const email = (body.email ?? '').trim();
     const validationId = body.validation_id ?? null;
+    const plan = sanitizeEnum(body.plan, ALLOWED_PLANS);
+    const source = sanitizeEnum(body.source, ALLOWED_SOURCES);
 
     if (!isValidEmail(email)) {
       return new Response(JSON.stringify({ error: 'Email inválido' }), {
@@ -153,11 +164,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Guardar lead
+    // Guardar lead (plan/source enriquecen la segmentación GTM; ambos pueden ser NULL)
     await supabase.from('email_leads').insert({
       email,
       validation_id: validationId,
       validation_score: score,
+      plan,
+      source,
     });
 
     // Enviar email si Resend está configurado
@@ -180,7 +193,7 @@ Deno.serve(async (req) => {
         }),
       });
     } else {
-      console.log(`[send-quick-lead] DRY RUN — to: ${email}, score: ${score}, id: ${validationId}`);
+      console.log(`[send-quick-lead] DRY RUN — to: ${email}, score: ${score}, id: ${validationId}, plan: ${plan}, source: ${source}`);
     }
 
     return new Response(JSON.stringify({ ok: true }), {

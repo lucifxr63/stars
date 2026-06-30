@@ -505,7 +505,7 @@ export function Validate() {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-quick-lead`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ email, validation_id: validationId ?? undefined }),
+        body: JSON.stringify({ email, validation_id: validationId ?? undefined, source: 'quick_exit' }),
       });
       if (!res.ok) console.warn('[send-quick-lead] status:', res.status);
     } catch (err) {
