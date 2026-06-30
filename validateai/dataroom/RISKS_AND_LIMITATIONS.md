@@ -13,7 +13,7 @@
 | 4 | IA | Usuario interpreta el output como verdad/garantía | Alto | Media | Disclaimers, Política de Uso de IA, lenguaje "no es asesoría" | ✅ Mitigado |
 | 5 | Datos | Dependencia de fuentes externas (APIs públicas, SerpApi) y de credenciales | Medio | Media | Degradación honesta: si no hay fuente, se etiqueta "no disponible" (no se inventa) | ✅ Mitigado |
 | 6 | Datos | Calidad del input del usuario no verificada | Medio | Alta | Comunicar que el análisis depende del input; supuestos explícitos | 🟡 Parcial |
-| 7 | Legal | Falta reconciliar sub-encargados en la política (menciona Stripe; pago real LemonSqueezy) | Medio | Alta | Actualizar política de privacidad y listado de sub-encargados | 🔴 Pendiente |
+| 7 | Legal | Sub-encargados en la política: mención de Stripe vs. pago real LemonSqueezy | Medio | Alta | Política actualizada a LemonSqueezy (texto + tabla de sub-encargados) en Fase 6 | ✅ Mitigado |
 | 8 | Legal | Sin auditoría legal/contable formal del data room | Medio | Alta | Revisión con asesores antes de uso institucional | 🔴 Pendiente |
 | 9 | Comercial | Pre-revenue: disposición a pagar y conversión no validadas | Alto | Alta | Pilotos, reactivar cobro, medir conversión | 🔴 Pendiente |
 | 10 | Comercial | Cobro en pausa (pasarela dormante) → no se mide conversión real | Alto | Alta | Reactivar LemonSqueezy / pasarela; mientras, waitlist Early Bird | 🟡 Parcial |
