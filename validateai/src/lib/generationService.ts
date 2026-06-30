@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { trackValidationCompleted } from '@/hooks/useAnalytics';
+import { trackEvent } from '@/lib/analytics';
 import type { UserTier } from '@/hooks/useUserTier';
 
 // ── Servicio de generación en background (híbrido) ────────────────────────────
@@ -121,7 +122,8 @@ async function runTasksInBackground(
   accessToken: string,
   tier: UserTier,
 ): Promise<void> {
-  await Promise.allSettled(
+  const startedAt = Date.now();
+  const results = await Promise.allSettled(
     pending.map(async (task) => {
       try {
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-validate`, {
@@ -137,16 +139,34 @@ async function runTasksInBackground(
         await supabase.rpc('merge_generation_progress', {
           p_id: validationId, p_key: task.id, p_status: 'success',
         });
+        return true;
       } catch {
         await supabase.rpc('merge_generation_progress', {
           p_id: validationId, p_key: task.id, p_status: 'error',
         });
+        return false;
       }
     }),
   );
 
   await supabase.from('validations').update({ status: 'completed' }).eq('id', validationId);
 
-  // KPI: completada (score 0 — el real se calcula/persiste server-side).
+  // Fase 11: analítica de fiabilidad de generación (solo conteos/duración, nunca contenido).
+  const sections_completed = results.filter((r) => r.status === 'fulfilled' && r.value === true).length;
+  const sections_requested = pending.length;
+  const sections_failed = sections_requested - sections_completed;
+  const genMeta = {
+    is_premium: false,
+    tier,
+    sections_requested,
+    sections_completed,
+    sections_failed,
+    duration_ms: Date.now() - startedAt,
+  };
+  if (sections_failed === 0) trackEvent('validation_generation_completed', genMeta);
+  else if (sections_completed === 0) trackEvent('validation_generation_failed', { ...genMeta, failure_type: 'all_failed' });
+  else trackEvent('validation_generation_partial', genMeta);
+
+  // KPI existente (continuidad): completada (score 0 — el real se calcula/persiste server-side).
   trackValidationCompleted(validationId, 0, (context.idea_industry as string) ?? '', tier);
 }

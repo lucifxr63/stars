@@ -430,6 +430,7 @@ export function StepGenerating() {
     // Read validationMode from the store at execution time, not from the closure,
     // to avoid stale-closure bugs when the user switches flows before reaching this step.
     const currentMode = useValidationStore.getState().validationMode;
+    const genStartedAt = Date.now();
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
@@ -500,6 +501,8 @@ export function StepGenerating() {
         });
 
         trackWizardStep(4, 'Generación', 'premium');
+        // Fase 11: fiabilidad de generación premium (solo metadatos, nunca contenido).
+        trackEvent('validation_generation_completed', { is_premium: true, tier, duration_ms: Date.now() - genStartedAt });
         toast.success('Análisis Premium completado');
         useValidationStore.getState().reset();
         navigate(`/results/${currentId}`);
@@ -568,6 +571,14 @@ export function StepGenerating() {
       // el GenerationStatusWidget retoma el seguimiento.
       const isTimeout = error instanceof DOMException &&
         (error.name === 'TimeoutError' || error.name === 'AbortError');
+      // Fase 11: registrar el fallo de generación premium (solo metadatos, sin contenido).
+      if (isPremium) {
+        trackEvent('validation_generation_failed', {
+          is_premium: true, tier,
+          failure_type: isTimeout ? 'timeout' : 'error',
+          duration_ms: Date.now() - genStartedAt,
+        });
+      }
       if (isPremium && isTimeout) {
         toast.info(
           'El análisis profundo está tomando más de lo esperado. Revisa tu Dashboard en unos minutos — te avisaremos al terminar.',

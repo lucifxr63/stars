@@ -22,7 +22,7 @@ Validus es un MVP funcional en producción, **pre-revenue**. La Fase 1 (confianz
 - **Primeros pilotos:** reclutar founders y/o una aceleradora para uso end-to-end; recoger feedback estructurado. *(Base operativa lista: programa de pilotos, guion de discovery y pipeline en `validateai/ops/`.)*
 - **Métricas iniciales:** instrumentar y empezar a medir activación (wizard completado), tiempo al primer dossier y paywall hits.
 - **Trust Layer v1:** indicador de fuente y nivel de confianza por sección del dossier de forma sistemática.
-- **Mejoras de producto:** generación asíncrona para prompts largos; pulido del dashboard de resultados.
+- **Mejoras de producto:** generación asíncrona para prompts largos (no-premium ya en background; premium → worker+polling según [docs/ASYNC_GENERATION_PLAN.md](../docs/ASYNC_GENERATION_PLAN.md)); pulido del dashboard de resultados.
 - **Reactivar cobro:** desbloquear la pasarela de pago para empezar a medir conversión real free→pago.
 
 ## 90 días — Integraciones reales, data room ampliado y preparación institucional
