@@ -1,7 +1,10 @@
 ﻿import type { FC } from 'react';
+import { TrustBadge, SectionTrustNote } from '@/components/shared/TrustLayer';
 
 // Sprint P-D: EvidenceWall auditado para resiliencia total ante fallos parciales.
 // Cualquier combinación de reddit_data/trends_data null es manejada sin white screen.
+// Fase 4 (Trust Layer): estados explícitos (Conectado / No disponible / Datos demo)
+// y copy informativo — una fuente no disponible no es un error grave.
 
 interface RedditPost {
   subreddit: string;
@@ -114,8 +117,8 @@ function PartialFailureCard({ source }: { source: string }) {
           {source} — No disponible temporalmente
         </p>
         <p className="text-xs text-amber-600/80 dark:text-amber-500/70 leading-relaxed">
-          El análisis en tiempo real de esta fuente no está disponible en este momento.
-          El resto del reporte no se ha visto afectado.
+          Esta fuente no está disponible en este momento. El análisis <strong>no inventa datos</strong> para
+          reemplazarla; el resto del reporte no se ha visto afectado.
         </p>
       </div>
     </div>
@@ -155,6 +158,22 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
 
   return (
     <div className="space-y-6">
+
+      {/* Trust Layer — nota + leyenda de estados de fuente */}
+      <div className="space-y-2.5">
+        <SectionTrustNote>
+          Evidencia de fuentes externas. Cuando una fuente no está disponible, Validus lo indica y
+          no inventa datos para reemplazarla. Es orientativo: valida lo crítico antes de decidir.
+        </SectionTrustNote>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border uppercase tracking-wide text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+            Conectado
+          </span>
+          <TrustBadge kind="no-disponible" />
+          <TrustBadge kind="datos-demo" />
+        </div>
+      </div>
 
       {/* Reddit */}
       <div>

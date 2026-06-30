@@ -34,6 +34,7 @@ import { trackDeliverableDownloaded, trackTabView, trackValidationCompleted, tra
 import { trackTelemetryEvent } from '@/lib/telemetry';
 import { useMentors } from '@/hooks/useMentors';
 import { EvidenceWall } from '@/components/shared/EvidenceWall';
+import { TrustLegend, SectionTrustNote } from '@/components/shared/TrustLayer';
 import { GovernanceCard } from '@/components/shared/GovernanceCard';
 import { FundraisingRoadmapCard } from '@/components/shared/FundraisingRoadmapCard';
 import { TractionTracker } from '@/components/shared/TractionTracker';
@@ -1410,6 +1411,10 @@ export function ValidationDetail() {
           {/* ── VEREDICTO ──────────────────────────────────────────────────── */}
           {activeTab === 'Veredicto' && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Trust Layer — leyenda de interpretación (colapsable, una sola vez en el dossier) */}
+              <div className="md:col-span-12">
+                <TrustLegend />
+              </div>
               {/* No-bloqueante (#6): la columna de score/widgets se muestra apenas hay
                   datos (score_breakdown ya viene del wizard); solo el Playbook espera
                   con un loader inline en su columna, sin tapar todo el tab. */}
@@ -1849,6 +1854,12 @@ export function ValidationDetail() {
               />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="md:col-span-12">
+                  <SectionTrustNote>
+                    Unit economics y proyecciones se basan en supuestos e inferencias de IA a partir de tu información.
+                    Son estimaciones orientativas, no proyecciones garantizadas ni asesoría financiera: valídalas antes de decidir.
+                  </SectionTrustNote>
+                </div>
                 {/* Unit Economics Check (RAG) */}
                 {data.playbook_analysis?.unit_economics_check && (
                   <div className="md:col-span-12 bg-[#12121A] border border-[#F7C56C]/20 rounded-2xl p-5">
@@ -2035,6 +2046,10 @@ export function ValidationDetail() {
               />
             ) : (
               <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <SectionTrustNote>
+                  Recomendaciones de fundraising, instrumentos, montos y fondos son orientativas e incluyen inferencias de IA.
+                  No son asesoría de inversión: contrástalas con un asesor antes de actuar.
+                </SectionTrustNote>
                 {/* Funding Verdict (RAG) */}
                 {data.playbook_analysis?.funding_verdict && (
                   <div className="bg-[#12121A] border border-[#34D399]/20 rounded-2xl p-5">
@@ -2217,6 +2232,10 @@ export function ValidationDetail() {
                 </div>
               ) : data.due_diligence_score ? (
                 <div className="space-y-5">
+                  <SectionTrustNote>
+                    Cruza tu información con fuentes públicas cuando están disponibles e incluye inferencias de IA.
+                    No reemplaza una due diligence legal o financiera profesional: valida lo crítico antes de decidir.
+                  </SectionTrustNote>
                   <ErrorBoundary label="Risk Intelligence Panel">
                     <RiskIntelligencePanel
                       alerts={bralidusPYAlerts}
