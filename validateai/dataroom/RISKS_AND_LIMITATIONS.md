@@ -16,7 +16,7 @@
 | 7 | Legal | Sub-encargados en la política: mención de Stripe vs. pago real LemonSqueezy | Medio | Alta | Política actualizada a LemonSqueezy (texto + tabla de sub-encargados) en Fase 6 | ✅ Mitigado |
 | 8 | Legal | Sin auditoría legal/contable formal del data room | Medio | Alta | Revisión con asesores antes de uso institucional | 🔴 Pendiente |
 | 9 | Comercial | Pre-revenue: disposición a pagar y conversión no validadas | Alto | Alta | Pilotos, reactivar cobro, medir conversión | 🔴 Pendiente |
-| 10 | Comercial | Cobro en pausa (pasarela dormante) → no se mide conversión real | Alto | Alta | Reactivar LemonSqueezy / pasarela; mientras, waitlist Early Bird | 🟡 Parcial |
+| 10 | Comercial | Cobro en pausa → no se mide conversión real | Alto | Alta | Infra **test-ready** (checkout+webhook+helper+fallback); falta config (secrets/variants/flag) + prueba test. Mientras, waitlist Early Bird | 🟡 Parcial |
 | 11 | Mercado | Sustituto fuerte: IA generativa genérica ("uso ChatGPT gratis") | Alto | Alta | Diferenciar por metodología, datos locales y trazabilidad; educación de mercado | 🟡 Parcial |
 | 12 | Mercado | Bajas barreras de entrada en software | Medio | Media | Defensa por motor de datos locales (Bralidus), marca y distribución | 🟡 Parcial |
 | 13 | Seguridad | Sin certificaciones (ISO/SOC2) ni pentest externo | Medio | Media | RLS, TLS, hashing RUT, IP truncada; auditoría externa a futuro | 🟡 Parcial |

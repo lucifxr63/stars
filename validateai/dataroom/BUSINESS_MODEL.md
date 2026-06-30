@@ -64,7 +64,7 @@ La metodología para derivar el precio de venta correcto (COGS real, peor caso p
 ## Riesgos comerciales
 
 - **Pre-revenue:** disposición a pagar y conversión free→pago **no validadas**.
-- **Cobro en pausa:** la pasarela (LemonSqueezy) está dormante; hoy se capta **waitlist Early Bird** en lugar de cobrar.
+- **Cobro en pausa pero test-ready:** la infraestructura de LemonSqueezy (checkout + webhook + mapeo de tiers) está **lista y probada**; el cobro está **apagado por un flag** (`VITE_CHECKOUT_ENABLED=false` por defecto → fallback a **waitlist Early Bird**). Activarlo es configuración (secrets + flag), no código — ver [docs/LEMONSQUEEZY_ACTIVATION_PLAN.md](../docs/LEMONSQUEEZY_ACTIVATION_PLAN.md). Sin cargos hasta habilitarlo manualmente.
 - **Dependencia de costo de IA:** márgenes sensibles al costo de tokens y al tipo de cambio CLP/USD.
 - **Educación de mercado:** explicar por qué Validus no es "otro chatbot".
 

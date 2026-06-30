@@ -23,7 +23,7 @@ Validus es un MVP funcional en producción, **pre-revenue**. La Fase 1 (confianz
 - **Métricas iniciales:** instrumentar y empezar a medir activación (wizard completado), tiempo al primer dossier y paywall hits.
 - **Trust Layer v1:** indicador de fuente y nivel de confianza por sección del dossier de forma sistemática.
 - **Mejoras de producto:** generación asíncrona para prompts largos (no-premium ya en background; premium → worker+polling según [docs/ASYNC_GENERATION_PLAN.md](../docs/ASYNC_GENERATION_PLAN.md)); pulido del dashboard de resultados.
-- **Reactivar cobro:** desbloquear la pasarela de pago para empezar a medir conversión real free→pago.
+- **Reactivar cobro:** el flujo ya está **test-ready** (helper + CTAs con fallback + plan de activación); falta la **configuración** (secrets en Supabase, productos/variants en LemonSqueezy, flag on) y una prueba en modo test. Ver [docs/LEMONSQUEEZY_ACTIVATION_PLAN.md](../docs/LEMONSQUEEZY_ACTIVATION_PLAN.md).
 
 ## 90 días — Integraciones reales, data room ampliado y preparación institucional
 

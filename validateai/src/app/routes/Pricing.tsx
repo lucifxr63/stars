@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import posthog from 'posthog-js';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { WaitlistModal } from '@/components/shared/WaitlistModal';
-import { trackCtaClick } from '@/lib/analytics';
+import { trackCtaClick, trackEvent } from '@/lib/analytics';
+import { isCheckoutConfigured, getCheckoutMode, startCheckout, type PaidTier } from '@/lib/checkout';
 
 type Tier = 'free' | 'basic' | 'pro' | 'premium';
 
@@ -109,12 +110,24 @@ export function Pricing() {
     posthog.capture('pricing_viewed', { source: 'pricing_page' });
   }, []);
 
-  // Contingencia de ingresos: LemonSqueezy bloqueado por Legal. El trigger de
-  // create-checkout queda DORMANTE; el intento de compra se redirige a la
-  // waitlist Early Bird (captura de lead BoFu de alta intención).
-  // Re-habilitar el cobro = revertir este commit cuando la pasarela esté activa.
-  const handleReserve = (tier: Tier) => {
+  // Fase 12: si el checkout está configurado (VITE_CHECKOUT_ENABLED + secrets en
+  // Supabase Edge), el CTA va a LemonSqueezy. Si NO, cae a la waitlist Early Bird
+  // (comportamiento por defecto, sin cargos). Todo en try/catch → nunca estado roto.
+  const handleReserve = async (tier: Tier) => {
     if (tier === 'free') { navigate('/login'); return; }
+    if (isCheckoutConfigured()) {
+      trackEvent('checkout_started', { plan: tier, source: 'pricing', mode: getCheckoutMode(), is_configured: true });
+      try {
+        const url = await startCheckout(tier as PaidTier);
+        window.location.href = url;
+        return;
+      } catch {
+        trackEvent('checkout_unavailable', { plan: tier, source: 'pricing', reason: 'create_checkout_error' });
+        // continúa al fallback de waitlist abajo
+      }
+    } else {
+      trackEvent('checkout_waitlist_fallback', { plan: tier, source: 'pricing', is_configured: false });
+    }
     posthog.capture('checkout_waitlist_hit', { tier });
     setWaitlistTier(tier);
   };
