@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import posthog from 'posthog-js';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -69,7 +69,7 @@ const PLANS = [
     color: '#0EB5C6',
     highlight: true,
     features: [
-      'Ideas y pivotes ilimitados',
+      'Hasta 50 validaciones al mes',
       'TAM/SAM/SOM dimensionado',
       'Unit Economics (CAC, LTV, Payback)',
       'Gobernanza, Cap Table y Fundraising Roadmap',
@@ -101,6 +101,12 @@ const PLANS = [
 export function Pricing() {
   const navigate = useNavigate();
   const [waitlistTier, setWaitlistTier] = useState<Tier | null>(null);
+
+  // Revenue readiness: medir intención de compra (vista de planes) sin PII.
+  // Cierra el embudo junto a checkout_waitlist_hit / _captured y paywall_hit.
+  useEffect(() => {
+    posthog.capture('pricing_viewed', { source: 'pricing_page' });
+  }, []);
 
   // Contingencia de ingresos: LemonSqueezy bloqueado por Legal. El trigger de
   // create-checkout queda DORMANTE; el intento de compra se redirige a la
@@ -233,8 +239,8 @@ export function Pricing() {
 
         <p className="text-center text-xs text-gray-400 dark:text-[#afaebb] mt-10">
           ¿Tienes preguntas?{' '}
-          <a href="mailto:contacto@validus.scouttech.lat" className="text-[#0EB5C6] hover:underline">
-            contacto@validus.scouttech.lat
+          <a href="mailto:contacto@scouttech.lat" className="text-[#0EB5C6] hover:underline">
+            contacto@scouttech.lat
           </a>
         </p>
       </main>

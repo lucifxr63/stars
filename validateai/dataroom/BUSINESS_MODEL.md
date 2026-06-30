@@ -21,7 +21,7 @@ Tesis de pricing: no se cobra por "generar texto", sino por la **profundidad del
 | Pro | $20.000 | 50 | 50 | Unit economics, gobernanza/cap table/fundraising, founder fit, PDF investor-ready |
 | Premium | $50.000 | 999 (ampliado) | 999 | Due diligence (SII+INAPI+CMF), data room PDF, API |
 
-> Pendiente: resolver inconsistencia entre el copy comercial "Pro ilimitado" (página `/pricing`) y el límite técnico real de **50 validaciones/mes** (`tierLimits.ts`). No cambiar precios ni lógica en esta fase; solo documentar.
+> Resuelto (Fase 6): el copy de Pro en `/pricing` se alineó al límite técnico real → **"Hasta 50 validaciones al mes"** (antes "ilimitado"). Coherente con `tierLimits.ts` (Pro = 50) y con la landing. No se cambiaron precios ni límites técnicos.
 
 > "Análisis costoso" = prompt que usa búsqueda web / APIs externas (mayor costo de cómputo). Metered por separado.
 

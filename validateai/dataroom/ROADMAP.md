@@ -15,7 +15,7 @@ Validus es un MVP funcional en producción, **pre-revenue**. La Fase 1 (confianz
 - **Completar el data room** (este directorio): pasar documentos de "Borrador" a "Revisado" con el equipo.
 - **Validación comercial inicial:** activar captación de waitlist Early Bird; preparar guion de pilotos.
 - **Revisión de fuentes de datos:** confirmar qué integraciones externas están activas vs. pendientes y etiquetar coherentemente en producto.
-- **Pricing:** completar el modelo de costos con facturación real (1 mes) y resolver la inconsistencia "Pro ilimitado vs 50/mes".
+- **Pricing:** completar el modelo de costos con facturación real (1 mes). *(La inconsistencia "Pro ilimitado vs 50/mes" se resolvió en Fase 6 alineando el copy a "Hasta 50 validaciones al mes".)*
 
 ## 60 días — Pilotos, métricas iniciales y Trust Layer
 

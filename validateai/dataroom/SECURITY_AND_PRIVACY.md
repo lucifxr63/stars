@@ -26,7 +26,7 @@ Medidas de privacidad implementadas (de iniciativas internas verificadas):
 - **Separación de auditoría** para accesos a datos sensibles.
 - Uso de datos anonimizados para mejora del modelo **solo con consentimiento explícito y revocable**.
 
-> Pendiente: reconciliar un punto de la política publicada — menciona "Stripe" como procesador de pagos, mientras que el cobro real previsto es vía **LemonSqueezy** (hoy en pausa). Debe alinearse el listado de sub-encargados antes de la versión definitiva.
+> Resuelto (Fase 6): la política de privacidad publicada se corrigió para reflejar el procesador de pagos real, **LemonSqueezy** (antes mencionaba "Stripe"), tanto en el texto como en el listado de sub-encargados. El cobro está hoy en pausa (waitlist Early Bird); ese estado operativo se documenta en [BUSINESS_MODEL.md](BUSINESS_MODEL.md), no en el documento legal.
 
 ## Procesamiento por IA
 

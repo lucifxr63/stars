@@ -100,7 +100,7 @@ export function PrivacyPolicy() {
               <li><strong className="text-gray-900 dark:text-[#F0EFF8]">Datos técnicos:</strong> dirección IP truncada (últimos 8 bits eliminados), tipo de dispositivo y navegador.</li>
             </ul>
             <p className="mt-2">
-              <strong className="text-gray-900 dark:text-[#F0EFF8]">No recopilamos</strong> RUT ni documentos de identidad, datos de tarjetas de crédito (procesados exclusivamente por Stripe), ni datos sensibles según el artículo 2 de la Ley 21.719.
+              <strong className="text-gray-900 dark:text-[#F0EFF8]">No recopilamos</strong> RUT ni documentos de identidad, datos de tarjetas de crédito (procesados exclusivamente por LemonSqueezy, nuestro procesador de pagos), ni datos sensibles según el artículo 2 de la Ley 21.719.
             </p>
           </Section>
 
@@ -166,7 +166,7 @@ export function PrivacyPolicy() {
                     ['Supabase', 'Base de datos, autenticación, almacenamiento', 'EE.UU. / UE'],
                     ['Vercel', 'Hosting y CDN del frontend', 'EE.UU. / Global'],
                     ['Anthropic', 'Procesamiento IA (Claude)', 'EE.UU.'],
-                    ['Stripe', 'Procesamiento de pagos', 'EE.UU.'],
+                    ['LemonSqueezy', 'Procesamiento de pagos', 'EE.UU.'],
                     ['PostHog', 'Analítica de producto', 'UE / EE.UU.'],
                     ['Resend', 'Envío de correos transaccionales', 'EE.UU.'],
                   ].map(([provider, use, location]) => (
