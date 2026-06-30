@@ -3,6 +3,8 @@ import posthog from 'posthog-js';
 import type { UserTier } from '@/hooks/useUserTier';
 import { WaitlistModal } from '@/components/shared/WaitlistModal';
 import { EVENTS } from '@/lib/storageKeys';
+import { trackEvent } from '@/lib/analytics';
+import { isCheckoutConfigured, getCheckoutMode, startCheckout, type PaidTier } from '@/lib/checkout';
 
 // Evento despachado por useAI.ts cuando el backend retorna 429 con error de tier/cuota.
 export const PAYWALL_HIT_EVENT = EVENTS.paywallHit;
@@ -81,9 +83,23 @@ export function UpgradeModal() {
 
   const closeAll = () => { setWaitlistOpen(false); setDetail(null); };
 
-  // Contingencia de ingresos (LemonSqueezy bloqueado): el CTA de upgrade
-  // no enruta a checkout, abre la waitlist Early Bird para capturar el lead BoFu.
-  const handleReserve = () => {
+  // Fase 12: si el checkout está configurado, el CTA va a LemonSqueezy; si no,
+  // abre la waitlist Early Bird (fallback por defecto, sin cargos). try/catch → nunca roto.
+  const handleReserve = async () => {
+    const tier = detail?.tier_needed;
+    const isPaid = tier === 'basic' || tier === 'pro' || tier === 'premium';
+    if (isPaid && isCheckoutConfigured()) {
+      trackEvent('checkout_started', { plan: tier, source: 'upgrade_modal', mode: getCheckoutMode(), is_configured: true });
+      try {
+        const url = await startCheckout(tier as PaidTier);
+        window.location.href = url;
+        return;
+      } catch {
+        trackEvent('checkout_unavailable', { plan: tier, source: 'upgrade_modal', reason: 'create_checkout_error' });
+      }
+    } else {
+      trackEvent('checkout_waitlist_fallback', { plan: tier ?? 'unknown', source: 'upgrade_modal', is_configured: false });
+    }
     if (detail) posthog.capture('checkout_waitlist_hit', { tier: detail.tier_needed });
     setWaitlistOpen(true);
   };

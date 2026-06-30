@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { trackEvent } from '@/lib/analytics';
 
 export function CheckoutSuccess() {
   const [tier, setTier] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Fase 12: vista de la página de éxito de checkout (sin PII).
+  useEffect(() => { trackEvent('checkout_success_viewed', {}); }, []);
 
   // Lemon Squeezy pasa ?checkout[custom][validation_id] y otros params
   // Leemos el tier actualizado directamente desde la DB
@@ -78,10 +82,10 @@ export function CheckoutSuccess() {
                   Ir al wizard →
                 </Link>
                 <Link
-                  to="/results"
+                  to="/dashboard"
                   className="px-5 py-2.5 border border-gray-200 dark:border-white/8 text-sm font-semibold text-gray-700 dark:text-[#C4C4D4] rounded-xl hover:border-indigo-300 transition-colors"
                 >
-                  Ver mis resultados
+                  Volver al dashboard
                 </Link>
               </div>
 
