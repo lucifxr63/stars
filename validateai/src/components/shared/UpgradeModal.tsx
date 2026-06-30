@@ -107,7 +107,7 @@ export function UpgradeModal() {
   if (!detail) return null;
 
   if (waitlistOpen) {
-    return <WaitlistModal tier={detail.tier_needed} onClose={closeAll} />;
+    return <WaitlistModal tier={detail.tier_needed} source="upgrade_modal" onClose={closeAll} />;
   }
 
   const tierInfo = TIER_INFO[detail.tier_needed];

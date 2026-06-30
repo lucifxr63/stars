@@ -19,10 +19,12 @@ const TIER_LABEL: Record<string, string> = {
 interface WaitlistModalProps {
   /** Tier que el usuario intentó comprar — contexto para telemetría. */
   tier: string;
+  /** Superficie de captura, persistida en el lead (Fase 13 / #4). */
+  source?: 'pricing' | 'upgrade_modal';
   onClose: () => void;
 }
 
-export function WaitlistModal({ tier, onClose }: WaitlistModalProps) {
+export function WaitlistModal({ tier, source = 'pricing', onClose }: WaitlistModalProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -38,7 +40,7 @@ export function WaitlistModal({ tier, onClose }: WaitlistModalProps) {
       await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-quick-lead`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: value }),
+        body: JSON.stringify({ email: value, plan: tier, source }),
       });
     } catch (err) {
       console.warn('[waitlist] network error:', err);
@@ -47,7 +49,7 @@ export function WaitlistModal({ tier, onClose }: WaitlistModalProps) {
     setSent(true);
     posthog.capture('checkout_waitlist_captured', { tier });
     toast.success(`¡Cupo reservado! Te notificaremos a ${value} con tu link de pago exclusivo apenas abramos.`);
-  }, [email, tier]);
+  }, [email, tier, source]);
 
   const tierLabel = TIER_LABEL[tier] ?? 'Premium';
 

@@ -361,6 +361,8 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          plan: string | null
+          source: string | null
           validation_id: string | null
           validation_score: number | null
         }
@@ -368,6 +370,8 @@ export type Database = {
           created_at?: string | null
           email: string
           id?: string
+          plan?: string | null
+          source?: string | null
           validation_id?: string | null
           validation_score?: number | null
         }
@@ -375,6 +379,8 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          plan?: string | null
+          source?: string | null
           validation_id?: string | null
           validation_score?: number | null
         }
