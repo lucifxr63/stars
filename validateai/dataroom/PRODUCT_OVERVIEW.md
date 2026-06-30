@@ -65,7 +65,7 @@ Bralidus es el motor GraphRAG con arquitectura orientada a proveer evidencia con
 
 ## Limitaciones actuales
 
-- La generación es **síncrona** para algunos flujos, lo que puede bloquear la UI en prompts largos *(deuda técnica conocida)*.
+- La generación no-premium ya corre en **background** (fire-and-forget + progreso persistente y resumible, con polling en el dashboard); el flujo **premium** sigue siendo **síncrono con timeout de 60s** (terminal en vivo + fallback elegante). La migración del premium a asíncrono real (worker + polling) está planificada — ver [docs/ASYNC_GENERATION_PLAN.md](../docs/ASYNC_GENERATION_PLAN.md). La fiabilidad de generación (éxito/parcial/fallo + duración) ya se mide vía analítica.
 - Parte de la integración de datos externos depende de credenciales/configuración; sin ellas, la fuente se muestra como "no disponible" en lugar de inventar datos.
 - El **Trust Layer** muestra fuente, supuestos, advertencias y nivel de confianza por sección del dossier (v2): cada sección surfacia los metadatos que la IA produce, con un componente reutilizable `SectionTraceability` y un resumen agregado de fuentes en la Evidence Wall. Pendiente: unificar el estilo entre todas las cards y llevarlo al export PDF.
 - Cobertura de tests y analítica de producto en ampliación.
