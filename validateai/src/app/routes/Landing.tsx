@@ -919,7 +919,7 @@ export function Landing() {
                 <li><Link to="/terms" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Términos y condiciones</Link></li>
                 <li><Link to="/privacy-policy" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Política de privacidad</Link></li>
                 <li><Link to="/ai-policy" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Política de uso de IA</Link></li>
-                <li><a href="mailto:contacto@validus.scouttech.lat" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-[#0EB5C6] transition-colors">Contacto</a></li>
+                <li><a href="mailto:contacto@scouttech.lat" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-[#0EB5C6] transition-colors">Contacto</a></li>
               </ul>
             </div>
           </div>

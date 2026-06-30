@@ -87,8 +87,8 @@ export function CheckoutSuccess() {
 
               <p className="text-[11px] text-gray-400 dark:text-[#afaebb]">
                 ¿Problemas?{' '}
-                <a href="mailto:contacto@validus.scouttech.lat" className="text-indigo-500 hover:underline">
-                  contacto@validus.scouttech.lat
+                <a href="mailto:contacto@scouttech.lat" className="text-indigo-500 hover:underline">
+                  contacto@scouttech.lat
                 </a>
               </p>
             </div>
