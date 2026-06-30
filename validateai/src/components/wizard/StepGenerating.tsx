@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, useRef } from 'react';
 import { STORAGE_KEYS } from '@/lib/storageKeys';
+import { trackEvent } from '@/lib/analytics';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -358,6 +359,10 @@ export function StepGenerating() {
     if (tierLoading) return;
     if (startedRef.current) return;
     startedRef.current = true;
+
+    // Fase 8: inicio de generación — punto único tier-agnóstico (premium + no-premium).
+    // Solo metadatos (tier/mode), nunca contenido. No altera la lógica de generación.
+    trackEvent('validation_generation_started', { tier, mode: useValidationStore.getState().validationMode });
 
     // Initialize tasks for this tier before starting
     setTasks(getTasksForTier(tier, useValidationStore.getState().validationMode));

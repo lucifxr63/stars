@@ -27,7 +27,12 @@ const MAX_STRING_LEN = 120; // strings largos ⇒ probable contenido libre, se d
 
 type Props = Record<string, unknown>;
 
-function sanitize(props: Props): Props {
+/**
+ * Red de seguridad de privacidad (pura y testeable): descarta claves con PII,
+ * strings largos (probable contenido libre) y valores undefined. Exportada para
+ * que el test unitario verifique la garantía "nunca enviamos PII".
+ */
+export function sanitizeProps(props: Props): Props {
   const out: Props = {};
   for (const [key, value] of Object.entries(props)) {
     if (PII_DENYLIST.has(key.toLowerCase())) continue;
@@ -43,7 +48,7 @@ export function trackEvent(name: string, props: Props = {}): void {
   if (!PH_KEY) return;
   if (typeof window === 'undefined') return;
   try {
-    posthog.capture(name, sanitize(props));
+    posthog.capture(name, sanitizeProps(props));
   } catch {
     // La analítica nunca debe romper la UI.
   }
