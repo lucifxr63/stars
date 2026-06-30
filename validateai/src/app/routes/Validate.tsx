@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { HISTORY_GUARD_KEY } from '@/lib/storageKeys';
+import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier, type UserTier } from '@/hooks/useUserTier';
@@ -138,6 +139,12 @@ export function Validate() {
   // Los efectos de beacon y scroll leen el estado de forma imperativa vía getState() — no usar aquí.
   const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
   const prevStep = useRef(currentStep);
+
+  // Fase 8: inicio del wizard (una vez por montaje del flujo).
+  useEffect(() => {
+    trackEvent('wizard_started', { tier, mode: validationMode });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Track step completions
   useEffect(() => {

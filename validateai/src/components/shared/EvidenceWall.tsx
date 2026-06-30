@@ -1,5 +1,6 @@
-﻿import type { FC } from 'react';
+﻿import { useEffect, type FC } from 'react';
 import { TrustBadge, SectionTrustNote } from '@/components/shared/TrustLayer';
+import { trackEvent } from '@/lib/analytics';
 
 // Sprint P-D: EvidenceWall auditado para resiliencia total ante fallos parciales.
 // Cualquier combinación de reddit_data/trends_data null es manejada sin white screen.
@@ -155,6 +156,16 @@ export const EvidenceWall: FC<Props> = ({ agentLog }) => {
 
   const redditIsDemo = isDemoSource(reddit_data);
   const trendsIsDemo = isDemoSource(trends_data);
+
+  // Fase 8: vista de evidencia — solo estado agregado de fuentes, nunca contenido.
+  useEffect(() => {
+    trackEvent('evidence_wall_viewed', {
+      source_status: `reddit:${reddit_status}/trends:${trends_status}`,
+      has_evidence: showRedditData || showTrendsData,
+      has_demo: redditIsDemo || trendsIsDemo,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reddit_status, trends_status]);
 
   return (
     <div className="space-y-6">

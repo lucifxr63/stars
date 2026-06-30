@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import posthog from 'posthog-js';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/analytics';
 
 // ── WaitlistModal (contingencia de ingresos / BoFu) ───────────────────────────
 // Secuestra los CTAs de pago mientras LemonSqueezy está bloqueado por Legal.
@@ -25,6 +26,9 @@ export function WaitlistModal({ tier, onClose }: WaitlistModalProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Fase 8: el modal se monta al abrirse → registra apertura del waitlist (BoFu).
+  useEffect(() => { trackEvent('waitlist_opened', { plan: tier }); }, [tier]);
 
   const submit = useCallback(async () => {
     const value = email.trim();

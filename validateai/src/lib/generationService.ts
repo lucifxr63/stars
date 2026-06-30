@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { trackValidationCompleted } from '@/hooks/useAnalytics';
+import { trackEvent } from '@/lib/analytics';
 import type { UserTier } from '@/hooks/useUserTier';
 
 // ── Servicio de generación en background (híbrido) ────────────────────────────
@@ -65,6 +66,8 @@ export interface StartedJob {
  */
 export async function startBackgroundGeneration(args: StartGenerationArgs): Promise<StartedJob> {
   const { tier, mode, context } = args;
+  // Fase 8: inicio de generación (flujo no-premium). Solo metadatos, sin contenido.
+  trackEvent('validation_generation_started', { tier, mode });
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('No session');
 

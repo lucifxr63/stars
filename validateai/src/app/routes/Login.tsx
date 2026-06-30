@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { trackEvent, trackCtaClick } from '@/lib/analytics';
 
 function Logo({ className = 'w-7 h-9' }: { className?: string }) {
   return (
@@ -44,6 +45,7 @@ export function Login() {
     setLoading(true);
     try {
       if (isSignUp) {
+        trackEvent('signup_started', { method: 'email' });
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         toast.success('Revisa tu email para confirmar tu cuenta.');
@@ -69,6 +71,7 @@ export function Login() {
   };
 
   const handleGoogle = async () => {
+    trackCtaClick('login', 'google');
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
