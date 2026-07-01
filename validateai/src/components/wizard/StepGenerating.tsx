@@ -347,7 +347,7 @@ const TIER_LABELS: Record<UserTier, { label: string; cls: string }> = {
 export function StepGenerating() {
   const navigate = useNavigate();
   const { validationId, setValidationId, stepIdea, stepMarket, stepFounder, stepIdeaQuick,
-    validationMode, setPremiumResult, setAgentLogId } = useValidationStore();
+    validationMode } = useValidationStore();
   const { isPro: isPremium, tier, loading: tierLoading } = useUserTier();
 
   // Tasks start empty — populated once tier is known to avoid running with wrong tier
@@ -462,8 +462,13 @@ export function StepGenerating() {
           setValidationId(currentId);
         }
 
-        const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/premium-validate`,
+        // Fase 15 (11C-c): premium ASÍNCRONO. Encolamos el job (enqueue-generation
+        // lo ejecuta server-side vía EdgeRuntime.waitUntil con este JWT fresco) y
+        // POLEAMOS el estado mientras la PremiumTerminal sigue visible (Labor
+        // Illusion). El trabajo NO está atado a la pestaña: si el usuario la cierra,
+        // waitUntil sigue y el GenerationStatusWidget del dashboard lo retoma.
+        const enqRes = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enqueue-generation`,
           {
             method: 'POST',
             headers: {
@@ -472,40 +477,58 @@ export function StepGenerating() {
             },
             body: JSON.stringify({
               validation_id: currentId,
-              idea_description: stepIdea.idea_description ?? stepIdea.idea_name,
+              tier,
+              mode: 'premium',
+              is_premium: true,
+              context: {
+                idea_description: stepIdea.idea_description ?? stepIdea.idea_name,
+                idea_name: stepIdea.idea_name,
+              },
             }),
-            // Red de seguridad: el análisis premium (Reddit + SerpAPI + Sonnet) puede
-            // tomar 20-45s. Timeout duro de 60s para que la terminal nunca quede en
-            // carga infinita si el backend cuelga o se demora más de lo esperado.
-            signal: AbortSignal.timeout(60_000),
           },
         );
+        if (!enqRes.ok) throw new Error(`enqueue-generation error: ${enqRes.status}`);
 
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({})) as { error?: string };
-          if (errBody?.error?.includes('premium_limit_exceeded')) {
-            toast.error('Alcanzaste el límite de 999 análisis premium este mes. Tu cuota se renueva el próximo ciclo.');
-            return;
-          }
-          throw new Error(`premium-validate error: ${res.status}`);
+        // Polling del estado (la vista, no el trabajo). ~2 min visibles; si excede,
+        // seguimos en el dashboard donde el widget retoma el seguimiento.
+        const POLL_MS = 3000;
+        const MAX_POLLS = 40;
+        let finalStatus: string | null = null;
+        for (let i = 0; i < MAX_POLLS; i++) {
+          await new Promise((r) => setTimeout(r, POLL_MS));
+          const { data: v } = await supabase
+            .from('validations')
+            .select('status')
+            .eq('id', currentId)
+            .single();
+          const s = v?.status;
+          if (s === 'completed' || s === 'partial' || s === 'failed') { finalStatus = s; break; }
         }
-        const premiumData = await res.json();
-
-        setAgentLogId(premiumData.log_id);
-        setPremiumResult({
-          executive_summary: premiumData.executive_summary,
-          reddit_status: premiumData.reddit_status,
-          trends_status: premiumData.trends_status,
-          agents: premiumData.agents,
-          errors: premiumData.errors,
-        });
 
         trackWizardStep(4, 'Generación', 'premium');
-        // Fase 11: fiabilidad de generación premium (solo metadatos, nunca contenido).
-        trackEvent('validation_generation_completed', { is_premium: true, tier, duration_ms: Date.now() - genStartedAt });
-        toast.success('Análisis Premium completado');
         useValidationStore.getState().reset();
-        navigate(`/results/${currentId}`);
+
+        if (finalStatus === 'failed') {
+          trackEvent('validation_generation_failed', { is_premium: true, tier, failure_type: 'worker_failed', duration_ms: Date.now() - genStartedAt });
+          toast.error('No pudimos completar tu análisis premium. Puedes reintentarlo desde tu panel.');
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+        if (finalStatus === 'partial') {
+          trackEvent('validation_generation_partial', { is_premium: true, tier, duration_ms: Date.now() - genStartedAt });
+          toast.warning('Tu análisis premium está listo, con algunas secciones pendientes.');
+          navigate(`/results/${currentId}`);
+          return;
+        }
+        if (finalStatus === 'completed') {
+          trackEvent('validation_generation_completed', { is_premium: true, tier, duration_ms: Date.now() - genStartedAt });
+          toast.success('Análisis Premium completado');
+          navigate(`/results/${currentId}`);
+          return;
+        }
+        // El trabajo sigue server-side; movemos al dashboard sin bloquear.
+        toast.info('Tu análisis premium sigue procesándose. Te avisamos en tu panel al terminar.', { duration: 8000 });
+        navigate('/dashboard', { replace: true });
         return;
       }
       // ── Fin rama Premium ─────────────────────────────────────────────────────
