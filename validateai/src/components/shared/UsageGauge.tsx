@@ -5,6 +5,8 @@ interface UsageGaugeProps {
   used: number;
   limit: number;
   tierLabel: string;
+  /** reset_at server-authoritative (useUsage). Si falta, se usa copy prudente. */
+  resetAt?: string | null;
 }
 
 interface GaugeConfig {
@@ -22,15 +24,17 @@ function getConfig(pct: number): GaugeConfig {
   return { color: '#059669', bg: 'rgba(5,150,105,0.06)', border: 'rgba(5,150,105,0.15)', label: 'En uso', textColor: '#059669' };
 }
 
-// Calcula días restantes hasta el próximo ciclo de 30 días
-function daysUntilReset(): number {
-  const now = new Date();
-  const resetDay = new Date(now);
-  resetDay.setDate(now.getDate() + (30 - (now.getDate() % 30)));
-  return Math.max(1, Math.ceil((resetDay.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+// Días restantes hasta el reset real del servidor (reset_at). Devuelve null si no
+// hay una fecha válida, para no inventar un ciclo cuando el dato aún no cargó.
+function daysUntilReset(resetAt?: string | null): number | null {
+  if (!resetAt) return null;
+  const reset = new Date(resetAt);
+  if (Number.isNaN(reset.getTime())) return null;
+  const diff = reset.getTime() - Date.now();
+  return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
+export function UsageGauge({ used, limit, tierLabel, resetAt }: UsageGaugeProps) {
   const pct = Math.min(used / Math.max(limit, 1), 1);
   const config = getConfig(pct);
 
@@ -47,13 +51,13 @@ export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
   const progress = arcLen * displayPct;
 
   const showUpsell = pct >= 0.8;
-  const daysLeft = daysUntilReset();
+  const daysLeft = daysUntilReset(resetAt);
   const remaining = Math.max(0, limit - used);
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       {/* Gauge SVG */}
-      <div className="relative w-28 h-28" role="meter" aria-valuenow={used} aria-valuemin={0} aria-valuemax={limit} aria-label={`Cuota: ${used} de ${limit} validaciones usadas`}>
+      <div className="relative w-28 h-28" role="meter" aria-valuenow={used} aria-valuemin={0} aria-valuemax={limit} aria-label={`Cuota: ${used} de ${limit} análisis usados este mes`}>
         <svg viewBox="0 0 120 120" className="w-full h-full" style={{ transform: 'rotate(135deg)' }}>
           {/* Track */}
           <circle
@@ -107,7 +111,9 @@ export function UsageGauge({ used, limit, tierLabel }: UsageGaugeProps) {
           </p>
         ) : null}
         <p className="text-[10px] text-gray-400 dark:text-[#afaebb]">
-          Reset en {daysLeft} día{daysLeft !== 1 ? 's' : ''}
+          {daysLeft != null
+            ? `Reset en ${daysLeft} día${daysLeft !== 1 ? 's' : ''}`
+            : 'Renovación mensual según ciclo'}
         </p>
       </div>
 

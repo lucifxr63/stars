@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BarChart2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -6,13 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useTrainingData } from '@/hooks/useTrainingData';
 import { useUserTier } from '@/hooks/useUserTier';
+import { useUsage } from '@/hooks/useUsage';
 import { AggregateRadarChart } from '@/components/shared/AggregateRadarChart';
 import { IdeationTrendLine } from '@/components/shared/IdeationTrendLine';
 import { UsageGauge } from '@/components/shared/UsageGauge';
-
-const TIER_LIMITS: Record<string, number> = {
-  free: 5, basic: 20, pro: 50, premium: 200,
-};
 
 interface ValidationRow {
   id: string;
@@ -65,6 +62,9 @@ export function Results() {
   const store = useValidationStore();
   const { updateConsent } = useTrainingData();
   const { tier } = useUserTier();
+  // Fuente única de uso/cuota (server-authoritative). Reemplaza el conteo
+  // client-side de validaciones y el TIER_LIMITS local divergentes.
+  const { usage, limits } = useUsage(tier);
   const [validations, setValidations] = useState<ValidationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [consent, setConsent] = useState(false);
@@ -72,14 +72,10 @@ export function Results() {
   const [pivotReason, setPivotReason] = useState('');
   const [pivoting, setPivoting] = useState(false);
 
-  // Métricas del gauge calculadas sobre los últimos 30 días
-  const usedThisCycle = useMemo(() => {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    return validations.filter((v) => new Date(v.created_at) >= cutoff).length;
-  }, [validations]);
-
-  const tierLimit = TIER_LIMITS[tier] ?? 5;
+  // Uso/cuota desde la fuente única (useUsage): análisis del mes vs límite del plan.
+  // NO es "validaciones creadas" — esa cadencia la muestran el header y el trend line.
+  const analysesUsed = usage?.total ?? 0;
+  const tierLimit = limits.total;
   const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
 
   useEffect(() => {
@@ -207,7 +203,7 @@ export function Results() {
                 Cuota mensual
               </p>
               <div className="flex-1 flex items-center justify-center">
-                <UsageGauge used={usedThisCycle} limit={tierLimit} tierLabel={tierLabel} />
+                <UsageGauge used={analysesUsed} limit={tierLimit} tierLabel={tierLabel} resetAt={usage?.reset_at} />
               </div>
             </div>
 

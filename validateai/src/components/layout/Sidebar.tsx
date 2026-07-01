@@ -7,6 +7,7 @@ import { markDeliberateLogout } from '@/lib/session';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
 import { useUsage } from '@/hooks/useUsage';
+import { UsageBar } from '@/components/shared/UsageBar';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
@@ -164,38 +165,17 @@ export function Sidebar({ onClose }: SidebarProps) {
           <ThemeToggle />
         </div>
 
-        {/* UsageBar: solo visible en free y basic — pro/premium son prácticamente ilimitados */}
+        {/* UsageBar: solo visible en free y basic — pro/premium son prácticamente ilimitados.
+            Fuente única (useUsage → get_usage_summary), compartida con /dashboard vía <UsageBar>. */}
         {(tier === 'free' || tier === 'basic') && (
           <div className="mx-1 mt-1">
-            <div className="bg-gray-50 dark:bg-white/[0.04] rounded-xl p-3 border border-gray-100 dark:border-white/[0.06]">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-[10px] font-semibold text-gray-500 dark:text-[#8B8AA0] uppercase tracking-wide">
-                  Análisis este mes
-                </span>
-                <span className="text-[10px] font-bold text-gray-700 dark:text-[#C4C4D4] tabular-nums">
-                  {usage?.total ?? 0} / {limits.total}
-                </span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.08] rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${remaining === 0
-                      ? 'bg-red-500'
-                      : remaining === 1
-                        ? 'bg-amber-500'
-                        : 'bg-[#0EB5C6]'
-                    }`}
-                  style={{ width: `${Math.min(100, ((usage?.total ?? 0) / limits.total) * 100)}%` }}
-                />
-              </div>
-              {remaining === 0 ? (
-                <p className="text-[10px] text-red-500 dark:text-red-400 mt-1.5 font-medium">
-                  Límite alcanzado · Se renueva el 1°
-                </p>
-              ) : (
-                <p className="text-[10px] text-gray-400 dark:text-[#afaebb] mt-1.5">
-                  {remaining} restante{remaining !== 1 ? 's' : ''} · renueva el 1°
-                </p>
-              )}
+            <UsageBar
+              used={usage?.total ?? 0}
+              limit={limits.total}
+              remaining={remaining}
+              resetAt={usage?.reset_at}
+              variant="muted"
+            >
               {tier === 'free' && remaining <= 1 && (
                 <Link
                   to="/profile"
@@ -205,7 +185,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                   Actualizar plan →
                 </Link>
               )}
-            </div>
+            </UsageBar>
           </div>
         )}
 

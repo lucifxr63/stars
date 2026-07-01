@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
+import { useUsage } from '@/hooks/useUsage';
+import { UsageBar } from '@/components/shared/UsageBar';
 import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
 import { GenerationStatusWidget } from '@/components/dashboard/GenerationStatusWidget';
 
@@ -47,6 +49,10 @@ export function Dashboard() {
   const navigate = useNavigate();
   const reset = useValidationStore((s) => s.reset);
   const { tier } = useUserTier();
+  // Uso/cuota desde la fuente única (useUsage), idéntico al Sidebar.
+  const { usage, limits, remaining } = useUsage(tier);
+  const isUnlimited = tier === 'pro' || tier === 'premium' || tier === 'admin';
+  const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
   const [userName, setUserName] = useState('');
   const [recent, setRecent] = useState<RecentValidation[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -137,6 +143,28 @@ export function Dashboard() {
             <p className="text-xl font-black text-gray-900 dark:text-[#F0EFF8] tabular-nums">{stat.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Uso del plan — misma fuente que el Sidebar (useUsage), sin saturar */}
+      <div className="mb-8">
+        <UsageBar
+          used={usage?.total ?? 0}
+          limit={limits.total}
+          remaining={remaining}
+          resetAt={usage?.reset_at}
+          unlimited={isUnlimited}
+          tierLabel={tierLabel}
+          variant="card"
+        >
+          {!isUnlimited && remaining <= 1 && (
+            <Link
+              to="/pricing"
+              className="block mt-2.5 text-center text-xs font-bold text-[#0EB5C6] hover:underline"
+            >
+              Mejorar plan →
+            </Link>
+          )}
+        </UsageBar>
       </div>
 
       {/* CTA principal */}
