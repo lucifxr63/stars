@@ -28,7 +28,10 @@ export interface MarketSignalsData {
   indicators: MarketIndicator[];
   signals: MarketSignal[];
   asOf: string;                 // ISO date
-  source: 'mock' | 'bralidus';
+  // 'live'     = indicadores reales (mindicador.cl vía Edge market-signals)
+  // 'bralidus' = feed GraphRAG real (cuando BralidusPY esté desplegado)
+  // 'mock'     = datos de demostración
+  source: 'mock' | 'live' | 'bralidus';
 }
 
 interface UseMarketSignals {
@@ -89,30 +92,43 @@ export function useMarketSignals(): UseMarketSignals {
     const apiUrl = import.meta.env.VITE_BRALIDUS_API_URL as string | undefined;
 
     async function load() {
-      // Sin endpoint configurado → mock (con pequeño delay para mostrar el skeleton).
-      if (!apiUrl) {
-        await new Promise((r) => setTimeout(r, 400));
-        if (!cancelled) { setData(MOCK); setLoading(false); }
-        return;
-      }
-      try {
-        const res = await fetch(`${apiUrl.replace(/\/$/, '')}/query`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ scope: 'market_signals', country: 'CL' }),
-        });
-        if (!res.ok) throw new Error(`bralidus ${res.status}`);
-        const json = (await res.json()) as MarketSignalsData;
-        if (!cancelled) { setData({ ...json, source: 'bralidus' }); setLoading(false); }
-      } catch (err) {
-        // Degradación elegante: el Command Center nunca queda en blanco.
-        console.warn('[useMarketSignals] fallback a mock:', err);
-        if (!cancelled) {
-          setData(MOCK);
-          setError(err instanceof Error ? err.message : 'unknown');
-          setLoading(false);
+      // 1. Bralidus real (GraphRAG) si está configurado.
+      if (apiUrl) {
+        try {
+          const res = await fetch(`${apiUrl.replace(/\/$/, '')}/query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scope: 'market_signals', country: 'CL' }),
+          });
+          if (!res.ok) throw new Error(`bralidus ${res.status}`);
+          const json = (await res.json()) as MarketSignalsData;
+          if (!cancelled) { setData({ ...json, source: 'bralidus' }); setLoading(false); }
+          return;
+        } catch (err) {
+          console.warn('[useMarketSignals] bralidus falló, intento Edge:', err);
         }
       }
+
+      // 2. Edge market-signals (indicadores reales vía mindicador.cl) — por defecto.
+      const supaUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      if (supaUrl) {
+        try {
+          const res = await fetch(`${supaUrl.replace(/\/$/, '')}/functions/v1/market-signals`, {
+            headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string },
+          });
+          if (!res.ok) throw new Error(`market-signals ${res.status}`);
+          const json = (await res.json()) as MarketSignalsData;
+          if (!cancelled) { setData({ ...json, source: 'live' }); setLoading(false); }
+          return;
+        } catch (err) {
+          console.warn('[useMarketSignals] Edge falló, fallback a mock:', err);
+          if (!cancelled) setError(err instanceof Error ? err.message : 'unknown');
+        }
+      }
+
+      // 3. Degradación elegante: el Command Center nunca queda en blanco.
+      await new Promise((r) => setTimeout(r, 300));
+      if (!cancelled) { setData(MOCK); setLoading(false); }
     }
 
     load();

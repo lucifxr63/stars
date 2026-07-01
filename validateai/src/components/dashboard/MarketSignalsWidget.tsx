@@ -98,6 +98,13 @@ export function MarketSignalsWidget() {
           </p>
         </div>
       )}
+      {!loading && data?.source === 'live' && (
+        <div className="px-5 py-2 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/[0.06]">
+          <p className="text-[10px] text-gray-400 dark:text-[#afaebb]">
+            Indicadores en vivo · mindicador.cl · señales editoriales orientativas
+          </p>
+        </div>
+      )}
     </div>
   );
 }
