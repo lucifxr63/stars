@@ -18,7 +18,18 @@ interface RecentValidation {
 const STATUS_LABEL: Record<string, string> = {
   completed: 'Completada',
   in_progress: 'En progreso',
+  partial: 'Parcial',
+  failed: 'Falló',
   archived: 'Archivada',
+};
+
+// Color del estado para la lista (coherente con Fase 15: partial/failed).
+const STATUS_COLOR: Record<string, string> = {
+  completed: 'text-emerald-600 dark:text-emerald-400',
+  in_progress: 'text-[#0EB5C6] dark:text-[#38D5E3]',
+  partial: 'text-amber-600 dark:text-amber-400',
+  failed: 'text-red-500 dark:text-red-400',
+  archived: 'text-gray-400 dark:text-[#afaebb]',
 };
 
 function scoreBg(score: number | null): string {
@@ -44,30 +55,43 @@ export function Dashboard() {
 
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
+        if (!user) return;
 
-      const meta = user.user_metadata;
-      setUserName(meta?.full_name ?? meta?.name ?? user.email?.split('@')[0] ?? '');
+        const meta = user.user_metadata;
+        setUserName(meta?.full_name ?? meta?.name ?? user.email?.split('@')[0] ?? '');
 
-      const { data } = await supabase
-        .from('validations')
-        .select('id, idea_name, idea_industry, validation_score, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
+        // Lista: las 5 más recientes del usuario. Filtro user_id explícito además
+        // de RLS — la policy "Admin can read all validations" haría que un admin
+        // viera las de todos sin este filtro.
+        const { data: recentData } = await supabase
+          .from('validations')
+          .select('id, idea_name, idea_industry, validation_score, status, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        setRecent((recentData as RecentValidation[]) ?? []);
 
-      const rows = (data as RecentValidation[]) ?? [];
-      setRecent(rows);
-      setTotalCount(rows.length);
+        // Stats sobre TODAS las validaciones (no solo las 5): count exacto para el
+        // total y promedio sobre todos los scores no nulos.
+        const { data: scoreData, count } = await supabase
+          .from('validations')
+          .select('validation_score', { count: 'exact' })
+          .eq('user_id', user.id);
+        setTotalCount(count ?? (scoreData?.length ?? 0));
 
-      const scored = rows.filter((r) => r.validation_score != null);
-      if (scored.length > 0) {
-        const sum = scored.reduce((acc, r) => acc + (r.validation_score ?? 0), 0);
-        setAvgScore(Math.round(sum / scored.length));
+        const scored = (scoreData ?? []).filter((r) => r.validation_score != null);
+        if (scored.length > 0) {
+          const sum = scored.reduce((acc, r) => acc + (r.validation_score ?? 0), 0);
+          setAvgScore(Math.round(sum / scored.length));
+        }
+      } catch (err) {
+        console.warn('[Dashboard] load error:', err);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
     load();
   }, []);
@@ -199,8 +223,13 @@ export function Dashboard() {
                   <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
                     {v.idea_name ?? 'Sin nombre'}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-[#afaebb] mt-0.5 truncate">
-                    {[v.idea_industry, STATUS_LABEL[v.status]].filter(Boolean).join(' · ')}
+                  <p className="text-xs mt-0.5 truncate">
+                    {v.idea_industry && (
+                      <span className="text-gray-400 dark:text-[#afaebb]">{v.idea_industry} · </span>
+                    )}
+                    <span className={`font-medium ${STATUS_COLOR[v.status] ?? 'text-gray-400 dark:text-[#afaebb]'}`}>
+                      {STATUS_LABEL[v.status] ?? v.status}
+                    </span>
                   </p>
                 </div>
 

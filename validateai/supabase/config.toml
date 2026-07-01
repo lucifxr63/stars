@@ -429,6 +429,11 @@ verify_jwt = false
 [functions.send-quick-lead]
 verify_jwt = false
 
+# Fase 17 (D-lite): feed de inteligencia de mercado (indicadores reales vía
+# mindicador.cl). Público (verify_jwt=false) — data no sensible, sin secrets.
+[functions.market-signals]
+verify_jwt = false
+
 # Fase 15 (11C): encola jobs de generación. verify_jwt=false → la función valida
 # el JWT del usuario internamente (getUser) y opera con service_role.
 [functions.enqueue-generation]
