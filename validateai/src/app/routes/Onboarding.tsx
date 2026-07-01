@@ -1,5 +1,4 @@
 ﻿import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -51,7 +50,6 @@ const STEP_META = [
 ] as const;
 
 export function Onboarding() {
-  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<OnboardingForm>({
@@ -102,7 +100,12 @@ export function Onboarding() {
     }
 
     trackEvent('onboarding_completed', { skipped: skipData });
-    navigate('/dashboard', { replace: true });
+    // Recarga completa (no navegación SPA): ProtectedLayout cachea
+    // onboarding_completed al montar y no lo re-lee mientras la identidad del
+    // user no cambie. Un navigate() dejaría el flag stale en false → rebote
+    // infinito a /onboarding. La recarga remonta el layout y re-lee el flag ya
+    // en true. replace() evita que "atrás" regrese al onboarding.
+    window.location.replace('/dashboard');
   };
 
   const meta = STEP_META[step - 1];
