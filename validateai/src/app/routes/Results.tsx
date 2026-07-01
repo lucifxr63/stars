@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -27,10 +27,65 @@ interface ValidationRow {
   score_breakdown?: Record<string, unknown> | null;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  completed:   { label: 'Completada',  className: 'bg-green-500/10 text-green-500 border border-green-500/20' },
-  in_progress: { label: 'En progreso', className: 'bg-blue-500/10 text-blue-400 border border-blue-500/20'   },
-  archived:    { label: 'Archivada',   className: 'bg-gray-500/10 text-gray-400 border border-gray-500/20'   },
+// Estados de presentación derivados de datos reales (validations.status admite
+// in_progress | completed | archived | partial | failed — NO existe 'draft').
+// El borrador vs. generando se deriva de current_step: el wizard tiene 4 pasos y
+// la generación async se dispara en el paso 4 (ver startBackgroundGeneration).
+type DisplayState = 'draft' | 'generating' | 'completed' | 'partial' | 'failed' | 'archived';
+
+const WIZARD_STEPS = 4;
+
+function displayStateOf(v: { status: string; current_step: number }): DisplayState {
+  switch (v.status) {
+    case 'completed': return 'completed';
+    case 'partial':   return 'partial';
+    case 'failed':    return 'failed';
+    case 'archived':  return 'archived';
+    case 'in_progress':
+    default:
+      return v.current_step >= WIZARD_STEPS ? 'generating' : 'draft';
+  }
+}
+
+interface StateConfig {
+  label: string;
+  hint: string;                 // descripción corta / acción recomendada
+  className: string;            // badge
+  hintClassName: string;        // color del hint inline
+  viewable: boolean;            // ¿tiene un dossier abrible en /results/:id?
+}
+
+const STATE_CONFIG: Record<DisplayState, StateConfig> = {
+  draft: {
+    label: 'Borrador', hint: 'Continúa donde lo dejaste',
+    className: 'bg-gray-500/10 text-gray-500 dark:text-gray-400 border border-gray-500/20',
+    hintClassName: 'text-blue-500 dark:text-blue-400', viewable: false,
+  },
+  generating: {
+    label: 'Generando', hint: 'Generando análisis',
+    className: 'bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20',
+    hintClassName: 'text-blue-500 dark:text-blue-400', viewable: false,
+  },
+  completed: {
+    label: 'Completada', hint: 'Lista para revisar',
+    className: 'bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20',
+    hintClassName: 'text-gray-400 dark:text-gray-500', viewable: true,
+  },
+  partial: {
+    label: 'Parcial', hint: 'Algunas secciones no se generaron',
+    className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+    hintClassName: 'text-amber-600 dark:text-amber-400', viewable: true,
+  },
+  failed: {
+    label: 'Fallida', hint: 'Requiere reintento o nueva validación',
+    className: 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20',
+    hintClassName: 'text-red-500 dark:text-red-400', viewable: false,
+  },
+  archived: {
+    label: 'Archivada', hint: '',
+    className: 'bg-gray-500/10 text-gray-400 border border-gray-500/20',
+    hintClassName: 'text-gray-400 dark:text-gray-500', viewable: true,
+  },
 };
 
 function ScoreBadge({ score }: { score: number | null }) {
@@ -79,10 +134,17 @@ export function Results() {
   const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
 
   useEffect(() => {
-    const fetch = async () => {
+    const load = async () => {
+      // Filtro user_id explícito además de RLS — coherente con /dashboard. Sin él,
+      // la policy "Admin can read all validations" haría que un admin viera todas.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) { setLoading(false); return; }
+
       const { data, error } = await supabase
         .from('validations')
         .select('id, idea_name, idea_industry, status, validation_score, current_step, created_at, completed_at, parent_id, version, pivot_reason, validation_mode, score_breakdown')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -93,16 +155,12 @@ export function Results() {
       }
 
       // Cargar consentimiento
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('training_consent').eq('id', user.id).single();
-        if (profile) setConsent(!!profile.training_consent);
-      }
+      const { data: profile } = await supabase.from('profiles').select('training_consent').eq('id', user.id).single();
+      if (profile) setConsent(!!profile.training_consent);
 
       setLoading(false);
     };
-    fetch();
+    load();
   }, []);
 
   const handleConsentToggle = async (val: boolean) => {
@@ -146,8 +204,12 @@ export function Results() {
     }
   };
 
-  const completed = validations.filter((v) => v.status === 'completed');
-  const inProgress = validations.filter((v) => v.status !== 'completed');
+  // Agrupación honesta por estado real. "Necesitan atención" (parcial/fallida)
+  // se separa de "En progreso" para que un fallo no parezca generando eternamente.
+  const needsAttention = validations.filter((v) => v.status === 'partial' || v.status === 'failed');
+  const inProgress     = validations.filter((v) => v.status === 'in_progress');
+  const completed      = validations.filter((v) => v.status === 'completed');
+  const archived       = validations.filter((v) => v.status === 'archived');
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
@@ -260,36 +322,40 @@ export function Results() {
           </div>
         )}
 
-        {/* In progress */}
-        {!loading && inProgress.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">En progreso</p>
-              <span className="text-xs text-gray-600 font-medium">{inProgress.length}</span>
-            </div>
-            <div className="space-y-2">
-              {inProgress.map((v) => (
-                <ValidationCard key={v.id} v={v} onContinue={handleContinue} />
-              ))}
-            </div>
-          </div>
+        {/* Necesitan atención — parcial + fallida (primero, para no esconder fallos) */}
+        {!loading && needsAttention.length > 0 && (
+          <ListSection title="Necesitan atención" dotClass="bg-amber-400" count={needsAttention.length}>
+            {needsAttention.map((v) => (
+              <ValidationCard key={v.id} v={v} onContinue={handleContinue} />
+            ))}
+          </ListSection>
         )}
 
-        {/* Completed */}
+        {/* En progreso — borradores y generaciones activas */}
+        {!loading && inProgress.length > 0 && (
+          <ListSection title="En progreso" dotClass="bg-blue-400" count={inProgress.length}>
+            {inProgress.map((v) => (
+              <ValidationCard key={v.id} v={v} onContinue={handleContinue} />
+            ))}
+          </ListSection>
+        )}
+
+        {/* Completadas */}
         {!loading && completed.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Completadas</p>
-              <span className="text-xs text-gray-600 font-medium">{completed.length}</span>
-            </div>
-            <div className="space-y-2">
-              {completed.map((v) => (
-                <ValidationCard key={v.id} v={v} onContinue={handleContinue} onPivot={setPivotTarget} />
-              ))}
-            </div>
-          </div>
+          <ListSection title="Completadas" dotClass="bg-green-400" count={completed.length}>
+            {completed.map((v) => (
+              <ValidationCard key={v.id} v={v} onContinue={handleContinue} onPivot={setPivotTarget} />
+            ))}
+          </ListSection>
+        )}
+
+        {/* Archivadas */}
+        {!loading && archived.length > 0 && (
+          <ListSection title="Archivadas" dotClass="bg-gray-400" count={archived.length}>
+            {archived.map((v) => (
+              <ValidationCard key={v.id} v={v} onContinue={handleContinue} />
+            ))}
+          </ListSection>
         )}
 
         {/* Dataset Consent Widget */}
@@ -357,6 +423,29 @@ export function Results() {
   );
 }
 
+function ListSection({
+  title,
+  dotClass,
+  count,
+  children,
+}: {
+  title: string;
+  dotClass: string;
+  count: number;
+  children: ReactNode;
+}) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2.5 mb-3">
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass}`} />
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{title}</p>
+        <span className="text-xs text-gray-600 font-medium">{count}</span>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
 function ValidationCard({
   v,
   onContinue,
@@ -367,19 +456,19 @@ function ValidationCard({
   onPivot?: (v: ValidationRow) => void;
 }) {
   const navigate = useNavigate();
-  const status = STATUS_CONFIG[v.status] ?? STATUS_CONFIG.in_progress;
+  const state = displayStateOf(v);
+  const cfg = STATE_CONFIG[state];
 
-  const handleClick = () => {
-    if (v.status === 'completed') navigate(`/results/${v.id}`);
-  };
+  const openResult = () => navigate(`/results/${v.id}`);
+  const cardClickable = cfg.viewable;
 
   return (
     <div
-      onClick={v.status === 'completed' ? handleClick : undefined}
+      onClick={cardClickable ? openResult : undefined}
       className={`group bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-4 sm:p-5
                   shadow-sm hover:shadow-lg hover:border-gray-200 dark:hover:border-white/[0.12]
                   transition-all duration-200 flex items-center gap-4
-                  ${v.status === 'completed' ? 'cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02]' : ''}`}
+                  ${cardClickable ? 'cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02]' : ''}`}
     >
       <ScoreBadge score={v.validation_score} />
 
@@ -388,8 +477,8 @@ function ValidationCard({
           <p className="font-bold text-gray-900 dark:text-[#F0EFF8] truncate text-sm sm:text-base">
             {v.idea_name ?? 'Sin nombre'}
           </p>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${status.className}`}>
-            {status.label}
+          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${cfg.className}`}>
+            {cfg.label}
           </span>
           {v.validation_mode === 'quick' && (
             <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded-full border border-yellow-500/20 font-semibold">
@@ -409,8 +498,11 @@ function ValidationCard({
           {new Date(v.created_at).toLocaleDateString('es-CL', {
             day: '2-digit', month: 'short', year: 'numeric',
           })}
-          {v.status === 'in_progress' && (
-            <span className="ml-2 text-blue-400 font-medium">· Paso {v.current_step} de 6</span>
+          {state === 'draft' && (
+            <span className={`ml-2 font-medium ${cfg.hintClassName}`}>· Paso {v.current_step} de {WIZARD_STEPS}</span>
+          )}
+          {state !== 'draft' && cfg.hint && (
+            <span className={`ml-2 font-medium ${cfg.hintClassName}`}>· {cfg.hint}</span>
           )}
           {v.pivot_reason && (
             <span className="ml-2 text-amber-500/80 truncate hidden sm:inline">· {v.pivot_reason}</span>
@@ -418,41 +510,98 @@ function ValidationCard({
         </p>
       </div>
 
-      {v.status === 'in_progress' ? (
+      <CardActions v={v} state={state} onContinue={onContinue} onPivot={onPivot} navigate={navigate} />
+    </div>
+  );
+}
+
+// Acciones por estado — solo reusan flujos seguros existentes (continuar/reintentar
+// vía el wizard, ver resultado, estudio de mercado, pivotar). No inventa retry/export.
+function CardActions({
+  v,
+  state,
+  onContinue,
+  onPivot,
+  navigate,
+}: {
+  v: ValidationRow;
+  state: DisplayState;
+  onContinue: (v: ValidationRow) => void;
+  onPivot?: (v: ValidationRow) => void;
+  navigate: ReturnType<typeof useNavigate>;
+}) {
+  // Borrador → continuar el wizard donde quedó.
+  if (state === 'draft') {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onContinue(v); }}
+        className="px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl cursor-pointer
+                   hover:bg-teal-600 active:scale-[0.97] transition-all shrink-0 shadow-sm shadow-teal-500/25"
+      >
+        Continuar →
+      </button>
+    );
+  }
+
+  // Generando → sin acción destructiva; el estado se refleja en el badge/hint.
+  if (state === 'generating') {
+    return (
+      <span className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-blue-500 dark:text-blue-400">
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        Generando…
+      </span>
+    );
+  }
+
+  // Fallida → reintentar reanudando el wizard (mismo flujo seguro que "Continuar").
+  if (state === 'failed') {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onContinue(v); }}
+        className="px-4 py-2 bg-red-500 text-white text-xs font-bold rounded-xl cursor-pointer
+                   hover:bg-red-600 active:scale-[0.97] transition-all shrink-0 shadow-sm shadow-red-500/25"
+      >
+        Reintentar →
+      </button>
+    );
+  }
+
+  // Completada / Parcial / Archivada → card clickable a /results/:id + acciones extra.
+  return (
+    <div className="shrink-0 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+      {state === 'completed' && (
         <button
-          onClick={(e) => { e.stopPropagation(); onContinue(v); }}
-          className="px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl cursor-pointer
-                     hover:bg-teal-600 active:scale-[0.97] transition-all shrink-0
-                     shadow-sm shadow-teal-500/25"
+          onClick={() => navigate(`/market/${v.id}`)}
+          title="Ver estudio de mercado"
+          className="px-3 py-1.5 text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20
+                     rounded-xl hover:bg-blue-500/20 transition-colors duration-150 cursor-pointer flex items-center gap-1"
         >
-          Continuar →
+          <BarChart2 className="w-3 h-3" />
+          Mercado
         </button>
-      ) : (
-        <div className="shrink-0 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => navigate(`/market/${v.id}`)}
-            title="Ver estudio de mercado"
-            className="px-3 py-1.5 text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20
-                       rounded-xl hover:bg-blue-500/20 transition-colors duration-150 cursor-pointer flex items-center gap-1"
-          >
-            <BarChart2 className="w-3 h-3" />
-            Mercado
-          </button>
-          {onPivot && (
-            <button
-              onClick={() => onPivot(v)}
-              title="Pivotar esta idea"
-              className="px-3 py-1.5 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20
-                         rounded-xl hover:bg-amber-500/20 transition-colors duration-150 cursor-pointer"
-            >
-              Pivotar
-            </button>
-          )}
-          <svg className="w-4 h-4 text-gray-400 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
       )}
+      {state === 'partial' && (
+        <button
+          onClick={() => navigate(`/results/${v.id}`)}
+          className="px-3 py-1.5 text-xs font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20
+                     rounded-xl hover:bg-amber-500/20 transition-colors duration-150 cursor-pointer"
+        >
+          Ver resultado
+        </button>
+      )}
+      {onPivot && state === 'completed' && (
+        <button
+          onClick={() => onPivot(v)}
+          title="Pivotar esta idea"
+          className="px-3 py-1.5 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20
+                     rounded-xl hover:bg-amber-500/20 transition-colors duration-150 cursor-pointer"
+        >
+          Pivotar
+        </button>
+      )}
+      <svg className="w-4 h-4 text-gray-400 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
     </div>
   );
 }
