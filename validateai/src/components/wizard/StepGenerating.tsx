@@ -125,7 +125,7 @@ function PremiumTerminal() {
       </div>
 
       <p className="text-[11px] text-gray-400 dark:text-[#afaebb] text-center mt-4">
-        No cierres esta pestaña. El análisis continúa en segundo plano.
+        Puedes cerrar esta pestaña — el análisis continúa en segundo plano y te avisamos en tu panel al terminar.
       </p>
     </div>
   );

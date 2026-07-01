@@ -939,8 +939,6 @@ export type Database = {
           rut_hash: string | null
           startup_name: string | null
           startup_sector: string | null
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           tier: string | null
           tier_expires_at: string | null
           training_consent: boolean | null
@@ -959,8 +957,6 @@ export type Database = {
           rut_hash?: string | null
           startup_name?: string | null
           startup_sector?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           tier?: string | null
           tier_expires_at?: string | null
           training_consent?: boolean | null
@@ -979,8 +975,6 @@ export type Database = {
           rut_hash?: string | null
           startup_name?: string | null
           startup_sector?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           tier?: string | null
           tier_expires_at?: string | null
           training_consent?: boolean | null
