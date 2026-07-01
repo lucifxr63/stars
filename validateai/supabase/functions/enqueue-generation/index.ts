@@ -76,27 +76,48 @@ async function runJob(job: JobRow, userToken: string, supabase: SupaClient): Pro
   const now = () => new Date().toISOString();
   await supabase.from('generation_jobs').update({ status: 'running', updated_at: now() }).eq('id', job.id);
 
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  // Fase 16 (11D): 1 reintento por-task en fallos TRANSITORIOS (red / 5xx) con
+  // backoff corto. NO se reintenta en 4xx/429 (rate-limit o error de cliente) para
+  // no quemar tokens ni golpear la cuota — esos se marcan error de inmediato.
+  const MAX_ATTEMPTS = 2;
+
   const tasks = job.tasks;
   for (const task of tasks) {
     if (task.status === 'success') continue;
-    try {
-      const endpoint = task.type === 'premium_validate' ? 'premium-validate' : 'ai-validate';
-      const body = task.type === 'premium_validate'
-        ? { validation_id: job.validation_id, idea_description: job.context.idea_description ?? job.context.idea_name }
-        : { validation_id: job.validation_id, step: 4, prompt_type: task.type, context: job.context };
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`${endpoint}_${res.status}`);
-      await res.json();
+    const endpoint = task.type === 'premium_validate' ? 'premium-validate' : 'ai-validate';
+    const body = task.type === 'premium_validate'
+      ? { validation_id: job.validation_id, idea_description: job.context.idea_description ?? job.context.idea_name }
+      : { validation_id: job.validation_id, step: 4, prompt_type: task.type, context: job.context };
+
+    let ok = false;
+    let lastErr = '';
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      task.attempts = attempt;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+          body: JSON.stringify(body),
+        });
+        // 4xx (incl. 429): error de cliente / cuota → no reintentar.
+        if (res.status >= 400 && res.status < 500) { lastErr = `${endpoint}_${res.status}`; break; }
+        if (!res.ok) throw new Error(`${endpoint}_${res.status}`); // 5xx → transitorio
+        await res.json();
+        ok = true;
+        break;
+      } catch (e) {
+        lastErr = String(e);
+        if (attempt < MAX_ATTEMPTS) await sleep(1500 * attempt); // backoff lineal
+      }
+    }
+
+    if (ok) {
       task.status = 'success';
       await supabase.rpc('merge_generation_progress', { p_id: job.validation_id, p_key: task.id, p_status: 'success' });
-    } catch (e) {
+    } else {
       task.status = 'error';
-      task.last_error = String(e);
-      task.attempts = (task.attempts ?? 0) + 1;
+      task.last_error = lastErr;
       await supabase.rpc('merge_generation_progress', { p_id: job.validation_id, p_key: task.id, p_status: 'error' });
     }
     await supabase.from('generation_jobs').update({ tasks, updated_at: now() }).eq('id', job.id);
