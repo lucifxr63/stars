@@ -11,7 +11,7 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-type Task = { id: string; type: string; status: 'pending'; attempts: number };
+type Task = { id: string; type: string; status: string; attempts: number; last_error?: string };
 
 // Espejo de TASK_DEFS en src/lib/generationService.ts — mantener en sync.
 const TASK_DEFS: Record<string, { id: string; type: string }[]> = {
@@ -50,6 +50,64 @@ function json(body: unknown, status: number, cors: Record<string, string>) {
     status,
     headers: { ...cors, 'Content-Type': 'application/json' },
   });
+}
+
+// EdgeRuntime.waitUntil mantiene viva la instancia para terminar el trabajo en
+// background tras devolver la respuesta (Supabase Edge). Declarado por si el tipo
+// no está en el ambiente; con fallback a ejecución fire-and-forget local.
+declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
+
+interface JobRow {
+  id: string;
+  validation_id: string;
+  tasks: Task[];
+  context: Record<string, unknown>;
+}
+
+// El cliente Deno no tiene los tipos del schema (Database), así que .update()/.rpc()
+// se infieren como 'never'. Se afloja a un tipo laxo, consistente con las demás Edge.
+// deno-lint-ignore no-explicit-any
+type SupaClient = any;
+
+// Ejecuta el job server-side usando el JWT FRESCO del usuario (no service-role):
+// así ai-validate/premium-validate conservan rate-limit y scoping por usuario sin
+// que tengamos que tocarlas ni guardar tokens. Tab-independiente vía waitUntil.
+async function runJob(job: JobRow, userToken: string, supabase: SupaClient): Promise<void> {
+  const now = () => new Date().toISOString();
+  await supabase.from('generation_jobs').update({ status: 'running', updated_at: now() }).eq('id', job.id);
+
+  const tasks = job.tasks;
+  for (const task of tasks) {
+    if (task.status === 'success') continue;
+    try {
+      const endpoint = task.type === 'premium_validate' ? 'premium-validate' : 'ai-validate';
+      const body = task.type === 'premium_validate'
+        ? { validation_id: job.validation_id, idea_description: job.context.idea_description ?? job.context.idea_name }
+        : { validation_id: job.validation_id, step: 4, prompt_type: task.type, context: job.context };
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`${endpoint}_${res.status}`);
+      await res.json();
+      task.status = 'success';
+      await supabase.rpc('merge_generation_progress', { p_id: job.validation_id, p_key: task.id, p_status: 'success' });
+    } catch (e) {
+      task.status = 'error';
+      task.last_error = String(e);
+      task.attempts = (task.attempts ?? 0) + 1;
+      await supabase.rpc('merge_generation_progress', { p_id: job.validation_id, p_key: task.id, p_status: 'error' });
+    }
+    await supabase.from('generation_jobs').update({ tasks, updated_at: now() }).eq('id', job.id);
+  }
+
+  // Finalizar: estado honesto del job y de la validación (consistente con 11B).
+  const okCount = tasks.filter((t) => t.status === 'success').length;
+  const jobStatus = okCount === tasks.length ? 'done' : okCount === 0 ? 'failed' : 'partial';
+  const valStatus = okCount === tasks.length ? 'completed' : okCount === 0 ? 'failed' : 'partial';
+  await supabase.from('generation_jobs').update({ status: jobStatus, updated_at: now() }).eq('id', job.id);
+  await supabase.from('validations').update({ status: valStatus }).eq('id', job.validation_id);
 }
 
 Deno.serve(async (req) => {
@@ -133,7 +191,15 @@ Deno.serve(async (req) => {
     // Señal para el widget: la validación está en proceso.
     await supabase.from('validations').update({ status: 'in_progress', current_step: 4 }).eq('id', validationId);
 
-    return json({ job_id: job.id, status: job.status, reused: false }, 200, cors);
+    // Ejecuta el job server-side con el JWT FRESCO del usuario, tab-independiente.
+    // waitUntil mantiene viva la instancia tras devolver la respuesta.
+    const userToken = authHeader.replace('Bearer ', '');
+    const jobRow: JobRow = { id: job.id, validation_id: validationId, tasks, context: body.context ?? {} };
+    const work = runJob(jobRow, userToken, supabase);
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime) EdgeRuntime.waitUntil(work);
+    else void work;
+
+    return json({ job_id: job.id, status: 'running', reused: false }, 200, cors);
   } catch (err) {
     console.error('[enqueue-generation] error:', err);
     return json({ error: 'Error interno' }, 500, cors);
