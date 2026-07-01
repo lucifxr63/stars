@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, CheckCircle2, X } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
@@ -19,9 +19,12 @@ interface ActiveRow {
   idea_name: string | null;
   generation_progress: Record<string, string> | null;
 }
+type TerminalStatus = 'completed' | 'partial' | 'failed';
 interface DoneRow {
   id: string;
   idea_name: string | null;
+  status: TerminalStatus;
+  failedCount: number;
 }
 
 export function GenerationStatusWidget() {
@@ -61,17 +64,27 @@ export function GenerationStatusWidget() {
       if (gone.length > 0) {
         const { data: doneData } = await supabase
           .from('validations')
-          .select('id, idea_name, status')
+          .select('id, idea_name, status, generation_progress')
           .in('id', gone);
-        const completed = (doneData ?? []).filter((r) => r.status === 'completed');
-        if (completed.length > 0 && !cancelled) {
+        // Fase 15 (11B): estados terminales honestos — completed / partial / failed.
+        const TERMINAL: TerminalStatus[] = ['completed', 'partial', 'failed'];
+        const finished = (doneData ?? []).filter((r) => TERMINAL.includes(r.status as TerminalStatus));
+        if (finished.length > 0 && !cancelled) {
           setDone((prev) => {
             const ids = new Set(prev.map((p) => p.id));
-            const fresh = completed.filter((c) => !ids.has(c.id));
-            fresh.forEach((c) =>
-              toast.success(`Tu validación de ${c.idea_name ?? 'tu startup'} está lista`),
-            );
-            return [...fresh.map((c) => ({ id: c.id, idea_name: c.idea_name })), ...prev];
+            const fresh = finished.filter((c) => !ids.has(c.id));
+            const toRow = (c: typeof fresh[number]): DoneRow => {
+              const prog = (c.generation_progress ?? {}) as Record<string, string>;
+              const failedCount = Object.values(prog).filter((v) => v === 'error').length;
+              return { id: c.id, idea_name: c.idea_name, status: c.status as TerminalStatus, failedCount };
+            };
+            fresh.map(toRow).forEach((row) => {
+              const name = row.idea_name ?? 'tu startup';
+              if (row.status === 'completed') toast.success(`Tu validación de ${name} está lista`);
+              else if (row.status === 'partial') toast.warning(`Validación de ${name} lista — ${row.failedCount} ${row.failedCount === 1 ? 'sección no se generó' : 'secciones no se generaron'}`);
+              else toast.error(`No pudimos generar la validación de ${name}`);
+            });
+            return [...fresh.map(toRow), ...prev];
           });
         }
         gone.forEach((id) => seen.current.delete(id));
@@ -127,32 +140,42 @@ export function GenerationStatusWidget() {
         );
       })}
 
-      {visibleDone.map((row) => (
-        <div
-          key={row.id}
-          className="flex items-center gap-3 px-5 py-4 rounded-2xl border-2 border-emerald-300 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/10"
-        >
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">
-              ¡Listo! Tu validación de {row.idea_name ?? 'tu startup'} está completa
-            </p>
-            <Link
-              to={`/results/${row.id}`}
-              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+      {visibleDone.map((row) => {
+        const name = row.idea_name ?? 'tu startup';
+        // Fase 15 (11B): estilo y copy honestos por estado terminal.
+        const cfg = row.status === 'completed'
+          ? { box: 'border-emerald-300 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/10', icon: <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />, link: 'text-emerald-600 dark:text-emerald-400',
+              title: `¡Listo! Tu validación de ${name} está completa` }
+          : row.status === 'partial'
+          ? { box: 'border-amber-300 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/10', icon: <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />, link: 'text-amber-600 dark:text-amber-400',
+              title: `Validación de ${name} lista — ${row.failedCount} ${row.failedCount === 1 ? 'sección no se generó' : 'secciones no se generaron'}` }
+          : { box: 'border-red-300 dark:border-red-700/40 bg-red-50 dark:bg-red-900/10', icon: <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />, link: 'text-red-600 dark:text-red-400',
+              title: `No pudimos generar la validación de ${name}` };
+        return (
+          <div key={row.id} className={`flex items-center gap-3 px-5 py-4 rounded-2xl border-2 ${cfg.box}`}>
+            {cfg.icon}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">{cfg.title}</p>
+              {row.status === 'failed' ? (
+                <Link to="/validate" className={`text-xs font-bold hover:underline ${cfg.link}`}>
+                  Reintentar →
+                </Link>
+              ) : (
+                <Link to={`/results/${row.id}`} className={`text-xs font-bold hover:underline ${cfg.link}`}>
+                  Ver resultado →
+                </Link>
+              )}
+            </div>
+            <button
+              onClick={() => setDismissed((p) => new Set(p).add(row.id))}
+              className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              aria-label="Descartar"
             >
-              Ver resultado →
-            </Link>
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={() => setDismissed((p) => new Set(p).add(row.id))}
-            className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            aria-label="Descartar"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

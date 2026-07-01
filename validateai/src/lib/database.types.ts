@@ -394,6 +394,62 @@ export type Database = {
           },
         ]
       }
+      generation_jobs: {
+        Row: {
+          attempts: number
+          context: Json
+          created_at: string
+          id: string
+          is_premium: boolean
+          last_error: string | null
+          mode: string
+          status: string
+          tasks: Json
+          tier: string
+          updated_at: string
+          user_id: string
+          validation_id: string
+        }
+        Insert: {
+          attempts?: number
+          context?: Json
+          created_at?: string
+          id?: string
+          is_premium?: boolean
+          last_error?: string | null
+          mode?: string
+          status?: string
+          tasks?: Json
+          tier?: string
+          updated_at?: string
+          user_id: string
+          validation_id: string
+        }
+        Update: {
+          attempts?: number
+          context?: Json
+          created_at?: string
+          id?: string
+          is_premium?: boolean
+          last_error?: string | null
+          mode?: string
+          status?: string
+          tasks?: Json
+          tier?: string
+          updated_at?: string
+          user_id?: string
+          validation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_jobs_validation_id_fkey"
+            columns: ["validation_id"]
+            isOneToOne: false
+            referencedRelation: "validations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       figma_connections: {
         Row: {
           access_token: string
