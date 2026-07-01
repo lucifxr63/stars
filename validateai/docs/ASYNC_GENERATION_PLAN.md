@@ -1,8 +1,14 @@
 # Validus — Generación asíncrona: mapa actual y plan por fases
 
-> **Estado:** Documento técnico · 2026-06-30 (Fase 11)
+> **Estado:** Documento técnico · actualizado 2026-07-01 (Fase 15)
 > **Propósito:** mapear cómo funciona hoy la generación del dossier y definir una estrategia **incremental** (sin sobrerrefactor) para volverla más robusta y escalable de cara a pilotos y usuarios concurrentes.
-> **Alcance de la Fase 11:** documentación + analítica de fiabilidad. La cola/worker real requiere schema/Edge nuevos y queda planificada para una fase posterior.
+> **Alcance ejecutado:** Fase 11 (documentación + analítica) y **Fase 15 (11B + 11C: estado `partial` explícito + async real server-side)**. Ver §3 para el estado por sub-fase.
+
+## 0. TL;DR (Fase 15 — desplegado)
+
+- **11B — estado `partial`/`failed` explícito:** `validations.status` ya distingue `completed` / `partial` / `failed`; el `GenerationStatusWidget` lo surfacia (verde / ámbar "N secciones no se generaron" / rojo "no pudimos generar"). Migración aplicada en prod.
+- **11C — async real server-side:** tabla `generation_jobs` (cola + estado por-task), Edge `enqueue-generation` que ejecuta el job con **`EdgeRuntime.waitUntil`** usando el **JWT fresco del usuario** (tab-independiente, sin tocar `ai-validate`/`premium-validate` ni guardar tokens), y Edge `process-generation-jobs` (**cron janitor** que finaliza jobs colgados). **Premium ya es asíncrono** (encola + polling con la terminal en vivo preservada). Verificado e2e en prod: enqueue → `running` → `done`/`completed` en ~8s.
+- **Decisión de arquitectura clave:** se descartó el "cron-worker puro" porque `ai-validate`/`premium-validate` identifican al usuario **solo por JWT** (rate-limit + scoping) y el cron no lo tiene. `waitUntil` con el JWT del request resuelve esto sin tocar esas Edge.
 
 ---
 
@@ -39,6 +45,10 @@ Wizard (último paso) → <StepGenerating> (mount)
   → timeout/abort → toast + navigate('/dashboard')  (job persiste server-side)
 ```
 
+> **⚠️ SUPERADO en Fase 15 (11C-c).** Premium ya NO es síncrono: encola vía
+> `enqueue-generation` (server-side con `waitUntil`) + polling con la terminal
+> preservada. El flujo de abajo describe el estado previo (pre-Fase 15).
+
 Bloquea el `await` hasta 60s, pero con terminal en vivo y **fallback elegante** al dashboard si se demora. No es asíncrono real.
 
 ### 1.3 Reintentos
@@ -47,7 +57,8 @@ Bloquea el `await` hasta 60s, pero con terminal en vivo y **fallback elegante** 
 ### 1.4 Persistencia y estado
 | Dónde | Qué |
 |---|---|
-| `validations.status` | `in_progress` / `completed` |
+| `validations.status` | `in_progress` / `completed` / `partial` / `failed` *(11B)* |
+| `generation_jobs` *(11C)* | cola + estado por-task del job async (fuente de orquestación) |
 | `validations.generation_progress` (JSONB) | estado por-task (`success`/`error`/`pending`) vía RPC `merge_generation_progress` |
 | Zustand `validationStore` | datos del wizard + `validationId` (persistidos a localStorage) |
 | Premium | `agent_log` / `reddit_status` / `trends_status` / `errors` en el payload |
@@ -65,12 +76,12 @@ Propiedades (PII-safe): `is_premium`, `tier`, `sections_requested/completed/fail
 
 ---
 
-## 2. Problemas / límites actuales
+## 2. Problemas / límites (estado tras Fase 15)
 
-1. **Fallo parcial silencioso a nivel de estado:** la validación se marca `completed` aunque falten secciones (los errores quedan por-task en `generation_progress`, pero el `status` no distingue "parcial"). *Fase 11 lo hace medible vía `validation_generation_partial`; surfaciarlo en BD/UI requiere decisión aparte.*
-2. **Premium síncrono (60s):** no escala a alta concurrencia ni a reportes muy largos; depende del timeout.
-3. **Sin cola real:** los jobs viven en el ciclo de vida de la pestaña (no-premium: el `fetch` corre en background del navegador; si el usuario cierra todo antes de que terminen, las tasks pendientes no se reanudan solas server-side).
-4. **Reanudación depende del cliente:** el resume lo orquesta el frontend (salta tasks `success`), no un worker server-side.
+1. ~~**Fallo parcial silencioso a nivel de estado**~~ → **RESUELTO (11B):** `validations.status` distingue `partial`/`failed` y el widget lo surfacia.
+2. ~~**Premium síncrono (60s)**~~ → **RESUELTO (11C-c):** premium encola + polling; el trabajo corre server-side vía `waitUntil`, no depende del timeout.
+3. ~~**Sin cola real**~~ → **RESUELTO (11C):** tabla `generation_jobs`; el premium corre server-side aunque se cierre la pestaña. *(No-premium sigue en background del navegador; migrarlo a enqueue es opcional — ya tiene estado `partial`.)*
+4. **Reanudación por-task server-side (parcial):** el janitor finaliza jobs colgados pero **no re-ejecuta** tasks (no tiene JWT). El reintento lo dispara el usuario (botón Reintentar) o queda para 11D.
 
 ---
 
@@ -81,25 +92,27 @@ Propiedades (PII-safe): `is_premium`, `tier`, `sections_requested/completed/fail
 - Documentar el flujo y los límites (este documento). ✅
 - *(Opcional futuro, presentacional)* mostrar conteo de secciones fallidas en el `GenerationStatusWidget` y un aviso honesto de "no pudimos generar X" en el dossier.
 
-### Fase 11B — Tabla de jobs (requiere schema)
-- Tabla `generation_jobs` (o ampliar `validations`): `id`, `validation_id`, `status` (`queued/running/partial/done/failed`), `tasks` (json con estado por prompt), `attempts`, `last_error`, `created_at`, `updated_at`.
-- El frontend deja de orquestar; solo **encola** y **consulta estado**.
-- Estado `partial` explícito (hoy se colapsa en `completed`).
+### Fase 11B — Estado `partial` explícito ✅ *(Fase 15 — desplegado)*
+- Migración: `validations.status` CHECK ampliado a `in_progress/completed/archived/partial/failed`.
+- `generationService.ts`: estado final calculado sobre el set COMPLETO del tier (reanudación-aware): todo ok→`completed`, algunos→`partial`, ninguno→`failed` (antes: siempre `completed`).
+- `GenerationStatusWidget`: cards verde/ámbar/roja + toasts diferenciados.
 
-### Fase 11C — Worker / Edge async (requiere Edge nueva)
-- Una Edge Function/worker consume `generation_jobs` y ejecuta los prompts **server-side** (no atado a la pestaña).
-- **Premium pasa a fire-and-forget + polling**, igual que no-premium → coherencia total y fin del timeout de 60s.
-- Reintentos server-side con backoff; idempotencia por `validation_id + prompt_type`.
+### Fase 11C — Async server-side ✅ *(Fase 15 — desplegado)*
+- Tabla `generation_jobs` (`queued/running/partial/done/failed`, `tasks` json, `attempts`, `last_error`) + RLS (lee lo suyo) + índice único parcial (1 job activo/validación).
+- Edge `enqueue-generation`: materializa tasks, inserta job idempotente y ejecuta con **`EdgeRuntime.waitUntil` + JWT del usuario** (NO cron-worker puro — ver nota).
+- Edge `process-generation-jobs`: **cron janitor** (finaliza jobs colgados >5 min; no re-ejecuta tasks).
+- **Premium fire-and-forget + polling** con la terminal preservada (11C-c).
+- Idempotencia por `validation_id` (job activo único). Reintento server-side por-task queda para 11D.
 
-### Fase 11D — Reintentos y polling robustos
-- Polling con backoff exponencial en el widget; cancelación al completar.
-- Reintento automático de tasks `error` (N intentos) antes de marcar `failed`.
-- Notificación (email/in-app) al completar un job largo (reusar `followup-email` / Resend cuando haya dominio).
+> **Nota de arquitectura (¿por qué `waitUntil` y no cron-worker puro?):** `ai-validate`/`premium-validate` identifican al usuario **solo por JWT** (rate-limit `check_and_increment_usage` + scoping por `user_id`). Un cron con service-role no tiene esa identidad. `waitUntil` ejecuta el job en la misma invocación de `enqueue` con el **JWT fresco** del request → server-side y tab-independiente **sin** tocar esas Edge ni guardar tokens. El cron queda como janitor.
 
-> Premium async real = **Fase 11C** (worker + polling). Hoy se mantiene el síncrono-con-timeout, que funciona con fallback elegante.
+### Fase 11D — Reintentos y polling robustos *(pendiente)*
+- Reintento automático server-side de tasks `error` (N intentos) antes de `failed`.
+- Backoff; notificación al completar un job largo (reusar `followup-email`/Resend cuando haya dominio).
+- Sync de `generation_progress` para premium (hoy queda `null`; el job.tasks es la fuente autoritativa — cosmético).
 
 ---
 
-## 4. Qué NO se tocó en Fase 11
+## 4. Qué NO se tocó (Fases 11 y 15)
 
-`ai-validate`, `premium-validate`, prompts, score, tiers, schema de `validations`, RPC `merge_generation_progress`, auth, pagos. Solo se añadió analítica frontend PII-safe y este documento. Los pasos 11B–11D requieren aprobación explícita por tocar schema/Edge Functions.
+`ai-validate`, `premium-validate`, prompts, score, tiers, RPC `merge_generation_progress`, auth, pagos. La Fase 15 **invoca** esas Edge (con el JWT del usuario) pero no cambia su lógica. Cambios de schema de la Fase 15: `validations.status` (ampliar CHECK) + tabla nueva `generation_jobs` — ambos aditivos, aplicados en prod.
