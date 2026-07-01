@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -7,13 +7,16 @@ import { useUsage } from '@/hooks/useUsage';
 import { UsageBar } from '@/components/shared/UsageBar';
 import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
 import { GenerationStatusWidget } from '@/components/dashboard/GenerationStatusWidget';
+import { trackEvent } from '@/lib/analytics';
 
-interface RecentValidation {
+interface ValidationRow {
   id: string;
   idea_name: string | null;
   idea_industry: string | null;
   validation_score: number | null;
   status: string;
+  current_step: number | null;
+  validation_mode: 'quick' | 'detailed' | null;
   created_at: string;
 }
 
@@ -34,6 +37,8 @@ const STATUS_COLOR: Record<string, string> = {
   archived: 'text-gray-400 dark:text-[#afaebb]',
 };
 
+const WIZARD_STEPS = 4;
+
 function scoreBg(score: number | null): string {
   if (score == null) return 'bg-gray-100 dark:bg-white/[0.06] text-gray-400';
   if (score >= 70) return 'bg-green-500 text-white';
@@ -45,16 +50,24 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
 }
 
+function titleOf(v: ValidationRow | null): string {
+  const name = v?.idea_name?.trim();
+  return name && name.length > 0 ? name : 'Validación sin título';
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const reset = useValidationStore((s) => s.reset);
+  const setValidationId = useValidationStore((s) => s.setValidationId);
+  const setStep = useValidationStore((s) => s.setStep);
+  const setValidationMode = useValidationStore((s) => s.setValidationMode);
   const { tier } = useUserTier();
   // Uso/cuota desde la fuente única (useUsage), idéntico al Sidebar.
   const { usage, limits, remaining } = useUsage(tier);
   const isUnlimited = tier === 'pro' || tier === 'premium' || tier === 'admin';
   const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
   const [userName, setUserName] = useState('');
-  const [recent, setRecent] = useState<RecentValidation[]>([]);
+  const [all, setAll] = useState<ValidationRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [avgScore, setAvgScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,26 +82,21 @@ export function Dashboard() {
         const meta = user.user_metadata;
         setUserName(meta?.full_name ?? meta?.name ?? user.email?.split('@')[0] ?? '');
 
-        // Lista: las 5 más recientes del usuario. Filtro user_id explícito además
-        // de RLS — la policy "Admin can read all validations" haría que un admin
-        // viera las de todos sin este filtro.
-        const { data: recentData } = await supabase
+        // Una sola query: filtra user_id explícito (además de RLS — la policy
+        // "Admin can read all validations" haría que un admin viera todas). De aquí
+        // se derivan lista reciente, última validación, conteos por estado y promedio.
+        const { data, count } = await supabase
           .from('validations')
-          .select('id, idea_name, idea_industry, validation_score, status, created_at')
+          .select('id, idea_name, idea_industry, validation_score, status, current_step, validation_mode, created_at', { count: 'exact' })
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(5);
-        setRecent((recentData as RecentValidation[]) ?? []);
+          .limit(100);
 
-        // Stats sobre TODAS las validaciones (no solo las 5): count exacto para el
-        // total y promedio sobre todos los scores no nulos.
-        const { data: scoreData, count } = await supabase
-          .from('validations')
-          .select('validation_score', { count: 'exact' })
-          .eq('user_id', user.id);
-        setTotalCount(count ?? (scoreData?.length ?? 0));
+        const rows = (data as ValidationRow[]) ?? [];
+        setAll(rows);
+        setTotalCount(count ?? rows.length);
 
-        const scored = (scoreData ?? []).filter((r) => r.validation_score != null);
+        const scored = rows.filter((r) => r.validation_score != null);
         if (scored.length > 0) {
           const sum = scored.reduce((acc, r) => acc + (r.validation_score ?? 0), 0);
           setAvgScore(Math.round(sum / scored.length));
@@ -103,6 +111,107 @@ export function Dashboard() {
   }, []);
 
   const firstName = userName.split(' ')[0];
+  const recent = all.slice(0, 5);
+  const latest = all[0] ?? null;
+
+  // Conteos por estado (salud del workspace), derivados de datos reales.
+  const counts = useMemo(() => ({
+    completed:  all.filter((v) => v.status === 'completed').length,
+    inProgress: all.filter((v) => v.status === 'in_progress').length,
+    partial:    all.filter((v) => v.status === 'partial').length,
+    failed:     all.filter((v) => v.status === 'failed').length,
+    archived:   all.filter((v) => v.status === 'archived').length,
+  }), [all]);
+
+  // ── Analítica PII-safe (allowlist: tier/has_validations/latest_status/total/source/target) ──
+  const viewedRef = useRef(false);
+  useEffect(() => {
+    if (loading || viewedRef.current) return;
+    viewedRef.current = true;
+    trackEvent('dashboard_viewed', {
+      tier,
+      has_validations: all.length > 0,
+      latest_status: latest?.status ?? 'none',
+      total_validations: totalCount,
+    });
+  }, [loading, tier, all.length, latest?.status, totalCount]);
+
+  const trackNext = (target: string) =>
+    trackEvent('dashboard_next_step_clicked', {
+      tier, latest_status: latest?.status ?? 'none', total_validations: totalCount, source: 'dashboard_hero', target,
+    });
+
+  // Acciones seguras (reusan el mismo flujo que /results): nueva, ver, reanudar wizard.
+  const goNew = () => { trackNext('new_validation'); reset(); navigate('/validate'); };
+  const goView = (id: string) => { trackNext('view_result'); navigate(`/results/${id}`); };
+  const resume = (v: ValidationRow) => {
+    trackNext('resume');
+    reset();
+    setValidationId(v.id);
+    setStep(v.current_step ?? 1);
+    if (v.validation_mode) setValidationMode(v.validation_mode);
+    navigate('/validate');
+  };
+
+  // ── Próximo paso recomendado (derivado del estado de la última validación) ──
+  interface NextStep {
+    title: string;
+    subtitle: string;
+    primary: { label: string; onClick: () => void };
+    secondary?: { label: string; onClick: () => void };
+  }
+  const newValidation = { label: 'Nueva validación', onClick: goNew };
+
+  let nextStep: NextStep;
+  if (!latest) {
+    nextStep = {
+      title: 'Crea tu primera validación',
+      subtitle: 'Valida tu próxima idea con IA en menos de 10 minutos.',
+      primary: { label: 'Generar nueva validación →', onClick: goNew },
+    };
+  } else if (latest.status === 'completed') {
+    nextStep = {
+      title: 'Revisa tu último resultado',
+      subtitle: `“${titleOf(latest)}” está lista para revisar.`,
+      primary: { label: 'Ver resultado →', onClick: () => goView(latest.id) },
+      secondary: newValidation,
+    };
+  } else if (latest.status === 'partial') {
+    nextStep = {
+      title: 'Revisa las secciones incompletas',
+      subtitle: 'Algunas secciones de tu última validación no se generaron.',
+      primary: { label: 'Ver resultado parcial →', onClick: () => goView(latest.id) },
+      secondary: newValidation,
+    };
+  } else if (latest.status === 'failed') {
+    nextStep = {
+      title: 'Tu última validación requiere atención',
+      subtitle: 'La generación falló. Puedes reintentar o empezar de nuevo.',
+      primary: { label: 'Reintentar o revisar →', onClick: () => resume(latest) },
+      secondary: newValidation,
+    };
+  } else if (latest.status === 'in_progress') {
+    const generating = (latest.current_step ?? 0) >= WIZARD_STEPS;
+    nextStep = generating
+      ? {
+          title: 'Tu análisis se está generando',
+          subtitle: 'Te avisamos apenas termine — puedes seguir explorando.',
+          primary: newValidation,
+        }
+      : {
+          title: 'Continúa tu validación en curso',
+          subtitle: `Retoma “${titleOf(latest)}” donde la dejaste.`,
+          primary: { label: 'Continuar →', onClick: () => resume(latest) },
+          secondary: newValidation,
+        };
+  } else {
+    // archived u otros: sugerir una nueva validación.
+    nextStep = {
+      title: 'Genera una nueva validación',
+      subtitle: 'Valida tu próxima idea con IA en minutos.',
+      primary: { label: 'Generar nueva validación →', onClick: goNew },
+    };
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 md:py-10">
@@ -119,21 +228,79 @@ export function Dashboard() {
       {/* Estado de generación en curso (redirect asíncrono del wizard) */}
       <GenerationStatusWidget />
 
+      {/* ── Próximo paso recomendado (hero dinámico) ─────────────────────────── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0EB5C6] to-[#5B52C5] rounded-2xl p-6 mb-6">
+        <div className="absolute right-0 top-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-white/70 mb-1.5">
+              {loading ? 'Cargando…' : 'Próximo paso'}
+            </p>
+            <h2 className="text-lg font-bold text-white mb-1">{nextStep.title}</h2>
+            <p className="text-[#E7E1FF] text-sm leading-relaxed">{nextStep.subtitle}</p>
+          </div>
+          <div className="shrink-0 flex flex-col gap-2 w-full sm:w-auto">
+            <button
+              onClick={nextStep.primary.onClick}
+              className="px-6 py-3 bg-white text-[#0EB5C6] font-bold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all text-sm shadow-lg whitespace-nowrap"
+            >
+              {nextStep.primary.label}
+            </button>
+            {nextStep.secondary && (
+              <button
+                onClick={nextStep.secondary.onClick}
+                className="px-6 py-2 text-white/90 font-semibold rounded-xl border border-white/30 hover:bg-white/10 transition-all text-xs whitespace-nowrap"
+              >
+                {nextStep.secondary.label}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Última validación (snapshot clickable) ───────────────────────────── */}
+      {!loading && latest && (
+        <Link
+          to={`/results/${latest.id}`}
+          onClick={() =>
+            trackEvent('dashboard_latest_validation_clicked', {
+              tier, latest_status: latest.status, total_validations: totalCount, source: 'dashboard',
+            })
+          }
+          className="flex items-center gap-4 px-4 py-4 mb-6 bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/[0.06] hover:border-[#0EB5C6]/40 transition-all group"
+        >
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-sm font-black ${scoreBg(latest.validation_score)}`}>
+            {latest.validation_score ?? '—'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#8B8AA0] mb-0.5">
+              Última validación
+            </p>
+            <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
+              {titleOf(latest)}
+            </p>
+            <p className="text-xs mt-0.5 truncate">
+              {latest.idea_industry && (
+                <span className="text-gray-400 dark:text-[#afaebb]">{latest.idea_industry} · </span>
+              )}
+              <span className={`font-medium ${STATUS_COLOR[latest.status] ?? 'text-gray-400 dark:text-[#afaebb]'}`}>
+                {STATUS_LABEL[latest.status] ?? latest.status}
+              </span>
+              <span className="text-gray-400 dark:text-[#afaebb]"> · {formatDate(latest.created_at)}</span>
+            </p>
+          </div>
+          <svg className="w-4 h-4 text-gray-300 dark:text-white/20 group-hover:text-[#0EB5C6] transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      )}
+
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          {
-            label: 'Ideas analizadas',
-            value: loading ? '—' : String(totalCount),
-          },
-          {
-            label: 'Score promedio',
-            value: loading ? '—' : avgScore != null ? `${avgScore} pts` : '—',
-          },
-          {
-            label: 'Plan activo',
-            value: tier.charAt(0).toUpperCase() + tier.slice(1),
-          },
+          { label: 'Ideas analizadas', value: loading ? '—' : String(totalCount) },
+          { label: 'Score promedio', value: loading ? '—' : avgScore != null ? `${avgScore} pts` : '—' },
+          { label: 'Plan activo', value: tierLabel },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -145,8 +312,27 @@ export function Dashboard() {
         ))}
       </div>
 
+      {/* ── Salud del workspace: conteos por estado (link a gestión) ─────────── */}
+      {!loading && totalCount > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8]">Estado de tus validaciones</p>
+            <Link to="/results" className="text-xs text-[#0EB5C6] hover:underline font-medium">Gestionar →</Link>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <StatePill label="Completadas" count={counts.completed} tint="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20" />
+            <StatePill label="En progreso" count={counts.inProgress} tint="bg-blue-500/10 text-blue-500 dark:text-blue-400 border-blue-500/20" />
+            <StatePill label="Parciales" count={counts.partial} tint="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" />
+            <StatePill label="Fallidas" count={counts.failed} tint="bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" />
+            {counts.archived > 0 && (
+              <StatePill label="Archivadas" count={counts.archived} tint="bg-gray-500/10 text-gray-500 dark:text-gray-400 border-gray-500/20" />
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Uso del plan — misma fuente que el Sidebar (useUsage), sin saturar */}
-      <div className="mb-8">
+      <div className="mb-6">
         <UsageBar
           used={usage?.total ?? 0}
           limit={limits.total}
@@ -165,23 +351,6 @@ export function Dashboard() {
             </Link>
           )}
         </UsageBar>
-      </div>
-
-      {/* CTA principal */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#0EB5C6] to-[#5B52C5] rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-5">
-        <div className="absolute right-0 top-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-        <div className="flex-1 relative">
-          <h2 className="text-lg font-bold text-white mb-1">Generar nueva validación</h2>
-          <p className="text-[#C4B5FD] text-sm leading-relaxed">
-            Valida tu próxima idea con IA en menos de 10 minutos.
-          </p>
-        </div>
-        <button
-          onClick={() => { reset(); navigate('/validate'); }}
-          className="shrink-0 px-6 py-3 bg-white text-[#0EB5C6] font-bold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all text-sm shadow-lg relative"
-        >
-          Comenzar →
-        </button>
       </div>
 
       {/* Widget secundario: Inteligencia de Mercado (Bralidus) */}
@@ -225,7 +394,7 @@ export function Dashboard() {
               El proceso completo toma menos de 15 minutos.
             </p>
             <button
-              onClick={() => { reset(); navigate('/validate'); }}
+              onClick={goNew}
               className="px-5 py-2.5 bg-[#0EB5C6] text-white text-sm font-semibold rounded-xl hover:bg-[#6B5EE6] transition-colors"
             >
               Validar mi primera idea
@@ -249,7 +418,7 @@ export function Dashboard() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
-                    {v.idea_name ?? 'Sin nombre'}
+                    {titleOf(v)}
                   </p>
                   <p className="text-xs mt-0.5 truncate">
                     {v.idea_industry && (
@@ -276,5 +445,19 @@ export function Dashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+// Pill de conteo por estado — link a /results (gestión). Se atenúa si count = 0.
+function StatePill({ label, count, tint }: { label: string; count: number; tint: string }) {
+  const dim = count === 0 ? 'opacity-45' : '';
+  return (
+    <Link
+      to="/results"
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all hover:scale-[1.03] ${tint} ${dim}`}
+    >
+      <span className="tabular-nums font-black">{count}</span>
+      <span>{label}</span>
+    </Link>
   );
 }
