@@ -224,9 +224,9 @@ export function Login() {
 
             <p className="text-center text-xs text-gray-400 dark:text-[#afaebb] mt-6">
               Al continuar aceptas nuestros{' '}
-              <span className="underline cursor-pointer hover:text-gray-600 dark:hover:text-[#8B8AA0]">Términos</span>
+              <Link to="/terms" className="underline hover:text-gray-600 dark:hover:text-[#8B8AA0]">Términos</Link>
               {' '}y{' '}
-              <span className="underline cursor-pointer hover:text-gray-600 dark:hover:text-[#8B8AA0]">Privacidad</span>
+              <Link to="/privacy-policy" className="underline hover:text-gray-600 dark:hover:text-[#8B8AA0]">Privacidad</Link>
             </p>
           </div>
         </div>
