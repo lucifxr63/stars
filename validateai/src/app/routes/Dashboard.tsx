@@ -7,6 +7,7 @@ import { useUsage } from '@/hooks/useUsage';
 import { UsageBar } from '@/components/shared/UsageBar';
 import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
 import { GenerationStatusWidget } from '@/components/dashboard/GenerationStatusWidget';
+import { TrustSourcesPanel } from '@/components/dashboard/TrustSourcesPanel';
 import { trackEvent } from '@/lib/analytics';
 import { summarizeGenerationProgress, type GenerationProgress } from '@/lib/generationProgress';
 
@@ -362,6 +363,11 @@ export function Dashboard() {
       {/* Widget secundario: Inteligencia de Mercado (Bralidus) */}
       <div className="mb-8">
         <MarketSignalsWidget />
+      </div>
+
+      {/* Confianza y fuentes — Trust Layer a nivel Command Center (Punto 5) */}
+      <div className="mb-8">
+        <TrustSourcesPanel />
       </div>
 
       {/* Últimas validaciones */}
