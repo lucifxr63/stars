@@ -50,7 +50,9 @@
 
 > **Fase 1 pilotos (2026-07):** las solicitudes desde `/dashboard` ahora se **persisten en la tabla `pilots`** (estado inicial `nuevo`), en vez de existir solo como lead/evento. Los estados de `pilots.status` coinciden con los de esta plantilla.
 >
-> **Fase 2 pilotos (2026-07):** el pipeline ya **se gestiona desde la app**: `/admin` → tab **"Pilotos"** permite listar, filtrar por estado, **cambiar `status`** y **editar notas internas (`admin_notes`, solo admin)**. Esta plantilla Markdown pasa a ser respaldo/planificación; la fuente operativa es la tabla `pilots`. Notificación por email y multi-admin siguen pendientes.
+> **Fase 2 pilotos (2026-07):** el pipeline ya **se gestiona desde la app**: `/admin` → tab **"Pilotos"** permite listar, filtrar por estado, **cambiar `status`** y **editar notas internas (`admin_notes`, solo admin)**. Esta plantilla Markdown pasa a ser respaldo/planificación; la fuente operativa es la tabla `pilots`.
+>
+> **Fase 3A pilotos (2026-07):** al crear una solicitud, el equipo recibe un **aviso por email** (Edge `pilot-notify` → `contacto@scouttech.lat`; DRY RUN si Resend no está configurado). El aviso es best-effort: la solicitud queda registrada aunque el email falle. **Multi-admin** sigue pendiente.
 
 ## Higiene de datos
 

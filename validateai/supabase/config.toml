@@ -429,6 +429,12 @@ verify_jwt = false
 [functions.send-quick-lead]
 verify_jwt = false
 
+# Pilotos Fase 3A: aviso interno al crear una solicitud de piloto. Solo founders
+# autenticados (verify_jwt=true → el gateway exige JWT válido; la función además
+# verifica ownership del pilot_id). Lee la fila con service_role; nunca admin_notes.
+[functions.pilot-notify]
+verify_jwt = true
+
 # Fase 17 (D-lite): feed de inteligencia de mercado (indicadores reales vía
 # mindicador.cl). Público (verify_jwt=false) — data no sensible, sin secrets.
 [functions.market-signals]

@@ -95,6 +95,23 @@ export function PilotRequestModal({ tier, source = 'dashboard', onClose, onSubmi
 
       // PII-safe: nunca objective/email.
       trackEvent('pilot_requested', { tier, source, segment, stage: stage || undefined, plan_interes: plan || undefined });
+
+      // Notificación interna al equipo (Fase 3A). Best-effort: NO bloquea el éxito del
+      // founder ni depende del ciclo de vida del modal (no toca estado). El id se obtiene
+      // por la RPC segura porque el founder no tiene SELECT sobre `pilots`.
+      void (async () => {
+        try {
+          const { data: st } = await supabase.rpc('get_my_pilot_status');
+          const pilotId = (st as { id?: string } | null)?.id;
+          if (!pilotId) { trackEvent('pilot_notify_failed', { source, failure_type: 'no_pilot_id' }); return; }
+          const { data: res, error: nErr } = await supabase.functions.invoke('pilot-notify', { body: { pilot_id: pilotId } });
+          if (nErr) trackEvent('pilot_notify_failed', { source, failure_type: 'invoke_error' });
+          else trackEvent('pilot_notify_sent', { source, dry_run: Boolean((res as { dry_run?: boolean } | null)?.dry_run) });
+        } catch {
+          trackEvent('pilot_notify_failed', { source, failure_type: 'exception' });
+        }
+      })();
+
       toast.success('¡Solicitud de piloto enviada! El equipo Scouttech te contactará.');
       setLoading(false);
       onSubmitted();

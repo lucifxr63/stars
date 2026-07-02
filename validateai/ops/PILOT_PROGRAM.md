@@ -116,5 +116,6 @@ Excluir / despriorizar cuando:
 - **Estados de piloto en sistema:** **Fase 1 + Fase 2 (2026-07) implementadas.**
   - *Fase 1:* las solicitudes se persisten en `pilots` (formulario autenticado en `/dashboard`). RLS: el founder solo INSERT su solicitud y lee su propio estado vía `get_my_pilot_status()` (no ve `admin_notes` ni la lista).
   - *Fase 2:* **tab "Pilotos" en `/admin`** — el admin (RLS `is_admin()`, sin service_role) lista las solicitudes, filtra por estado, **cambia el `status` del pipeline** y **edita `admin_notes`** (solo visibles en admin). Los estados coinciden con esta guía.
-  - **Pendiente:** notificación por email a la solicitud (Fase 3); multi-admin real (`is_admin()` es un email hardcodeado); reactivación de cobro para medir conversión. No hay pilotos activos: la tabla registra solicitudes, no acuerdos.
+  - *Fase 3A:* **notificación por email al equipo** al crear una solicitud — Edge `pilot-notify` (verifica JWT + ownership del `pilot_id`; lee la fila con service_role; email solo a `PILOT_NOTIFY_TO`, **nunca `admin_notes`**). Sin `RESEND_API_KEY` → **DRY RUN** seguro. Es **best-effort**: la solicitud queda persistida aunque el email falle; el éxito del founder depende solo del INSERT.
+  - **Pendiente:** multi-admin real (`is_admin()` es un email hardcodeado); reactivación de cobro para medir conversión. No hay pilotos activos: la tabla registra solicitudes, no acuerdos.
 - **Reactivación de cobro** (LemonSqueezy) para medir conversión real.
