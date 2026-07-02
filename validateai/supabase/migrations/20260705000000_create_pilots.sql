@@ -143,6 +143,11 @@ $$;
 -- La RPC nunca expone email, objective ni admin_notes.
 REVOKE ALL ON FUNCTION public.get_my_pilot_status() FROM public;
 GRANT EXECUTE ON FUNCTION public.get_my_pilot_status() TO authenticated;
+-- Supabase concede EXECUTE por default (ALTER DEFAULT PRIVILEGES) a anon/authenticated/
+-- service_role en funciones nuevas; el REVOKE FROM public no lo quita. Revocamos anon
+-- explícitamente para que solo usuarios autenticados invoquen la RPC (defensa en
+-- profundidad — la función ya filtra por auth.uid(), que es NULL para anon).
+REVOKE EXECUTE ON FUNCTION public.get_my_pilot_status() FROM anon;
 
 COMMENT ON TABLE public.pilots IS
   'Solicitudes de piloto (Fase 1). Founder solo INSERT + lectura de su estado vía RPC get_my_pilot_status; admin (is_admin) lee/actualiza. admin_notes es admin-only.';
