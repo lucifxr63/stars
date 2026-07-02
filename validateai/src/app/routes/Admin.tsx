@@ -7,15 +7,49 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { setPreviewTier, getPreviewTier, type UserTier } from '@/hooks/useUserTier';
+import { trackEvent } from '@/lib/analytics';
 
 const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 const WIZARD_STEPS = 4; // Idea, Mercado, Fundador, Generación
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'pilots' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
 type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
+
+// ── Pilotos (Fase 2) ──────────────────────────────────────────────────────────
+const PILOT_STATUSES = [
+  'nuevo', 'contactado', 'demo_agendada', 'piloto_activo',
+  'feedback_recibido', 'interes_pago', 'cerrado', 'no_califica',
+] as const;
+type PilotStatus = typeof PILOT_STATUSES[number];
+
+const PILOT_STATUS_LABEL: Record<PilotStatus, string> = {
+  nuevo: 'Nuevo',
+  contactado: 'Contactado',
+  demo_agendada: 'Demo agendada',
+  piloto_activo: 'Piloto activo',
+  feedback_recibido: 'Feedback recibido',
+  interes_pago: 'Interés en pago',
+  cerrado: 'Cerrado',
+  no_califica: 'No califica',
+};
+
+interface PilotRow {
+  id: string;
+  email: string;
+  segment: string;
+  stage: string | null;
+  plan_interes: string | null;
+  status: PilotStatus;
+  source: string;
+  objective: string | null;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface Profile {
   id: string;
@@ -217,6 +251,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
   },
   {
+    id: 'pilots', label: 'Pilotos',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.63 8.25m5.96 6.12l-3.58-3.58m0 0a6 6 0 00-7.38 5.84h4.8m2.58-5.84L4.94 6.87M9.75 21.75l-2.12-2.12" /></svg>,
+  },
+  {
     id: 'health', label: 'Sistema',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>,
   },
@@ -288,6 +326,14 @@ export function Admin() {
   const [profTotal, setProfTotal] = useState(0);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [savingTier, setSavingTier] = useState<Record<string, boolean>>({});
+  // Pilotos (Fase 2). undefined = cargando · null = error de carga (RLS/red).
+  const [pilots, setPilots] = useState<PilotRow[] | null | undefined>(undefined);
+  const [pilotTotal, setPilotTotal] = useState(0);
+  const [pilotPage, setPilotPage] = useState(0);
+  const [pilotFilter, setPilotFilter] = useState<PilotStatus | 'all'>('all');
+  const [expandedPilot, setExpandedPilot] = useState<string | null>(null);
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [savingPilot, setSavingPilot] = useState<Record<string, boolean>>({});
   const [activePreview, setActivePreview] = useState<UserTier | null>(() => getPreviewTier());
   const [expenses, setExpenses] = useState<Expense[]>(loadExpenses);
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id'>>({ name: '', amount: 0, category: 'infra', currency: 'USD' });
@@ -299,8 +345,9 @@ export function Admin() {
     });
   }, [navigate]);
 
-  const load = useCallback(async (vPage = 0, aPage = 0, pPage = 0, search = '') => {
-    setLoading(true);
+  // Fetch PURO (sin setState) → permite aplicar el resultado dentro de `.then`,
+  // evitando react-hooks/set-state-in-effect en el efecto de carga.
+  const fetchAdminData = useCallback(async (vPage = 0, aPage = 0, pPage = 0, search = '') => {
     const vFrom = vPage * PAGE_SIZE;
     const aFrom = aPage * PAGE_SIZE;
     const pFrom = pPage * PAGE_SIZE;
@@ -312,7 +359,7 @@ export function Admin() {
     if (search.trim()) valQuery = valQuery.ilike('idea_name', `%${search.trim()}%`);
     valQuery = valQuery.range(vFrom, vFrom + PAGE_SIZE - 1);
 
-    const [{ data: profs, count: pCount }, { data: vals, count: vCount }, { data: ais, count: aCount }, { data: fb }] = await Promise.all([
+    const [prof, val, ai, fbRes] = await Promise.all([
       supabase.from('profiles')
         .select('id, full_name, avatar_url, tier, created_at, validations(count)', { count: 'exact' })
         .order('created_at', { ascending: false })
@@ -327,19 +374,27 @@ export function Admin() {
         .order('created_at', { ascending: false })
         .limit(100),
     ]);
+    return {
+      profs: prof.data, pCount: prof.count,
+      vals: val.data, vCount: val.count,
+      ais: ai.data, aCount: ai.count,
+      fb: fbRes.data,
+    };
+  }, []);
 
-    setProfiles((profs ?? []).map(p => ({
+  // Aplica el resultado (setState). No es un efecto → seguro llamarlo desde `.then`.
+  const applyAdminData = useCallback((r: Awaited<ReturnType<typeof fetchAdminData>>) => {
+    setProfiles((r.profs ?? []).map(p => ({
       ...p,
       validations_count: (p as Profile).validations?.[0]?.count ?? 0,
     })) as Profile[]);
-    setProfTotal(pCount ?? 0);
-    setValidations((vals ?? []) as unknown as Validation[]);
-    setValTotal(vCount ?? 0);
-    setAiInteractions((ais ?? []) as unknown as AiInteraction[]);
-    setAiTotal(aCount ?? 0);
-    setFeedback((fb ?? []) as unknown as ReportFeedbackRow[]);
-    // Digest agregado server-side (todo el histórico). Best-effort: si falla, la UI
-    // cae a la agregación client-side sobre las filas cargadas.
+    setProfTotal(r.pCount ?? 0);
+    setValidations((r.vals ?? []) as unknown as Validation[]);
+    setValTotal(r.vCount ?? 0);
+    setAiInteractions((r.ais ?? []) as unknown as AiInteraction[]);
+    setAiTotal(r.aCount ?? 0);
+    setFeedback((r.fb ?? []) as unknown as ReportFeedbackRow[]);
+    // Digest agregado server-side (best-effort; si falla, cae a la agregación client-side).
     supabase.rpc('get_feedback_digest').then(({ data: dg, error: dgErr }) => {
       if (!dgErr && dg) setFeedbackDigest(dg as unknown as FeedbackDigest);
     });
@@ -347,7 +402,77 @@ export function Admin() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(valPage, aiPage, profPage, valSearch); }, [load, valPage, aiPage, profPage, valSearch]);
+  // Refresco manual (botón "Actualizar"): muestra loading. Fuera de un efecto → ok.
+  const load = useCallback(async (vPage = 0, aPage = 0, pPage = 0, search = '') => {
+    setLoading(true);
+    applyAdminData(await fetchAdminData(vPage, aPage, pPage, search));
+  }, [fetchAdminData, applyAdminData]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAdminData(valPage, aiPage, profPage, valSearch).then((r) => { if (!cancelled) applyAdminData(r); });
+    return () => { cancelled = true; };
+  }, [fetchAdminData, applyAdminData, valPage, aiPage, profPage, valSearch]);
+
+  // ── Pilotos: carga vía RLS admin (is_admin()). Sin service_role. ────────────
+  // Query pura (sin setState) para que el setState viva en `.then` (lint-clean).
+  const queryPilots = useCallback(async (): Promise<{ rows: PilotRow[] | null; count: number }> => {
+    let q = supabase
+      .from('pilots')
+      .select('id, email, segment, stage, plan_interes, status, source, objective, admin_notes, created_at, updated_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(pilotPage * PAGE_SIZE, pilotPage * PAGE_SIZE + PAGE_SIZE - 1);
+    if (pilotFilter !== 'all') q = q.eq('status', pilotFilter);
+    const { data, count, error } = await q;
+    if (error) return { rows: null, count: 0 };
+    return { rows: (data ?? []) as unknown as PilotRow[], count: count ?? 0 };
+  }, [pilotPage, pilotFilter]);
+
+  useEffect(() => {
+    let cancelled = false;
+    queryPilots().then((r) => {
+      if (cancelled) return;
+      setPilots(r.rows);
+      setPilotTotal(r.count);
+    });
+    return () => { cancelled = true; };
+  }, [queryPilots]);
+
+  // Refresca solo la lista de pilotos (tras update). No toca los demás tabs.
+  const refreshPilots = useCallback(() => {
+    queryPilots().then((r) => { setPilots(r.rows); setPilotTotal(r.count); });
+  }, [queryPilots]);
+
+  // Cambio de estado inline (update vía RLS admin). Optimista + toast + analytics.
+  const changePilotStatus = useCallback(async (row: PilotRow, next: PilotStatus) => {
+    if (next === row.status) return;
+    setSavingPilot((s) => ({ ...s, [row.id]: true }));
+    const { data, error } = await supabase
+      .from('pilots').update({ status: next }).eq('id', row.id).select('id');
+    setSavingPilot((s) => ({ ...s, [row.id]: false }));
+    if (error || !data || data.length === 0) {
+      toast.error('No se pudo cambiar el estado (revisa permisos/RLS).');
+      return;
+    }
+    trackEvent('pilot_status_changed', { from: row.status, to: next, source: 'admin' });
+    toast.success(`Estado → ${PILOT_STATUS_LABEL[next]}`);
+    refreshPilots();
+  }, [refreshPilots]);
+
+  // Guardar nota interna (admin_notes). No envía contenido a analytics.
+  const savePilotNote = useCallback(async (row: PilotRow) => {
+    const draft = noteDrafts[row.id] ?? '';
+    setSavingPilot((s) => ({ ...s, [row.id]: true }));
+    const { data, error } = await supabase
+      .from('pilots').update({ admin_notes: draft.trim() || null }).eq('id', row.id).select('id');
+    setSavingPilot((s) => ({ ...s, [row.id]: false }));
+    if (error || !data || data.length === 0) {
+      toast.error('No se pudo guardar la nota (revisa permisos/RLS).');
+      return;
+    }
+    toast.success('Nota guardada');
+    refreshPilots();
+  }, [noteDrafts, refreshPilots]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const completed = validations.filter(v => v.status === 'completed');
@@ -612,6 +737,7 @@ export function Admin() {
               {tab === 'validations' && `${completed.length} completadas · ${inProgress.length} en progreso`}
               {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
               {tab === 'feedback' && `${feedback.length} respuestas · refinamiento de RAG`}
+              {tab === 'pilots' && `${pilotTotal} solicitud${pilotTotal === 1 ? '' : 'es'} de piloto · pipeline manual`}
               {tab === 'health' && `Funnel · Tiers · Prompts · Modelos`}
               {tab === 'finanzas' && `MRR $${mrr.toFixed(0)} · Gastos $${totalCostMonthly.toFixed(0)}/mes · Margen ${grossMargin}%`}
               {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
@@ -1317,6 +1443,132 @@ export function Admin() {
               </>
             );
           })()}
+
+          {/* ══ PILOTOS (Fase 2) ══════════════════════════════════════════════ */}
+          {tab === 'pilots' && (
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden">
+              {/* Filtro por estado */}
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-white/5 flex-wrap">
+                <label className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0]">Estado</label>
+                <select
+                  value={pilotFilter}
+                  onChange={(e) => { setPilotFilter(e.target.value as PilotStatus | 'all'); setPilotPage(0); }}
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0F] text-gray-700 dark:text-[#C4C4D4] cursor-pointer"
+                >
+                  <option value="all">Todos</option>
+                  {PILOT_STATUSES.map((s) => <option key={s} value={s}>{PILOT_STATUS_LABEL[s]}</option>)}
+                </select>
+              </div>
+
+              {/* Loading */}
+              {pilots === undefined && (
+                <div className="px-6 py-16 text-center text-sm text-gray-400">Cargando solicitudes…</div>
+              )}
+
+              {/* Error (RLS/red) */}
+              {pilots === null && (
+                <div className="px-6 py-16 text-center">
+                  <p className="text-sm font-semibold text-red-500 dark:text-red-400">No pudimos cargar las solicitudes de piloto.</p>
+                  <button onClick={refreshPilots} className="mt-3 text-xs font-bold text-[#0EB5C6] hover:underline">Reintentar</button>
+                </div>
+              )}
+
+              {/* Vacío */}
+              {Array.isArray(pilots) && pilots.length === 0 && (
+                <div className="px-6 py-16 text-center text-sm text-gray-400">No hay solicitudes de piloto todavía.</div>
+              )}
+
+              {/* Tabla */}
+              {Array.isArray(pilots) && pilots.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-[11px] uppercase tracking-wide text-gray-400 border-b border-gray-100 dark:border-white/5">
+                        <th className="py-3 pl-6 pr-4 font-semibold">Email</th>
+                        <th className="py-3 pr-4 font-semibold">Segmento</th>
+                        <th className="py-3 pr-4 font-semibold">Estado</th>
+                        <th className="py-3 pr-4 font-semibold">Creado</th>
+                        <th className="py-3 pr-4 font-semibold">Actualizado</th>
+                        <th className="py-3 pr-6 font-semibold text-right">Detalle</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pilots.map((row) => {
+                        const isOpen = expandedPilot === row.id;
+                        const saving = savingPilot[row.id];
+                        return (
+                          <>
+                            <tr key={row.id} className="border-b border-gray-50 dark:border-white/[0.03] hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
+                              <td className="py-3.5 pl-6 pr-4 text-gray-900 dark:text-[#F0EFF8] max-w-[220px] truncate" title={row.email}>{row.email}</td>
+                              <td className="py-3.5 pr-4 text-gray-500 dark:text-[#8B8AA0] capitalize">{row.segment.replace(/_/g, ' ')}</td>
+                              <td className="py-3.5 pr-4">
+                                <select
+                                  value={row.status}
+                                  disabled={saving}
+                                  onChange={(e) => changePilotStatus(row, e.target.value as PilotStatus)}
+                                  className={`text-xs font-bold px-2 py-1 rounded-lg border cursor-pointer transition-opacity ${saving ? 'opacity-50' : ''} bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-[#C4C4D4] border-gray-200 dark:border-white/10`}
+                                >
+                                  {PILOT_STATUSES.map((s) => <option key={s} value={s}>{PILOT_STATUS_LABEL[s]}</option>)}
+                                </select>
+                              </td>
+                              <td className="py-3.5 pr-4 text-gray-400 dark:text-[#afaebb] tabular-nums">{new Date(row.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: '2-digit' })}</td>
+                              <td className="py-3.5 pr-4 text-gray-400 dark:text-[#afaebb] tabular-nums">{new Date(row.updated_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: '2-digit' })}</td>
+                              <td className="py-3.5 pr-6 text-right">
+                                <button
+                                  onClick={() => {
+                                    setExpandedPilot(isOpen ? null : row.id);
+                                    if (!isOpen && noteDrafts[row.id] === undefined) {
+                                      setNoteDrafts((d) => ({ ...d, [row.id]: row.admin_notes ?? '' }));
+                                    }
+                                  }}
+                                  className="text-xs font-semibold text-[#0EB5C6] hover:underline"
+                                >
+                                  {isOpen ? 'Cerrar' : 'Ver'}
+                                </button>
+                              </td>
+                            </tr>
+                            {isOpen && (
+                              <tr key={`${row.id}-detail`} className="bg-gray-50/60 dark:bg-white/[0.02]">
+                                <td colSpan={6} className="px-6 py-4">
+                                  <div className="grid sm:grid-cols-3 gap-4 mb-4 text-xs">
+                                    <div><span className="text-gray-400 uppercase tracking-wide">Etapa</span><p className="text-gray-700 dark:text-[#C4C4D4] mt-0.5">{row.stage ?? '—'}</p></div>
+                                    <div><span className="text-gray-400 uppercase tracking-wide">Plan de interés</span><p className="text-gray-700 dark:text-[#C4C4D4] mt-0.5 capitalize">{row.plan_interes ?? '—'}</p></div>
+                                    <div><span className="text-gray-400 uppercase tracking-wide">Fuente</span><p className="text-gray-700 dark:text-[#C4C4D4] mt-0.5">{row.source}</p></div>
+                                  </div>
+                                  <div className="mb-4 text-xs">
+                                    <span className="text-gray-400 uppercase tracking-wide">Objetivo</span>
+                                    <p className="text-gray-600 dark:text-[#8B8AA0] mt-0.5 whitespace-pre-wrap leading-relaxed">{row.objective?.trim() ? row.objective : '—'}</p>
+                                  </div>
+                                  <div className="text-xs">
+                                    <label className="text-gray-400 uppercase tracking-wide">Notas internas (solo admin)</label>
+                                    <textarea
+                                      value={noteDrafts[row.id] ?? ''}
+                                      onChange={(e) => setNoteDrafts((d) => ({ ...d, [row.id]: e.target.value }))}
+                                      rows={3}
+                                      placeholder="Notas del pipeline (no visibles para el founder)…"
+                                      className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0F] text-gray-800 dark:text-[#F0EFF8] resize-none focus:outline-none focus:ring-2 focus:ring-[#0EB5C6]/20"
+                                    />
+                                    <button
+                                      onClick={() => savePilotNote(row)}
+                                      disabled={saving}
+                                      className="mt-2 px-4 py-1.5 bg-[#0EB5C6] text-white text-xs font-bold rounded-lg hover:bg-[#6B5EE6] disabled:opacity-50 transition"
+                                    >
+                                      {saving ? 'Guardando…' : 'Guardar nota'}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  <PaginationBar page={pilotPage} total={pilotTotal} pageSize={PAGE_SIZE} onChange={setPilotPage} />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ══ SISTEMA / HEALTH ══════════════════════════════════════════════ */}
           {tab === 'health' && (

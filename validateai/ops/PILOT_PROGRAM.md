@@ -113,5 +113,8 @@ Excluir / despriorizar cuando:
 ## Pendientes operativos (requieren producto/infra — fuera de alcance de esta fase)
 
 - **Captura de lead enriquecida:** hoy la waitlist persiste **solo el email** (`email_leads`); el **plan de interés, la fuente y el segmento** viven solo en PostHog, no unidos al lead. Para gestionar pilotos a escala convendría persistirlos → requiere tocar la Edge Function `send-quick-lead` y el schema de `email_leads` (decisión aparte).
-- **Estados de piloto en sistema:** **Fase 1 (2026-07) implementada** — las solicitudes de piloto se persisten en la tabla `pilots` mediante un formulario autenticado en `/dashboard`. RLS: el founder solo INSERT su solicitud y lee su propio estado vía la RPC `get_my_pilot_status()` (no ve `admin_notes` ni la lista). La **gestión del pipeline sigue manual** (Supabase dashboard / SQL); la **UI admin** (`/admin` tab "Pilotos") y la **notificación por email** quedan para Fase 2. No hay pilotos activos: la tabla registra solicitudes, no acuerdos.
+- **Estados de piloto en sistema:** **Fase 1 + Fase 2 (2026-07) implementadas.**
+  - *Fase 1:* las solicitudes se persisten en `pilots` (formulario autenticado en `/dashboard`). RLS: el founder solo INSERT su solicitud y lee su propio estado vía `get_my_pilot_status()` (no ve `admin_notes` ni la lista).
+  - *Fase 2:* **tab "Pilotos" en `/admin`** — el admin (RLS `is_admin()`, sin service_role) lista las solicitudes, filtra por estado, **cambia el `status` del pipeline** y **edita `admin_notes`** (solo visibles en admin). Los estados coinciden con esta guía.
+  - **Pendiente:** notificación por email a la solicitud (Fase 3); multi-admin real (`is_admin()` es un email hardcodeado); reactivación de cobro para medir conversión. No hay pilotos activos: la tabla registra solicitudes, no acuerdos.
 - **Reactivación de cobro** (LemonSqueezy) para medir conversión real.
