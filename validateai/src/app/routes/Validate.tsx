@@ -96,7 +96,7 @@ export function Validate() {
   const navigate = useNavigate();
   const { currentStep, validationId, setValidationId, reset, setValidationMode, validationMode,
     stepIdea, updateStepIdea, updateStepMarket, updateStepIdeaQuick, setStep } = useValidationStore();
-  const { isPro: isPremium, loading: tierLoading, tier } = useUserTier();
+  const { loading: tierLoading, tier } = useUserTier();
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const exitShownRef = useRef(false);
@@ -167,15 +167,17 @@ export function Validate() {
   // Sincronizar validationMode con el tier del usuario en cada mount.
   useEffect(() => {
     if (tierLoading) return;
-    const targetMode = isPremium ? 'premium' : 'detailed';
     const currentMode = useValidationStore.getState().validationMode;
     const hasActiveSession = !!useValidationStore.getState().validationId;
-    // Resetear 'quick' persistido de una sesión anterior cuando no hay sesión activa,
-    // para que el FlowSelector arranque en 'detailed' por defecto en sesiones nuevas.
-    if (currentMode !== targetMode && (currentMode !== 'quick' || !hasActiveSession)) {
-      setValidationMode(targetMode);
+    // Todos los tiers (incluido premium/pro) arrancan en el flujo base (detailed) al
+    // iniciar una validación nueva. El análisis profundo premium/pro se resuelve por
+    // tier en StepGenerating, no por el modo del wizard — no hace falta el flujo premium
+    // dedicado para acceder a él. Solo normalizamos sesiones nuevas: una sesión activa
+    // (quick o premium en curso, o reanudada desde DB) se preserva.
+    if (currentMode !== 'detailed' && !hasActiveSession) {
+      setValidationMode('detailed');
     }
-  }, [tierLoading, isPremium]);
+  }, [tierLoading]);
 
   // Deep linking: si la URL contiene ?resume=<id>, inyecta el ID en el store antes
   // de que el efecto de hidratación dispare su fetch a Supabase. El parámetro se
