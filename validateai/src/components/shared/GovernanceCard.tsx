@@ -186,8 +186,10 @@ export function GovernanceCard({ data }: Props) {
           </p>
           <div className="space-y-2">
             {data.inapi_checklist.map((check, i) => {
-              const meta = INAPI_LABEL[check.type];
-              const prio = PRIORITY_CONFIG[check.risk];
+              // La IA puede devolver type/risk fuera del enum (JSON no validado en
+              // runtime) → fallback defensivo para no romper el render.
+              const meta = INAPI_LABEL[check.type] ?? { label: 'Otro', icon: '📄' };
+              const prio = PRIORITY_CONFIG[check.risk] ?? PRIORITY_CONFIG.nice_to_have;
               return (
                 <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-[#0A0A0F] rounded-xl border border-gray-100 dark:border-white/5">
                   <div className="shrink-0 flex flex-col items-center gap-1 mt-0.5">
@@ -222,7 +224,7 @@ export function GovernanceCard({ data }: Props) {
           </div>
           <div className="space-y-2">
             {data.legal_checklist.map((item, i) => {
-              const p = PRIORITY_CONFIG[item.priority];
+              const p = PRIORITY_CONFIG[item.priority] ?? PRIORITY_CONFIG.nice_to_have;
               return (
                 <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-[#0A0A0F] rounded-xl border border-gray-100 dark:border-white/5">
                   <span className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-black ${p.className}`}>

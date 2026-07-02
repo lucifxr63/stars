@@ -36,7 +36,9 @@ function ReadinessBar({ score }: { score: number }) {
 }
 
 export function FundraisingRoadmapCard({ data }: Props) {
-  const instrument = INSTRUMENT_LABELS[data.recommended_instrument];
+  // La IA puede devolver un instrumento fuera del enum (JSON no validado) → fallback.
+  const instrument = INSTRUMENT_LABELS[data.recommended_instrument]
+    ?? { label: data.recommended_instrument ?? 'Instrumento', color: 'bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-[#8B8AA0]' };
 
   return (
     <div className="bg-white dark:bg-[#12121A] border-2 border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm space-y-5">
