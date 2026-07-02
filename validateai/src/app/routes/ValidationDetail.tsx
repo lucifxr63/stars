@@ -2394,6 +2394,20 @@ export function ValidationDetail() {
         </div>
       )}
 
+      {/* Overlay Due Diligence — visible en cualquier pestaña durante la generación (40-90s) */}
+      {generatingDueDiligence && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#12121A] border border-white/[0.06] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
+            <div className="w-12 h-12 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />
+            <div>
+              <p className="font-bold text-[#F0EFF8] mb-1">Generando Due Diligence Score</p>
+              <p className="text-sm text-[#8B8AA0]">Consultando PJUD, Inapi y Fintoc y analizando con el modelo RAG de Paul Graham…</p>
+              <p className="text-xs text-[#afaebb] mt-2">No cierres ni recargues esta página.<br />Puede tomar hasta 90 segundos.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Overlay análisis avanzados — sólo en generación manual (no en la auto-gen silenciosa) */}
       {generatingAdvanced && !silentAdvanced && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
