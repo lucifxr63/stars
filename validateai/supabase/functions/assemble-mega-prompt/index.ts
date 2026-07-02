@@ -626,7 +626,10 @@ async function callClaude(system: string, user: string): Promise<Record<string, 
       system,
       messages: [{ role: 'user', content: user }],
     }),
-    signal: AbortSignal.timeout(45_000),
+    // Generar el DueDiligenceScore completo (~2000+ tokens) con un prompt de entrada
+    // grande puede superar los 45s. 90s da holgura sin acercarse al límite wall-clock
+    // (~150s) de la Edge Function, que también cubre embeddings + Bralidus previos.
+    signal: AbortSignal.timeout(90_000),
   });
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
   const data = await res.json();
