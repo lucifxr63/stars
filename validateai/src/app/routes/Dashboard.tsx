@@ -8,6 +8,7 @@ import { UsageBar } from '@/components/shared/UsageBar';
 import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
 import { GenerationStatusWidget } from '@/components/dashboard/GenerationStatusWidget';
 import { trackEvent } from '@/lib/analytics';
+import { summarizeGenerationProgress, type GenerationProgress } from '@/lib/generationProgress';
 
 interface ValidationRow {
   id: string;
@@ -18,6 +19,7 @@ interface ValidationRow {
   current_step: number | null;
   validation_mode: 'quick' | 'detailed' | null;
   created_at: string;
+  generation_progress: GenerationProgress | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -87,7 +89,7 @@ export function Dashboard() {
         // se derivan lista reciente, última validación, conteos por estado y promedio.
         const { data, count } = await supabase
           .from('validations')
-          .select('id, idea_name, idea_industry, validation_score, status, current_step, validation_mode, created_at', { count: 'exact' })
+          .select('id, idea_name, idea_industry, validation_score, status, current_step, validation_mode, created_at, generation_progress', { count: 'exact' })
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(100);
@@ -177,9 +179,13 @@ export function Dashboard() {
       secondary: newValidation,
     };
   } else if (latest.status === 'partial') {
+    const s = summarizeGenerationProgress(latest.generation_progress);
+    const subtitle = s.total > 0
+      ? `${s.completed} de ${s.total} secciones se generaron — puedes revisar el resultado parcial.`
+      : 'Algunas secciones de tu última validación no se generaron.';
     nextStep = {
       title: 'Revisa las secciones incompletas',
-      subtitle: 'Algunas secciones de tu última validación no se generaron.',
+      subtitle,
       primary: { label: 'Ver resultado parcial →', onClick: () => goView(latest.id) },
       secondary: newValidation,
     };

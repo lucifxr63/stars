@@ -10,6 +10,7 @@ import { useUsage } from '@/hooks/useUsage';
 import { AggregateRadarChart } from '@/components/shared/AggregateRadarChart';
 import { IdeationTrendLine } from '@/components/shared/IdeationTrendLine';
 import { UsageGauge } from '@/components/shared/UsageGauge';
+import { summarizeGenerationProgress, type GenerationProgress } from '@/lib/generationProgress';
 
 interface ValidationRow {
   id: string;
@@ -25,6 +26,7 @@ interface ValidationRow {
   pivot_reason: string | null;
   validation_mode?: 'quick' | 'detailed';
   score_breakdown?: Record<string, unknown> | null;
+  generation_progress?: GenerationProgress | null;
 }
 
 // Estados de presentación derivados de datos reales (validations.status admite
@@ -143,7 +145,7 @@ export function Results() {
 
       const { data, error } = await supabase
         .from('validations')
-        .select('id, idea_name, idea_industry, status, validation_score, current_step, created_at, completed_at, parent_id, version, pivot_reason, validation_mode, score_breakdown')
+        .select('id, idea_name, idea_industry, status, validation_score, current_step, created_at, completed_at, parent_id, version, pivot_reason, validation_mode, score_breakdown, generation_progress')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -459,6 +461,16 @@ function ValidationCard({
   const state = displayStateOf(v);
   const cfg = STATE_CONFIG[state];
 
+  // Punto 4: para parcial/fallida, deriva "X de Y secciones" desde generation_progress
+  // (fiable en estados terminales). Si no hay dato, cae al hint prudente del estado.
+  const gen = summarizeGenerationProgress(v.generation_progress);
+  let hint = cfg.hint;
+  if (state === 'partial' && gen.total > 0) {
+    hint = `${gen.completed} de ${gen.total} secciones completadas`;
+  } else if (state === 'failed' && gen.total > 0) {
+    hint = gen.failed >= gen.total ? 'Ninguna sección se generó' : `${gen.failed} de ${gen.total} secciones fallaron`;
+  }
+
   const openResult = () => navigate(`/results/${v.id}`);
   const cardClickable = cfg.viewable;
 
@@ -501,8 +513,8 @@ function ValidationCard({
           {state === 'draft' && (
             <span className={`ml-2 font-medium ${cfg.hintClassName}`}>· Paso {v.current_step} de {WIZARD_STEPS}</span>
           )}
-          {state !== 'draft' && cfg.hint && (
-            <span className={`ml-2 font-medium ${cfg.hintClassName}`}>· {cfg.hint}</span>
+          {state !== 'draft' && hint && (
+            <span className={`ml-2 font-medium ${cfg.hintClassName}`}>· {hint}</span>
           )}
           {v.pivot_reason && (
             <span className="ml-2 text-amber-500/80 truncate hidden sm:inline">· {v.pivot_reason}</span>
