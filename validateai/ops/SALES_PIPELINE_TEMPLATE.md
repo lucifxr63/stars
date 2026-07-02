@@ -48,6 +48,8 @@
 
 > Pre-revenue: la fila "Convertidos" permanece en 0 hasta reactivar la pasarela de pago. No inventar conversiones.
 
+> **Fase 1 pilotos (2026-07):** las solicitudes desde `/dashboard` ahora se **persisten en la tabla `pilots`** (estado inicial `nuevo`), en vez de existir solo como lead/evento. La gestión del pipeline (mover estados) sigue siendo **manual** en esta plantilla / Supabase dashboard hasta la UI admin (Fase 2). Los estados de `pilots.status` coinciden con los de esta plantilla.
+
 ## Higiene de datos
 
 - **No** pegar emails/teléfonos/nombres completos en este documento versionado en git. Usar alias (`L-001`) y mantener el detalle de contacto en un lugar privado/seguro fuera del repo.

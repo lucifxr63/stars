@@ -1169,6 +1169,62 @@ export type Database = {
         }
         Relationships: []
       }
+      pilots: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          email: string
+          id: string
+          objective: string | null
+          plan_interes: string | null
+          segment: string
+          source: string
+          stage: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          validation_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          objective?: string | null
+          plan_interes?: string | null
+          segment: string
+          source?: string
+          stage?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          validation_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          objective?: string | null
+          plan_interes?: string | null
+          segment?: string
+          source?: string
+          stage?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          validation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilots_validation_id_fkey"
+            columns: ["validation_id"]
+            isOneToOne: false
+            referencedRelation: "validations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_feedback: {
         Row: {
           created_at: string
@@ -1896,6 +1952,7 @@ export type Database = {
           total_ideas: number
         }[]
       }
+      get_my_pilot_status: { Args: never; Returns: Json }
       get_usage_summary: { Args: { p_user_id: string }; Returns: Json }
       increment_cache_usage: { Args: { cache_id: string }; Returns: undefined }
       insert_radar_signal: {
