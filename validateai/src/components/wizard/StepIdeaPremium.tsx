@@ -66,7 +66,7 @@ function DescriptionQuality({ length }: { length: number }) {
 }
 
 export function StepIdeaPremium() {
-  const { stepIdea, extractedData, updateStepIdea, nextStep, prevStep } = useValidationStore();
+  const { stepIdea, extractedData, currentStep, updateStepIdea, nextStep, prevStep } = useValidationStore();
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<StepIdea>({
     resolver: zodResolver(StepIdeaSchema),
@@ -97,7 +97,7 @@ export function StepIdeaPremium() {
         idea_description: data.idea_description,
         idea_industry: data.idea_industry,
         current_solution: data.current_solution,
-        current_step: 3,
+        current_step: 2,
       }).eq('id', validationId).then(() => { });
     }
     nextStep();
@@ -111,8 +111,17 @@ export function StepIdeaPremium() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <p className="text-sm text-violet-700 dark:text-violet-300 leading-relaxed">
-          <strong className="font-semibold">La IA pre-llenó tu formulario.</strong>{' '}
-          Revisa cada campo y ajusta lo que no sea preciso — tú tienes la última palabra.
+          {extractedData ? (
+            <>
+              <strong className="font-semibold">La IA pre-llenó tu formulario.</strong>{' '}
+              Revisa cada campo y ajusta lo que no sea preciso — tú tienes la última palabra.
+            </>
+          ) : (
+            <>
+              <strong className="font-semibold">Define tu idea con precisión.</strong>{' '}
+              Mientras más claro sea el problema y la solución, más riguroso será tu Due Diligence Score.
+            </>
+          )}
         </p>
       </div>
 
@@ -208,14 +217,16 @@ export function StepIdeaPremium() {
       </div>
 
       <div className="flex gap-4">
-        <button type="button" onClick={prevStep}
-          className="w-1/3 py-4 text-gray-600 dark:text-[#8B8AA0] font-bold rounded-2xl hover:bg-gray-100 dark:bg-white/5 transition-all text-sm">
-          Volver
-        </button>
+        {currentStep > 1 && (
+          <button type="button" onClick={prevStep}
+            className="w-1/3 py-4 text-gray-600 dark:text-[#8B8AA0] font-bold rounded-2xl hover:bg-gray-100 dark:bg-white/5 transition-all text-sm">
+            Volver
+          </button>
+        )}
         <button type="submit"
-          className="w-2/3 py-4 bg-[#0EB5C6] text-white font-bold rounded-2xl
+          className={`${currentStep > 1 ? 'w-2/3' : 'w-full'} py-4 bg-[#0EB5C6] text-white font-bold rounded-2xl
                      hover:bg-[#6B5EE6] active:scale-[0.98] transition-all
-                     shadow-lg shadow-[#0EB5C6]/25 text-sm">
+                     shadow-lg shadow-[#0EB5C6]/25 text-sm`}>
           Continuar al mercado →
         </button>
       </div>

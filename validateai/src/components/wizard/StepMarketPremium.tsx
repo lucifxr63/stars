@@ -89,6 +89,8 @@ export function StepMarketPremium() {
         business_model: data.business_model,
         pricing_range: data.pricing_range,
         acquisition_channel: data.acquisition_channel ?? null,
+        // current_step: 4 es la firma global de "en generación" (GenerationStatusWidget,
+        // Results/Dashboard usan >= WIZARD_STEPS=4). No depende de la numeración visual.
         current_step: 4,
       }).eq('id', validationId).then(() => { });
     }
