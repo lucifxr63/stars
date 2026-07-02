@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { mockAuth, TEST_USER } from '../fixtures/mockSupabase';
+import { mockAuth } from '../fixtures/mockSupabase';
 
 test.beforeEach(async ({ page }) => {
   await mockAuth(page);
@@ -27,7 +27,9 @@ test.describe('Dashboard con usuario autenticado', () => {
   });
 
   test('muestra el CTA de nueva validación', async ({ page }) => {
-    await expect(page.getByRole('button', { name: /comenzar/i })).toBeVisible();
+    // Punto 3: el hero de "Próximo paso" para usuario sin validaciones muestra
+    // "Generar nueva validación →" (antes era "Comenzar →").
+    await expect(page.getByRole('button', { name: /generar nueva validación/i })).toBeVisible();
   });
 
   test('muestra el estado "sin validaciones" para usuario nuevo', async ({ page }) => {
@@ -50,14 +52,16 @@ test.describe('Sidebar', () => {
   });
 
   test('UsageBar visible para tier free con uso parcial', async ({ page }) => {
-    // El mock retorna total=2, limit=3 → "2 / 3"
-    await expect(page.getByText(/análisis este mes/i)).toBeVisible();
-    await expect(page.getByText('2 / 3')).toBeVisible();
+    // El mock retorna total=2, limit=3 → "2 / 3". Desde Punto 1/3 el uso aparece
+    // a propósito en el Sidebar y en la card del Dashboard (misma fuente useUsage),
+    // por eso .first() — no es ambigüedad, es la unificación esperada.
+    await expect(page.getByText(/análisis este mes/i).first()).toBeVisible();
+    await expect(page.getByText('2 / 3').first()).toBeVisible();
   });
 
   test('UsageBar muestra restantes correctos', async ({ page }) => {
-    // 3 - 2 = 1 restante
-    await expect(page.getByText(/1 restante/i)).toBeVisible();
+    // 3 - 2 = 1 restante (visible en Sidebar y card del Dashboard).
+    await expect(page.getByText(/1 restante/i).first()).toBeVisible();
   });
 
   test('UsageBar muestra link de upgrade cuando quedan ≤1', async ({ page }) => {
