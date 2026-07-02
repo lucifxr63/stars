@@ -33,7 +33,7 @@ const SEVERITY_CONFIG = {
 } as const;
 
 function AlertBadge({ severity }: { severity: BraliduAlert['severity'] }) {
-  const cfg = SEVERITY_CONFIG[severity];
+  const cfg = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.info;
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.bg} ${cfg.border} ${cfg.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
