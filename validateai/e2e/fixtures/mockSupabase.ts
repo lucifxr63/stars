@@ -124,6 +124,36 @@ export async function mockAuth(page: Page) {
   // Edge Functions de Deno: el smoke E2E debe depender SOLO del artefacto del
   // frontend — ninguna llamada sale a la red real (Supabase/AI).
   await mockEdgeFunctions(page);
+
+  // market-signals: el catch-all devuelve {status:'mock'} sin `indicators`/`signals`,
+  // lo que hacía crashear a MarketSignalsWidget (data?.indicators.map → undefined) y
+  // tumbaba el dashboard vía ErrorBoundary. Registrado DESPUÉS del catch-all para
+  // ganar (Playwright evalúa las rutas en orden inverso de registro).
+  await mockMarketSignals(page);
+}
+
+// Shape real que espera useMarketSignals (MarketSignalsData): indicators + signals +
+// asOf + source. Datos fake mínimos y estables, claramente de test.
+export const MARKET_SIGNALS_FIXTURE = {
+  asOf: '2026-07-01T00:00:00Z',
+  source: 'live' as const,
+  indicators: [
+    { key: 'usdclp', label: 'USD/CLP', value: '$948', deltaPct: -0.8, trend: 'down' as const },
+    { key: 'ipsa',   label: 'IPSA',    value: '6.842', deltaPct: 1.2,  trend: 'up' as const },
+    { key: 'uf',     label: 'UF',      value: '$38.240', deltaPct: 0.1, trend: 'up' as const },
+    { key: 'ipc',    label: 'IPC 12m', value: '3.4%',  deltaPct: -0.2, trend: 'down' as const },
+  ],
+  signals: [
+    { id: 's1', headline: 'Demanda de SaaS B2B en alza', detail: 'Interés sostenido el último trimestre.', sentiment: 'positive' as const, source: 'Bralidus · test' },
+    { id: 's2', headline: 'TPM estable', detail: 'Menor incertidumbre de costo de capital.', sentiment: 'neutral' as const, source: 'BCCh · test' },
+  ],
+};
+
+/** Mock del feed market-signals con el shape real del widget. */
+export async function mockMarketSignals(page: Page) {
+  await page.route(`${SUPABASE_URL}/functions/v1/market-signals**`, (route) =>
+    json(route, MARKET_SIGNALS_FIXTURE),
+  );
 }
 
 /**
