@@ -562,7 +562,14 @@ export function ValidationDetail() {
         }),
       });
 
-      if (!response.ok) throw new Error('Error al generar Due Diligence');
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        let detail = body;
+        // El edge function devuelve { error, detail } — `detail` trae el String(err) real.
+        try { const j = JSON.parse(body); detail = j?.detail ?? j?.error ?? j?.message ?? body; } catch { /* body no es JSON */ }
+        console.error('[assemble-mega-prompt] HTTP', response.status, detail);
+        throw new Error(`Error al generar Due Diligence (HTTP ${response.status}): ${String(detail).slice(0, 300)}`);
+      }
 
       const result = await response.json();
       const { due_diligence_score, data_warnings, sources_used, sources_skipped, from_cache, bralidus_alerts } = result;
@@ -598,7 +605,8 @@ export function ValidationDetail() {
       }
     } catch (err) {
       console.error(err);
-      toast.error('Ocurrió un error al generar tu Due Diligence Score.');
+      const msg = err instanceof Error ? err.message : 'Ocurrió un error al generar tu Due Diligence Score.';
+      toast.error(msg);
     } finally {
       setGeneratingDueDiligence(false);
     }

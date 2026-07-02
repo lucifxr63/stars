@@ -618,18 +618,39 @@ async function callClaude(system: string, user: string): Promise<Record<string, 
     },
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
-      max_tokens: 1200,
+      // El DueDiligenceScore es un JSON extenso (5 dimensiones con gaps + verdict_summary
+      // + red_flags/strengths/recommended_next_steps). Con 1200 tokens la salida se
+      // truncaba a mitad de un valor y el JSON quedaba inválido ("Expected ',' or '}'").
+      // 4096 da holgura suficiente sin exceder el timeout.
+      max_tokens: 4096,
       system,
       messages: [{ role: 'user', content: user }],
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(45_000),
   });
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  const rawText = (data.content[0].text as string) ?? '';
+  const rawText = (data.content?.[0]?.text as string) ?? '';
+
+  // Si Claude agotó los tokens, el JSON queda incompleto: no parsees un fragmento,
+  // es un error accionable (subir max_tokens) en vez de un "JSON malformado" críptico.
+  if (data.stop_reason === 'max_tokens') {
+    throw new Error(`Claude truncó la respuesta (stop_reason=max_tokens, ${rawText.length} chars). Sube max_tokens.`);
+  }
+
+  // Extrae el objeto JSON (tolera fences ```json). Greedy: primer '{' … último '}'.
   const match = rawText.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error(`Claude no devolviÃ³ JSON vÃ¡lido. Respuesta: ${rawText.slice(0, 200)}`);
-  const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+  if (!match) throw new Error(`Claude no devolvió JSON válido. Respuesta: ${rawText.slice(0, 200)}`);
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(match[0]) as Record<string, unknown>;
+  } catch (e) {
+    // Adjunta el contexto alrededor del punto de fallo para diagnóstico rápido.
+    const msg = e instanceof Error ? e.message : String(e);
+    const pos = Number(msg.match(/position (\d+)/)?.[1] ?? 0);
+    const snippet = match[0].slice(Math.max(0, pos - 80), pos + 80);
+    throw new Error(`Claude devolvió JSON malformado (${msg}). Contexto: …${snippet}…`);
+  }
   validateDueDiligenceSchema(parsed);
   return parsed;
 }
