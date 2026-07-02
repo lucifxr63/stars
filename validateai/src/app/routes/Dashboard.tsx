@@ -8,6 +8,7 @@ import { UsageBar } from '@/components/shared/UsageBar';
 import { MarketSignalsWidget } from '@/components/dashboard/MarketSignalsWidget';
 import { GenerationStatusWidget } from '@/components/dashboard/GenerationStatusWidget';
 import { TrustSourcesPanel } from '@/components/dashboard/TrustSourcesPanel';
+import { PilotProgramCard } from '@/components/dashboard/PilotProgramCard';
 import { trackEvent } from '@/lib/analytics';
 import { summarizeGenerationProgress, type GenerationProgress } from '@/lib/generationProgress';
 
@@ -368,6 +369,11 @@ export function Dashboard() {
       {/* Confianza y fuentes — Trust Layer a nivel Command Center (Punto 5) */}
       <div className="mb-8">
         <TrustSourcesPanel />
+      </div>
+
+      {/* Programa de pilotos — superficie del founder (Punto 6, frontend-only) */}
+      <div className="mb-8">
+        <PilotProgramCard tier={tier} source="dashboard" />
       </div>
 
       {/* Últimas validaciones */}
