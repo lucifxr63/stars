@@ -218,12 +218,12 @@ src/components/
 │   ├── FlowSelector.tsx    — Elección de flujo (quick/detailed/premium)
 │   ├── StepIdea.tsx        — Paso 1 detallado: idea completa
 │   ├── StepIdeaQuick.tsx   — Paso 1 rápido: campos mínimos
-│   ├── StepIdeaPremium.tsx — Paso 2 premium: revisión de PDF extraído
+│   ├── StepIdeaPremium.tsx — Paso 1 premium: idea (revisión/entrada manual)
 │   ├── StepMarket.tsx      — Paso 2 detallado: mercado
-│   ├── StepMarketPremium.tsx — Paso 3 premium: revisión mercado
+│   ├── StepMarketPremium.tsx — Paso 2 premium: mercado
 │   ├── StepFounder.tsx     — Paso 3: founder y equipo
 │   ├── StepGenerating.tsx  — Paso 4: loading + streaming IA
-│   ├── StepUpload.tsx      — Paso 1 premium: subida de PDF
+│   ├── StepUpload.tsx      — (sin uso) subida de PDF, fuera del flujo premium
 │   ├── StepTransition.tsx  — Overlay entre pasos
 │   ├── TaskCardStream.tsx  — Card de resultado streaming
 │   └── OnboardingOverlay.tsx → (está en shared/ pero usada en wizard)
@@ -447,7 +447,7 @@ src/
    ├── FlowSelector: elige flujo
    ├── Flujo Detallado: StepIdea → StepMarket → StepFounder → StepGenerating
    ├── Flujo Rápido: StepIdeaQuick → StepGenerating
-   └── Flujo Premium: StepUpload → StepIdeaPremium → StepMarketPremium → StepFounder → StepGenerating
+   └── Flujo Premium: StepIdeaPremium → StepMarketPremium → StepGenerating
 6. Resultados streaming → redirect a /results/:id (ValidationDetail)
 7. ValidationDetail → tabs con todos los análisis + exportar PDF/pivot/reanalizar
 8. Dashboard → /results (historial de todas las validaciones)

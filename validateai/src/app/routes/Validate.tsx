@@ -16,7 +16,6 @@ import { StepMarket } from '@/components/wizard/StepMarket';
 import { StepMarketPremium } from '@/components/wizard/StepMarketPremium';
 import { StepFounder } from '@/components/wizard/StepFounder';
 import { StepGenerating } from '@/components/wizard/StepGenerating';
-import { StepUpload } from '@/components/wizard/StepUpload';
 import { trackWizardStep, trackWizardAbandoned } from '@/hooks/useAnalytics';
 import { trackTelemetryEvent, trackTelemetryBeacon } from '@/lib/telemetry';
 import { OnboardingOverlay, useOnboarding } from '@/components/shared/OnboardingOverlay';
@@ -62,12 +61,11 @@ const STEP_COMPONENTS_DETAILED: Record<number, React.FC> = {
   4: StepGenerating,
 };
 
-// Flujo premium: Upload → IdeaPremium (revisión) → MarketPremium (revisión) → Generando
+// Flujo premium: IdeaPremium (revisión) → MarketPremium (revisión) → Generando
 const STEP_COMPONENTS_PREMIUM: Record<number, React.FC> = {
-  1: StepUpload,
-  2: StepIdeaPremium,
-  3: StepMarketPremium,
-  4: StepGenerating,
+  1: StepIdeaPremium,
+  2: StepMarketPremium,
+  3: StepGenerating,
 };
 
 // Flujo rápido manual (quick): IdeaQuick → Generando
@@ -84,10 +82,9 @@ const STEP_TITLES_DETAILED: Record<number, { title: string; hint: string }> = {
 };
 
 const STEP_TITLES_PREMIUM: Record<number, { title: string; hint: string }> = {
-  1: { title: 'Sube tu documento', hint: 'La IA extrae todo de tu Pitch Deck automáticamente' },
-  2: { title: 'Revisa tu idea', hint: 'Confirma o ajusta los datos extraídos por la IA' },
-  3: { title: 'Revisa tu mercado', hint: 'Confirma el ICP, modelo de negocio y precio' },
-  4: { title: 'Analizando...', hint: 'Generando tu análisis Premium con datos en tiempo real' },
+  1: { title: 'Tu idea', hint: 'Define el problema y la solución de tu proyecto' },
+  2: { title: 'Tu mercado', hint: 'Confirma el ICP, modelo de negocio y precio' },
+  3: { title: 'Analizando...', hint: 'Generando tu análisis Premium con datos en tiempo real' },
 };
 
 const STEP_TITLES_QUICK: Record<number, { title: string; hint: string }> = {
@@ -137,7 +134,7 @@ export function Validate() {
   const StepComponent = stepMap[currentStep] ?? STEP_COMPONENTS_DETAILED[currentStep];
   // Último step del flujo activo. Úsalo en efectos cuyas deps incluyan isPremiumMode/isQuickMode.
   // Los efectos de beacon y scroll leen el estado de forma imperativa vía getState() — no usar aquí.
-  const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
+  const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
   const prevStep = useRef(currentStep);
 
   // Fase 8: inicio del wizard (una vez por montaje del flujo).
@@ -293,7 +290,7 @@ export function Validate() {
     const sendAbandonBeacon = () => {
       if (beaconSent.value) return;
       const { currentStep: step } = useValidationStore.getState();
-      const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
+      const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
       if (step >= lastStep) return;
       beaconSent.value = true;
       trackTelemetryBeacon('wizard_abandoned', {
@@ -332,7 +329,7 @@ export function Validate() {
 
       if (dt > 0) {
         const velocity = (y - lastY) / dt;   // negative = scrolling up
-        const lastStep = isPremiumMode ? 4 : (isQuickMode ? 2 : 4);
+        const lastStep = isPremiumMode ? 3 : (isQuickMode ? 2 : 4);
         const { currentStep: step, stepIdea, stepIdeaQuick } = useValidationStore.getState();
         const hasInteracted = !!stepIdea.idea_name || !!stepIdeaQuick.idea_name;
         if (
