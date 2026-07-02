@@ -28,7 +28,7 @@ export function FounderFitCard({ data, onCompleteProfile, onRegenerate, regenera
       <EmptyStateAI
         title="Founder Fit no analizado"
         description="Genera el análisis Pro para evaluar tu alineación como founder con el problema, industria, capacidad técnica y red de contactos."
-        action={onGenerate ? { label: 'Generar Análisis Pro', onClick: onGenerate, loading: generating } : undefined}
+        action={onGenerate ? { label: generating ? 'Generando análisis…' : 'Generar Análisis Pro', onClick: onGenerate, loading: generating } : undefined}
       />
     );
   }

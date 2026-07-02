@@ -283,6 +283,9 @@ export function ValidationDetail() {
   const [showPivotModal, setShowPivotModal] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [generatingAdvanced, setGeneratingAdvanced] = useState(false);
+  // Cuando la generación avanzada se dispara sola (pro/premium), corre en segundo
+  // plano sin el overlay bloqueante: las cards muestran su propio estado de carga.
+  const [silentAdvanced, setSilentAdvanced] = useState(false);
   const [regeneratingFounder, setRegeneratingFounder] = useState(false);
   const [advancedProgress, setAdvancedProgress] = useState<string>('');
   const [generatingVerdict, setGeneratingVerdict] = useState(false);
@@ -754,8 +757,12 @@ export function ValidationDetail() {
   };
 
   /** Genera los análisis avanzados (riesgo, unit economics, founder fit, señales) */
-  const handleGenerateAdvanced = async () => {
+  const handleGenerateAdvanced = async (opts?: { silent?: boolean }) => {
     if (!data) return;
+    // `silent` sólo cuando se invoca explícitamente con { silent: true } (auto-gen).
+    // Las llamadas desde onClick/onGenerate reciben un evento, no este flag → no silent.
+    const silent = opts?.silent === true;
+    setSilentAdvanced(silent);
     setGeneratingAdvanced(true);
     try {
       const ctx: Record<string, unknown> = buildAdvancedCtx();
@@ -811,14 +818,38 @@ export function ValidationDetail() {
         setData((prev) => prev ? { ...prev, ...localUpdates } : prev);
       }
 
-      toast.success('Análisis avanzados generados');
+      toast.success(silent ? 'Análisis Pro listo ✓' : 'Análisis avanzados generados');
     } catch {
-      toast.error('No se pudieron generar los análisis avanzados.');
+      // En background no molestamos con un toast de error: la card conserva su
+      // botón manual como fallback.
+      if (!silent) toast.error('No se pudieron generar los análisis avanzados.');
     } finally {
       setGeneratingAdvanced(false);
+      setSilentAdvanced(false);
       setAdvancedProgress('');
     }
   };
+
+  // Auto-genera los análisis Pro en segundo plano para pro/premium (isPremium = isPro).
+  // Se dispara una vez por validación (guard en sessionStorage), tras el veredicto y
+  // sólo si hay algo pendiente y queda cuota. Sin overlay: las cards muestran su carga
+  // y al terminar se emite el toast "Análisis Pro listo".
+  const advancedAutoKey = `advanced_auto_${id}`;
+  useEffect(() => {
+    if (
+      !isPremium ||
+      !data ||
+      (activeTab !== 'Veredicto' && activeTab !== 'Validación') ||
+      !hasAdvancedToGenerate ||
+      generatingAdvanced ||
+      generatingVerdict ||
+      remaining === 0 ||
+      sessionStorage.getItem(advancedAutoKey) === 'true'
+    ) return;
+    sessionStorage.setItem(advancedAutoKey, 'true');
+    handleGenerateAdvanced({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium, data?.id, activeTab, hasAdvancedToGenerate, generatingVerdict, remaining]);
 
   const handleUpgradeToDetailed = () => {
     if (!data) return;
@@ -1211,7 +1242,7 @@ export function ValidationDetail() {
 
                   {hasAdvancedToGenerate && (
                     <button
-                      onClick={remaining === 0 ? undefined : handleGenerateAdvanced}
+                      onClick={remaining === 0 ? undefined : () => handleGenerateAdvanced()}
                       disabled={generatingAdvanced || remaining === 0}
                       className="flex items-center gap-2 px-3 py-2 hover:bg-[#0EB5C6]/10 rounded-xl text-xs font-bold text-[#38D5E3] text-left transition disabled:opacity-50"
                       title={remaining === 0 ? 'Límite mensual alcanzado' : undefined}
@@ -2355,8 +2386,8 @@ export function ValidationDetail() {
         </div>
       )}
 
-      {/* Overlay análisis avanzados */}
-      {generatingAdvanced && (
+      {/* Overlay análisis avanzados — sólo en generación manual (no en la auto-gen silenciosa) */}
+      {generatingAdvanced && !silentAdvanced && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[#12121A] border border-white/[0.06] rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-4 max-w-sm text-center">
             <div className="w-12 h-12 border-4 border-[#0EB5C6] border-t-transparent rounded-full animate-spin" />

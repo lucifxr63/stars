@@ -65,7 +65,7 @@ export function VerdictMarketTiming({
       <EmptyStateAI
         title="Señal de Mercado no analizada"
         description="Genera el análisis Pro para evaluar el timing de tu entrada al mercado: tendencias, rondas recientes y momentum sectorial."
-        action={onGenerate ? { label: 'Generar Análisis Pro', onClick: onGenerate, loading: generating } : undefined}
+        action={onGenerate ? { label: generating ? 'Generando análisis…' : 'Generar Análisis Pro', onClick: onGenerate, loading: generating } : undefined}
       />
     );
   }
