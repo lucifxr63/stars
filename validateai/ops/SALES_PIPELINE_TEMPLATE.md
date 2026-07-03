@@ -52,7 +52,9 @@
 >
 > **Fase 2 pilotos (2026-07):** el pipeline ya **se gestiona desde la app**: `/admin` → tab **"Pilotos"** permite listar, filtrar por estado, **cambiar `status`** y **editar notas internas (`admin_notes`, solo admin)**. Esta plantilla Markdown pasa a ser respaldo/planificación; la fuente operativa es la tabla `pilots`.
 >
-> **Fase 3A pilotos (2026-07):** al crear una solicitud, el equipo recibe un **aviso por email** (Edge `pilot-notify` → `contacto@scouttech.lat`; DRY RUN si Resend no está configurado). El aviso es best-effort: la solicitud queda registrada aunque el email falle. **Multi-admin** sigue pendiente.
+> **Fase 3A pilotos (2026-07):** al crear una solicitud, el equipo recibe un **aviso por email** (Edge `pilot-notify` → `contacto@scouttech.lat`; DRY RUN si Resend no está configurado). El aviso es best-effort: la solicitud queda registrada aunque el email falle.
+>
+> **Fase 3B pilotos (2026-07):** **multi-admin** — más de un operador Scouttech puede acceder a `/admin` sin editar SQL cada vez. Los admins viven en `public.admin_users`; se agregan/desactivan por SQL (ver `docs/ADMIN_OPERATORS.md`). UI de gestión de operadores pendiente (Fase 3C).
 
 ## Higiene de datos
 
