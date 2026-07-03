@@ -16,7 +16,33 @@ import { trackEvent } from '@/lib/analytics';
 const WIZARD_STEPS = 4; // Idea, Mercado, Fundador, Generación
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'pilots' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'pilots' | 'operators' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
+
+// ── Operadores admin (Fase 3C) ────────────────────────────────────────────────
+const OPERATOR_ROLES = ['owner', 'admin', 'operator'] as const;
+type OperatorRole = typeof OPERATOR_ROLES[number];
+const OPERATOR_ROLE_LABEL: Record<OperatorRole, string> = { owner: 'Owner', admin: 'Admin', operator: 'Operator' };
+interface OperatorRow {
+  id: string;
+  user_id: string;
+  email: string;
+  role: OperatorRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+const OP_ERR: Record<string, string> = {
+  forbidden: 'Solo un owner puede gestionar operadores.',
+  invalid_role: 'Rol inválido.',
+  user_not_found: 'No existe una cuenta con ese email. Pídele que se registre primero.',
+  last_owner: 'No puedes dejar al workspace sin owner activo.',
+  not_found: 'Operador no encontrado.',
+};
+function opResult(data: unknown, error: unknown, okMsg: string): boolean {
+  const res = data as { ok?: boolean; error?: string } | null;
+  if (error || !res?.ok) { toast.error(OP_ERR[res?.error ?? ''] ?? 'No se pudo completar la acción.'); return false; }
+  toast.success(okMsg); return true;
+}
 type StatusFilter = 'all' | 'completed' | 'in_progress' | 'archived';
 
 // ── Pilotos (Fase 2) ──────────────────────────────────────────────────────────
@@ -255,6 +281,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.63 8.25m5.96 6.12l-3.58-3.58m0 0a6 6 0 00-7.38 5.84h4.8m2.58-5.84L4.94 6.87M9.75 21.75l-2.12-2.12" /></svg>,
   },
   {
+    id: 'operators', label: 'Operadores',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>,
+  },
+  {
     id: 'health', label: 'Sistema',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>,
   },
@@ -334,6 +364,12 @@ export function Admin() {
   const [expandedPilot, setExpandedPilot] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [savingPilot, setSavingPilot] = useState<Record<string, boolean>>({});
+  // Operadores (Fase 3C). undefined = cargando · null = error.
+  const [operators, setOperators] = useState<OperatorRow[] | null | undefined>(undefined);
+  const [savingOp, setSavingOp] = useState<Record<string, boolean>>({});
+  const [newOpEmail, setNewOpEmail] = useState('');
+  const [newOpRole, setNewOpRole] = useState<OperatorRole>('operator');
+  const [addingOp, setAddingOp] = useState(false);
   const [activePreview, setActivePreview] = useState<UserTier | null>(() => getPreviewTier());
   const [expenses, setExpenses] = useState<Expense[]>(loadExpenses);
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id'>>({ name: '', amount: 0, category: 'infra', currency: 'USD' });
@@ -341,7 +377,8 @@ export function Admin() {
 
   // Gate multi-admin (Fase 3B): la seguridad real es la RLS is_admin(); esto solo
   // decide el acceso a la superficie /admin. Redirige a no-admins una vez resuelto.
-  const { isAdmin, loading: adminLoading } = useAdminRole();
+  const { isAdmin, role: adminRoleName, loading: adminLoading } = useAdminRole();
+  const isOwner = adminRoleName === 'owner' || adminRoleName === 'owner_legacy';
   useEffect(() => {
     if (!adminLoading && !isAdmin) navigate('/validate', { replace: true });
   }, [adminLoading, isAdmin, navigate]);
@@ -474,6 +511,49 @@ export function Admin() {
     toast.success('Nota guardada');
     refreshPilots();
   }, [noteDrafts, refreshPilots]);
+
+  // ── Operadores (Fase 3C): lista vía RLS admin; escritura vía RPC gateada a owner ─
+  const queryOperators = useCallback(async (): Promise<OperatorRow[] | null> => {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('id, user_id, email, role, is_active, created_at, updated_at')
+      .order('created_at', { ascending: true });
+    if (error) return null;
+    return (data ?? []) as unknown as OperatorRow[];
+  }, []);
+
+  useEffect(() => {
+    if (!isOwner) return;
+    let cancelled = false;
+    queryOperators().then((rows) => { if (!cancelled) setOperators(rows); });
+    return () => { cancelled = true; };
+  }, [isOwner, queryOperators]);
+
+  const refreshOperators = useCallback(() => { queryOperators().then(setOperators); }, [queryOperators]);
+
+  const addOperator = useCallback(async () => {
+    const email = newOpEmail.trim();
+    if (!email) return;
+    setAddingOp(true);
+    const { data, error } = await supabase.rpc('admin_add_operator', { p_email: email, p_role: newOpRole });
+    setAddingOp(false);
+    if (opResult(data, error, 'Operador agregado')) { setNewOpEmail(''); setNewOpRole('operator'); refreshOperators(); }
+  }, [newOpEmail, newOpRole, refreshOperators]);
+
+  const setOperatorActive = useCallback(async (row: OperatorRow, active: boolean) => {
+    setSavingOp((s) => ({ ...s, [row.id]: true }));
+    const { data, error } = await supabase.rpc('admin_set_operator_active', { p_user_id: row.user_id, p_active: active });
+    setSavingOp((s) => ({ ...s, [row.id]: false }));
+    if (opResult(data, error, active ? 'Operador activado' : 'Operador desactivado')) refreshOperators();
+  }, [refreshOperators]);
+
+  const setOperatorRole = useCallback(async (row: OperatorRow, nextRole: OperatorRole) => {
+    if (nextRole === row.role) return;
+    setSavingOp((s) => ({ ...s, [row.id]: true }));
+    const { data, error } = await supabase.rpc('admin_set_operator_role', { p_user_id: row.user_id, p_role: nextRole });
+    setSavingOp((s) => ({ ...s, [row.id]: false }));
+    if (opResult(data, error, `Rol → ${OPERATOR_ROLE_LABEL[nextRole]}`)) refreshOperators();
+  }, [refreshOperators]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const completed = validations.filter(v => v.status === 'completed');
@@ -678,7 +758,7 @@ export function Admin() {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(item => (
+          {NAV_ITEMS.filter(item => item.id !== 'operators' || isOwner).map(item => (
             <button
               key={item.id}
               onClick={() => setTab(item.id)}
@@ -739,6 +819,7 @@ export function Admin() {
               {tab === 'ai' && `${aiInteractions.length} interacciones · ${totalTokens.toLocaleString()} tokens`}
               {tab === 'feedback' && `${feedback.length} respuestas · refinamiento de RAG`}
               {tab === 'pilots' && `${pilotTotal} solicitud${pilotTotal === 1 ? '' : 'es'} de piloto · pipeline manual`}
+              {tab === 'operators' && `Gestión de operadores admin · solo owner`}
               {tab === 'health' && `Funnel · Tiers · Prompts · Modelos`}
               {tab === 'finanzas' && `MRR $${mrr.toFixed(0)} · Gastos $${totalCostMonthly.toFixed(0)}/mes · Margen ${grossMargin}%`}
               {tab === 'content' && 'Genera imágenes + copy para LinkedIn'}
@@ -1566,6 +1647,101 @@ export function Admin() {
                     </tbody>
                   </table>
                   <PaginationBar page={pilotPage} total={pilotTotal} pageSize={PAGE_SIZE} onChange={setPilotPage} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══ OPERADORES (Fase 3C) ══════════════════════════════════════════ */}
+          {tab === 'operators' && (
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden">
+              {/* Alta de operador */}
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
+                <p className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0] mb-2">Agregar operador (debe tener cuenta en Validus)</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="email"
+                    value={newOpEmail}
+                    onChange={(e) => setNewOpEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addOperator()}
+                    placeholder="email@ejemplo.cl"
+                    className="flex-1 min-w-[220px] px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0F] text-gray-800 dark:text-[#F0EFF8] focus:outline-none focus:ring-2 focus:ring-[#0EB5C6]/20"
+                  />
+                  <select
+                    value={newOpRole}
+                    onChange={(e) => setNewOpRole(e.target.value as OperatorRole)}
+                    className="text-xs font-semibold px-2.5 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0F] text-gray-700 dark:text-[#C4C4D4] cursor-pointer"
+                  >
+                    {OPERATOR_ROLES.map((r) => <option key={r} value={r}>{OPERATOR_ROLE_LABEL[r]}</option>)}
+                  </select>
+                  <button
+                    onClick={addOperator}
+                    disabled={addingOp || !newOpEmail.trim()}
+                    className="px-4 py-2 bg-[#0EB5C6] text-white text-xs font-bold rounded-lg hover:bg-[#6B5EE6] disabled:opacity-50 transition"
+                  >
+                    {addingOp ? 'Agregando…' : 'Agregar'}
+                  </button>
+                </div>
+              </div>
+
+              {operators === undefined && <div className="px-6 py-16 text-center text-sm text-gray-400">Cargando operadores…</div>}
+              {operators === null && (
+                <div className="px-6 py-16 text-center">
+                  <p className="text-sm font-semibold text-red-500 dark:text-red-400">No pudimos cargar los operadores.</p>
+                  <button onClick={refreshOperators} className="mt-3 text-xs font-bold text-[#0EB5C6] hover:underline">Reintentar</button>
+                </div>
+              )}
+              {Array.isArray(operators) && operators.length === 0 && (
+                <div className="px-6 py-16 text-center text-sm text-gray-400">Aún no hay operadores.</div>
+              )}
+              {Array.isArray(operators) && operators.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-[11px] uppercase tracking-wide text-gray-400 border-b border-gray-100 dark:border-white/5">
+                        <th className="py-3 pl-6 pr-4 font-semibold">Email</th>
+                        <th className="py-3 pr-4 font-semibold">Rol</th>
+                        <th className="py-3 pr-4 font-semibold">Estado</th>
+                        <th className="py-3 pr-4 font-semibold">Agregado</th>
+                        <th className="py-3 pr-6 font-semibold text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {operators.map((op) => {
+                        const saving = savingOp[op.id];
+                        return (
+                          <tr key={op.id} className="border-b border-gray-50 dark:border-white/[0.03] hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
+                            <td className="py-3.5 pl-6 pr-4 text-gray-900 dark:text-[#F0EFF8] max-w-[260px] truncate" title={op.email}>{op.email}</td>
+                            <td className="py-3.5 pr-4">
+                              <select
+                                value={op.role}
+                                disabled={saving}
+                                onChange={(e) => setOperatorRole(op, e.target.value as OperatorRole)}
+                                className={`text-xs font-bold px-2 py-1 rounded-lg border cursor-pointer ${saving ? 'opacity-50' : ''} bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-[#C4C4D4] border-gray-200 dark:border-white/10`}
+                              >
+                                {OPERATOR_ROLES.map((r) => <option key={r} value={r}>{OPERATOR_ROLE_LABEL[r]}</option>)}
+                              </select>
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${op.is_active ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                                {op.is_active ? 'Activo' : 'Inactivo'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 pr-4 text-gray-400 dark:text-[#afaebb] tabular-nums">{new Date(op.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: '2-digit' })}</td>
+                            <td className="py-3.5 pr-6 text-right">
+                              <button
+                                onClick={() => setOperatorActive(op, !op.is_active)}
+                                disabled={saving}
+                                className={`text-xs font-semibold hover:underline disabled:opacity-50 ${op.is_active ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}
+                              >
+                                {op.is_active ? 'Desactivar' : 'Activar'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
