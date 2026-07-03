@@ -361,6 +361,11 @@ export function Admin() {
   const [pilotTotal, setPilotTotal] = useState(0);
   const [pilotPage, setPilotPage] = useState(0);
   const [pilotFilter, setPilotFilter] = useState<PilotStatus | 'all'>('all');
+  // Fase 3D: búsqueda por email (input responsivo + valor debounced) + funnel.
+  const [pilotSearchInput, setPilotSearchInput] = useState('');
+  const [pilotSearch, setPilotSearch] = useState('');
+  const pilotSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pilotFunnel, setPilotFunnel] = useState<Record<string, number> | null>(null);
   const [expandedPilot, setExpandedPilot] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [savingPilot, setSavingPilot] = useState<Record<string, boolean>>({});
@@ -461,10 +466,22 @@ export function Admin() {
       .order('created_at', { ascending: false })
       .range(pilotPage * PAGE_SIZE, pilotPage * PAGE_SIZE + PAGE_SIZE - 1);
     if (pilotFilter !== 'all') q = q.eq('status', pilotFilter);
+    if (pilotSearch.trim()) q = q.ilike('email', `%${pilotSearch.trim()}%`);
     const { data, count, error } = await q;
     if (error) return { rows: null, count: 0 };
     return { rows: (data ?? []) as unknown as PilotRow[], count: count ?? 0 };
-  }, [pilotPage, pilotFilter]);
+  }, [pilotPage, pilotFilter, pilotSearch]);
+
+  // Funnel: conteo por estado sobre TODO el pipeline (independiente de filtro/página).
+  // `select('status')` sin paginar — barato en volumen early-stage; migrar a RPC/vista
+  // si el pipeline crece a decenas de miles.
+  const queryPilotFunnel = useCallback(async (): Promise<Record<string, number> | null> => {
+    const { data, error } = await supabase.from('pilots').select('status');
+    if (error) return null;
+    const counts: Record<string, number> = {};
+    for (const r of (data ?? []) as { status: string }[]) counts[r.status] = (counts[r.status] ?? 0) + 1;
+    return counts;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -475,6 +492,14 @@ export function Admin() {
     });
     return () => { cancelled = true; };
   }, [queryPilots]);
+
+  useEffect(() => {
+    let cancelled = false;
+    queryPilotFunnel().then((c) => { if (!cancelled) setPilotFunnel(c); });
+    return () => { cancelled = true; };
+  }, [queryPilotFunnel]);
+
+  const refreshFunnel = useCallback(() => { queryPilotFunnel().then(setPilotFunnel); }, [queryPilotFunnel]);
 
   // Refresca solo la lista de pilotos (tras update). No toca los demás tabs.
   const refreshPilots = useCallback(() => {
@@ -495,7 +520,8 @@ export function Admin() {
     trackEvent('pilot_status_changed', { from: row.status, to: next, source: 'admin' });
     toast.success(`Estado → ${PILOT_STATUS_LABEL[next]}`);
     refreshPilots();
-  }, [refreshPilots]);
+    refreshFunnel();
+  }, [refreshPilots, refreshFunnel]);
 
   // Guardar nota interna (admin_notes). No envía contenido a analytics.
   const savePilotNote = useCallback(async (row: PilotRow) => {
@@ -556,6 +582,12 @@ export function Admin() {
   }, [refreshOperators]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
+  // Funnel de pilotos (Fase 3D): totales derivados del conteo por estado.
+  const pilotFunnelTotal = pilotFunnel ? Object.values(pilotFunnel).reduce((a, b) => a + b, 0) : 0;
+  const pilotFunnelActive = pilotFunnel?.piloto_activo ?? 0;
+  const pilotFunnelPago = pilotFunnel?.interes_pago ?? 0;
+  const pilotFunnelConv = pilotFunnelTotal ? Math.round((pilotFunnelPago / pilotFunnelTotal) * 100) : 0;
+
   const completed = validations.filter(v => v.status === 'completed');
   const inProgress = validations.filter(v => v.status === 'in_progress');
   const avgScore = completed.length
@@ -1529,17 +1561,58 @@ export function Admin() {
           {/* ══ PILOTOS (Fase 2) ══════════════════════════════════════════════ */}
           {tab === 'pilots' && (
             <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden">
-              {/* Filtro por estado */}
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-white/5 flex-wrap">
-                <label className="text-xs font-semibold text-gray-500 dark:text-[#8B8AA0]">Estado</label>
-                <select
-                  value={pilotFilter}
-                  onChange={(e) => { setPilotFilter(e.target.value as PilotStatus | 'all'); setPilotPage(0); }}
-                  className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0F] text-gray-700 dark:text-[#C4C4D4] cursor-pointer"
-                >
-                  <option value="all">Todos</option>
-                  {PILOT_STATUSES.map((s) => <option key={s} value={s}>{PILOT_STATUS_LABEL[s]}</option>)}
-                </select>
+              {/* Funnel + KPIs (Fase 3D) */}
+              <div className="px-6 pt-4 pb-3 border-b border-gray-100 dark:border-white/5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                  {[
+                    { label: 'Total pipeline', value: pilotFunnelTotal, accent: 'text-gray-900 dark:text-[#F0EFF8]' },
+                    { label: 'Pilotos activos', value: pilotFunnelActive, accent: 'text-emerald-600 dark:text-emerald-400' },
+                    { label: 'Interés en pago', value: pilotFunnelPago, accent: 'text-[#0EB5C6]' },
+                    { label: 'Conversión', value: `${pilotFunnelConv}%`, accent: 'text-violet-600 dark:text-[#A99FF9]' },
+                  ].map((kpi) => (
+                    <div key={kpi.label} className="rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50/60 dark:bg-white/[0.02] px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#8B8AA0]">{kpi.label}</p>
+                      <p className={`text-lg font-bold tabular-nums ${kpi.accent}`}>{pilotFunnel === null ? '—' : kpi.value}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Chips por estado (clic → filtra) */}
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => { setPilotFilter('all'); setPilotPage(0); }}
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${pilotFilter === 'all' ? 'bg-[#0EB5C6]/10 text-[#0EB5C6] border-[#0EB5C6]/30' : 'text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/[0.04]'}`}
+                  >
+                    Todos <span className="tabular-nums opacity-70">{pilotFunnelTotal}</span>
+                  </button>
+                  {PILOT_STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => { setPilotFilter(s); setPilotPage(0); }}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${pilotFilter === s ? 'bg-[#0EB5C6]/10 text-[#0EB5C6] border-[#0EB5C6]/30' : 'text-gray-500 dark:text-[#8B8AA0] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/[0.04]'}`}
+                    >
+                      {PILOT_STATUS_LABEL[s]} <span className="tabular-nums opacity-70">{pilotFunnel?.[s] ?? 0}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Búsqueda por email */}
+              <div className="flex items-center gap-3 px-6 py-3 border-b border-gray-100 dark:border-white/5">
+                <input
+                  type="search"
+                  value={pilotSearchInput}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPilotSearchInput(v);
+                    if (pilotSearchTimeout.current) clearTimeout(pilotSearchTimeout.current);
+                    pilotSearchTimeout.current = setTimeout(() => { setPilotSearch(v); setPilotPage(0); }, 350);
+                  }}
+                  placeholder="Buscar por email…"
+                  className="flex-1 min-w-[180px] max-w-xs px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0F] text-gray-800 dark:text-[#F0EFF8] focus:outline-none focus:ring-2 focus:ring-[#0EB5C6]/20"
+                />
+                {pilotSearch && (
+                  <span className="text-xs text-gray-400 dark:text-[#8B8AA0]">{pilotTotal} resultado{pilotTotal === 1 ? '' : 's'}</span>
+                )}
               </div>
 
               {/* Loading */}
@@ -1557,7 +1630,11 @@ export function Admin() {
 
               {/* Vacío */}
               {Array.isArray(pilots) && pilots.length === 0 && (
-                <div className="px-6 py-16 text-center text-sm text-gray-400">No hay solicitudes de piloto todavía.</div>
+                <div className="px-6 py-16 text-center text-sm text-gray-400">
+                  {pilotSearch || pilotFilter !== 'all'
+                    ? 'Ningún piloto coincide con el filtro/búsqueda.'
+                    : 'No hay solicitudes de piloto todavía.'}
+                </div>
               )}
 
               {/* Tabla */}
