@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useValidationStore } from '@/stores/validationStore';
@@ -113,43 +113,61 @@ export function Dashboard() {
   const [avgScore, setAvgScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
-        if (!user) return;
+  // Fetch puro (sin setState) para que el setState viva en `.then` (lint-clean,
+  // mismo patrón que Admin.tsx). Reutilizable: se aplica en el montaje y de nuevo
+  // cuando el GenerationStatusWidget detecta que una generación terminó (Punto 6).
+  const fetchDashboard = useCallback(async (): Promise<{
+    userName: string; rows: ValidationRow[]; count: number; avgScore: number | null;
+  } | null> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) return null;
 
-        const meta = user.user_metadata;
-        setUserName(meta?.full_name ?? meta?.name ?? user.email?.split('@')[0] ?? '');
+      const meta = user.user_metadata;
+      const name = meta?.full_name ?? meta?.name ?? user.email?.split('@')[0] ?? '';
 
-        // Una sola query: filtra user_id explícito (además de RLS — la policy
-        // "Admin can read all validations" haría que un admin viera todas). De aquí
-        // se derivan lista reciente, última validación, conteos por estado y promedio.
-        const { data, count } = await supabase
-          .from('validations')
-          .select('id, idea_name, idea_industry, validation_score, status, current_step, validation_mode, created_at, generation_progress', { count: 'exact' })
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(100);
+      // Una sola query: filtra user_id explícito (además de RLS — la policy
+      // "Admin can read all validations" haría que un admin viera todas). De aquí
+      // se derivan lista reciente, última validación, conteos por estado y promedio.
+      const { data, count } = await supabase
+        .from('validations')
+        .select('id, idea_name, idea_industry, validation_score, status, current_step, validation_mode, created_at, generation_progress', { count: 'exact' })
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-        const rows = (data as ValidationRow[]) ?? [];
-        setAll(rows);
-        setTotalCount(count ?? rows.length);
-
-        const scored = rows.filter((r) => r.validation_score != null);
-        if (scored.length > 0) {
-          const sum = scored.reduce((acc, r) => acc + (r.validation_score ?? 0), 0);
-          setAvgScore(Math.round(sum / scored.length));
-        }
-      } catch (err) {
-        console.warn('[Dashboard] load error:', err);
-      } finally {
-        setLoading(false);
-      }
+      const rows = (data as ValidationRow[]) ?? [];
+      const scored = rows.filter((r) => r.validation_score != null);
+      const avg = scored.length > 0
+        ? Math.round(scored.reduce((acc, r) => acc + (r.validation_score ?? 0), 0) / scored.length)
+        : null;
+      return { userName: name, rows, count: count ?? rows.length, avgScore: avg };
+    } catch (err) {
+      console.warn('[Dashboard] load error:', err);
+      return null;
     }
-    load();
   }, []);
+
+  // Aplica el resultado del fetch. No toca `loading` salvo apagarlo → el refresh
+  // post-generación no parpadea (skeletons solo en el montaje inicial).
+  const applyDashboard = useCallback((d: Awaited<ReturnType<typeof fetchDashboard>>) => {
+    if (d) {
+      setUserName(d.userName);
+      setAll(d.rows);
+      setTotalCount(d.count);
+      setAvgScore(d.avgScore);
+    }
+    setLoading(false);
+  }, []);
+
+  const refreshDashboard = useCallback(() => { fetchDashboard().then(applyDashboard); }, [fetchDashboard, applyDashboard]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDashboard().then((d) => { if (!cancelled) applyDashboard(d); });
+    return () => { cancelled = true; };
+  }, [fetchDashboard, applyDashboard]);
 
   const firstName = userName.split(' ')[0];
   const recent = all.slice(0, 5);
@@ -270,8 +288,9 @@ export function Dashboard() {
         </p>
       </div>
 
-      {/* Estado de generación en curso (redirect asíncrono del wizard) */}
-      <GenerationStatusWidget />
+      {/* Estado de generación en curso (redirect asíncrono del wizard).
+          Al terminar una generación, refresca los datos del dashboard (Punto 6). */}
+      <GenerationStatusWidget onFinished={refreshDashboard} />
 
       {/* ── Próximo paso recomendado (hero dinámico) ─────────────────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#0EB5C6] to-[#5B52C5] rounded-2xl p-6 mb-6">
