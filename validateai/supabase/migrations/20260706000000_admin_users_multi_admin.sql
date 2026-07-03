@@ -99,6 +99,11 @@ $$;
 
 REVOKE ALL ON FUNCTION public.get_my_admin_role() FROM public;
 GRANT EXECUTE ON FUNCTION public.get_my_admin_role() TO authenticated;
+-- Supabase concede EXECUTE por default (ALTER DEFAULT PRIVILEGES) a anon en funciones
+-- nuevas; el REVOKE FROM public no lo quita. Revocamos anon explícitamente para que
+-- solo usuarios autenticados invoquen la RPC (defensa en profundidad — ya filtra por
+-- auth.uid(), que es NULL para anon → devuelve {is_admin:false}).
+REVOKE EXECUTE ON FUNCTION public.get_my_admin_role() FROM anon;
 
 -- ── Seed: migra al owner actual (por email) a admin_users. Idempotente. ──────
 INSERT INTO public.admin_users (user_id, email, role, is_active)
