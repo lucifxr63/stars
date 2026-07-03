@@ -1997,6 +1997,10 @@ export type Database = {
         }
         Returns: string
       }
+      admin_add_operator: { Args: { p_email: string; p_role?: string }; Returns: Json }
+      admin_set_operator_active: { Args: { p_user_id: string; p_active: boolean }; Returns: Json }
+      admin_set_operator_role: { Args: { p_user_id: string; p_role: string }; Returns: Json }
+      is_owner: { Args: never; Returns: boolean }
       get_my_admin_role: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       match_mentors: {
