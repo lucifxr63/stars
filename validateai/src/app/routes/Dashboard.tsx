@@ -59,6 +59,43 @@ function titleOf(v: ValidationRow | null): string {
   return name && name.length > 0 ? name : 'Validación sin título';
 }
 
+// ── Trust por validación (Punto 4) ──────────────────────────────────────────
+// Señal HONESTA de profundidad/confianza derivada SOLO de datos ya persistidos
+// (validation_mode). No fabrica un score de confianza — solo comunica el rigor del
+// análisis. `detailed` = mayor profundidad; `quick` = orientativo; null = sin señal.
+interface TrustChip { label: string; tint: string; dot: string; title: string; }
+const TRUST_BY_MODE: Record<'quick' | 'detailed', TrustChip> = {
+  detailed: {
+    label: 'Detallado',
+    tint: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    dot: 'bg-emerald-500',
+    title: 'Análisis en profundidad: más secciones y fuentes. Aun así es orientativo — valida lo crítico antes de decidir.',
+  },
+  quick: {
+    label: 'Rápido',
+    tint: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+    dot: 'bg-amber-500',
+    title: 'Análisis rápido y orientativo. Para mayor rigor, corre una validación detallada.',
+  },
+};
+function trustChipOf(v: ValidationRow | null): TrustChip | null {
+  const mode = v?.validation_mode;
+  return mode ? TRUST_BY_MODE[mode] : null;
+}
+
+// Chip compacto de confianza/profundidad. Reutilizado en snapshot y lista.
+function TrustBadge({ chip }: { chip: TrustChip }) {
+  return (
+    <span
+      title={chip.title}
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[10px] font-bold leading-none ${chip.tint}`}
+    >
+      <span className={`w-1 h-1 rounded-full ${chip.dot}`} aria-hidden="true" />
+      {chip.label}
+    </span>
+  );
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const reset = useValidationStore((s) => s.reset);
@@ -284,9 +321,12 @@ export function Dashboard() {
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#8B8AA0] mb-0.5">
               Última validación
             </p>
-            <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
-              {titleOf(latest)}
-            </p>
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
+                {titleOf(latest)}
+              </p>
+              {trustChipOf(latest) && <TrustBadge chip={trustChipOf(latest)!} />}
+            </div>
             <p className="text-xs mt-0.5 truncate">
               {latest.idea_industry && (
                 <span className="text-gray-400 dark:text-[#afaebb]">{latest.idea_industry} · </span>
@@ -435,9 +475,12 @@ export function Dashboard() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
-                    {titleOf(v)}
-                  </p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] truncate group-hover:text-[#0EB5C6] transition-colors">
+                      {titleOf(v)}
+                    </p>
+                    {trustChipOf(v) && <TrustBadge chip={trustChipOf(v)!} />}
+                  </div>
                   <p className="text-xs mt-0.5 truncate">
                     {v.idea_industry && (
                       <span className="text-gray-400 dark:text-[#afaebb]">{v.idea_industry} · </span>
