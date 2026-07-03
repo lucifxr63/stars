@@ -7,10 +7,9 @@ import { markDeliberateLogout } from '@/lib/session';
 import { useValidationStore } from '@/stores/validationStore';
 import { useUserTier } from '@/hooks/useUserTier';
 import { useUsage } from '@/hooks/useUsage';
+import { useAdminRole } from '@/hooks/useAdminRole';
 import { UsageBar } from '@/components/shared/UsageBar';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
-
-const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 
 const TIER_LABEL: Record<string, string> = {
   free: 'Free', basic: 'Basic', pro: 'Pro', premium: 'Premium',
@@ -54,14 +53,13 @@ export function Sidebar({ onClose }: SidebarProps) {
   const reset = useValidationStore((s) => s.reset);
   const { tier } = useUserTier();
   const { usage, limits, remaining } = useUsage(tier);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAdminRole(); // multi-admin (Fase 3B)
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const user = data.session?.user;
       if (!user) return;
-      setIsAdmin(user.email === ADMIN_EMAIL);
       const name =
         user.user_metadata?.full_name ??
         user.user_metadata?.name ??

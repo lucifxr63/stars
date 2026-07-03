@@ -10,9 +10,9 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { setPreviewTier, getPreviewTier, type UserTier } from '@/hooks/useUserTier';
+import { useAdminRole } from '@/hooks/useAdminRole';
 import { trackEvent } from '@/lib/analytics';
 
-const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
 const WIZARD_STEPS = 4; // Idea, Mercado, Fundador, Generación
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
@@ -339,11 +339,12 @@ export function Admin() {
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id'>>({ name: '', amount: 0, category: 'infra', currency: 'USD' });
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
+  // Gate multi-admin (Fase 3B): la seguridad real es la RLS is_admin(); esto solo
+  // decide el acceso a la superficie /admin. Redirige a no-admins una vez resuelto.
+  const { isAdmin, loading: adminLoading } = useAdminRole();
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user?.email !== ADMIN_EMAIL) navigate('/validate', { replace: true });
-    });
-  }, [navigate]);
+    if (!adminLoading && !isAdmin) navigate('/validate', { replace: true });
+  }, [adminLoading, isAdmin, navigate]);
 
   // Fetch PURO (sin setState) → permite aplicar el resultado dentro de `.then`,
   // evitando react-hooks/set-state-in-effect en el efecto de carga.

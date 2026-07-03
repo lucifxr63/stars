@@ -7,8 +7,7 @@ import { EVENTS } from '@/lib/storageKeys';
 import { useValidationStore } from '@/stores/validationStore';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { getPreviewTier, setPreviewTier, type UserTier } from '@/hooks/useUserTier';
-
-const ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
+import { useAdminRole } from '@/hooks/useAdminRole';
 
 const PREVIEW_COLORS: Record<UserTier, string> = {
   free:    'bg-gray-800 text-gray-200 border-gray-600',
@@ -22,15 +21,9 @@ export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const reset = useValidationStore((s) => s.reset);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAdminRole(); // multi-admin (Fase 3B)
   const [menuOpen, setMenuOpen] = useState(false);
   const [previewTier, setPreviewTierState] = useState<UserTier | null>(() => getPreviewTier());
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setIsAdmin(data.session?.user?.email === ADMIN_EMAIL);
-    });
-  }, []);
 
   useEffect(() => {
     const onPreview = (e: Event) => {
@@ -40,7 +33,6 @@ export function Header() {
     return () => window.removeEventListener(EVENTS.tierPreview, onPreview);
   }, []);
 
-  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   const handleLogout = async () => {
     markDeliberateLogout();
@@ -133,17 +125,17 @@ export function Header() {
       {/* Mobile drawer */}
       {menuOpen && (
         <div className="sm:hidden border-t border-black/[0.07] dark:border-white/[0.06] bg-white dark:bg-[#12121A] px-4 py-3 space-y-1">
-          <Link to="/results" className={linkCls(isActive('/results'))}>
+          <Link to="/results" onClick={() => setMenuOpen(false)} className={linkCls(isActive('/results'))}>
             Mis validaciones
           </Link>
-          <Link to="/profile" className={linkCls(isActive('/profile'))}>
+          <Link to="/profile" onClick={() => setMenuOpen(false)} className={linkCls(isActive('/profile'))}>
             Perfil
           </Link>
-          <Link to="/developers" className={linkCls(isActive('/developers'))}>
+          <Link to="/developers" onClick={() => setMenuOpen(false)} className={linkCls(isActive('/developers'))}>
             API & Devs
           </Link>
           {isAdmin && (
-            <Link to="/admin" className={linkCls(isActive('/admin'))}>
+            <Link to="/admin" onClick={() => setMenuOpen(false)} className={linkCls(isActive('/admin'))}>
               Admin
             </Link>
           )}
