@@ -30,11 +30,21 @@ interface DoneRow {
   progress: GenerationProgress | null;
 }
 
-export function GenerationStatusWidget() {
+interface GenerationStatusWidgetProps {
+  // Se invoca cuando una generación pasa a un estado terminal (completed/partial/
+  // failed). El Dashboard lo usa para refrescar hero/snapshot/stats/lista (Punto 6).
+  onFinished?: () => void;
+}
+
+export function GenerationStatusWidget({ onFinished }: GenerationStatusWidgetProps = {}) {
   const [active, setActive] = useState<ActiveRow[]>([]);
   const [done, setDone] = useState<DoneRow[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const seen = useRef<Set<string>>(new Set());
+
+  // Ref al callback para no re-suscribir el efecto de polling en cada render.
+  const onFinishedRef = useRef(onFinished);
+  useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,6 +99,8 @@ export function GenerationStatusWidget() {
             });
             return [...fresh.map(toRow), ...prev];
           });
+          // Punto 6: avisa al Dashboard para refrescar hero/snapshot/stats/lista.
+          onFinishedRef.current?.();
         }
         gone.forEach((id) => seen.current.delete(id));
       }
