@@ -28,6 +28,12 @@ class StartupContext(BaseModel):
         None,
         description="Modelo de negocio (B2B, B2C, marketplace). Informativo — no afecta routing.",
     )
+    company_rut: str | None = Field(
+        None,
+        description="RUT de la empresa (opcional). Si se provee y S-Pulse está configurado, "
+        "se inyecta inteligencia de relaciones societarias citable en el contexto.",
+        examples=["76.086.428-5"],
+    )
 
 
 # ── Query endpoint ────────────────────────────────────────────────────────────
@@ -53,6 +59,11 @@ class QueryRequest(BaseModel):
     entity_override: list[str] | None = Field(
         None,
         description="Sobreescribe el routing: usa estos document_titles directamente.",
+    )
+    tenant_id: str | None = Field(
+        None,
+        description="Tenant forwardeado por la host app (Validus). Necesario para traer "
+        "oportunidades de S-Pulse. Bralidus NUNCA lo infiere — lo confía de quien lo llama.",
     )
 
 
@@ -119,6 +130,11 @@ class MoEQueryRequest(BaseModel):
     entity_override: list[str] | None = Field(
         None,
         description="Sobreescribe el routing MoE: usa estos document_titles directamente.",
+    )
+    tenant_id: str | None = Field(
+        None,
+        description="Tenant forwardeado por la host app (Validus). Necesario para traer "
+        "oportunidades de S-Pulse. Bralidus NUNCA lo infiere — lo confía de quien lo llama.",
     )
 
 

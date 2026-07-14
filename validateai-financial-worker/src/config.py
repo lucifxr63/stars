@@ -20,3 +20,11 @@ OPENAI_API_KEY: str = _require("OPENAI_API_KEY")
 # Sprint 1 — CMF API (opcional: si no está configurada el extractor falla silenciosamente)
 # Mercado Público: ingestado por proceso externo, no se necesita key aquí.
 CMF_BEST_KEY: str = os.getenv("CMF_BEST_KEY", "")     # api.cmfchile.cl
+
+# ── S-Pulse — B2B Relationship Intelligence (host↔S-Pulse, opcional) ───────────
+# Bralidus actúa como "host app" de S-Pulse (grafo societario chileno + trazabilidad
+# legal). Si BASE_URL no está configurada, la integración se desactiva por completo
+# (degrada a None, nunca crashea). El API key es un secreto COMPARTIDO, no un JWT.
+SPULSE_BASE_URL: str = os.getenv("SPULSE_BASE_URL", "").rstrip("/")  # ej: https://s-pulse.up.railway.app/api
+SPULSE_INTERNAL_API_KEY: str = os.getenv("SPULSE_INTERNAL_API_KEY", "")
+SPULSE_TIMEOUT_S: float = float(os.getenv("SPULSE_TIMEOUT_S", "8"))  # timeout duro por request
