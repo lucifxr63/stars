@@ -214,7 +214,10 @@ export const BRALIDUS_CITE_DIRECTIVE =
 // forzado (datos fechados). basic (macroOnly=true): solo el pull macro.
 export async function fetchBralidusBundle(
   query: string,
-  startupContext: { industry: string; stage: string; geography: string },
+  // company_rut/tenant_id opcionales: se forwardean verbatim a Bralidus (que los
+  // usa para inyectar relaciones societarias de S-Pulse). Este pull NO usa la
+  // caché por perfil (bralidus_context_cache), así que sumar el RUT no la envenena.
+  startupContext: { industry: string; stage: string; geography: string; company_rut?: string; tenant_id?: string },
   tier: string,
 ): Promise<BralidusBundle> {
   const config = BRALIDUS_TIER[tier] ?? BRALIDUS_TIER.free;
