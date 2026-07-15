@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/store/auth';
+import { CompanyIdentityGate } from '@/components/CompanyIdentityGate';
 
 // Guard de rutas protegidas. Mientras carga la sesión muestra un placeholder;
-// sin sesión redirige a /login.
+// sin sesión redirige a /login. Con sesión, gatea la identidad de empresa
+// compartida antes de la app.
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
 
@@ -13,5 +15,5 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (!session) {
     return <Navigate to="/login" replace />;
   }
-  return <>{children}</>;
+  return <CompanyIdentityGate>{children}</CompanyIdentityGate>;
 }
