@@ -9,6 +9,11 @@ export interface CompanyIdentity {
   company_name: string;
 }
 
+// El cliente de Validus está tipado con el Database generado, que NO incluye la
+// tabla compartida company_identity → accedemos sin tipos.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const table = () => (supabase as any).from('company_identity');
+
 // Devuelve:
 //   objeto → identidad existente
 //   null   → sesión OK, sin identidad aún → mostrar el gate
@@ -16,8 +21,7 @@ export interface CompanyIdentity {
 export async function getCompanyIdentity(): Promise<CompanyIdentity | null | false> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
-  const { data, error } = await supabase
-    .from('company_identity')
+  const { data, error } = await table()
     .select('company_rut, company_name')
     .eq('user_id', user.id)
     .maybeSingle();
@@ -31,8 +35,9 @@ export async function getCompanyIdentity(): Promise<CompanyIdentity | null | fal
 export async function saveCompanyIdentity(identity: CompanyIdentity): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Sin sesión');
-  const { error } = await supabase
-    .from('company_identity')
-    .upsert({ user_id: user.id, ...identity }, { onConflict: 'user_id' });
+  const { error } = await table().upsert(
+    { user_id: user.id, ...identity },
+    { onConflict: 'user_id' },
+  );
   if (error) throw error;
 }
