@@ -7,6 +7,8 @@ import { EVENTS } from '@/lib/storageKeys';
 import { useValidationStore } from '@/stores/validationStore';
 import { useConsentGuard } from '@/hooks/useConsentGuard';
 import { ConsentModal } from '@/components/shared/ConsentModal';
+import { CompanyIdentityModal } from '@/components/shared/CompanyIdentityModal';
+import { getCompanyIdentity } from '@/lib/companyIdentity';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { UpgradeModal } from '@/components/shared/UpgradeModal';
 import { getPreviewTier, setPreviewTier, type UserTier } from '@/hooks/useUserTier';
@@ -26,6 +28,8 @@ export function ProtectedLayout() {
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
   const consentStatus = useConsentGuard(user?.id);
   const [consentAccepted, setConsentAccepted] = useState(false);
+  // null = sin resolver; true = falta identidad de empresa → gate; false = ok/no aplica
+  const [companyNeeded, setCompanyNeeded] = useState<boolean | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -69,6 +73,15 @@ export function ProtectedLayout() {
       });
   }, [user]);
 
+  // Identidad de empresa compartida (RUT de negocio). Se pide una vez y la usa
+  // todo el ecosistema (grafo societario S-Pulse). Degrada si la tabla no existe.
+  useEffect(() => {
+    if (!user) { setCompanyNeeded(null); return; }
+    let active = true;
+    getCompanyIdentity().then((c) => { if (active) setCompanyNeeded(c === null); });
+    return () => { active = false; };
+  }, [user]);
+
   const handleConsentAccepted = useCallback(() => setConsentAccepted(true), []);
 
   // Wait for both auth + onboarding status before rendering
@@ -81,11 +94,16 @@ export function ProtectedLayout() {
   }
 
   const needsConsent = consentStatus === 'required' && !consentAccepted;
+  // No pedir la identidad de empresa durante el onboarding (dejar que termine).
+  const needsCompany = companyNeeded === true && location.pathname !== '/onboarding';
 
   return (
     <>
       {needsConsent && (
         <ConsentModal userId={user.id} onAccepted={handleConsentAccepted} />
+      )}
+      {!needsConsent && needsCompany && (
+        <CompanyIdentityModal onDone={() => setCompanyNeeded(false)} />
       )}
       <Outlet />
     </>
