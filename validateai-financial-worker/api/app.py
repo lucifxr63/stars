@@ -37,6 +37,7 @@ from api.experts import EXPERTS
 from api.radar.signal_cache import signal_cache
 from api.auth import require_api_key
 from api.spulse import router as spulse_router, build_relationship_context
+from api.jobs import router as jobs_router
 from api import rag, cache
 
 log = logging.getLogger(__name__)
@@ -123,6 +124,10 @@ app.add_middleware(
 
 # Router proxy read-only de S-Pulse (/spulse/*). Protegido por require_api_key.
 app.include_router(spulse_router)
+
+# Disparadores HTTP de los jobs del scheduler (/jobs/*). Protegido por CRON_SECRET.
+# Reemplaza al APScheduler en serverless (ver lifespan); los agenda un cron externo.
+app.include_router(jobs_router)
 
 
 # ── Helper: inyección de inteligencia de relaciones (S-Pulse, Fase 2) ──────────
