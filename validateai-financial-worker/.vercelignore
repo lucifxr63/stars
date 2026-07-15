@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+server.log
+tests
+scripts
+migrations
+docker-compose.yml
+Dockerfile
+railway.toml
+.env
+node_modules

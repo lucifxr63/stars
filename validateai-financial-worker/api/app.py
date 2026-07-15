@@ -66,20 +66,27 @@ async def lifespan(app: FastAPI):
     get_db()
     log.info("Supabase client listo.")
 
-    # Iniciar scheduler de jobs automáticos
-    from api.scheduler import scheduler
-    scheduler.start()
-    jobs = scheduler.get_jobs()
-    log.info("Scheduler iniciado: %d jobs activos.", len(jobs))
-    for job in jobs:
-        log.info("  - %s: próxima ejecución %s", job.name, job.next_run_time)
+    # Iniciar scheduler de jobs automáticos. En serverless (Vercel) NO corre:
+    # no hay proceso long-lived, el thread se congela tras la respuesta. Los jobs
+    # se disparan aparte (Vercel Cron / GitHub Actions) por HTTP. VERCEL=1 lo pone
+    # Vercel automáticamente.
+    if os.getenv("VERCEL"):
+        log.info("Entorno Vercel detectado: scheduler deshabilitado (jobs por cron externo).")
+    else:
+        from api.scheduler import scheduler
+        scheduler.start()
+        jobs = scheduler.get_jobs()
+        log.info("Scheduler iniciado: %d jobs activos.", len(jobs))
+        for job in jobs:
+            log.info("  - %s: próxima ejecución %s", job.name, job.next_run_time)
 
     auth_active = bool(os.getenv("BRALIDUS_API_KEY"))
     log.info("Auth: %s", "activa (Bearer token)" if auth_active else "deshabilitada (dev mode)")
 
     yield
 
-    scheduler.shutdown(wait=False)
+    if not os.getenv("VERCEL"):
+        scheduler.shutdown(wait=False)
     log.info("BralidusPY API apagando.")
 
 
