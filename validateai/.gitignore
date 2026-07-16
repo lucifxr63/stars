@@ -33,3 +33,4 @@ __pycache__/
 # Playwright (artefactos de test generados)
 playwright-report/
 test-results/
+.env*

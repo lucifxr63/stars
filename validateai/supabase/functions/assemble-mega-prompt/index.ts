@@ -730,11 +730,27 @@ serve(async (req) => {
     });
 
     // â”€â”€ S5-B: verificar cachÃ© antes de gastar tokens de Claude â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // RUT de la empresa para inteligencia societaria (S-Pulse vía Bralidus).
+    // Preferimos el que manda el request; si no, la identidad de empresa compartida
+    // del ecosistema (tabla company_identity). Lee con service key (bypassa RLS).
+    let companyRut: string | null = (rut_empresa as string) ?? null;
+    if (!companyRut) {
+      const { data: ci } = await supabase
+        .from('company_identity')
+        .select('company_rut')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      companyRut = (ci?.company_rut as string) ?? null;
+    }
+
     const cacheQueryText = [
       validation.idea_name,
       validation.idea_industry,
       validation.business_model,
       validation.target_country,
+      // Per-empresa: sus relaciones societarias son distintas → la caché DD no
+      // debe colisionar entre empresas con el mismo perfil de idea.
+      companyRut,
     ].filter(Boolean).join(' | ');
 
     const cached = await checkDueDiligenceCache(supabase, cacheQueryText);
@@ -762,6 +778,9 @@ serve(async (req) => {
       industry: (validation.idea_industry as string) ?? 'default',
       stage:    (validation.business_stage as string) ?? 'seed',
       geography: (validation.target_country as string) === 'CL' ? 'chile' : 'latam',
+      // company_rut → Bralidus inyecta relaciones societarias de S-Pulse
+      // (build_relationship_context). Este pull no usa la caché por perfil.
+      ...(companyRut ? { company_rut: companyRut } : {}),
     };
 
     const bralidusPYPromise = bralidusTierConfig.enabled
