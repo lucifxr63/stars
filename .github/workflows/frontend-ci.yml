@@ -35,6 +35,14 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # `src/lib/supabase.ts` llama a createClient() en module-scope; sin estas vars,
+    # validateSupabaseUrl lanza y cualquier test/módulo que lo importe (ej.
+    # upgradeModal.test.ts → checkout.ts → supabase.ts) no carga. Son valores DUMMY
+    # (no hay red en CI): sólo permiten construir el cliente. La app real usa los
+    # secrets de Vercel. URL bien formada para pasar la validación de formato.
+    env:
+      VITE_SUPABASE_URL: https://dummy.supabase.co
+      VITE_SUPABASE_ANON_KEY: dummy-anon-key-for-ci
     steps:
       - uses: actions/checkout@v4
         with:
