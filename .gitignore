@@ -18,3 +18,4 @@ cashflow/modelos.md
 
 # Temporales del CLI de Supabase
 validateai/supabase/.temp/
+.env*
