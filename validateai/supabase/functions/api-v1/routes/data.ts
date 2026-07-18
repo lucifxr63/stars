@@ -3,6 +3,12 @@ import { getSupabase } from '../middleware/auth.ts'
 const MP_BASE = 'https://api.mercadopublico.cl/servicios/v1/publico'
 const CHILECOMPRA_CACHE_TTL_HOURS = 24
 
+// BralidusPY (proxy de Licitus). Mismos secrets que usa _shared/bralidus.ts —
+// el secreto NUNCA llega al navegador; el browser se autentica con su Validus
+// API key contra api-v1 y este gateway agrega el Bearer server-side.
+const BRALIDUS_URL = Deno.env.get('BRALIDUS_URL') ?? ''
+const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY') ?? ''
+
 // GET /api/v1/data/economy
 // Retorna todos los indicadores económicos disponibles (CMF, SII, FRED, etc.)
 // organizados por proveedor para facilitar el consumo.
@@ -122,6 +128,45 @@ export const chilecompraMetricasHandler = async (c: any) => {
     return c.json({ error: 'Internal server error' }, 500)
   }
 }
+
+// ── Licitus (vía BralidusPY) ─────────────────────────────────────────────────
+// Browser → api-v1 (Validus API key) → BralidusPY /licitus/* (Bearer secreto)
+// → Licitus /v1/*. Fuente PARALELA a chilecompra/metricas: Licitus sirve OCs
+// reales de purchase_orders + buyer intelligence; metricas M1-M10 son cálculo
+// propio de Validus. No fusionar (decisión de canonicidad pendiente — plan §7).
+//
+// BralidusPY responde { data: <json plano de Licitus> } o 503 si Licitus degrada.
+const licitusProxyHandler = (subpath: (c: any) => string, tokens: number) => async (c: any) => {
+  if (!BRALIDUS_URL) {
+    return c.json({ error: 'BRALIDUS_URL no configurado', hint: 'Configurar secret en Supabase' }, 503)
+  }
+  try {
+    const url = new URL(c.req.url)
+    const target = `${BRALIDUS_URL.replace(/\/$/, '')}/licitus${subpath(c)}${url.search}`
+    const res = await fetch(target, {
+      headers: BRALIDUS_API_KEY ? { 'Authorization': `Bearer ${BRALIDUS_API_KEY}` } : {},
+      signal: AbortSignal.timeout(12_000),
+    })
+    const body = await res.json().catch(() => ({ error: `BralidusPY HTTP ${res.status}` }))
+    if (res.status === 429) {
+      return c.json({ error: 'Rate limit de Licitus alcanzado — reintenta en unos segundos', ...body }, 429)
+    }
+    c.set('tokens_used', tokens)
+    return c.json(body, res.status)
+  } catch (err) {
+    console.error('Licitus proxy error:', err)
+    return c.json({ error: 'Licitus no disponible', detail: String(err) }, 502)
+  }
+}
+
+// GET /api/v1/data/licitus/proveedor/:rut?periodo_meses=12
+export const licitusProveedorHandler = licitusProxyHandler(
+  (c) => `/proveedor/${encodeURIComponent(c.req.param('rut') ?? '')}`, 40,
+)
+// GET /api/v1/data/licitus/mercado/benchmarks?unspsc&region&periodo_meses
+export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benchmarks', 30)
+// GET /api/v1/data/licitus/mercado/activas?unspsc&region&monto_min&cierre_desde_horas&limit
+export const licitusActivasHandler = licitusProxyHandler(() => '/mercado/activas', 30)
 
 // GET /api/v1/data/chilecompra?rut={rut}&refresh=true
 // Retorna datos de contratos públicos de un proveedor desde Mercado Público.

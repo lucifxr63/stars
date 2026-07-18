@@ -28,3 +28,12 @@ CMF_BEST_KEY: str = os.getenv("CMF_BEST_KEY", "")     # api.cmfchile.cl
 SPULSE_BASE_URL: str = os.getenv("SPULSE_BASE_URL", "").rstrip("/")  # ej: https://s-pulse.up.railway.app/api
 SPULSE_INTERNAL_API_KEY: str = os.getenv("SPULSE_INTERNAL_API_KEY", "")
 SPULSE_TIMEOUT_S: float = float(os.getenv("SPULSE_TIMEOUT_S", "8"))  # timeout duro por request
+
+# ── Licitus — Inteligencia de Mercado Público (host↔Licitus, opcional) ─────────
+# Bralidus consume la API B2B /v1 de Licitus (actividad de proveedores en compras
+# públicas, benchmarks de mercado, licitaciones activas). Mismo patrón que S-Pulse:
+# sin BASE_URL la integración se desactiva por completo (degrada a None).
+# ⚠️ A diferencia de S-Pulse, Licitus responde JSON PLANO (sin wrapper {success,data}).
+LICITUS_BASE_URL: str = os.getenv("LICITUS_BASE_URL", "").rstrip("/")  # ej: https://api.licitus.scouttech.lat/v1
+LICITUS_API_KEY: str = os.getenv("LICITUS_API_KEY", "")
+LICITUS_TIMEOUT_S: float = float(os.getenv("LICITUS_TIMEOUT_S", "8"))  # timeout duro por request
