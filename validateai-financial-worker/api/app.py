@@ -37,6 +37,7 @@ from api.experts import EXPERTS
 from api.radar.signal_cache import signal_cache
 from api.auth import require_api_key
 from api.spulse import router as spulse_router, build_relationship_context
+from api.licitus import router as licitus_router
 from api.jobs import router as jobs_router
 from api import rag, cache
 
@@ -124,6 +125,9 @@ app.add_middleware(
 
 # Router proxy read-only de S-Pulse (/spulse/*). Protegido por require_api_key.
 app.include_router(spulse_router)
+
+# Router proxy read-only de Licitus (/licitus/*). Protegido por require_api_key.
+app.include_router(licitus_router)
 
 # Disparadores HTTP de los jobs del scheduler (/jobs/*). Protegido por CRON_SECRET.
 # Reemplaza al APScheduler en serverless (ver lifespan); los agenda un cron externo.
@@ -743,6 +747,23 @@ async def health_endpoint() -> HealthResponse:
             )
     except Exception as exc:
         services.append(ServiceStatus(name="spulse", ok=False, detail=str(exc)))
+
+    # Licitus (integración opcional — deshabilitada NO cuenta como fallo)
+    try:
+        from src.clients.licitus_client import licitus
+        if not licitus.is_enabled():
+            services.append(ServiceStatus(name="licitus", ok=True, detail="deshabilitada (sin BASE_URL)"))
+        else:
+            reachable = licitus.health()
+            services.append(
+                ServiceStatus(
+                    name="licitus",
+                    ok=reachable,
+                    detail="alcanzable" if reachable else "configurada pero no responde",
+                )
+            )
+    except Exception as exc:
+        services.append(ServiceStatus(name="licitus", ok=False, detail=str(exc)))
 
     # Cache
     c_stats = cache.stats()
