@@ -37,7 +37,7 @@ from api.experts import EXPERTS
 from api.radar.signal_cache import signal_cache
 from api.auth import require_api_key
 from api.spulse import router as spulse_router, build_relationship_context
-from api.licitus import router as licitus_router
+from api.licitus import router as licitus_router, build_procurement_context
 from api.jobs import router as jobs_router
 from api import rag, cache
 
@@ -155,6 +155,24 @@ async def _maybe_append_spulse(
     return f"{context}\n\n{rel}" if rel else context
 
 
+async def _maybe_append_licitus(context: str, startup_context) -> str:
+    """
+    Si el startup_context trae un company_rut y Licitus está configurado, anexa
+    un bloque de actividad en compras públicas (OCs reales + benchmarks de
+    Mercado Público) citable. Degrada a `context` sin cambios ante cualquier
+    fallo — mismo contrato que _maybe_append_spulse.
+    """
+    rut = getattr(startup_context, "company_rut", None) if startup_context else None
+    if not rut:
+        return context
+    try:
+        proc = await asyncio.to_thread(build_procurement_context, rut)
+    except Exception as exc:  # defensivo — build_* ya degrada, esto es doble red
+        log.warning("[licitus] build_procurement_context falló (%s).", exc)
+        return context
+    return f"{context}\n\n{proc}" if proc else context
+
+
 # ── POST /query ───────────────────────────────────────────────────────────────
 
 @app.post(
@@ -226,6 +244,9 @@ async def query_endpoint(req: QueryRequest) -> QueryResponse:
 
     # 5b. Inteligencia de relaciones societarias (S-Pulse) — opcional, degrada a nada
     context = await _maybe_append_spulse(context, req.startup_context, req.tenant_id)
+
+    # 5c. Actividad en compras públicas (Licitus) — opcional, degrada a nada
+    context = await _maybe_append_licitus(context, req.startup_context)
 
     node_results = [
         NodeResult(
@@ -368,6 +389,9 @@ async def query_moe_endpoint(
 
     # Inteligencia de relaciones societarias (S-Pulse) — opcional, degrada a nada
     context = await _maybe_append_spulse(context, req.startup_context, req.tenant_id)
+
+    # Actividad en compras públicas (Licitus) — opcional, degrada a nada
+    context = await _maybe_append_licitus(context, req.startup_context)
 
     node_results = [
         NodeResult(
