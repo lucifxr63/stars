@@ -1,4 +1,14 @@
-import { getSupabase } from '../middleware/auth.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// Cliente service-role propio: este módulo se importa desde funciones sueltas
+// (assemble-mega-prompt, extract-founder-profile, enqueue-generation), no solo
+// desde api-v1, así que no depende de su middleware.
+function getSupabase() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+}
 
 /**
  * Creates an HMAC-SHA256 signature for the given payload using the secret.
@@ -19,20 +29,20 @@ async function createSignature(payload: string, secret: string): Promise<string>
   const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData)
   const signatureArray = Array.from(new Uint8Array(signatureBuffer))
   const signatureHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('')
-  
+
   return signatureHex
 }
 
 /**
  * Dispatches an event to all active webhooks subscribed to it for a given profile.
- * 
- * @param eventName Name of the event (e.g. 'economy.indicator.updated')
+ *
+ * @param eventName Name of the event (e.g. 'validation.complete', 'analysis.ready', 'profile.updated')
  * @param payload Data payload to send
  * @param targetProfileId Only trigger webhooks owned by this profile. If null, triggers globally (for all profiles subscribed to the event).
  */
 export async function dispatchWebhook(eventName: string, payload: any, targetProfileId?: string) {
   const supabase = getSupabase()
-  
+
   // 1. Fetch active subscriptions for this event
   let query = supabase
     .from('webhook_subscriptions')
@@ -60,7 +70,7 @@ export async function dispatchWebhook(eventName: string, payload: any, targetPro
   const dispatchPromises = subscriptions.map(async (sub) => {
     try {
       const signature = await createSignature(payloadString, sub.secret)
-      
+
       const response = await fetch(sub.endpoint_url, {
         method: 'POST',
         headers: {
@@ -70,7 +80,7 @@ export async function dispatchWebhook(eventName: string, payload: any, targetPro
         },
         body: payloadString,
         // Short timeout for webhooks to not block our processes
-        signal: AbortSignal.timeout(5000) 
+        signal: AbortSignal.timeout(5000)
       })
 
       if (!response.ok) {
@@ -82,7 +92,7 @@ export async function dispatchWebhook(eventName: string, payload: any, targetPro
     }
   })
 
-  // We don't await the results here strictly if we don't want to block the main thread, 
+  // We don't await the results here strictly if we don't want to block the main thread,
   // but in Edge Functions it's safer to await Promise.allSettled to ensure they fire before execution context dies.
   await Promise.allSettled(dispatchPromises)
 }

@@ -7,6 +7,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { dispatchWebhook } from '../_shared/webhook_dispatcher.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -60,6 +61,7 @@ declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 interface JobRow {
   id: string;
   validation_id: string;
+  user_id: string;
   tasks: Task[];
   context: Record<string, unknown>;
 }
@@ -129,6 +131,15 @@ async function runJob(job: JobRow, userToken: string, supabase: SupaClient): Pro
   const valStatus = okCount === tasks.length ? 'completed' : okCount === 0 ? 'failed' : 'partial';
   await supabase.from('generation_jobs').update({ status: jobStatus, updated_at: now() }).eq('id', job.id);
   await supabase.from('validations').update({ status: valStatus }).eq('id', job.validation_id);
+
+  // Notificar a los webhooks del usuario que la validación terminó (solo en éxito).
+  if (valStatus === 'completed') {
+    try {
+      await dispatchWebhook('validation.complete', { validation_id: job.validation_id }, job.user_id);
+    } catch (e) {
+      console.warn('[enqueue-generation] dispatchWebhook error:', e);
+    }
+  }
 }
 
 Deno.serve(async (req) => {
@@ -215,7 +226,7 @@ Deno.serve(async (req) => {
     // Ejecuta el job server-side con el JWT FRESCO del usuario, tab-independiente.
     // waitUntil mantiene viva la instancia tras devolver la respuesta.
     const userToken = authHeader.replace('Bearer ', '');
-    const jobRow: JobRow = { id: job.id, validation_id: validationId, tasks, context: body.context ?? {} };
+    const jobRow: JobRow = { id: job.id, validation_id: validationId, user_id: user.id, tasks, context: body.context ?? {} };
     const work = runJob(jobRow, userToken, supabase);
     if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime) EdgeRuntime.waitUntil(work);
     else void work;

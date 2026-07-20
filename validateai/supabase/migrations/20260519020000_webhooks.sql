@@ -6,7 +6,7 @@
 create table public.webhook_subscriptions (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
-  api_key_id uuid not null references public.api_keys(id) on delete cascade,
+  api_key_id uuid references public.api_keys(id) on delete cascade,
   
   endpoint_url text not null check (endpoint_url ~ '^https?://'),
   events text[] not null default '{}',
