@@ -115,3 +115,16 @@ def test_campos_faltantes_no_crashean():
     block = _ctx(proveedor={"rut": RUT}, benchmarks=None)
     assert block is not None
     assert RUT in block
+
+
+def test_tendencia_absurda_se_omite():
+    """Histórico incompleto en Licitus → tendencias de miles de % son artefacto, no señal."""
+    import copy
+    bench = copy.deepcopy(BENCHMARKS)
+    bench["volumen"]["tendencia_vs_periodo_anterior_pct"] = 19398.4
+    block = _ctx(proveedor=None, benchmarks=bench)
+    assert block is not None
+    assert "Tendencia" not in block
+    # la plausible sí aparece
+    block2 = _ctx(proveedor=None, benchmarks=BENCHMARKS)
+    assert "Tendencia: +19.4%" in block2

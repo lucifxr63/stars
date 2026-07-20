@@ -84,8 +84,15 @@ def _benchmark_lines(bench: dict, label: str) -> list[str]:
     contr = bench.get("contratos") or {}
     top = bench.get("top_compradores") or []
     lines = [f"\n**{label}** (últimos {(bench.get('filtros') or {}).get('periodo_meses', 12)} meses):"]
+    # Tendencia solo si es plausible: con histórico incompleto en Licitus el
+    # período anterior queda casi vacío y el % se dispara a miles (misleading
+    # para el LLM). Umbral generoso: ±300% ya es señal, más que eso es artefacto.
     tendencia = vol.get("tendencia_vs_periodo_anterior_pct")
-    tendencia_str = f" · Tendencia: {_fmt_pct(tendencia)}" if tendencia is not None else ""
+    try:
+        plausible = tendencia is not None and abs(float(tendencia)) <= 300
+    except (TypeError, ValueError):
+        plausible = False
+    tendencia_str = f" · Tendencia: {_fmt_pct(tendencia)}" if plausible else ""
     lines.append(
         f"- Licitaciones publicadas: {vol.get('licitaciones_publicadas', 's/d')} · "
         f"Monto total en OCs: {_fmt_clp(vol.get('monto_total_ocs_clp'))} CLP{tendencia_str}"
