@@ -4,7 +4,8 @@ import { authMiddleware } from './middleware/auth.ts'
 import { usageMiddleware } from './middleware/usage.ts'
 import { rateLimitMiddleware } from './middleware/ratelimit.ts'
 import { ragQueryHandler } from './routes/rag.ts'
-import { economicDataHandler, macroDataHandler, chilecompraDataHandler, chilecompraMetricasHandler, licitusProveedorHandler, licitusBenchmarksHandler, licitusActivasHandler } from './routes/data.ts'
+import { economicDataHandler, macroDataHandler, chilecompraDataHandler, chilecompraMetricasHandler, licitusProveedorHandler, licitusBenchmarksHandler, licitusActivasHandler, spulseSearchHandler, spulseProfileHandler, spulseNetworkHandler } from './routes/data.ts'
+import { intelQueryHandler, intelMoeQueryHandler } from './routes/intel.ts'
 import { ingestTextHandler, ingestFileHandler, ingestVaultHandler } from './routes/ingest.ts'
 import { createWebhookHandler, listWebhooksHandler, deleteWebhookHandler } from './routes/webhooks.ts'
 import { validateHandler } from './routes/validate.ts'
@@ -47,6 +48,13 @@ app.get('/api/v1/data/chilecompra/metricas', chilecompraMetricasHandler)
 app.get('/api/v1/data/licitus/proveedor/:rut', licitusProveedorHandler)
 app.get('/api/v1/data/licitus/mercado/benchmarks', licitusBenchmarksHandler)
 app.get('/api/v1/data/licitus/mercado/activas', licitusActivasHandler)
+// S-Pulse (grafo societario vía BralidusPY) — superficie curada read-only
+app.get('/api/v1/data/spulse/companies/search', spulseSearchHandler)
+app.get('/api/v1/data/spulse/companies/:rut/profile', spulseProfileHandler)
+app.get('/api/v1/data/spulse/companies/:rut/network', spulseNetworkHandler)
+// Inteligencia unificada (BralidusPY GraphRAG) — macro + doctrina + S-Pulse + Licitus
+app.post('/api/v1/intel/query', intelQueryHandler)
+app.post('/api/v1/intel/query/moe', intelMoeQueryHandler)
 app.post('/api/v1/rag/ingest/text', ingestTextHandler)
 app.post('/api/v1/rag/ingest/file', ingestFileHandler)
 // Vault ingest: called by GitHub Actions — bypasses RaaS auth, uses service role key
