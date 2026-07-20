@@ -168,6 +168,42 @@ export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benc
 // GET /api/v1/data/licitus/mercado/activas?unspsc&region&monto_min&cierre_desde_horas&limit
 export const licitusActivasHandler = licitusProxyHandler(() => '/mercado/activas', 30)
 
+// ── S-Pulse (vía BralidusPY) ─────────────────────────────────────────────────
+// Grafo societario chileno con trazabilidad legal. Mismo hop que Licitus:
+// Browser/API consumer → api-v1 (developer key) → BralidusPY /spulse/* (Bearer
+// secreto) → S-Pulse. Superficie curada: search / profile / network (lo
+// tenant-scoped como /opportunities NO se expone públicamente).
+const spulseProxyHandler = (subpath: (c: any) => string, tokens: number) => async (c: any) => {
+  if (!BRALIDUS_URL) {
+    return c.json({ error: 'BRALIDUS_URL no configurado', hint: 'Configurar secret en Supabase' }, 503)
+  }
+  try {
+    const url = new URL(c.req.url)
+    const target = `${BRALIDUS_URL.replace(/\/$/, '')}/spulse${subpath(c)}${url.search}`
+    const res = await fetch(target, {
+      headers: BRALIDUS_API_KEY ? { 'Authorization': `Bearer ${BRALIDUS_API_KEY}` } : {},
+      signal: AbortSignal.timeout(12_000),
+    })
+    const body = await res.json().catch(() => ({ error: `BralidusPY HTTP ${res.status}` }))
+    c.set('tokens_used', tokens)
+    return c.json(body, res.status)
+  } catch (err) {
+    console.error('S-Pulse proxy error:', err)
+    return c.json({ error: 'S-Pulse no disponible', detail: String(err) }, 502)
+  }
+}
+
+// GET /api/v1/data/spulse/companies/search?q=
+export const spulseSearchHandler = spulseProxyHandler(() => '/companies/search', 30)
+// GET /api/v1/data/spulse/companies/:rut/profile
+export const spulseProfileHandler = spulseProxyHandler(
+  (c) => `/companies/${encodeURIComponent(c.req.param('rut') ?? '')}/profile`, 40,
+)
+// GET /api/v1/data/spulse/companies/:rut/network
+export const spulseNetworkHandler = spulseProxyHandler(
+  (c) => `/companies/${encodeURIComponent(c.req.param('rut') ?? '')}/network`, 40,
+)
+
 // GET /api/v1/data/chilecompra?rut={rut}&refresh=true
 // Retorna datos de contratos públicos de un proveedor desde Mercado Público.
 // Sin ?rut retorna licitaciones publicadas hoy.
