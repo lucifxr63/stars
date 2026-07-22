@@ -9,6 +9,7 @@ import {
   type BralidusExpert,
   type BralidusBundle,
 } from '../_shared/bralidus.ts';
+import { dispatchWebhook } from '../_shared/webhook_dispatcher.ts';
 
 // â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ALLOWED_ORIGINS = [
@@ -965,6 +966,13 @@ serve(async (req) => {
       .update({ status: 'processed' })
       .eq('validation_id', validation_id)
       .eq('status', 'pending');
+
+    // Notificar a los webhooks del usuario (fire-and-forget, no bloquea la respuesta).
+    dispatchWebhook('analysis.ready', {
+      validation_id,
+      investor_readiness: dueDiligenceScore.investorReadiness,
+      total: dueDiligenceScore.total,
+    }, user.id).catch(e => console.warn('[assemble-mega-prompt] dispatchWebhook error:', e));
 
     return new Response(JSON.stringify({
       success: true,

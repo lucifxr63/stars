@@ -1,5 +1,6 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { dispatchWebhook } from '../_shared/webhook_dispatcher.ts';
 
 // â”€â”€ Env â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const OPENAI_API_KEY     = Deno.env.get('OPENAI_API_KEY')!;
@@ -211,6 +212,12 @@ serve(async (req) => {
       }, { onConflict: 'id' });
 
     if (upsertErr) throw new Error(`DB error: ${upsertErr.message}`);
+
+    // Notificar a los webhooks del usuario (fire-and-forget, no bloquea la respuesta).
+    dispatchWebhook('profile.updated', {
+      full_name: structured.full_name,
+      extraction_status: 'done',
+    }, user.id).catch(e => console.warn('[extract-founder-profile] dispatchWebhook error:', e));
 
     return new Response(JSON.stringify({ ...structured, extraction_status: 'done' }), {
       status: 200,

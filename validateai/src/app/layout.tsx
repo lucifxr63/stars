@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -77,6 +77,14 @@ export function ProtectedLayout() {
   // todo el ecosistema (grafo societario S-Pulse). Degrada si la tabla no existe.
   useEffect(() => {
     if (!user) { setCompanyNeeded(null); return; }
+    try {
+      if (sessionStorage.getItem('validus_company_identity_skipped') === 'true') {
+        setCompanyNeeded(false);
+        return;
+      }
+    } catch (e) {
+      console.warn('sessionStorage check error:', e);
+    }
     let active = true;
     getCompanyIdentity().then((c) => { if (active) setCompanyNeeded(c === null); });
     return () => { active = false; };
