@@ -21,18 +21,31 @@ export const authMiddleware = async (c: any, next: any) => {
   const authHeader = c.req.header('Authorization')
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ error: 'Missing or invalid Authorization header. Expected "Bearer <api_key>"' }, 401)
+    return c.json({ error: 'Missing or invalid Authorization header. Expected "Bearer <token_or_api_key>"' }, 401)
   }
 
-  const apiKey = authHeader.replace('Bearer ', '').trim()
+  const token = authHeader.replace('Bearer ', '').trim()
   
-  if (!apiKey) {
-    return c.json({ error: 'Empty API key provided' }, 401)
+  if (!token) {
+    return c.json({ error: 'Empty authentication token provided' }, 401)
   }
 
   try {
-    const keyHash = await hashApiKey(apiKey)
     const supabase = getSupabase()
+
+    // 1. Check if token is a Supabase Auth User Session JWT (starts with 'ey')
+    if (token.startsWith('ey')) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+      if (user && !userError) {
+        c.set('profile_id', user.id)
+        c.set('user_email', user.email)
+        c.set('auth_type', 'session')
+        return await next()
+      }
+    }
+
+    // 2. Otherwise, check if token is a valid RaaS API Key in api_keys table
+    const keyHash = await hashApiKey(token)
 
     const { data: keyRecord, error } = await supabase
       .from('api_keys')
@@ -46,7 +59,7 @@ export const authMiddleware = async (c: any, next: any) => {
     }
 
     if (!keyRecord) {
-      return c.json({ error: 'Invalid API key' }, 401)
+      return c.json({ error: 'Invalid API key or session token' }, 401)
     }
 
     if (!keyRecord.is_active) {
@@ -59,11 +72,12 @@ export const authMiddleware = async (c: any, next: any) => {
     // Inject profile and key info into Hono context
     c.set('profile_id', keyRecord.profile_id)
     c.set('api_key_id', keyRecord.id)
+    c.set('auth_type', 'api_key')
 
     await next()
 
   } catch (err) {
-    console.error('Auth middleware error:', err)
-    return c.json({ error: 'Authentication failed' }, 500)
+    console.error('Auth middleware exception:', err)
+    return c.json({ error: 'Authentication failed' }, 401)
   }
 }
