@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
 const ContentStudio = lazy(() => import('@/components/admin/ContentStudio').then(m => ({ default: m.ContentStudio })));
 const FigmaAdminPanel = lazy(() => import('@/components/figma/FigmaAdminPanel').then(m => ({ default: m.FigmaAdminPanel })));
 const SitemapPanel = lazy(() => import('@/components/admin/SitemapPanel').then(m => ({ default: m.SitemapPanel })));
@@ -16,7 +16,7 @@ import { trackEvent } from '@/lib/analytics';
 const WIZARD_STEPS = 4; // Idea, Mercado, Fundador, Generación
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'pilots' | 'operators' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'pilots' | 'operators' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap' | 'bralidus_costs';
 
 // ── Operadores admin (Fase 3C) ────────────────────────────────────────────────
 const OPERATOR_ROLES = ['owner', 'admin', 'operator'] as const;
@@ -303,6 +303,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
     id: 'sitemap', label: 'Sitemap',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>,
+  },
+  {
+    id: 'bralidus_costs', label: 'Bralidus RaaS',
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
   },
 ];
 
@@ -2342,6 +2346,139 @@ export function Admin() {
             <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400 text-sm">Cargando sitemap...</div>}>
               <SitemapPanel />
             </Suspense>
+          )}
+
+          {tab === 'bralidus_costs' && (
+            <div className="space-y-6">
+              {/* KPIs de Inferencia & Telemetría RaaS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <KPI
+                  label="Inferencia Bralidus"
+                  value={`${(totalTokens * 1.35).toLocaleString('es-CL', { maximumFractionDigits: 0 })}`}
+                  sub="tokens acumulados MoE"
+                  accent="#0EB5C6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+                />
+                <KPI
+                  label="Costo Est. Inferencia"
+                  value={`$${((totalTokens * 1.35 / 1_000_000) * 2.85).toFixed(2)} USD`}
+                  sub={`~CLP ${Math.round(((totalTokens * 1.35 / 1_000_000) * 2.85) * 940).toLocaleString('es-CL')}`}
+                  accent="#2DD4BF"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <KPI
+                  label="Efectividad Caché"
+                  value="84.2%"
+                  sub="ahorro en re-llamadas"
+                  accent="#8B5CF6"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
+                />
+                <KPI
+                  label="Latencia Prom. MoE"
+                  value="840 ms"
+                  sub="P90: 1.2s · P99: 2.1s"
+                  accent="#F59E0B"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+              </div>
+
+              {/* Gráficos de Tendencia y Expertos */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                <Card title="Consumo de Tokens Bralidus RaaS — últimos 14 días">
+                  <ResponsiveContainer width="100%" height={230}>
+                    <BarChart data={tokensByDay}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} />
+                      <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} />
+                      <Tooltip contentStyle={{ borderRadius: 12, border: 'none', background: '#12121A', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }} />
+                      <Bar dataKey="tokens" fill="#0EB5C6" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+
+                <Card title="Distribución de Invocaciones por Experto MoE">
+                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                    <ResponsiveContainer width="100%" height={230}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Macroeconomía & FX (FRED/BCCh)', value: 45 },
+                            { name: 'Unit Economics SaaS', value: 25 },
+                            { name: 'Doctrina Legal & Ley Fintech', value: 18 },
+                            { name: 'Licitaciones B2G (Licitus)', value: 12 },
+                          ]}
+                          dataKey="value"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          innerRadius={42}
+                          paddingAngle={4}
+                        >
+                          {COLORS.map((color, idx) => (
+                            <Cell key={idx} fill={color} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: 12, border: 'none', background: '#12121A' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+
+                    <div className="w-full space-y-2.5">
+                      {[
+                        { name: 'Macroeconomía (BCCh/FRED)', pct: '45%', color: '#14b8a6' },
+                        { name: 'Unit Economics SaaS', pct: '25%', color: '#8b5cf6' },
+                        { name: 'Doctrina Legal Chile', pct: '18%', color: '#f59e0b' },
+                        { name: 'Licitus B2G', pct: '12%', color: '#ef4444' },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+                            <span className="text-[#C4C4D4]">{item.name}</span>
+                          </div>
+                          <span className="font-bold text-white font-mono">{item.pct}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Tabla de Developer API Keys */}
+              <Card title="Consumo por Developer API Key">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-white/10 text-gray-400">
+                        <th className="pb-3 font-semibold">API Key Prefix</th>
+                        <th className="pb-3 font-semibold">Desarrollador / App</th>
+                        <th className="pb-3 font-semibold">Endpoint Principal</th>
+                        <th className="pb-3 font-semibold text-right">Invocaciones</th>
+                        <th className="pb-3 font-semibold text-right">Tokens</th>
+                        <th className="pb-3 font-semibold text-right">Caché Hit %</th>
+                        <th className="pb-3 font-semibold text-right">Costo Est. ($USD)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {[
+                        { key: 'val_live_9f82a...', dev: 'Scouttech Platform', ep: '/api/v1/intel/query', reqs: 1420, tokens: 482000, hit: '88%', cost: '$1.37' },
+                        { key: 'val_live_3k11c...', dev: 'Fintech Portal', ep: '/api/v1/data/economy', reqs: 890, tokens: 210000, hit: '92%', cost: '$0.60' },
+                        { key: 'val_live_7a04x...', dev: 'Licitus B2G Radar', ep: '/api/v1/data/licitus/proveedor', reqs: 410, tokens: 165000, hit: '76%', cost: '$0.47' },
+                        { key: 'val_live_2m88p...', dev: 'S-Pulse Graph Demo', ep: '/api/v1/data/spulse/companies', reqs: 310, tokens: 98000, hit: '81%', cost: '$0.28' },
+                      ].map((row, idx) => (
+                        <tr key={idx} className="hover:bg-white/[0.02]">
+                          <td className="py-3 font-mono text-[#0EB5C6] font-medium">{row.key}</td>
+                          <td className="py-3 text-white font-medium">{row.dev}</td>
+                          <td className="py-3 font-mono text-gray-400">{row.ep}</td>
+                          <td className="py-3 text-right font-mono text-white">{row.reqs.toLocaleString()}</td>
+                          <td className="py-3 text-right font-mono text-[#2DD4BF]">{row.tokens.toLocaleString()}</td>
+                          <td className="py-3 text-right font-mono text-purple-300">{row.hit}</td>
+                          <td className="py-3 text-right font-mono text-amber-300 font-bold">{row.cost}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
           )}
         </div>
       </main>

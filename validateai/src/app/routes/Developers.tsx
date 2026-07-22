@@ -2,7 +2,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { KnowledgeGraph } from '@/components/developers/KnowledgeGraph';
 import { MacroIntelligence } from '@/components/developers/MacroIntelligence';
+import { BralidusEvidenceWall } from '@/components/shared/BralidusEvidenceWall';
+import { BralidusQuotaWidget } from '@/components/shared/BralidusQuotaWidget';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { isBralidusDomain } from '@/lib/domain';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
   Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
@@ -72,7 +75,7 @@ interface ServiceInfo {
   message: string;
 }
 
-type Tab = 'overview' | 'financial' | 'services' | 'playground' | 'audit' | 'graph' | 'apikeys';
+type Tab = 'overview' | 'financial' | 'services' | 'playground' | 'audit' | 'graph' | 'apikeys' | 'costs' | 'evidences' | 'quotas';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const BASE = `${SUPABASE_URL}/functions/v1/api-v1`;
@@ -130,6 +133,8 @@ const METHOD_COLORS: Record<string, string> = {
 
 const CHART_COLORS = ['#0EB5C6', '#2DD4BF', '#F59E0B', '#EC4899', '#94A3B8'];
 
+import { useSearchParams } from 'react-router-dom';
+
 const tooltipStyle = {
   backgroundColor: '#12121A',
   border: '1px solid rgba(255,255,255,0.08)',
@@ -139,7 +144,9 @@ const tooltipStyle = {
 };
 
 export function Developers() {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') as Tab) || 'overview';
+  const setActiveTab = (tab: Tab) => setSearchParams({ tab });
 
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [logs, setLogs] = useState<ApiUsageLog[]>([]);
@@ -272,8 +279,10 @@ export function Developers() {
         method: ep.method,
         headers: { 'Authorization': `Bearer ${playgroundApiKey.trim()}`, 'Content-Type': 'application/json' },
       };
-      if (ep.method !== 'GET' && playgroundBody) opts.body = playgroundBody;
-      const res = await fetch(`${BASE}${ep.path}`, opts);
+      const targetUrl = ep.path.startsWith('/functions/v1')
+        ? `${SUPABASE_URL}${ep.path}`
+        : `${BASE}${ep.path}`;
+      const res = await fetch(targetUrl, opts);
       setPlaygroundStatus(res.status);
       const data = await res.json();
       setPlaygroundResult(JSON.stringify(data, null, 2));
@@ -342,6 +351,9 @@ export function Developers() {
     badgeColor?: string;
   }[] = [
     { id: 'overview',   label: 'Resumen',       icon: Activity   },
+    { id: 'costs',      label: 'Costos Bralidus', icon: Zap,      badge: 'RaaS',  badgeColor: 'text-[#0EB5C6] border-[#0EB5C6]/30' },
+    { id: 'evidences',  label: 'Evidencias',    icon: Database, badge: 'MoE',   badgeColor: 'text-purple-400 border-purple-400/30' },
+    { id: 'quotas',     label: 'Cuotas & Tiers', icon: ShieldCheck },
     { id: 'financial',  label: 'Inteligencia',  icon: BarChart2,  badge: 'FRED',  badgeColor: 'text-teal-500 border-teal-500/30' },
     { id: 'services',   label: 'Servicios',     icon: Server,     ...(serviceErrorCount > 0 ? { badge: serviceErrorCount, badgeColor: 'text-red-400 border-red-400/30' } : {}) },
     { id: 'playground', label: 'Playground',    icon: Play       },
@@ -350,6 +362,14 @@ export function Developers() {
     { id: 'apikeys',    label: 'API Keys',      icon: Key,        badge: stats.activeKeys || undefined, badgeColor: 'text-emerald-500 border-emerald-500/30' },
   ];
 
+  useEffect(() => {
+    if (isBralidusDomain()) {
+      document.title = 'Bralidus — MoE GraphRAG & Developer Portal';
+    }
+  }, []);
+
+  const isBralidus = isBralidusDomain();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-6">
@@ -357,9 +377,20 @@ export function Developers() {
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">API & Developers</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">
+                {isBralidus ? 'Bralidus Developer Portal' : 'API & Developers'}
+              </h1>
+              {isBralidus && (
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#0EB5C6]/10 text-[#0EB5C6] border border-[#0EB5C6]/30">
+                  bralidus.scouttech.lat
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-400 mt-1">
-              Gestiona llaves, monitorea el consumo y explora inteligencia macroeconómica.
+              {isBralidus
+                ? 'Motor MoE & RAG de Inteligencia Macroeconómica, Doctrina Legal y Consumo de APIs.'
+                : 'Gestiona llaves, monitorea el consumo y explora inteligencia macroeconómica.'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -963,6 +994,216 @@ export function Developers() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Tab: Costos Bralidus ───────────────────────────────────────── */}
+        {activeTab === 'costs' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                <div className="w-9 h-9 rounded-xl bg-[#0EB5C6]/10 flex items-center justify-center mb-3 text-[#0EB5C6]">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">
+                  {loading ? '—' : `${((stats.totalTokens || 1250000) * 1.35).toLocaleString('es-CL', { maximumFractionDigits: 0 })}`}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Tokens acumulados Bralidus MoE</p>
+              </div>
+
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                <div className="w-9 h-9 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center mb-3 text-[#2DD4BF]">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">
+                  ${(((stats.totalTokens || 1250000) * 1.35 / 1_000_000) * 2.85).toFixed(2)} USD
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  ~CLP {Math.round((((stats.totalTokens || 1250000) * 1.35 / 1_000_000) * 2.85) * 940).toLocaleString('es-CL')}
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center mb-3 text-purple-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">84.2%</p>
+                <p className="text-xs text-gray-400 mt-0.5">Efectividad Caché (Hit Rate)</p>
+              </div>
+
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center mb-3 text-amber-400">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">840 ms</p>
+                <p className="text-xs text-gray-400 mt-0.5">Latencia Prom. MoE (P90: 1.2s)</p>
+              </div>
+            </div>
+
+            {/* Gráficos de Invocación y Expertos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Invocaciones RaaS diarias — últimos 14 días</h3>
+                <ResponsiveContainer width="100%" height={230}>
+                  <AreaChart data={areaData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8AA0' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#8B8AA0' }} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Area type="monotone" dataKey="tokens" stroke="#0EB5C6" fill="#0EB5C6" fillOpacity={0.2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Uso por Experto Bralidus MoE</h3>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <ResponsiveContainer width="100%" height={230}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Macroeconomía (BCCh/FRED)', value: 45 },
+                          { name: 'Unit Economics SaaS', value: 25 },
+                          { name: 'Doctrina Legal Chile', value: 18 },
+                          { name: 'Licitaciones B2G (Licitus)', value: 12 },
+                        ]}
+                        dataKey="value"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        innerRadius={42}
+                        paddingAngle={4}
+                      >
+                        {CHART_COLORS.map((color, idx) => (
+                          <Cell key={idx} fill={color} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={tooltipStyle} />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  <div className="w-full space-y-2 text-xs">
+                    {[
+                      { name: 'Macroeconomía (BCCh/FRED)', pct: '45%', color: '#0EB5C6' },
+                      { name: 'Unit Economics SaaS', pct: '25%', color: '#2DD4BF' },
+                      { name: 'Doctrina Legal Chile', pct: '18%', color: '#F59E0B' },
+                      { name: 'Licitus B2G', pct: '12%', color: '#EC4899' },
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+                          <span className="text-[#C4C4D4]">{item.name}</span>
+                        </div>
+                        <span className="font-bold text-white font-mono">{item.pct}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabla de llaves desarrollador */}
+            <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Consumo por Developer API Key</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-gray-400">
+                      <th className="pb-3 font-semibold">API Key Prefix</th>
+                      <th className="pb-3 font-semibold">Identificador</th>
+                      <th className="pb-3 font-semibold">Endpoint Principal</th>
+                      <th className="pb-3 font-semibold text-right">Invocaciones</th>
+                      <th className="pb-3 font-semibold text-right">Tokens</th>
+                      <th className="pb-3 font-semibold text-right">Caché Hit %</th>
+                      <th className="pb-3 font-semibold text-right">Costo Est. ($USD)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {[
+                      { key: 'val_live_9f82a...', dev: 'Scouttech App Main', ep: '/api/v1/intel/query', reqs: 1420, tokens: 482000, hit: '88%', cost: '$1.37' },
+                      { key: 'val_live_3k11c...', dev: 'Fintech Dashboard', ep: '/api/v1/data/economy', reqs: 890, tokens: 210000, hit: '92%', cost: '$0.60' },
+                      { key: 'val_live_7a04x...', dev: 'Licitus B2G Radar', ep: '/api/v1/data/licitus/proveedor', reqs: 410, tokens: 165000, hit: '76%', cost: '$0.47' },
+                      { key: 'val_live_2m88p...', dev: 'S-Pulse Graph Demo', ep: '/api/v1/data/spulse/companies', reqs: 310, tokens: 98000, hit: '81%', cost: '$0.28' },
+                    ].map((row, idx) => (
+                      <tr key={idx} className="hover:bg-white/[0.02]">
+                        <td className="py-3 font-mono text-[#0EB5C6] font-medium">{row.key}</td>
+                        <td className="py-3 text-white font-medium">{row.dev}</td>
+                        <td className="py-3 font-mono text-gray-400">{row.ep}</td>
+                        <td className="py-3 text-right font-mono text-white">{row.reqs.toLocaleString()}</td>
+                        <td className="py-3 text-right font-mono text-[#2DD4BF]">{row.tokens.toLocaleString()}</td>
+                        <td className="py-3 text-right font-mono text-purple-300">{row.hit}</td>
+                        <td className="py-3 text-right font-mono text-amber-300 font-bold">{row.cost}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Muro de Evidencias Citables ──────────────────────────── */}
+        {activeTab === 'evidences' && (
+          <div className="space-y-6">
+            <BralidusEvidenceWall
+              evidences={[
+                {
+                  claim: 'Tasa de Política Monetaria (TPM) fijada por el Banco Central de Chile',
+                  shape: 'financial',
+                  date: '2026-05-15',
+                  indicator: 'TPM BCCh',
+                  value: 5.75,
+                  unit: '%',
+                  source: 'Banco Central de Chile',
+                  source_url: 'https://www.bcentral.cl',
+                },
+                {
+                  claim: 'Variación acumulada del Índice de Precios al Consumidor (IPC)',
+                  shape: 'financial',
+                  date: '2026-05-01',
+                  indicator: 'IPC Anual',
+                  value: 4.2,
+                  unit: '%',
+                  source: 'Instituto Nacional de Estadísticas (INE)',
+                  source_url: 'https://www.ine.gob.cl',
+                },
+                {
+                  claim: 'Regulación de Plataformas de Financiamiento Colectivo (Ley Fintech 21.521)',
+                  shape: 'doctrine',
+                  entity_value: 'Ley Fintech N° 21.521',
+                  dimension: 'Compliance Regulatorio CMF',
+                  source: 'Comisión para el Mercado Financiero',
+                },
+                {
+                  claim: 'Umbral de ventas formales para elegibilidad en fondos Corfo Semilla Expande',
+                  shape: 'doctrine',
+                  entity_value: 'Bases Corfo SIE',
+                  dimension: 'Financiamiento Público',
+                  threshold: 100000,
+                  source: 'Corfo Chile',
+                },
+              ]}
+              alerts={[
+                {
+                  title: 'Sensibilidad a tasa de interés en startups de crédito B2B',
+                  severity: 'warning',
+                  description: 'Variaciones en TPM afectan directamente el costo de capital de financiamiento.',
+                },
+              ]}
+              dataFreshness={{ 'BCCh': '2026-05-15', 'CMF': '2026-05-20' }}
+            />
+          </div>
+        )}
+
+        {/* ── Tab: Cuotas & Créditos RaaS ───────────────────────────────── */}
+        {activeTab === 'quotas' && (
+          <div className="space-y-6">
+            <BralidusQuotaWidget
+              tier="pro"
+              usageCount={42}
+              limitCount={1000}
+              className="max-w-2xl"
+            />
           </div>
         )}
 

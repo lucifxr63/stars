@@ -13,7 +13,7 @@ import { servicesHealthHandler } from './routes/health.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-validus-signature',
   'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS',
 }
 
@@ -21,7 +21,7 @@ const app = new Hono()
 
 app.use('*', cors({
   origin: '*',
-  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type'],
+  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type', 'x-validus-signature'],
   allowMethods: ['POST', 'GET', 'DELETE', 'OPTIONS'],
 }))
 

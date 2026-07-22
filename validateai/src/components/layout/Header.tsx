@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -17,7 +17,10 @@ const PREVIEW_COLORS: Record<UserTier, string> = {
   admin:   'bg-rose-900 text-rose-200 border-rose-600',
 };
 
+import { isBralidusDomain } from '@/lib/domain';
+
 export function Header() {
+  const isBralidus = isBralidusDomain();
   const navigate = useNavigate();
   const location = useLocation();
   const reset = useValidationStore((s) => s.reset);
@@ -32,7 +35,6 @@ export function Header() {
     window.addEventListener(EVENTS.tierPreview, onPreview);
     return () => window.removeEventListener(EVENTS.tierPreview, onPreview);
   }, []);
-
 
   const handleLogout = async () => {
     markDeliberateLogout();
@@ -66,13 +68,15 @@ export function Header() {
       )}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+        <Link to={isBralidus ? '/dashboard' : '/'} className="flex items-center gap-2.5 group shrink-0">
           <svg viewBox="0 0 500 500" className="w-7 h-7 group-hover:scale-105 transition-transform" aria-hidden="true">
             <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white"/>
             <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6"/>
             <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6"/>
           </svg>
-          <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validus</span>
+          <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">
+            {isBralidus ? 'Bralidus Intelligence' : 'Validus'}
+          </span>
         </Link>
 
         {/* Desktop nav */}

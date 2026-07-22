@@ -76,6 +76,7 @@ export async function dispatchWebhook(eventName: string, payload: any, targetPro
         headers: {
           'Content-Type': 'application/json',
           'x-webhook-signature': signature,
+          'X-Validus-Signature': signature,
           'User-Agent': 'Validus-RaaS-Webhook/1.0'
         },
         body: payloadString,

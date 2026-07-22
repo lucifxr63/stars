@@ -44,6 +44,8 @@ import { PlaybookAnalysisCard } from '@/components/shared/PlaybookAnalysisCard';
 import { ReportFeedback } from '@/components/shared/ReportFeedback';
 import { DueDiligenceScoreCard } from '@/components/shared/DueDiligenceScoreCard';
 import { RiskIntelligencePanel, type BraliduAlert } from '@/components/shared/RiskIntelligencePanel';
+import { BralidusEvidenceWall } from '@/components/shared/BralidusEvidenceWall';
+import { BralidusQuotaWidget } from '@/components/shared/BralidusQuotaWidget';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import type {
   MarketSizing,
@@ -1042,11 +1044,20 @@ export function ValidationDetail() {
   return (
     <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
       <div className="flex-1 max-w-[88rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-          <Link to="/results" className="hover:text-[#0EB5C6] transition">Mis validaciones</Link>
-          <span>›</span>
-          <span className="text-gray-700 dark:text-[#C4C4D4] font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
+        {/* Breadcrumb & Quota Widget */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Link to="/results" className="hover:text-[#0EB5C6] transition">Mis validaciones</Link>
+            <span>›</span>
+            <span className="text-gray-700 dark:text-[#C4C4D4] font-medium truncate">{data.idea_name ?? 'Sin nombre'}</span>
+          </div>
+
+          <BralidusQuotaWidget
+            tier={tier}
+            usageCount={usage?.total ?? 0}
+            limitCount={limits?.total ?? 100}
+            className="w-full md:w-auto min-w-[280px]"
+          />
         </div>
 
         {/* Header */}
@@ -2290,6 +2301,20 @@ export function ValidationDetail() {
                       sourcesSkipped={ddAuditTrail?.sourcesSkipped}
                       fromCache={ddAuditTrail?.fromCache}
                       verdictSummary={ddAuditTrail?.verdictSummary}
+                    />
+                  </ErrorBoundary>
+                  
+                  <ErrorBoundary label="Bralidus Evidence Wall">
+                    <BralidusEvidenceWall
+                      evidences={(() => {
+                        const dd = data.due_diligence_score as unknown as Record<string, unknown> | null;
+                        return (dd?.evidences as any[]) ?? [];
+                      })()}
+                      alerts={bralidusPYAlerts as any[]}
+                      dataFreshness={(() => {
+                        const dd = data.due_diligence_score as unknown as Record<string, unknown> | null;
+                        return (dd?.data_freshness as Record<string, string>) ?? null;
+                      })()}
                     />
                   </ErrorBoundary>
                 </div>

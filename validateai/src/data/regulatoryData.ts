@@ -116,10 +116,11 @@ export const CHILE_REGULATORY: RegulatoryItem[] = [
 ];
 
 export function getRegulatoryItems(industry: string): RegulatoryItem[] {
-  return CHILE_REGULATORY.filter(
+  const filtered = CHILE_REGULATORY.filter(
     (item) =>
       item.relevantIndustries === 'all' || item.relevantIndustries.includes(industry),
-  ).sort((a, b) => {
+  );
+  return [...filtered].sort((a, b) => {
     const order = { critical: 0, important: 1, informational: 2 };
     return order[a.urgency] - order[b.urgency];
   });

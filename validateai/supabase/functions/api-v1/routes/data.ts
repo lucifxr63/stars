@@ -1,4 +1,5 @@
 import { getSupabase } from '../middleware/auth.ts'
+import { isValidRut, formatRutCanonical } from '../utils/validation.ts'
 
 const MP_BASE = 'https://api.mercadopublico.cl/servicios/v1/publico'
 const CHILECOMPRA_CACHE_TTL_HOURS = 24
@@ -136,10 +137,18 @@ export const chilecompraMetricasHandler = async (c: any) => {
 // propio de Validus. No fusionar (decisión de canonicidad pendiente — plan §7).
 //
 // BralidusPY responde { data: <json plano de Licitus> } o 503 si Licitus degrada.
-const licitusProxyHandler = (subpath: (c: any) => string, tokens: number) => async (c: any) => {
+const licitusProxyHandler = (subpath: (c: any) => string, tokens: number, requiresRut = false) => async (c: any) => {
   if (!BRALIDUS_URL) {
     return c.json({ error: 'BRALIDUS_URL no configurado', hint: 'Configurar secret en Supabase' }, 503)
   }
+
+  if (requiresRut) {
+    const rut = c.req.param('rut') ?? ''
+    if (!isValidRut(rut)) {
+      return c.json({ error: 'RUT chileno inválido (formato esperado: 12.345.678-K o 12345678K)' }, 400)
+    }
+  }
+
   try {
     const url = new URL(c.req.url)
     const target = `${BRALIDUS_URL.replace(/\/$/, '')}/licitus${subpath(c)}${url.search}`
@@ -152,7 +161,13 @@ const licitusProxyHandler = (subpath: (c: any) => string, tokens: number) => asy
       return c.json({ error: 'Rate limit de Licitus alcanzado — reintenta en unos segundos', ...body }, 429)
     }
     c.set('tokens_used', tokens)
-    return c.json(body, res.status)
+    
+    // Normalización de payload de respuesta Licitus
+    const normalizedBody = res.ok && typeof body === 'object' && body !== null
+      ? { source: 'licitus', normalized: true, ...body }
+      : body
+
+    return c.json(normalizedBody, res.status)
   } catch (err) {
     console.error('Licitus proxy error:', err)
     return c.json({ error: 'Licitus no disponible', detail: String(err) }, 502)
@@ -161,7 +176,7 @@ const licitusProxyHandler = (subpath: (c: any) => string, tokens: number) => asy
 
 // GET /api/v1/data/licitus/proveedor/:rut?periodo_meses=12
 export const licitusProveedorHandler = licitusProxyHandler(
-  (c) => `/proveedor/${encodeURIComponent(c.req.param('rut') ?? '')}`, 40,
+  (c) => `/proveedor/${encodeURIComponent(formatRutCanonical(c.req.param('rut') ?? ''))}`, 40, true
 )
 // GET /api/v1/data/licitus/mercado/benchmarks?unspsc&region&periodo_meses
 export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benchmarks', 30)
@@ -173,10 +188,18 @@ export const licitusActivasHandler = licitusProxyHandler(() => '/mercado/activas
 // Browser/API consumer → api-v1 (developer key) → BralidusPY /spulse/* (Bearer
 // secreto) → S-Pulse. Superficie curada: search / profile / network (lo
 // tenant-scoped como /opportunities NO se expone públicamente).
-const spulseProxyHandler = (subpath: (c: any) => string, tokens: number) => async (c: any) => {
+const spulseProxyHandler = (subpath: (c: any) => string, tokens: number, requiresRut = false) => async (c: any) => {
   if (!BRALIDUS_URL) {
     return c.json({ error: 'BRALIDUS_URL no configurado', hint: 'Configurar secret en Supabase' }, 503)
   }
+
+  if (requiresRut) {
+    const rut = c.req.param('rut') ?? ''
+    if (!isValidRut(rut)) {
+      return c.json({ error: 'RUT chileno inválido (formato esperado: 12.345.678-K o 12345678K)' }, 400)
+    }
+  }
+
   try {
     const url = new URL(c.req.url)
     const target = `${BRALIDUS_URL.replace(/\/$/, '')}/spulse${subpath(c)}${url.search}`
@@ -197,11 +220,11 @@ const spulseProxyHandler = (subpath: (c: any) => string, tokens: number) => asyn
 export const spulseSearchHandler = spulseProxyHandler(() => '/companies/search', 30)
 // GET /api/v1/data/spulse/companies/:rut/profile
 export const spulseProfileHandler = spulseProxyHandler(
-  (c) => `/companies/${encodeURIComponent(c.req.param('rut') ?? '')}/profile`, 40,
+  (c) => `/companies/${encodeURIComponent(formatRutCanonical(c.req.param('rut') ?? ''))}/profile`, 40, true
 )
 // GET /api/v1/data/spulse/companies/:rut/network
 export const spulseNetworkHandler = spulseProxyHandler(
-  (c) => `/companies/${encodeURIComponent(c.req.param('rut') ?? '')}/network`, 40,
+  (c) => `/companies/${encodeURIComponent(formatRutCanonical(c.req.param('rut') ?? ''))}/network`, 40, true
 )
 
 // GET /api/v1/data/chilecompra?rut={rut}&refresh=true

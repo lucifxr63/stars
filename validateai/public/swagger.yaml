@@ -1,48 +1,54 @@
-﻿openapi: 3.0.3
+openapi: 3.0.3
 info:
-  title: Validus RaaS API
-  version: "1.0.0"
+  title: Bralidus & Validus RaaS API
+  version: "1.2.0"
   description: |
-    API de ValidaciÃ³n de Ideas de Negocio como Servicio (RAG-as-a-Service).
+    API de Inteligencia de Mercado, GraphRAG y Validación como Servicio (RaaS).
 
-    Orquesta datos gubernamentales chilenos en tiempo real (SII, CMF, INAPI) con bÃºsqueda
-    vectorial semÃ¡ntica (pgvector) e inteligencia artificial (Claude Sonnet) para emitir
-    diagnÃ³sticos de viabilidad de grado institucional.
+    Orquesta datos macroeconómicos (BCCh, CMF, yfinance), doctrina legal, grafo societario (S-Pulse)
+    e inteligencia de licitaciones públicas (Licitus) mediante el motor BralidusPY.
 
-    ## AutenticaciÃ³n
-    Todas las rutas bajo `/api/v1` requieren una API Key vÃ¡lida:
+    ## Autenticación
+    Todas las rutas bajo `/api/v1` requieren una API Key válida en la cabecera:
     ```
     Authorization: Bearer val_live_XXXX...
     ```
-    Genera y gestiona tus llaves en el [Portal de Desarrolladores](https://validus.scouttech.lat/developers).
+    Genera y gestiona tus llaves en el [Portal de Desarrolladores](https://bralidus.scouttech.lat/developers).
 
     ## Rate Limiting
-    - 100 requests/minuto por API Key
-    - Headers de control: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+    - 100 requests/minuto por API Key.
+    - Headers de control: `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
   contact:
-    name: Validus
-    url: https://validus.scouttech.lat
+    name: Validus / Bralidus
+    url: https://bralidus.scouttech.lat
   license:
     name: Propietario
 servers:
   - url: https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1
-    description: ProducciÃ³n
+    description: Producción Edge Gateway
 
 tags:
+  - name: Bralidus Intelligence (MoE GraphRAG)
+    description: Consultas semánticas fusionadas con datos macro, doctrina y perfil de empresa
+  - name: S-Pulse (Grafo Societario)
+    description: Grafo de relaciones societarias chilenas con trazabilidad legal
+  - name: Licitus (Mercado Público)
+    description: Inteligencia B2G y órdenes de compra reales
+  - name: Datos Económicos
+    description: Indicadores financieros en tiempo real (UF, IPC, Dólar)
   - name: RAG
-    description: Motor de bÃºsqueda semÃ¡ntica y base de conocimiento
-  - name: Datos EconÃ³micos
-    description: Indicadores financieros en tiempo real (CMF, SII)
+    description: Búsqueda vectorial semántica pgvector
   - name: Webhooks
-    description: Notificaciones asÃ­ncronas (PJUD, Fintoc)
-  - name: IngestiÃ³n
-    description: Poblar la base de conocimiento propietaria
+    description: Notificaciones asíncronas de eventos
+  - name: Ingestión
+    description: Ingesta de documentos a la base de conocimiento
 
 paths:
-  /api/v1/rag/query:
+  /api/v1/intel/query:
     post:
-      tags: [RAG]
-      summary: Consulta semÃ¡ntica a la base de conocimiento
+      tags: [Bralidus Intelligence (MoE GraphRAG)]
+      summary: Consulta semántica unificada Bralidus
+      description: Fusiona datos macro, doctrina normativa y (si se pasa company_rut) datos de S-Pulse y Licitus en un contexto citable.
       security:
         - BearerAuth: []
       requestBody:
@@ -55,64 +61,203 @@ paths:
               properties:
                 query:
                   type: string
-                  description: Texto libre para buscar contexto relevante.
-                  example: "estrategias de go-to-market para fintech en Chile"
-                filters:
+                  example: "impacto del alza de tasas en fintech de crédito en Chile"
+                startup_context:
                   type: object
-                  description: Filtros opcionales (ej. industria, tipo de documento).
+                  properties:
+                    industry:
+                      type: string
+                      example: "fintech"
+                    stage:
+                      type: string
+                      example: "early_stage"
+                    geography:
+                      type: string
+                      example: "Chile"
+                    company_rut:
+                      type: string
+                      example: "76.123.456-7"
+                top_k:
+                  type: integer
+                  default: 10
+                  maximum: 25
       responses:
         '200':
-          description: Fragmentos de conocimiento relevantes.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  answer:
-                    type: string
-                  sources:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        type:
-                          type: string
-                        id:
-                          type: string
+          description: Contexto citable e inteligencia ensamblada.
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/v1/intel/query/moe:
+    post:
+      tags: [Bralidus Intelligence (MoE GraphRAG)]
+      summary: Consulta Mixture-of-Experts (MoE)
+      description: Invoca la red de gating de BralidusPY para activar expertos especializados (unit economics, legal, macro) y reportar evidencias.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  example: "regulaciones de Ley Fintech aplicables a plataformas de crowdfunding"
+                top_k:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          description: Respuesta enriquecida por la mezcla de expertos.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/data/spulse/companies/search:
+    get:
+      tags: [S-Pulse (Grafo Societario)]
+      summary: Búsqueda de empresas en grafo societario
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "Tecnología"
+      responses:
+        '200':
+          description: Lista de empresas coincidentes.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/data/spulse/companies/{rut}/profile:
+    get:
+      tags: [S-Pulse (Grafo Societario)]
+      summary: Perfil de empresa y estructura legal
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "76123456-7"
+      responses:
+        '200':
+          description: Perfil detallado de la sociedad.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/data/spulse/companies/{rut}/network:
+    get:
+      tags: [S-Pulse (Grafo Societario)]
+      summary: Red de socios y relaciones societarias
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Malla societaria y conexiones inter-empresas.
+
+  /api/v1/data/licitus/proveedor/{rut}:
+    get:
+      tags: [Licitus (Mercado Público)]
+      summary: Histórico de licitaciones y órdenes de compra del proveedor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: periodo_meses
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Histórico de contrataciones públicas.
+
+  /api/v1/data/licitus/mercado/benchmarks:
+    get:
+      tags: [Licitus (Mercado Público)]
+      summary: Benchmarks de mercado B2G
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: unspsc
+          in: query
+          schema:
+            type: string
+        - name: region
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Métricas agregadas de montos y tiempos de adjudicación.
+
+  /api/v1/data/licitus/mercado/activas:
+    get:
+      tags: [Licitus (Mercado Público)]
+      summary: Licitaciones públicas activas
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Oportunidades vigentes en Mercado Público.
+
+  /api/v1/rag/query:
+    post:
+      tags: [RAG]
+      summary: Consulta semántica simple a pgvector
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+      responses:
+        '200':
+          description: Fragmentos vectoriales encontrados.
+
   /api/v1/data/economy:
     get:
-      tags: [Datos EconÃ³micos]
-      summary: Retorna indicadores econÃ³micos en cachÃ©
-      description: UF, IPC y DÃ³lar cacheados desde CMF y SII.
+      tags: [Datos Económicos]
+      summary: Retorna UF, IPC y indicadores en caché
       security:
         - BearerAuth: []
       responses:
         '200':
           description: Indicadores vigentes.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  uf:
-                    type: number
-                    example: 38521.45
-                  uf_date:
-                    type: string
-                    example: "2026-05-21"
-                  ipc_anual:
-                    type: number
-                    example: 4.2
-        '401':
-          $ref: '#/components/responses/Unauthorized'
 
   /api/v1/webhooks:
     post:
       tags: [Webhooks]
-      summary: Registra un webhook de notificaciÃ³n
+      summary: Registra un webhook de notificación
       security:
         - BearerAuth: []
       requestBody:
@@ -125,16 +270,11 @@ paths:
               properties:
                 url:
                   type: string
-                  format: uri
-                  example: "https://tu-sistema.cl/webhook/validateai"
                 event:
                   type: string
-                  enum: [pjud.resolved, fintoc.connected, validation.complete]
       responses:
         '201':
           description: Webhook registrado.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
     get:
       tags: [Webhooks]
       summary: Lista webhooks registrados
@@ -142,33 +282,7 @@ paths:
         - BearerAuth: []
       responses:
         '200':
-          description: Lista de webhooks activos.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /api/v1/rag/ingest/text:
-    post:
-      tags: [IngestiÃ³n]
-      summary: Ingesta texto plano a la base vectorial
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [text, metadata]
-              properties:
-                text:
-                  type: string
-                metadata:
-                  type: object
-      responses:
-        '201':
-          description: Documento ingestado y vectorizado.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Lista de webhooks del usuario.
 
 components:
   securitySchemes:
@@ -179,13 +293,13 @@ components:
 
   responses:
     BadRequest:
-      description: ParÃ¡metros invÃ¡lidos.
+      description: Parámetros inválidos.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Unauthorized:
-      description: API Key faltante, invÃ¡lida o revocada.
+      description: API Key faltante, inválida o revocada.
       content:
         application/json:
           schema:

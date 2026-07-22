@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { ProtectedLayout, AppLayout } from '@/app/layout';
@@ -72,7 +72,11 @@ function NotFound() {
   );
 }
 
+import { isBralidusDomain } from '@/lib/domain';
+
 export default function App() {
+  const isBralidus = isBralidusDomain();
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <ErrorBoundary>
@@ -80,7 +84,7 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Rutas públicas */}
-              <Route path="/"               element={<Landing />} />
+              <Route path="/"               element={isBralidus ? <Developers /> : <Landing />} />
               <Route path="/login"          element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password"  element={<ResetPassword />} />
@@ -105,7 +109,7 @@ export default function App() {
                 {/* App: todas las rutas con sidebar via AppLayout */}
                 <Route element={<AppLayout />}>
                   <Route path="/validate" element={<Validate />} />
-                  <Route path="/dashboard"              element={<Dashboard />} />
+                  <Route path="/dashboard"              element={isBralidus ? <Developers /> : <Dashboard />} />
                   <Route path="/market-intelligence"    element={<MarketIntelligence />} />
                   <Route path="/results"                element={<Results />} />
                   <Route path="/results/:id"            element={<ValidationDetail />} />
@@ -114,6 +118,8 @@ export default function App() {
                   <Route path="/startup"                element={<MyStartup />} />
                   <Route path="/profile"                element={<Profile />} />
                   <Route path="/developers"             element={<Developers />} />
+                  <Route path="/bralidus"               element={<Developers />} />
+                  <Route path="/bralidus/*"             element={<Developers />} />
                   <Route path="/admin"                  element={<Admin />} />
                   <Route path="/surveys"                element={<SurveyList />} />
                   <Route path="/surveys/new"            element={<SurveyBuilder />} />

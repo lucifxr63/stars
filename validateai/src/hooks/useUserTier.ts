@@ -15,7 +15,7 @@ export const TIER_SECTIONS = {
 export const ALL_SECTIONS = ['score', 'breakdown', 'questions', 'client', 'valueProposition', 'mvp', 'swot', 'nextSteps', 'risks', 'unitEconomics', 'founderFit', 'marketSizing', 'competitiveAnalysis', 'governance', 'fundraising'];
 
 export function getUserSections(tier: UserTier): string[] {
-  if (tier === 'pro' || tier === 'premium' || tier === 'admin') return ALL_SECTIONS;
+  if (tier === 'pro' || tier === 'premium' || tier === 'admin') return [...ALL_SECTIONS];
   return [...TIER_SECTIONS[tier]];
 }
 

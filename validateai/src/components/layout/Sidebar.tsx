@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X, ClipboardList, Code2, Radar } from 'lucide-react';
+import { Home, BarChart2, Rocket, Settings, Shield, LogOut, X, ClipboardList, Code2, Radar, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { markDeliberateLogout } from '@/lib/session';
@@ -30,15 +30,39 @@ const NAV_ITEMS = [
   { label: 'Configuración', path: '/profile', Icon: Settings },
 ] as const;
 
+import { isBralidusDomain } from '@/lib/domain';
+import { Zap, Database, Brain, Play, Key, Server, Layers } from 'lucide-react';
+
+const BRALIDUS_NAV_ITEMS = [
+  { label: 'Dashboard RaaS', path: '/developers?tab=overview', tab: 'overview', Icon: Layers },
+  { label: 'Costos Bralidus', path: '/developers?tab=costs', tab: 'costs', Icon: Zap },
+  { label: 'Muro Evidencias', path: '/developers?tab=evidences', tab: 'evidences', Icon: Database },
+  { label: 'Cuotas & Tiers', path: '/developers?tab=quotas', tab: 'quotas', Icon: ShieldCheck },
+  { label: 'Knowledge Graph', path: '/developers?tab=graph', tab: 'graph', Icon: Brain },
+  { label: 'Inteligencia Macro', path: '/developers?tab=financial', tab: 'financial', Icon: BarChart2 },
+  { label: 'Playground API', path: '/developers?tab=playground', tab: 'playground', Icon: Play },
+  { label: 'RAG Audit', path: '/developers?tab=audit', tab: 'audit', Icon: ShieldCheck },
+  { label: 'API Keys', path: '/developers?tab=apikeys', tab: 'apikeys', Icon: Key },
+  { label: 'Servicios', path: '/developers?tab=services', tab: 'services', Icon: Server },
+] as const;
+
 function SidebarLogo() {
+  const isBralidus = isBralidusDomain() || window.location.pathname.startsWith('/developers') || window.location.pathname.startsWith('/bralidus');
   return (
-    <Link to="/dashboard" className="flex items-center gap-2.5 group">
+    <Link to={isBralidus ? '/developers' : '/dashboard'} className="flex items-center gap-2.5 group">
       <svg viewBox="0 0 500 500" className="w-7 h-7 shrink-0 group-hover:scale-105 transition-transform" aria-hidden="true">
         <path d="M191.932 459.258L30 200.26H78.2826L206.788 404.341L422.946 60H469L220.159 459.258H191.932Z" className="fill-[#041440] dark:fill-white" />
         <path d="M245.415 91.1688L144.393 268.534L167.42 308.609L245.415 175.028L287.755 241.818L311.525 203.97L245.415 91.1688Z" fill="#0EB5C6" />
         <path d="M330.838 318.998L354.607 282.635L460.829 460H413.289L330.838 318.998Z" fill="#0EB5C6" />
       </svg>
-      <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">Validus</span>
+      <span className="font-heading text-sm font-semibold text-gray-900 dark:text-[#F0EFF8] tracking-tight">
+        {isBralidus ? 'Bralidus' : 'Validus'}
+      </span>
+      {isBralidus && (
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0EB5C6]/10 text-[#0EB5C6] border border-[#0EB5C6]/20">
+          MoE RaaS
+        </span>
+      )}
     </Link>
   );
 }
@@ -55,6 +79,9 @@ export function Sidebar({ onClose }: SidebarProps) {
   const { usage, limits, remaining } = useUsage(tier);
   const { isAdmin } = useAdminRole(); // multi-admin (Fase 3B)
   const [userName, setUserName] = useState('');
+
+  const isBralidusMode = isBralidusDomain() || location.pathname.startsWith('/developers') || location.pathname.startsWith('/bralidus');
+  const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -112,18 +139,36 @@ export function Sidebar({ onClose }: SidebarProps) {
 
       {/* Nav items */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ label, path, Icon }) => {
-          const active = isActive(path);
-          return (
-            <Link key={path} to={path} onClick={onClose} className={navCls(active)} aria-current={active ? 'page' : undefined}>
-              <Icon className={iconCls(active)} />
-              <span className="flex-1">{label}</span>
-              {active && <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] shrink-0" aria-hidden="true" />}
-            </Link>
-          );
-        })}
+        {isBralidusMode ? (
+          <>
+            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#8B8AA0] mb-2">
+              Bralidus Engine
+            </p>
+            {BRALIDUS_NAV_ITEMS.map(({ label, path, tab, Icon }) => {
+              const active = currentTab === tab;
+              return (
+                <Link key={path} to={path} onClick={onClose} className={navCls(active)} aria-current={active ? 'page' : undefined}>
+                  <Icon className={iconCls(active)} />
+                  <span className="flex-1">{label}</span>
+                  {active && <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] shrink-0" aria-hidden="true" />}
+                </Link>
+              );
+            })}
+          </>
+        ) : (
+          NAV_ITEMS.map(({ label, path, Icon }) => {
+            const active = isActive(path);
+            return (
+              <Link key={path} to={path} onClick={onClose} className={navCls(active)} aria-current={active ? 'page' : undefined}>
+                <Icon className={iconCls(active)} />
+                <span className="flex-1">{label}</span>
+                {active && <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] shrink-0" aria-hidden="true" />}
+              </Link>
+            );
+          })
+        )}
 
-        {isAdmin && (
+        {isAdmin && !isBralidusMode && (
           <>
             <div className="my-2 border-t border-gray-100 dark:border-white/[0.06]" />
             <Link
@@ -140,7 +185,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               className={navCls(isActive('/developers'))}
             >
               <Code2 className={iconCls(isActive('/developers'))} />
-              <span className="flex-1">Developers</span>
+              <span className="flex-1">Bralidus Portal</span>
             </Link>
           </>
         )}

@@ -170,9 +170,21 @@ export function compressBralidus(
     .filter(a => a.severity === 'critical' || a.severity === 'warning')
     .map(a => `  [${a.severity.toUpperCase()}] ${a.title}`)
     .join('\n');
-  const evLines: string[] = [];
-  let budget = 2400;
+
+  // Deduplicación sintáctica por clave única (claim + date + indicator)
+  const seenKeys = new Set<string>();
+  const uniqueEvidences: BralidusEvidence[] = [];
   for (const ev of evidence) {
+    const key = `${ev.claim ?? ''}_${ev.date ?? ''}_${ev.indicator ?? ''}_${ev.entity_value ?? ''}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      uniqueEvidences.push(ev);
+    }
+  }
+
+  const evLines: string[] = [];
+  let budget = 2400; // Presupuesto total ~600 tokens
+  for (const ev of uniqueEvidences) {
     let line: string;
     if (ev.shape === 'financial') {
       const val = typeof ev.value === 'number' ? ev.value.toLocaleString('es-CL') : String(ev.value ?? '');
@@ -185,10 +197,13 @@ export function compressBralidus(
       const thr = ev.threshold !== undefined ? ` (umbral: ${ev.threshold})` : '';
       line = `  - [DOCTRINA] ${ev.entity_value ?? ev.claim}${dim}${thr}`;
     }
+    // Cota defensiva: truncar línea individual a máx 1400 caracteres (~350 tokens)
+    if (line.length > 1400) line = line.slice(0, 1400) + '...';
     if (budget - line.length < 0) break;
     budget -= line.length;
     evLines.push(line);
   }
+
   const freshnessNote = dataFreshness
     ? `  Frescura de datos: ${Object.entries(dataFreshness).map(([k, v]) => `${k}=${v}`).join(', ')}`
     : '';

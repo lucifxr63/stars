@@ -79,7 +79,7 @@ export default function CorrelationChart({
         .eq('document_title', macroTitle)
         .maybeSingle();
 
-      const rawObs: ObsPoint[] = ((node?.metadata as any)?.observaciones ?? [])
+      const rawObs: ObsPoint[] = [...((node?.metadata as any)?.observaciones ?? [])]
         .filter((o: { date: string; value: number | null }) => o.value != null)
         .sort((a: ObsPoint, b: ObsPoint) => a.date.localeCompare(b.date))
         .slice(-monthsToShow);

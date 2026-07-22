@@ -90,7 +90,7 @@ function buildGraph(rawNodes: RawKnNode[], rawEdges: RawKnEdge[], filterCat: str
   });
 
   const posMap = new Map(nodes.map(n => [n.id, n]));
-  const edges: PlacedEdge[] = rawEdges
+  const edges: PlacedEdge[] = [...rawEdges]
     .filter(e => visIds.has(e.source_title) && visIds.has(e.target_title))
     .sort((a, b) => ((deg.get(b.source_title) ?? 0) + (deg.get(b.target_title) ?? 0)) - ((deg.get(a.source_title) ?? 0) + (deg.get(a.target_title) ?? 0)))
     .slice(0, 180)
