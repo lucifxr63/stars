@@ -178,6 +178,14 @@ const licitusProxyHandler = (subpath: (c: any) => string, tokens: number, requir
 export const licitusProveedorHandler = licitusProxyHandler(
   (c) => `/proveedor/${encodeURIComponent(formatRutCanonical(c.req.param('rut') ?? ''))}`, 40, true
 )
+// GET /api/v1/data/licitus/proveedor/:rut/vs-mercado?periodo_meses=12
+export const licitusProveedorVsMercadoHandler = licitusProxyHandler(
+  (c) => `/proveedor/${encodeURIComponent(formatRutCanonical(c.req.param('rut') ?? ''))}/vs-mercado`, 45, true
+)
+// GET /api/v1/data/licitus/proveedor/:rut/oportunidades?limit=10
+export const licitusProveedorOportunidadesHandler = licitusProxyHandler(
+  (c) => `/proveedor/${encodeURIComponent(formatRutCanonical(c.req.param('rut') ?? ''))}/oportunidades`, 45, true
+)
 // GET /api/v1/data/licitus/mercado/benchmarks?unspsc&region&periodo_meses
 export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benchmarks', 30)
 // GET /api/v1/data/licitus/mercado/activas?unspsc&region&monto_min&cierre_desde_horas&limit

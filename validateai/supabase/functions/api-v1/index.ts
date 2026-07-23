@@ -4,7 +4,7 @@ import { authMiddleware } from './middleware/auth.ts'
 import { usageMiddleware } from './middleware/usage.ts'
 import { rateLimitMiddleware } from './middleware/ratelimit.ts'
 import { ragQueryHandler } from './routes/rag.ts'
-import { economicDataHandler, macroDataHandler, chilecompraDataHandler, chilecompraMetricasHandler, licitusProveedorHandler, licitusBenchmarksHandler, licitusActivasHandler, spulseSearchHandler, spulseProfileHandler, spulseNetworkHandler } from './routes/data.ts'
+import { economicDataHandler, macroDataHandler, chilecompraDataHandler, chilecompraMetricasHandler, licitusProveedorHandler, licitusProveedorVsMercadoHandler, licitusProveedorOportunidadesHandler, licitusBenchmarksHandler, licitusActivasHandler, spulseSearchHandler, spulseProfileHandler, spulseNetworkHandler } from './routes/data.ts'
 import { intelQueryHandler, intelMoeQueryHandler } from './routes/intel.ts'
 import { ingestTextHandler, ingestFileHandler, ingestVaultHandler } from './routes/ingest.ts'
 import { createWebhookHandler, listWebhooksHandler, deleteWebhookHandler } from './routes/webhooks.ts'
@@ -46,6 +46,8 @@ app.get('/api/v1/data/chilecompra', chilecompraDataHandler)
 app.get('/api/v1/data/chilecompra/metricas', chilecompraMetricasHandler)
 // Licitus (Mercado Público vía BralidusPY) — fuente paralela a chilecompra/metricas
 app.get('/api/v1/data/licitus/proveedor/:rut', licitusProveedorHandler)
+app.get('/api/v1/data/licitus/proveedor/:rut/vs-mercado', licitusProveedorVsMercadoHandler)
+app.get('/api/v1/data/licitus/proveedor/:rut/oportunidades', licitusProveedorOportunidadesHandler)
 app.get('/api/v1/data/licitus/mercado/benchmarks', licitusBenchmarksHandler)
 app.get('/api/v1/data/licitus/mercado/activas', licitusActivasHandler)
 // S-Pulse (grafo societario vía BralidusPY) — superficie curada read-only
