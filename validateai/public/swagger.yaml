@@ -5,7 +5,7 @@ info:
   description: |
     Plataforma de APIs de Inteligencia de Mercado, Mercado Público (B2G), Datos Macroeconómicos y GraphRAG como Servicio (RaaS).
 
-    Centraliza datos de Mercado Público (Licitaciones, Órdenes de Compra, Organismos, Proveedores), indicadores macroeconómicos (BCCh, FRED, yfinance) y motor vectorial pgvector.
+    Centraliza datos de Mercado Público (Licitaciones, Compra Ágil, Órdenes de Compra, Organismos, Proveedores, Benchmarks, Métricas M1-M10), indicadores macroeconómicos (BCCh, FRED, yfinance) y motor vectorial pgvector.
 
     ## Autenticación
     Todas las rutas bajo `/api/v1` requieren una API Key válida en la cabecera HTTP:
@@ -29,7 +29,7 @@ servers:
 
 tags:
   - name: Mercado Público (B2G)
-    description: Licitaciones, Órdenes de Compra, Organismos Compradores y Perfiles de Proveedores B2G
+    description: Licitaciones, Compra Ágil, Órdenes de Compra, Organismos Compradores, Proveedores, Benchmarks y Métricas M1-M10
   - name: Datos Económicos
     description: Indicadores macroeconómicos en tiempo real (UF, IPC, Dólar, TPM, PIB)
   - name: Bralidus Intelligence (GraphRAG)
@@ -40,7 +40,7 @@ tags:
     description: Notificaciones asíncronas en tiempo real
 
 paths:
-  # ── Mercado Público: Pilar 1 — Licitaciones ───────────────────────────
+  # ── Mercado Público: Pilar 1 — Licitaciones & Compra Ágil ─────────────────
   /api/v1/mercado-publico/licitaciones:
     get:
       tags: [Mercado Público (B2G)]
@@ -115,6 +115,26 @@ paths:
         '404':
           description: Licitación no encontrada.
 
+  /api/v1/mercado-publico/compra-agil:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Oportunidades de Compra Ágil (< 300 UTM)
+      description: Listado en tiempo real de cotizaciones expeditas de menor monto de instituciones públicas.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: buyer_rut
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listado de compras ágiles activas.
+
   # ── Mercado Público: Pilar 2 — Órdenes de Compra ──────────────────────
   /api/v1/mercado-publico/ordenes-compra:
     get:
@@ -174,7 +194,7 @@ paths:
         '200':
           description: Detalle completo de la orden de compra.
 
-  # ── Mercado Público: Pilar 3 — Organismos y Proveedores ─────────────────
+  # ── Mercado Público: Pilar 3 — Organismos, Proveedores & Benchmarks ─────
   /api/v1/mercado-publico/organismos:
     get:
       tags: [Mercado Público (B2G)]
@@ -196,6 +216,23 @@ paths:
       responses:
         '200':
           description: Lista de organismos compradores.
+
+  /api/v1/mercado-publico/organismos/{id}:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Ficha de un organismo comprador y sus OCs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "6921"
+      responses:
+        '200':
+          description: Histórico de órdenes de compra emitidas por la institución.
 
   /api/v1/mercado-publico/proveedores/{rut}:
     get:
@@ -232,6 +269,64 @@ paths:
       responses:
         '200':
           description: Comparativa directa de mercado.
+
+  /api/v1/mercado-publico/proveedores/{rut}/oportunidades:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Licitaciones recomendadas para el perfil del proveedor
+      description: Licitaciones y compras ágiles activas rankeadas por algoritmo de relevancia semántica para el proveedor.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "76.086.428-5"
+      responses:
+        '200':
+          description: Oportunidades recomendadas.
+
+  /api/v1/mercado-publico/benchmarks:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Benchmarks B2G agregados por rubro y región
+      description: Métricas agregadas de volúmenes, medianas de ticket, proveedores activos y concentración por rubro UNSPSC.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: unspsc
+          in: query
+          schema:
+            type: string
+            example: "43232200"
+        - name: region
+          in: query
+          schema:
+            type: string
+            example: "13"
+      responses:
+        '200':
+          description: Benchmarks sectoriales.
+
+  /api/v1/mercado-publico/metricas/{rut}:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Métricas consolidadas M1-M10 para una empresa
+      description: Lee las métricas consolidadas M1 a M10 de compras públicas (volúmenes, ticket promedio, PMO de pago en días).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "76.086.428-5"
+      responses:
+        '200':
+          description: Métricas M1-M10 de Mercado Público.
 
   # ── Datos Económicos ──────────────────────────────────────────────────
   /api/v1/data/economy:

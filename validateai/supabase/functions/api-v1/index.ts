@@ -69,17 +69,21 @@ app.get('/api/v1/data/chilecompra/metricas', chilecompraMetricasHandler)
 
 // ── Mercado Público (API Canónica Bralidus v1) ──────────────────────────────────
 app.get('/api/v1/mercado-publico/health', mercadoPublicoHealthHandler)
-// 1. Licitaciones
+// 1. Licitaciones & Compra Ágil
 app.get('/api/v1/mercado-publico/licitaciones', mercadoPublicoLicitacionesHandler)
 app.get('/api/v1/mercado-publico/licitaciones/:codigo_externo', mercadoPublicoLicitacionDetailHandler)
+app.get('/api/v1/mercado-publico/compra-agil', mercadoPublicoCompraAgilHandler)
 // 2. Órdenes de Compra
 app.get('/api/v1/mercado-publico/ordenes-compra', mercadoPublicoOrdenesHandler)
 app.get('/api/v1/mercado-publico/ordenes-compra/:codigo_oc', mercadoPublicoOrdenDetailHandler)
 // 3. Organismos y Proveedores
 app.get('/api/v1/mercado-publico/organismos', mercadoPublicoOrganismosHandler)
+app.get('/api/v1/mercado-publico/organismos/:id', mercadoPublicoCompradorHandler)
 app.get('/api/v1/mercado-publico/proveedores/:rut', mercadoPublicoProveedorHandler)
 app.get('/api/v1/mercado-publico/proveedores/:rut/vs-mercado', mercadoPublicoProveedorVsMercadoHandler)
+app.get('/api/v1/mercado-publico/proveedores/:rut/oportunidades', licitusProveedorOportunidadesHandler)
 app.get('/api/v1/mercado-publico/benchmarks', mercadoPublicoBenchmarksHandler)
+app.get('/api/v1/mercado-publico/metricas/:rut', chilecompraMetricasHandler)
 
 // Rutas alias B2G
 app.get('/api/v1/data/b2g/licitaciones/activas', licitusActivasHandler)
