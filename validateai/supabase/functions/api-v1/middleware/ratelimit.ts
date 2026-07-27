@@ -30,6 +30,8 @@ export const ENDPOINT_CREDITS: Record<string, number> = {
   '/api/v1/data/spulse/companies': 3,
   '/api/v1/data/licitus/proveedor': 3,
   '/api/v1/data/licitus/mercado': 3,
+  '/api/v1/data/mercado-publico': 3,
+  '/api/v1/mercado-publico': 3,
   '/api/v1/rag/query': 5,
   '/api/v1/rag/ingest/text': 10,
   '/api/v1/rag/ingest/file': 15,

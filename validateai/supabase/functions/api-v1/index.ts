@@ -4,7 +4,29 @@ import { authMiddleware } from './middleware/auth.ts'
 import { usageMiddleware } from './middleware/usage.ts'
 import { rateLimitMiddleware } from './middleware/ratelimit.ts'
 import { ragQueryHandler } from './routes/rag.ts'
-import { economicDataHandler, macroDataHandler, chilecompraDataHandler, chilecompraMetricasHandler, licitusProveedorHandler, licitusProveedorVsMercadoHandler, licitusProveedorOportunidadesHandler, licitusBenchmarksHandler, licitusActivasHandler, spulseSearchHandler, spulseProfileHandler, spulseNetworkHandler } from './routes/data.ts'
+import { 
+  economicDataHandler, 
+  macroDataHandler, 
+  chilecompraDataHandler, 
+  chilecompraMetricasHandler, 
+  licitusProveedorHandler, 
+  licitusProveedorVsMercadoHandler, 
+  licitusProveedorOportunidadesHandler, 
+  licitusBenchmarksHandler, 
+  licitusActivasHandler, 
+  spulseSearchHandler, 
+  spulseProfileHandler, 
+  spulseNetworkHandler,
+  mercadoPublicoHealthHandler,
+  mercadoPublicoLicitacionesHandler,
+  mercadoPublicoLicitacionDetailHandler,
+  mercadoPublicoOrdenesHandler,
+  mercadoPublicoOrdenDetailHandler,
+  mercadoPublicoOrganismosHandler,
+  mercadoPublicoProveedorHandler,
+  mercadoPublicoProveedorVsMercadoHandler,
+  mercadoPublicoBenchmarksHandler
+} from './routes/data.ts'
 import { intelQueryHandler, intelMoeQueryHandler } from './routes/intel.ts'
 import { ingestTextHandler, ingestFileHandler, ingestVaultHandler } from './routes/ingest.ts'
 import { createWebhookHandler, listWebhooksHandler, deleteWebhookHandler } from './routes/webhooks.ts'
@@ -44,13 +66,36 @@ app.get('/api/v1/data/economy', economicDataHandler)
 app.get('/api/v1/data/macro', macroDataHandler)
 app.get('/api/v1/data/chilecompra', chilecompraDataHandler)
 app.get('/api/v1/data/chilecompra/metricas', chilecompraMetricasHandler)
-// Licitus (Mercado Público vía BralidusPY) — fuente paralela a chilecompra/metricas
+
+// ── Mercado Público (API Canónica Bralidus v1) ──────────────────────────────────
+app.get('/api/v1/mercado-publico/health', mercadoPublicoHealthHandler)
+// 1. Licitaciones
+app.get('/api/v1/mercado-publico/licitaciones', mercadoPublicoLicitacionesHandler)
+app.get('/api/v1/mercado-publico/licitaciones/:codigo_externo', mercadoPublicoLicitacionDetailHandler)
+// 2. Órdenes de Compra
+app.get('/api/v1/mercado-publico/ordenes-compra', mercadoPublicoOrdenesHandler)
+app.get('/api/v1/mercado-publico/ordenes-compra/:codigo_oc', mercadoPublicoOrdenDetailHandler)
+// 3. Organismos y Proveedores
+app.get('/api/v1/mercado-publico/organismos', mercadoPublicoOrganismosHandler)
+app.get('/api/v1/mercado-publico/proveedores/:rut', mercadoPublicoProveedorHandler)
+app.get('/api/v1/mercado-publico/proveedores/:rut/vs-mercado', mercadoPublicoProveedorVsMercadoHandler)
+app.get('/api/v1/mercado-publico/benchmarks', mercadoPublicoBenchmarksHandler)
+
+// Rutas alias B2G
+app.get('/api/v1/data/b2g/licitaciones/activas', licitusActivasHandler)
+app.get('/api/v1/data/b2g/benchmarks', licitusBenchmarksHandler)
+app.get('/api/v1/data/b2g/proveedor/:rut', licitusProveedorHandler)
+app.get('/api/v1/data/b2g/proveedor/:rut/vs-mercado', licitusProveedorVsMercadoHandler)
+
+// Rutas legacy Licitus
 app.get('/api/v1/data/licitus/proveedor/:rut', licitusProveedorHandler)
 app.get('/api/v1/data/licitus/proveedor/:rut/vs-mercado', licitusProveedorVsMercadoHandler)
 app.get('/api/v1/data/licitus/proveedor/:rut/oportunidades', licitusProveedorOportunidadesHandler)
 app.get('/api/v1/data/licitus/mercado/benchmarks', licitusBenchmarksHandler)
 app.get('/api/v1/data/licitus/mercado/activas', licitusActivasHandler)
-// S-Pulse (grafo societario vía BralidusPY) — superficie curada read-only
+
+// 🔒 S-Pulse (grafo societario — WIP / resguardado interno)
+// Oculto de la documentación pública Swagger/Developer Portal
 app.get('/api/v1/data/spulse/companies/search', spulseSearchHandler)
 app.get('/api/v1/data/spulse/companies/:rut/profile', spulseProfileHandler)
 app.get('/api/v1/data/spulse/companies/:rut/network', spulseNetworkHandler)

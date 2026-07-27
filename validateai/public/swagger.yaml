@@ -1,25 +1,25 @@
 openapi: 3.0.3
 info:
-  title: Bralidus & Validus RaaS API
-  version: "1.2.0"
+  title: Bralidus API Platform
+  version: "2.0.0"
   description: |
-    API de Inteligencia de Mercado, GraphRAG y Validación como Servicio (RaaS).
+    Plataforma de APIs de Inteligencia de Mercado, Mercado Público (B2G), Datos Macroeconómicos y GraphRAG como Servicio (RaaS).
 
-    Orquesta datos macroeconómicos (BCCh, CMF, yfinance), doctrina legal, grafo societario (S-Pulse)
-    e inteligencia de licitaciones públicas (Licitus) mediante el motor BralidusPY.
+    Centraliza datos de Mercado Público (Licitaciones, Órdenes de Compra, Organismos, Proveedores), indicadores macroeconómicos (BCCh, FRED, yfinance) y motor vectorial pgvector.
 
     ## Autenticación
-    Todas las rutas bajo `/api/v1` requieren una API Key válida en la cabecera:
+    Todas las rutas bajo `/api/v1` requieren una API Key válida en la cabecera HTTP:
     ```
     Authorization: Bearer val_live_XXXX...
     ```
-    Genera y gestiona tus llaves en el [Portal de Desarrolladores](https://bralidus.scouttech.lat/developers).
+    Genera y gestiona tus llaves de acceso en el [Developer Portal](https://bralidus.scouttech.lat/developers).
 
-    ## Rate Limiting
-    - 100 requests/minuto por API Key.
-    - Headers de control: `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+    ## Rate Limiting & Créditos
+    - Cada endpoint consume un monto ponderado de créditos en función de su complejidad.
+    - Headers de respuesta estándar: `X-RateLimit-Limit-Credits`, `X-RateLimit-Remaining-Credits`, `X-RateLimit-Tier`, `X-RateLimit-Request-Cost`.
+
   contact:
-    name: Validus / Bralidus
+    name: Bralidus API Team
     url: https://bralidus.scouttech.lat
   license:
     name: Propietario
@@ -28,206 +28,229 @@ servers:
     description: Producción Edge Gateway
 
 tags:
-  - name: Bralidus Intelligence (MoE GraphRAG)
-    description: Consultas semánticas fusionadas con datos macro, doctrina y perfil de empresa
-  - name: S-Pulse (Grafo Societario)
-    description: Grafo de relaciones societarias chilenas con trazabilidad legal
-  - name: Licitus (Mercado Público)
-    description: Inteligencia B2G y órdenes de compra reales
+  - name: Mercado Público (B2G)
+    description: Licitaciones, Órdenes de Compra, Organismos Compradores y Perfiles de Proveedores B2G
   - name: Datos Económicos
-    description: Indicadores financieros en tiempo real (UF, IPC, Dólar)
-  - name: RAG
-    description: Búsqueda vectorial semántica pgvector
+    description: Indicadores macroeconómicos en tiempo real (UF, IPC, Dólar, TPM, PIB)
+  - name: Bralidus Intelligence (GraphRAG)
+    description: Búsqueda semántica fusionada con datos macroeconómicos y normativos
+  - name: RAG & Vault
+    description: Búsqueda vectorial semántica pgvector e indexación de datos privados
   - name: Webhooks
-    description: Notificaciones asíncronas de eventos
-  - name: Ingestión
-    description: Ingesta de documentos a la base de conocimiento
+    description: Notificaciones asíncronas en tiempo real
 
 paths:
-  /api/v1/intel/query:
-    post:
-      tags: [Bralidus Intelligence (MoE GraphRAG)]
-      summary: Consulta semántica unificada Bralidus
-      description: Fusiona datos macro, doctrina normativa y (si se pasa company_rut) datos de S-Pulse y Licitus en un contexto citable.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [query]
-              properties:
-                query:
-                  type: string
-                  example: "impacto del alza de tasas en fintech de crédito en Chile"
-                startup_context:
-                  type: object
-                  properties:
-                    industry:
-                      type: string
-                      example: "fintech"
-                    stage:
-                      type: string
-                      example: "early_stage"
-                    geography:
-                      type: string
-                      example: "Chile"
-                    company_rut:
-                      type: string
-                      example: "76.123.456-7"
-                top_k:
-                  type: integer
-                  default: 10
-                  maximum: 25
-      responses:
-        '200':
-          description: Contexto citable e inteligencia ensamblada.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /api/v1/intel/query/moe:
-    post:
-      tags: [Bralidus Intelligence (MoE GraphRAG)]
-      summary: Consulta Mixture-of-Experts (MoE)
-      description: Invoca la red de gating de BralidusPY para activar expertos especializados (unit economics, legal, macro) y reportar evidencias.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [query]
-              properties:
-                query:
-                  type: string
-                  example: "regulaciones de Ley Fintech aplicables a plataformas de crowdfunding"
-                top_k:
-                  type: integer
-                  default: 10
-      responses:
-        '200':
-          description: Respuesta enriquecida por la mezcla de expertos.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /api/v1/data/spulse/companies/search:
+  # ── Mercado Público: Pilar 1 — Licitaciones ───────────────────────────
+  /api/v1/mercado-publico/licitaciones:
     get:
-      tags: [S-Pulse (Grafo Societario)]
-      summary: Búsqueda de empresas en grafo societario
+      tags: [Mercado Público (B2G)]
+      summary: Buscador de licitaciones públicas
+      description: Obtiene un listado paginado de licitaciones públicas filtrable por fechas, estado u organismo.
       security:
         - BearerAuth: []
       parameters:
+        - name: fecha_inicio
+          in: query
+          description: Fecha de inicio de búsqueda (YYYY-MM-DD)
+          schema:
+            type: string
+            example: "2026-07-01"
+        - name: fecha_fin
+          in: query
+          description: Fecha de fin de búsqueda (YYYY-MM-DD)
+          schema:
+            type: string
+            example: "2026-07-27"
+        - name: estado
+          in: query
+          description: Estado de la licitación (publicada, cerrada, adjudicada, desierta)
+          schema:
+            type: string
+            example: "publicada"
+        - name: codigo_organismo
+          in: query
+          description: Código del organismo comprador
+          schema:
+            type: string
+            example: "6921"
         - name: q
           in: query
-          required: true
+          description: Término de búsqueda en el título
           schema:
             type: string
-          example: "Tecnología"
-      responses:
-        '200':
-          description: Lista de empresas coincidentes.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /api/v1/data/spulse/companies/{rut}/profile:
-    get:
-      tags: [S-Pulse (Grafo Societario)]
-      summary: Perfil de empresa y estructura legal
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: rut
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "76123456-7"
-      responses:
-        '200':
-          description: Perfil detallado de la sociedad.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /api/v1/data/spulse/companies/{rut}/network:
-    get:
-      tags: [S-Pulse (Grafo Societario)]
-      summary: Red de socios y relaciones societarias
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: rut
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Malla societaria y conexiones inter-empresas.
-
-  /api/v1/data/licitus/proveedor/{rut}:
-    get:
-      tags: [Licitus (Mercado Público)]
-      summary: Histórico de licitaciones y órdenes de compra del proveedor
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: rut
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: periodo_meses
+            example: "desarrollo de software"
+        - name: page
           in: query
           schema:
             type: integer
-            default: 12
-      responses:
-        '200':
-          description: Histórico de contrataciones públicas.
-
-  /api/v1/data/licitus/mercado/benchmarks:
-    get:
-      tags: [Licitus (Mercado Público)]
-      summary: Benchmarks de mercado B2G
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: unspsc
-          in: query
-          schema:
-            type: string
-        - name: region
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Métricas agregadas de montos y tiempos de adjudicación.
-
-  /api/v1/data/licitus/mercado/activas:
-    get:
-      tags: [Licitus (Mercado Público)]
-      summary: Licitaciones públicas activas
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: limit
+            default: 1
+        - name: page_size
           in: query
           schema:
             type: integer
             default: 20
       responses:
         '200':
-          description: Oportunidades vigentes en Mercado Público.
+          description: Listado paginado de licitaciones.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/rag/query:
+  /api/v1/mercado-publico/licitaciones/{codigo_externo}:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Detalle de una licitación específica
+      description: Obtiene el detalle completo de una licitación por su código externo (ej. 1234-56-LE26).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: codigo_externo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "1234-56-LE26"
+      responses:
+        '200':
+          description: Detalle completo de la licitación.
+        '404':
+          description: Licitación no encontrada.
+
+  # ── Mercado Público: Pilar 2 — Órdenes de Compra ──────────────────────
+  /api/v1/mercado-publico/ordenes-compra:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Listado de órdenes de compra (OCs)
+      description: Transacciones reales de compra emitidas por organismos del Estado.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: fecha
+          in: query
+          description: Fecha específica (YYYY-MM-DD)
+          schema:
+            type: string
+            example: "2026-07-25"
+        - name: rut_proveedor
+          in: query
+          description: RUT del proveedor adjudicado
+          schema:
+            type: string
+            example: "76.086.428-5"
+        - name: estado
+          in: query
+          description: Estado de la OC (enviada, aceptada, recepcion_conforme)
+          schema:
+            type: string
+            example: "aceptada"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Listado de órdenes de compra.
+
+  /api/v1/mercado-publico/ordenes-compra/{codigo_oc}:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Detalle de una orden de compra
+      description: Detalle completo de la OC con precios unitarios, ítems y datos del proveedor.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: codigo_oc
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "1234-56-SE26"
+      responses:
+        '200':
+          description: Detalle completo de la orden de compra.
+
+  # ── Mercado Público: Pilar 3 — Organismos y Proveedores ─────────────────
+  /api/v1/mercado-publico/organismos:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Directorio de organismos compradores del Estado
+      description: Busca y lista instituciones compradoras (Ministerios, Municipios, Hospitales).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: nombre
+          in: query
+          description: Nombre o parte del nombre de la institución
+          schema:
+            type: string
+            example: "MINEDUC"
+        - name: rut
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de organismos compradores.
+
+  /api/v1/mercado-publico/proveedores/{rut}:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Perfil B2G público de un proveedor
+      description: Historial de contrataciones públicas, OCs ganadas, ticket promedio, buyer intelligence y B2G maturity score (0-100).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "76.086.428-5"
+      responses:
+        '200':
+          description: Perfil B2G del proveedor.
+
+  /api/v1/mercado-publico/proveedores/{rut}/vs-mercado:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Comparativa del proveedor vs benchmark de su mercado
+      description: Compara la facturación B2G y ticket promedio del proveedor contra los cuartiles p25/p50/p75 de su rubro UNSPSC.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "76.086.428-5"
+      responses:
+        '200':
+          description: Comparativa directa de mercado.
+
+  # ── Datos Económicos ──────────────────────────────────────────────────
+  /api/v1/data/economy:
+    get:
+      tags: [Datos Económicos]
+      summary: Snapshot macroeconómico consolidado de Chile
+      description: Retorna los indicadores vigentes (UF, IPC, USD/CLP, TPM, PIB, desempleo).
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Indicadores macroeconómicos vigentes.
+
+  # ── GraphRAG & Bralidus Intelligence ─────────────────────────────────
+  /api/v1/intel/query:
     post:
-      tags: [RAG]
-      summary: Consulta semántica simple a pgvector
+      tags: [Bralidus Intelligence (GraphRAG)]
+      summary: Búsqueda GraphRAG con contexto macro y normativo
+      description: Fusiona datos macroeconómicos y cuerpo normativo en un contexto Markdown citable para LLMs.
       security:
         - BearerAuth: []
       requestBody:
@@ -240,24 +263,74 @@ paths:
               properties:
                 query:
                   type: string
+                  example: "impacto del alza de tasas en startups de crédito en Chile"
+                top_k:
+                  type: integer
+                  default: 10
       responses:
         '200':
-          description: Fragmentos vectoriales encontrados.
+          description: Contexto citable e inteligencia ensamblada.
 
-  /api/v1/data/economy:
+  /api/v1/intel/radar/signals:
     get:
-      tags: [Datos Económicos]
-      summary: Retorna UF, IPC y indicadores en caché
+      tags: [Bralidus Intelligence (GraphRAG)]
+      summary: Stream de señales activas del Radar Forense
+      description: Retorna alertas activas de mercado (regulaciones CMF, quiebras sectoriales, oportunidades).
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Indicadores vigentes.
+          description: Señales activas de mercado.
 
+  # ── RAG & Vault Privado ───────────────────────────────────────────────
+  /api/v1/rag/query:
+    post:
+      tags: [RAG & Vault]
+      summary: Búsqueda semántica vectorial HNSW (pgvector)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  example: "métricas de retención y churn"
+      responses:
+        '200':
+          description: Chunks semánticos más relevantes.
+
+  /api/v1/rag/ingest/text:
+    post:
+      tags: [RAG & Vault]
+      summary: Indexación de texto plano en el Vault privado del cliente
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text, title]
+              properties:
+                text:
+                  type: string
+                title:
+                  type: string
+      responses:
+        '200':
+          description: Texto vectorizado e indexado exitosamente.
+
+  # ── Webhooks ──────────────────────────────────────────────────────────
   /api/v1/webhooks:
     post:
       tags: [Webhooks]
-      summary: Registra un webhook de notificación
+      summary: Registra un webhook de notificación de eventos
       security:
         - BearerAuth: []
       requestBody:
@@ -275,25 +348,17 @@ paths:
       responses:
         '201':
           description: Webhook registrado.
-    get:
-      tags: [Webhooks]
-      summary: Lista webhooks registrados
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Lista de webhooks del usuario.
 
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
-      description: "API Key generada en el portal de desarrolladores. Formato: `val_live_XXXXXXXXXXXX`"
+      description: "API Key generada en el Developer Portal. Formato: `val_live_XXXXXXXXXXXX`"
 
   responses:
     BadRequest:
-      description: Parámetros inválidos.
+      description: Parámetros de consulta inválidos.
       content:
         application/json:
           schema:

@@ -191,6 +191,222 @@ export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benc
 // GET /api/v1/data/licitus/mercado/activas?unspsc&region&monto_min&cierre_desde_horas&limit
 export const licitusActivasHandler = licitusProxyHandler(() => '/mercado/activas', 30)
 
+// ── Bralidus REST Standard Response Helper ────────────────────────────────────
+const buildBralidusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico') => ({
+  request_id: `req_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
+  page,
+  page_size: pageSize,
+  total,
+  source,
+  synced_at: new Date().toISOString(),
+})
+
+const buildBralidusResponse = (data: any, page = 1, pageSize = 20, total = 0, source = 'mercado_publico', errors: any[] = []) => ({
+  data,
+  meta: buildBralidusMeta(page, pageSize, total, source),
+  errors,
+})
+
+// ── Mercado Público (API Prima Bralidus v1) ──────────────────────────────────
+
+// GET /api/v1/mercado-publico/health
+export const mercadoPublicoHealthHandler = async (c: any) => {
+  return c.json(buildBralidusResponse({
+    status: 'ok',
+    sources: {
+      mercado_publico_v1: 'operational',
+      compra_agil_v2: 'operational',
+    },
+    version: '1.0.0',
+  }, 1, 1, 1))
+}
+
+// GET /api/v1/mercado-publico/opportunities (Buscador Unificado: tender + agile_purchase)
+export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? c.req.query('limit') ?? 20), 100)
+    const offset = (page - 1) * pageSize
+    const typeParam = c.req.query('type') // 'tender', 'agile_purchase', or comma-separated
+    const statusParam = c.req.query('status')
+    const q = c.req.query('q')
+
+    let query = supabase.from('opportunities').select('*', { count: 'exact' }).order('published_at', { ascending: false })
+
+    if (typeParam) {
+      const types = typeParam.split(',').map((t: string) => t.trim())
+      query = query.in('source_type', types)
+    }
+    if (statusParam) query = query.eq('status_code', statusParam)
+    if (q) query = query.ilike('title', `%${q}%`)
+
+    const { data, count, error } = await query.range(offset, offset + pageSize - 1)
+    if (error) throw error
+
+    c.set('tokens_used', 25)
+    return c.json(buildBralidusResponse(data ?? [], page, pageSize, count ?? 0))
+  } catch (err) {
+    console.error('mercadoPublicoOpportunitiesHandler error:', err)
+    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// GET /api/v1/mercado-publico/opportunities/:id
+export const mercadoPublicoOpportunityDetailHandler = async (c: any) => {
+  const id = c.req.param('id')
+  try {
+    const supabase = getSupabase()
+    const isUuid = id.includes('-') && id.length > 20
+    const query = supabase.from('opportunities').select('*')
+    const { data, error } = await (isUuid ? query.eq('id', id) : query.eq('external_code', id)).maybeSingle()
+
+    if (error) throw error
+    if (!data) return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'NOT_FOUND', message: `Oportunidad ${id} no encontrada` }]), 404)
+
+    c.set('tokens_used', 15)
+    return c.json(buildBralidusResponse(data, 1, 1, 1))
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// GET /api/v1/mercado-publico/licitaciones
+export const mercadoPublicoLicitacionesHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
+    const offset = (page - 1) * pageSize
+    
+    const fechaInicio = c.req.query('fecha_inicio')
+    const fechaFin = c.req.query('fecha_fin')
+    const estado = c.req.query('estado') || c.req.query('status')
+    const codigoOrganismo = c.req.query('codigo_organismo') || c.req.query('buyer_rut')
+    const q = c.req.query('q')
+
+    let query = supabase.from('opportunities').select('*', { count: 'exact' }).neq('source_type', 'compra_agil').order('published_at', { ascending: false })
+    
+    if (q) query = query.ilike('title', `%${q}%`)
+    if (codigoOrganismo) query = query.eq('buyer_org_code', codigoOrganismo)
+    if (estado) query = query.eq('status_code', estado)
+    if (fechaInicio) query = query.gte('published_at', fechaInicio)
+    if (fechaFin) query = query.lte('published_at', fechaFin)
+
+    const { data, count, error } = await query.range(offset, offset + pageSize - 1)
+    if (error) throw error
+
+    c.set('tokens_used', 25)
+    return c.json(buildBralidusResponse(data ?? [], page, pageSize, count ?? 0))
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// GET /api/v1/mercado-publico/licitaciones/:codigo_externo
+export const mercadoPublicoLicitacionDetailHandler = async (c: any) => {
+  const codigo = c.req.param('codigo_externo') || c.req.param('id') || c.req.param('code')
+  try {
+    const supabase = getSupabase()
+    const isUuid = codigo && codigo.includes('-') && codigo.length > 20
+    const query = supabase.from('opportunities').select('*')
+    const { data, error } = await (isUuid ? query.eq('id', codigo) : query.eq('external_code', codigo)).maybeSingle()
+
+    if (error) throw error
+    if (!data) return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'NOT_FOUND', message: `Licitación ${codigo} no encontrada` }]), 404)
+
+    c.set('tokens_used', 15)
+    return c.json(buildBralidusResponse(data, 1, 1, 1))
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// GET /api/v1/mercado-publico/ordenes-compra
+export const mercadoPublicoOrdenesHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
+    const offset = (page - 1) * pageSize
+    
+    const fecha = c.req.query('fecha')
+    const rutProveedor = c.req.query('rut_proveedor') || c.req.query('supplier_rut')
+    const estado = c.req.query('estado') || c.req.query('status')
+    const codigoOrganismo = c.req.query('codigo_organismo') || c.req.query('buyer_rut')
+
+    let query = supabase.from('purchase_orders').select('*', { count: 'exact' }).order('issued_at', { ascending: false })
+    
+    if (rutProveedor) query = query.eq('supplier_code', rutProveedor)
+    if (codigoOrganismo) query = query.eq('buyer_org_code', codigoOrganismo)
+    if (estado) query = query.eq('status', estado)
+    if (fecha) query = query.gte('issued_at', `${fecha}T00:00:00Z`).lte('issued_at', `${fecha}T23:59:59Z`)
+
+    const { data, count, error } = await query.range(offset, offset + pageSize - 1)
+    if (error) throw error
+
+    c.set('tokens_used', 25)
+    return c.json(buildBralidusResponse(data ?? [], page, pageSize, count ?? 0))
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// GET /api/v1/mercado-publico/ordenes-compra/:codigo_oc
+export const mercadoPublicoOrdenDetailHandler = async (c: any) => {
+  const codigo = c.req.param('codigo_oc') || c.req.param('id') || c.req.param('code')
+  try {
+    const supabase = getSupabase()
+    const isUuid = codigo && codigo.includes('-') && codigo.length > 20
+    const query = supabase.from('purchase_orders').select('*')
+    const { data, error } = await (isUuid ? query.eq('id', codigo) : query.eq('external_code', codigo)).maybeSingle()
+
+    if (error) throw error
+    if (!data) return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'NOT_FOUND', message: `Orden de Compra ${codigo} no encontrada` }]), 404)
+
+    c.set('tokens_used', 15)
+    return c.json(buildBralidusResponse(data, 1, 1, 1))
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// GET /api/v1/mercado-publico/organismos
+export const mercadoPublicoOrganismosHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
+    const offset = (page - 1) * pageSize
+    
+    const nombre = c.req.query('nombre') || c.req.query('q')
+    const rut = c.req.query('rut')
+
+    let query = supabase.from('purchase_orders').select('buyer_org_code, buyer_name', { count: 'exact' })
+    
+    if (nombre) query = query.ilike('buyer_name', `%${nombre}%`)
+    if (rut) query = query.eq('buyer_org_code', rut)
+
+    const { data, count, error } = await query.range(offset, offset + pageSize - 1)
+    if (error) throw error
+
+    // Elimina duplicados de compradores
+    const uniqueBuyers = Array.from(
+      new Map((data ?? []).map((item: any) => [item.buyer_org_code, item])).values()
+    )
+
+    c.set('tokens_used', 20)
+    return c.json(buildBralidusResponse(uniqueBuyers, page, pageSize, count ?? 0))
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// Aliases para proveedores
+export const mercadoPublicoProveedorHandler = licitusProveedorHandler
+export const mercadoPublicoProveedorVsMercadoHandler = licitusProveedorVsMercadoHandler
+export const mercadoPublicoBenchmarksHandler = licitusBenchmarksHandler
+
 // ── S-Pulse (vía BralidusPY) ─────────────────────────────────────────────────
 // Grafo societario chileno con trazabilidad legal. Mismo hop que Licitus:
 // Browser/API consumer → api-v1 (developer key) → BralidusPY /spulse/* (Bearer
