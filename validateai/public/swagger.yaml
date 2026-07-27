@@ -3,9 +3,9 @@ info:
   title: Bralidus API Platform
   version: "2.0.0"
   description: |
-    Plataforma de APIs de Inteligencia de Mercado, Mercado Público (B2G), Datos Macroeconómicos y GraphRAG como Servicio (RaaS).
+    Plataforma de APIs de Inteligencia de Mercado, Mercado Público (B2G), Datos Macroeconómicos, Grafo Societario y GraphRAG como Servicio (RaaS).
 
-    Centraliza datos de Mercado Público (Licitaciones, Compra Ágil, Órdenes de Compra, Organismos, Proveedores, Benchmarks, Métricas M1-M10), indicadores macroeconómicos (BCCh, FRED, yfinance) y motor vectorial pgvector.
+    Centraliza datos de Mercado Público (Licitaciones, Compra Ágil, Órdenes de Compra, Organismos, Proveedores, Benchmarks, Métricas M1-M10), indicadores macroeconómicos (BCCh, FRED, yfinance, CMF, INE, SEIA, Diario Oficial), Grafo Societario S-Pulse y motor vectorial pgvector.
 
     ## Autenticación
     Todas las rutas bajo `/api/v1` requieren una API Key válida en la cabecera HTTP:
@@ -30,324 +30,256 @@ servers:
 tags:
   - name: Mercado Público (B2G)
     description: Licitaciones, Compra Ágil, Órdenes de Compra, Organismos Compradores, Proveedores, Benchmarks y Métricas M1-M10
-  - name: Datos Económicos
-    description: Indicadores macroeconómicos en tiempo real (UF, IPC, Dólar, TPM, PIB)
+  - name: Datos Económicos & Macro
+    description: Indicadores macroeconómicos locales y globales (BCCh, FRED, yfinance, CMF Insolvencias, INE Empleo, SEIA, Diario Oficial)
   - name: Bralidus Intelligence (GraphRAG)
-    description: Búsqueda semántica fusionada con datos macroeconómicos y normativos
-  - name: RAG & Vault
-    description: Búsqueda vectorial semántica pgvector e indexación de datos privados
-  - name: Webhooks
-    description: Notificaciones asíncronas en tiempo real
+    description: Búsqueda semántica fusionada con datos macroeconómicos, normativos y Mixture of Experts (MoE)
+  - name: RAG & Vault Vectorial
+    description: Búsqueda vectorial semántica pgvector e ingesta de documentos y Vault privado
+  - name: Grafo Societario (S-Pulse)
+    description: Redes societarias, mallas de empresas, socios, directivas y trazabilidad legal auditable
+  - name: Webhooks & Servicios
+    description: Notificaciones asíncronas en tiempo real, validación de startups y health check
 
 paths:
-  # ── Mercado Público: Pilar 1 — Licitaciones & Compra Ágil ─────────────────
-  /api/v1/mercado-publico/licitaciones:
+  # ── Mercado Público: Licitaciones & Compra Ágil ───────────────────────────
+  /api/v1/mercado-publico/health:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Buscador de licitaciones públicas
-      description: Obtiene un listado paginado de licitaciones públicas filtrable por fechas, estado u organismo.
-      security:
-        - BearerAuth: []
+      summary: Estado operativo de servicios Mercado Público
+      responses:
+        '200':
+          description: Estado del servicio.
+
+  /api/v1/mercado-publico/opportunities:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Buscador unificado (licitaciones y compras ágiles)
       parameters:
-        - name: fecha_inicio
-          in: query
-          description: Fecha de inicio de búsqueda (YYYY-MM-DD)
-          schema:
-            type: string
-            example: "2026-07-01"
-        - name: fecha_fin
-          in: query
-          description: Fecha de fin de búsqueda (YYYY-MM-DD)
-          schema:
-            type: string
-            example: "2026-07-27"
-        - name: estado
-          in: query
-          description: Estado de la licitación (publicada, cerrada, adjudicada, desierta)
-          schema:
-            type: string
-            example: "publicada"
-        - name: codigo_organismo
-          in: query
-          description: Código del organismo comprador
-          schema:
-            type: string
-            example: "6921"
         - name: q
           in: query
-          description: Término de búsqueda en el título
           schema:
             type: string
-            example: "desarrollo de software"
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [tender, agile_purchase]
         - name: page
           in: query
           schema:
             type: integer
             default: 1
-        - name: page_size
+      responses:
+        '200':
+          description: Listado de oportunidades.
+
+  /api/v1/mercado-publico/licitaciones:
+    get:
+      tags: [Mercado Público (B2G)]
+      summary: Buscador de licitaciones públicas
+      parameters:
+        - name: fecha_inicio
           in: query
           schema:
-            type: integer
-            default: 20
+            type: string
+        - name: fecha_fin
+          in: query
+          schema:
+            type: string
+        - name: estado
+          in: query
+          schema:
+            type: string
+        - name: codigo_organismo
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
       responses:
         '200':
           description: Listado paginado de licitaciones.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
 
   /api/v1/mercado-publico/licitaciones/{codigo_externo}:
     get:
       tags: [Mercado Público (B2G)]
       summary: Detalle de una licitación específica
-      description: Obtiene el detalle completo de una licitación por su código externo (ej. 1234-56-LE26).
-      security:
-        - BearerAuth: []
       parameters:
         - name: codigo_externo
           in: path
           required: true
           schema:
             type: string
-            example: "1234-56-LE26"
       responses:
         '200':
           description: Detalle completo de la licitación.
-        '404':
-          description: Licitación no encontrada.
 
   /api/v1/mercado-publico/compra-agil:
     get:
       tags: [Mercado Público (B2G)]
       summary: Oportunidades de Compra Ágil (< 300 UTM)
-      description: Listado en tiempo real de cotizaciones expeditas de menor monto de instituciones públicas.
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: buyer_rut
-          in: query
-          schema:
-            type: string
-        - name: q
-          in: query
-          schema:
-            type: string
       responses:
         '200':
           description: Listado de compras ágiles activas.
 
-  # ── Mercado Público: Pilar 2 — Órdenes de Compra ──────────────────────
   /api/v1/mercado-publico/ordenes-compra:
     get:
       tags: [Mercado Público (B2G)]
       summary: Listado de órdenes de compra (OCs)
-      description: Transacciones reales de compra emitidas por organismos del Estado.
-      security:
-        - BearerAuth: []
       parameters:
-        - name: fecha
-          in: query
-          description: Fecha específica (YYYY-MM-DD)
-          schema:
-            type: string
-            example: "2026-07-25"
         - name: rut_proveedor
           in: query
-          description: RUT del proveedor adjudicado
           schema:
             type: string
-            example: "76.086.428-5"
-        - name: estado
+        - name: codigo_organismo
           in: query
-          description: Estado de la OC (enviada, aceptada, recepcion_conforme)
           schema:
             type: string
-            example: "aceptada"
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: page_size
-          in: query
-          schema:
-            type: integer
-            default: 20
       responses:
         '200':
-          description: Listado de órdenes de compra.
+          description: Listado de OCs.
 
   /api/v1/mercado-publico/ordenes-compra/{codigo_oc}:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Detalle de una orden de compra
-      description: Detalle completo de la OC con precios unitarios, ítems y datos del proveedor.
-      security:
-        - BearerAuth: []
+      summary: Detalle de orden de compra por código
       parameters:
         - name: codigo_oc
           in: path
           required: true
           schema:
             type: string
-            example: "1234-56-SE26"
       responses:
         '200':
-          description: Detalle completo de la orden de compra.
+          description: Detalle de la OC.
 
-  # ── Mercado Público: Pilar 3 — Organismos, Proveedores & Benchmarks ─────
   /api/v1/mercado-publico/organismos:
     get:
       tags: [Mercado Público (B2G)]
       summary: Directorio de organismos compradores del Estado
-      description: Busca y lista instituciones compradoras (Ministerios, Municipios, Hospitales).
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: nombre
-          in: query
-          description: Nombre o parte del nombre de la institución
-          schema:
-            type: string
-            example: "MINEDUC"
-        - name: rut
-          in: query
-          schema:
-            type: string
       responses:
         '200':
-          description: Lista de organismos compradores.
+          description: Listado de organismos.
 
   /api/v1/mercado-publico/organismos/{id}:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Ficha de un organismo comprador y sus OCs
-      security:
-        - BearerAuth: []
+      summary: Perfil de organismo comprador
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
-            example: "6921"
       responses:
         '200':
-          description: Histórico de órdenes de compra emitidas por la institución.
+          description: Ficha del organismo.
 
   /api/v1/mercado-publico/proveedores/{rut}:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Perfil B2G público de un proveedor
-      description: Historial de contrataciones públicas, OCs ganadas, ticket promedio, buyer intelligence y B2G maturity score (0-100).
-      security:
-        - BearerAuth: []
+      summary: Perfil B2G 360° de proveedor por RUT
       parameters:
         - name: rut
           in: path
           required: true
           schema:
             type: string
-            example: "76.086.428-5"
       responses:
         '200':
-          description: Perfil B2G del proveedor.
+          description: Ficha B2G y score de madurez.
 
   /api/v1/mercado-publico/proveedores/{rut}/vs-mercado:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Comparativa del proveedor vs benchmark de su mercado
-      description: Compara la facturación B2G y ticket promedio del proveedor contra los cuartiles p25/p50/p75 de su rubro UNSPSC.
-      security:
-        - BearerAuth: []
+      summary: Benchmark del proveedor vs la industria UNSPSC
       parameters:
         - name: rut
           in: path
           required: true
           schema:
             type: string
-            example: "76.086.428-5"
       responses:
         '200':
-          description: Comparativa directa de mercado.
+          description: Comparativa contra medianas de mercado.
 
   /api/v1/mercado-publico/proveedores/{rut}/oportunidades:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Licitaciones recomendadas para el perfil del proveedor
-      description: Licitaciones y compras ágiles activas rankeadas por algoritmo de relevancia semántica para el proveedor.
-      security:
-        - BearerAuth: []
+      summary: Licitaciones recomendadas para el proveedor
       parameters:
         - name: rut
           in: path
           required: true
           schema:
             type: string
-            example: "76.086.428-5"
       responses:
         '200':
-          description: Oportunidades recomendadas.
+          description: Licitaciones sugeridas.
 
   /api/v1/mercado-publico/benchmarks:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Benchmarks B2G agregados por rubro y región
-      description: Métricas agregadas de volúmenes, medianas de ticket, proveedores activos y concentración por rubro UNSPSC.
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: unspsc
-          in: query
-          schema:
-            type: string
-            example: "43232200"
-        - name: region
-          in: query
-          schema:
-            type: string
-            example: "13"
+      summary: Benchmarks sectoriales por categoría UNSPSC
       responses:
         '200':
-          description: Benchmarks sectoriales.
+          description: Métricas agregadas por rubro.
 
   /api/v1/mercado-publico/metricas/{rut}:
     get:
       tags: [Mercado Público (B2G)]
-      summary: Métricas consolidadas M1-M10 para una empresa
-      description: Lee las métricas consolidadas M1 a M10 de compras públicas (volúmenes, ticket promedio, PMO de pago en días).
-      security:
-        - BearerAuth: []
+      summary: Métricas consolidadas M1 a M10 por RUT
       parameters:
         - name: rut
           in: path
           required: true
           schema:
             type: string
-            example: "76.086.428-5"
       responses:
         '200':
-          description: Métricas M1-M10 de Mercado Público.
+          description: Métricas M1-M10.
 
-  # ── Datos Económicos ──────────────────────────────────────────────────
+  # ── Datos Económicos & Macro ──────────────────────────────────────────────
   /api/v1/data/economy:
     get:
-      tags: [Datos Económicos]
-      summary: Snapshot macroeconómico consolidado de Chile
-      description: Retorna los indicadores vigentes (UF, IPC, USD/CLP, TPM, PIB, desempleo).
-      security:
-        - BearerAuth: []
+      tags: [Datos Económicos & Macro]
+      summary: Snapshot macroeconómico consolidado de Chile (UF, IPC, TPM, Dólar)
       responses:
         '200':
-          description: Indicadores macroeconómicos vigentes.
+          description: Indicadores económicos locales.
 
-  # ── GraphRAG & Bralidus Intelligence ─────────────────────────────────
+  /api/v1/data/macro:
+    get:
+      tags: [Datos Económicos & Macro]
+      summary: Indicadores macroeconómicos globales FRED (Cobre, WTI, Fed Rate, USD/CLP)
+      responses:
+        '200':
+          description: Indicadores FRED globales.
+
+  /api/v1/data/economy/bcch/uf:
+    get:
+      tags: [Datos Económicos & Macro]
+      summary: Valor diario y serie de la UF (Banco Central de Chile)
+      responses:
+        '200':
+          description: Datos UF.
+
+  /api/v1/data/economy/cmf/quiebras-insolvencias:
+    get:
+      tags: [Datos Económicos & Macro]
+      summary: Radar Forense de insolvencias y procedimientos concursales
+      responses:
+        '200':
+          description: Registros de insolvencia.
+
+  # ── Bralidus Intelligence (GraphRAG) ───────────────────────────────────────
   /api/v1/intel/query:
     post:
       tags: [Bralidus Intelligence (GraphRAG)]
-      summary: Búsqueda GraphRAG con contexto macro y normativo
-      description: Fusiona datos macroeconómicos y cuerpo normativo en un contexto Markdown citable para LLMs.
-      security:
-        - BearerAuth: []
+      summary: GraphRAG Unificado (Macro + Normativa + B2G)
       requestBody:
         required: true
         content:
@@ -358,32 +290,17 @@ paths:
               properties:
                 query:
                   type: string
-                  example: "impacto del alza de tasas en startups de crédito en Chile"
                 top_k:
                   type: integer
-                  default: 10
+                  default: 5
       responses:
         '200':
-          description: Contexto citable e inteligencia ensamblada.
+          description: Respuesta con contexto GraphRAG citable.
 
-  /api/v1/intel/radar/signals:
-    get:
-      tags: [Bralidus Intelligence (GraphRAG)]
-      summary: Stream de señales activas del Radar Forense
-      description: Retorna alertas activas de mercado (regulaciones CMF, quiebras sectoriales, oportunidades).
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Señales activas de mercado.
-
-  # ── RAG & Vault Privado ───────────────────────────────────────────────
-  /api/v1/rag/query:
+  /api/v1/intel/query/moe:
     post:
-      tags: [RAG & Vault]
-      summary: Búsqueda semántica vectorial HNSW (pgvector)
-      security:
-        - BearerAuth: []
+      tags: [Bralidus Intelligence (GraphRAG)]
+      summary: Mixture of Experts (MoE 5 Expertos + Radar Forense)
       requestBody:
         required: true
         content:
@@ -394,54 +311,140 @@ paths:
               properties:
                 query:
                   type: string
-                  example: "métricas de retención y churn"
+                max_experts:
+                  type: integer
+                  default: 3
       responses:
         '200':
-          description: Chunks semánticos más relevantes.
+          description: Respuesta MoE con expertos activados y frescura de datos.
+
+  /api/v1/intel/entities:
+    get:
+      tags: [Bralidus Intelligence (GraphRAG)]
+      summary: Catálogo de entidades macroeconómicas y normativas indexadas
+      responses:
+        '200':
+          description: Lista de entidades.
+
+  # ── RAG & Vault Vectorial ────────────────────────────────────────────────
+  /api/v1/rag/query:
+    post:
+      tags: [RAG & Vault Vectorial]
+      summary: Búsqueda semántica vectorial HNSW (pgvector)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+      responses:
+        '200':
+          description: Nodos más relevantes por similitud.
 
   /api/v1/rag/ingest/text:
     post:
-      tags: [RAG & Vault]
-      summary: Indexación de texto plano en el Vault privado del cliente
-      security:
-        - BearerAuth: []
+      tags: [RAG & Vault Vectorial]
+      summary: Ingesta y vectorización de texto plano en espacio privado
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [text, title]
+              required: [texts]
               properties:
-                text:
-                  type: string
-                title:
-                  type: string
+                texts:
+                  type: array
+                  items:
+                    type: string
       responses:
         '200':
-          description: Texto vectorizado e indexado exitosamente.
+          description: Confirmación de ingesta.
 
-  # ── Webhooks ──────────────────────────────────────────────────────────
+  /api/v1/rag/ingest/file:
+    post:
+      tags: [RAG & Vault Vectorial]
+      summary: Carga y parsing automático de documentos (PDF, MD, Docx)
+      responses:
+        '200':
+          description: Documento parsed e ingestado.
+
+  # ── Grafo Societario (S-Pulse) ───────────────────────────────────────────
+  /api/v1/data/spulse/companies/search:
+    get:
+      tags: [Grafo Societario (S-Pulse)]
+      summary: Buscador de empresas en el registro societario por nombre o RUT
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listado de empresas coincidentes.
+
+  /api/v1/data/spulse/companies/{rut}/profile:
+    get:
+      tags: [Grafo Societario (S-Pulse)]
+      summary: Ficha 360° societaria (socios, mallas y alertas de riesgo)
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Perfil 360° societario.
+
+  /api/v1/data/spulse/companies/{rut}/network:
+    get:
+      tags: [Grafo Societario (S-Pulse)]
+      summary: Grafo de redes y mallas de la empresa
+      parameters:
+        - name: rut
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Nodos y aristas para render UI.
+
+  /api/v1/data/spulse/relationships/{rel_id}/source:
+    get:
+      tags: [Grafo Societario (S-Pulse)]
+      summary: Fuente legal auditable de una relación societaria
+      parameters:
+        - name: rel_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Documento fuente (Diario Oficial, escritura).
+
+  # ── Webhooks & Servicios ─────────────────────────────────────────────────
+  /api/v1/validate:
+    post:
+      tags: [Webhooks & Servicios]
+      summary: Validación de startup (Wizard 18 entregables)
+      responses:
+        '200':
+          description: Resultado de la validación.
+
   /api/v1/webhooks:
     post:
-      tags: [Webhooks]
-      summary: Registra un webhook de notificación de eventos
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [url, event]
-              properties:
-                url:
-                  type: string
-                event:
-                  type: string
+      tags: [Webhooks & Servicios]
+      summary: Registra un webhook para recibir notificaciones en tiempo real
       responses:
-        '201':
+        '200':
           description: Webhook registrado.
 
 components:
@@ -449,29 +452,3 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
-      description: "API Key generada en el Developer Portal. Formato: `val_live_XXXXXXXXXXXX`"
-
-  responses:
-    BadRequest:
-      description: Parámetros de consulta inválidos.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: API Key faltante, inválida o revocada.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-  schemas:
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-        details:
-          type: object
-        code:
-          type: string

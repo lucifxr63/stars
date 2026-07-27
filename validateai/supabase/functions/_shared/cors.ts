@@ -14,12 +14,11 @@ export const ALLOWED_ORIGINS = [
 
 export function getCorsHeaders(req: Request) {
   const origin = req.headers.get('Origin') ?? '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : (origin || ALLOWED_ORIGINS[0]);
+  const reqHeaders = req.headers.get('Access-Control-Request-Headers') || 'authorization, x-client-info, apikey, content-type, x-validus-signature, x-bralidus-key';
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    // PATCH/DELETE/PUT no son métodos "safelisted": deben declararse explícitamente
-    // o el navegador bloquea el preflight (POST/GET/HEAD sí pasan sin listarse).
+    'Access-Control-Allow-Headers': reqHeaders,
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
     'Vary': 'Origin',
   };
