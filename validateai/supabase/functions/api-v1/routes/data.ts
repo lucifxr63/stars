@@ -189,7 +189,23 @@ export const licitusProveedorOportunidadesHandler = licitusProxyHandler(
 // GET /api/v1/data/licitus/mercado/benchmarks?unspsc&region&periodo_meses
 export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benchmarks', 30)
 // GET /api/v1/data/licitus/mercado/activas?unspsc&region&monto_min&cierre_desde_horas&limit
-export const licitusActivasHandler = licitusProxyHandler(() => '/mercado/activas', 30)
+export const licitusActivasHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const limit = Math.min(Number(c.req.query('limit') ?? 20), 100)
+    const type = c.req.query('type')
+
+    let query = supabase.from('licitaciones_mercado_publico').select('*', { count: 'exact' }).order('published_at', { ascending: false }).limit(limit)
+    if (type) query = query.eq('source_type', type)
+
+    const { data, count, error } = await query
+    if (!error && data && data.length > 0) {
+      c.set('tokens_used', 30)
+      return c.json(buildBralidusResponse(data.map(withOfficialUrl), 1, limit, count ?? data.length))
+    }
+  } catch {}
+  return licitusProxyHandler(() => '/mercado/activas', 30)(c)
+}
 
 // ── Bralidus REST Standard Response Helper ────────────────────────────────────
 const buildBralidusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico') => ({
@@ -245,7 +261,7 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     const statusParam = c.req.query('status')
     const q = c.req.query('q')
 
-    let query = supabase.from('opportunities').select('*', { count: 'exact' }).order('published_at', { ascending: false })
+    let query = supabase.from('licitaciones_mercado_publico').select('*', { count: 'exact' }).order('published_at', { ascending: false })
 
     if (typeParam) {
       const types = typeParam.split(',').map((t: string) => t.trim())
@@ -255,7 +271,16 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     if (q) query = query.ilike('title', `%${q}%`)
 
     const { data, count, error } = await query.range(offset, offset + pageSize - 1)
-    if (error) throw error
+    if (error) {
+      // Fallback a tabla legacy opportunities si licitaciones_mercado_publico vacante
+      const legacy = await supabase.from('opportunities').select('*', { count: 'exact' }).order('published_at', { ascending: false }).range(offset, offset + pageSize - 1)
+      if (!legacy.error && legacy.data) {
+        const mappedData = legacy.data.map(withOfficialUrl)
+        c.set('tokens_used', 25)
+        return c.json(buildBralidusResponse(mappedData, page, pageSize, legacy.count ?? 0))
+      }
+      throw error
+    }
 
     const mappedData = (data ?? []).map(withOfficialUrl)
 
@@ -273,7 +298,7 @@ export const mercadoPublicoOpportunityDetailHandler = async (c: any) => {
   try {
     const supabase = getSupabase()
     const isUuid = id.includes('-') && id.length > 20
-    const query = supabase.from('opportunities').select('*')
+    const query = supabase.from('licitaciones_mercado_publico').select('*')
     const { data, error } = await (isUuid ? query.eq('id', id) : query.eq('external_code', id)).maybeSingle()
 
     if (error) throw error
