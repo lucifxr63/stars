@@ -830,10 +830,6 @@ export const mercadoPublicoAiPrediccionHandler = async (c: any) => {
   return c.json({ data })
 }
 
-  c.set('tokens_used', 40)
-  return c.json({ data })
-}
-
 // ── SECCIÓN 2: DATOS ECONÓMICOS, MACRO & DOMINIOS ESTRUCTURADOS ──────────────────
 
 // 1. Snapshot Económico Consolidado Chile

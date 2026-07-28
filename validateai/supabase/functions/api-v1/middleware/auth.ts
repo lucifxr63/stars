@@ -24,19 +24,21 @@ export const authMiddleware = async (c: any, next: any) => {
   }
 
   const authHeader = c.req.header('Authorization') || c.req.header('x-bralidus-key') || c.req.header('apikey') || c.req.query('apikey')
-  
-  // Si no hay encabezado pero es un token demo o público en querystring/header
-  let token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : ''
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : ''
 
+  // Sin token: perfil público demo (consultas abiertas del portal/playground).
+  // Este es el ÚNICO caso que degrada a demo — errores reales de auth (key
+  // inválida, fallo de DB, excepción) deben rechazar, no dejar pasar (bug
+  // corregido 2026-07-28: la versión anterior caía a "demo" también en esos
+  // casos, dejando el gateway efectivamente sin autenticación).
   if (!token) {
-    // Si la petición viene sin token, asignar perfil público demo para consultas abiertas
     c.set('profile_id', '00000000-0000-0000-0000-000000000000')
     c.set('api_key_id', 'demo_public_key')
     c.set('auth_type', 'anonymous')
     return await next()
   }
 
-  // Soporte directo para llaves demo o publishable keys del portal
+  // Soporte explícito para llaves demo/publishable conocidas del portal.
   if (token === 'demo_public_key' || token.startsWith('demo_') || token.startsWith('sb_publishable_')) {
     c.set('profile_id', '00000000-0000-0000-0000-000000000000')
     c.set('api_key_id', 'demo_public_key')
@@ -69,19 +71,15 @@ export const authMiddleware = async (c: any, next: any) => {
 
     if (error) {
       console.error('Auth middleware DB error:', error)
-      // Permite fallback a sesión demo en caso de indisponibilidad temporal
-      c.set('profile_id', '00000000-0000-0000-0000-000000000000')
-      c.set('api_key_id', 'demo_public_key')
-      c.set('auth_type', 'fallback')
-      return await next()
+      return c.json({ error: 'Internal server error during authentication' }, 500)
     }
 
-    if (!keyRecord || !keyRecord.is_active) {
-      // Fallback suave para entornos de desarrollo / portal público
-      c.set('profile_id', '00000000-0000-0000-0000-000000000000')
-      c.set('api_key_id', 'demo_public_key')
-      c.set('auth_type', 'demo_fallback')
-      return await next()
+    if (!keyRecord) {
+      return c.json({ error: 'Invalid API key or session token' }, 401)
+    }
+
+    if (!keyRecord.is_active) {
+      return c.json({ error: 'API key has been revoked' }, 403)
     }
 
     // Update last_used_at non-blocking (fire and forget)
@@ -92,17 +90,6 @@ export const authMiddleware = async (c: any, next: any) => {
     c.set('api_key_id', keyRecord.id)
     c.set('auth_type', 'api_key')
     return await next()
-  } catch (err) {
-    console.error('Auth middleware exception:', err)
-    c.set('profile_id', '00000000-0000-0000-0000-000000000000')
-    c.set('api_key_id', 'demo_public_key')
-    c.set('auth_type', 'exception_fallback')
-    return await next()
-  }
-}
-
-    await next()
-
   } catch (err) {
     console.error('Auth middleware exception:', err)
     return c.json({ error: 'Authentication failed' }, 401)
