@@ -73,7 +73,13 @@ import {
   companiesPublicProcurementMetricsHandler,
   analyticsCorrelationsHandler,
   insightsMacroBriefHandler,
-  exportsHandler
+  exportsHandler,
+  companyProfileHandler,
+  companyOwnershipMeshHandler,
+  companyLegalRepsHandler,
+  companyRelatedPartiesHandler,
+  companyB2GConflictsHandler,
+  companySearchHandler
 } from './routes/data.ts'
 
 import { 
@@ -282,7 +288,15 @@ app.get('/api/v1/data/licitus/proveedor/:rut/oportunidades', licitusProveedorOpo
 app.get('/api/v1/data/licitus/mercado/benchmarks', licitusBenchmarksHandler)
 app.get('/api/v1/data/licitus/mercado/activas', licitusActivasHandler)
 
-// S-Pulse (grafo societario — interno)
+// S-Pulse v2.0 (Inteligencia Societaria & Mallas Empresariales)
+app.get('/api/v1/data/companies/search', companySearchHandler)
+app.get('/api/v1/data/companies/:rut/profile', companyProfileHandler)
+app.get('/api/v1/data/companies/:rut/ownership-mesh', companyOwnershipMeshHandler)
+app.get('/api/v1/data/companies/:rut/legal-representatives', companyLegalRepsHandler)
+app.get('/api/v1/data/companies/:rut/related-parties', companyRelatedPartiesHandler)
+app.post('/api/v1/data/companies/:rut/b2g-conflicts', companyB2GConflictsHandler)
+
+// S-Pulse (grafo societario — interno legacy)
 app.get('/api/v1/data/spulse/companies/search', spulseSearchHandler)
 app.get('/api/v1/data/spulse/companies/:rut/profile', spulseProfileHandler)
 app.get('/api/v1/data/spulse/companies/:rut/network', spulseNetworkHandler)
