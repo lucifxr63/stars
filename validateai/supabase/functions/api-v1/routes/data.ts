@@ -187,6 +187,35 @@ export const licitusProveedorOportunidadesHandler = licitusProxyHandler(
   (c) => `/proveedor/${encodeURIComponent(formatRutCanonical(c.req.param('rut') ?? ''))}/oportunidades`, 45, true
 )
 // GET /api/v1/data/licitus/mercado/benchmarks?unspsc&region&periodo_meses
+// ── Bralidus REST Standard Response Helper ────────────────────────────────────
+const buildBralidusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico') => ({
+  request_id: `req_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
+  page,
+  page_size: pageSize,
+  total,
+  source,
+  synced_at: new Date().toISOString(),
+})
+
+const buildBralidusResponse = (data: any, page = 1, pageSize = 20, total = 0, source = 'mercado_publico', errors: any[] = []) => ({
+  data,
+  meta: buildBralidusMeta(page, pageSize, total, source),
+  errors,
+})
+
+const withOfficialUrl = (item: any) => {
+  if (!item) return item
+  const code = item.external_code || item.codigo_externo || item.codigo || ''
+  const isAgile = item.source_type === 'agile_purchase' || item.source_type === 'compra_agil' || String(code).toLowerCase().includes('cot')
+  const url = isAgile
+    ? `https://www.mercadopublico.cl/CompraAgil/Ficha/${encodeURIComponent(code)}`
+    : `https://www.mercadopublico.cl/Procurement/Modules/RFBA/Details.aspx?code=${encodeURIComponent(code)}`
+  return {
+    ...item,
+    official_url: item.official_url || url
+  }
+}
+
 export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benchmarks', 30)
 // GET /api/v1/data/licitus/mercado/activas?unspsc&region&monto_min&cierre_desde_horas&limit
 export const licitusActivasHandler = async (c: any) => {
@@ -207,22 +236,6 @@ export const licitusActivasHandler = async (c: any) => {
   return licitusProxyHandler(() => '/mercado/activas', 30)(c)
 }
 
-// ── Bralidus REST Standard Response Helper ────────────────────────────────────
-const buildBralidusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico') => ({
-  request_id: `req_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
-  page,
-  page_size: pageSize,
-  total,
-  source,
-  synced_at: new Date().toISOString(),
-})
-
-const buildBralidusResponse = (data: any, page = 1, pageSize = 20, total = 0, source = 'mercado_publico', errors: any[] = []) => ({
-  data,
-  meta: buildBralidusMeta(page, pageSize, total, source),
-  errors,
-})
-
 // ── Mercado Público (API Prima Bralidus v1) ──────────────────────────────────
 
 // GET /api/v1/mercado-publico/health
@@ -235,19 +248,6 @@ export const mercadoPublicoHealthHandler = async (c: any) => {
     },
     version: '1.0.0',
   }, 1, 1, 1))
-}
-
-const withOfficialUrl = (item: any) => {
-  if (!item) return item
-  const code = item.external_code || item.codigo_externo || item.codigo || ''
-  const isAgile = item.source_type === 'agile_purchase' || item.source_type === 'compra_agil' || String(code).toLowerCase().includes('cot')
-  const url = isAgile
-    ? `https://www.mercadopublico.cl/CompraAgil/Ficha/${encodeURIComponent(code)}`
-    : `https://www.mercadopublico.cl/Procurement/Modules/RFBA/Details.aspx?code=${encodeURIComponent(code)}`
-  return {
-    ...item,
-    official_url: item.official_url || url
-  }
 }
 
 // GET /api/v1/mercado-publico/opportunities (Buscador Unificado: tender + agile_purchase)
