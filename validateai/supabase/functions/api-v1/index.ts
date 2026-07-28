@@ -354,7 +354,7 @@ app.onError((err, c) => {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin') || '*'
-  const reqHeaders = req.headers.get('access-control-request-headers') || 'authorization, x-client-info, apikey, content-type, x-validus-signature, x-bralidus-key'
+  const reqHeaders = req.headers.get('access-control-request-headers') || 'authorization, x-client-info, apikey, content-type, x-validus-signature, x-animus-key, x-bralidus-key'
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': origin,

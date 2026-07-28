@@ -188,20 +188,25 @@ export const licitusProveedorOportunidadesHandler = licitusProxyHandler(
 )
 // GET /api/v1/data/licitus/mercado/benchmarks?unspsc&region&periodo_meses
 // ── Bralidus REST Standard Response Helper ────────────────────────────────────
-const buildBralidusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico') => ({
-  request_id: `req_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
-  page,
-  page_size: pageSize,
-  total,
+const buildAnimusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico') => ({
+  engine: 'Animus Engine v2.0',
+  version: '2.0.0',
   source,
-  synced_at: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
+  page,
+  pageSize,
+  total,
+  totalPages: Math.ceil(total / Math.max(pageSize, 1))
 })
 
-const buildBralidusResponse = (data: any, page = 1, pageSize = 20, total = 0, source = 'mercado_publico', errors: any[] = []) => ({
+const buildAnimusResponse = (data: any, page = 1, pageSize = 20, total = 0, source = 'mercado_publico', errors: any[] = []) => ({
   data,
-  meta: buildBralidusMeta(page, pageSize, total, source),
-  errors,
+  meta: buildAnimusMeta(page, pageSize, total, source),
+  ...(errors.length > 0 ? { errors } : {})
 })
+
+const buildBralidusMeta = buildAnimusMeta
+const buildBralidusResponse = buildAnimusResponse
 
 const withOfficialUrl = (item: any) => {
   if (!item) return item
