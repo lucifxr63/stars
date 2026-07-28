@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 // Fallback: si la RPC aún no existe (migración no aplicada), cae al chequeo legacy
 // por email para no bloquear al owner actual durante la transición. TEMPORAL.
 
-const LEGACY_ADMIN_EMAIL = 'lucianoalonso2000@gmail.com';
+const ADMIN_EMAILS = ['lucianoalonso2000@gmail.com', 'luciano@scouttech.lat', 'contacto@scouttech.lat'];
 
 export interface AdminRoleState {
   isAdmin: boolean;
@@ -25,7 +25,8 @@ export function useAdminRole(): AdminRoleState {
     let cancelled = false;
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      const legacy = (session?.user?.email ?? '').toLowerCase() === LEGACY_ADMIN_EMAIL;
+      const email = (session?.user?.email ?? '').toLowerCase();
+      const legacy = ADMIN_EMAILS.includes(email) || email.endsWith('@scouttech.lat');
 
       const { data, error } = await supabase.rpc('get_my_admin_role');
       if (cancelled) return;
