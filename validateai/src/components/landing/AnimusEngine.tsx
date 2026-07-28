@@ -1,12 +1,12 @@
 /* ════════════════════════════════════════════════════════════════
-   BralidusEngine — sección que cuenta el motor de inteligencia detrás
-   de Validus. Bralidus es un servicio GraphRAG (grafo de conocimiento +
+   AnimusEngine — sección que cuenta el motor de inteligencia detrás
+   de Validus. Animus es un servicio GraphRAG (grafo de conocimiento +
    búsqueda vectorial) que ingesta datos institucionales chilenos reales
    y devuelve evidencia citable con procedencia. Es el diferenciador
    "comprobable, no opinión de chatbot".
 ═══════════════════════════════════════════════════════════════════ */
 
-/* Fuentes reales que ingesta Bralidus */
+/* Fuentes reales que ingesta Animus */
 const SOURCES = [
   { label: 'Banco Central (BCCh)', color: '#0EB5C6' },
   { label: 'CMF', color: '#34D399' },
@@ -18,7 +18,7 @@ const SOURCES = [
   { label: 'Prensa económica LatAm', color: '#0EB5C6' },
 ];
 
-/* Corpus de doctrina VC — los 9 playbooks RAG que razona Bralidus */
+/* Corpus de doctrina VC — los 9 playbooks RAG que razona Animus */
 const PLAYBOOKS = [
   { n: '01', label: 'Validación', desc: 'Mom Test' },
   { n: '02', label: 'Economics', desc: 'Unit economics' },
@@ -31,7 +31,7 @@ const PLAYBOOKS = [
   { n: '09', label: 'CORFO / SII', desc: 'Financiamiento estatal' },
 ];
 
-/* Pipeline real de /query/moe — lo que hace BralidusPy en cada consulta */
+/* Pipeline real de /query/moe — lo que hace AnimusPy en cada consulta */
 const PIPELINE = [
   { n: '01', title: 'Gating Network', desc: 'Enruta tu pregunta al experto correcto por keywords, semántica y tu industria/etapa.', color: '#0EB5C6' },
   { n: '02', title: 'Embedding 1536-d', desc: 'Vectoriza la consulta con caché para recuperar solo lo relevante.', color: '#38D5E3' },
@@ -39,7 +39,7 @@ const PIPELINE = [
   { n: '04', title: 'Evidencia citable', desc: 'Ensambla el contexto con procedencia: indicador, valor, fecha y fuente.', color: '#34D399' },
 ];
 
-/* Los 5 expertos reales del MoE de BralidusPy → cómo se unen al dossier de Validus.
+/* Los 5 expertos reales del MoE de AnimusPy → cómo se unen al dossier de Validus.
    Cada experto tiene un destino primario; todos convergen en Due Diligence. */
 const EXPERTS = [
   { name: 'Unit Economics', color: '#34D399', feeds: 'Finanzas', desc: 'CAC/LTV, retención por cohortes y eficiencia de capital con benchmarks reales.' },
@@ -49,14 +49,14 @@ const EXPERTS = [
   { name: 'Legal y Regulatorio', color: '#F7C56C', feeds: 'Inversión', desc: 'CMF, Diario Oficial, marco societario y Ley 21.719.' },
 ];
 
-/* Procedencia de ejemplo — evidencia citable real que produce Bralidus */
+/* Procedencia de ejemplo — evidencia citable real que produce Animus */
 const EVIDENCE = [
   { metric: 'TPM 5,00%', source: 'Banco Central de Chile · jun 2026', effect: 'Ajusta ↑ el riesgo financiero del modelo', color: '#0EB5C6' },
   { metric: 'Sanción sectorial', source: 'CMF · API oficial', effect: 'Suma señal de riesgo regulatorio', color: '#F87171' },
   { metric: 'Licitación adjudicada', source: 'Mercado Público · > $5M CLP', effect: 'Confirma demanda B2G del segmento', color: '#34D399' },
 ];
 
-/* Grafo de conocimiento — hub Bralidus → 5 expertos (MoE) → sus fuentes de datos.
+/* Grafo de conocimiento — hub Animus → 5 expertos (MoE) → sus fuentes de datos.
    Refleja la arquitectura real: ramificación multi-nivel con decenas de nodos. */
 const GRAPH_EXPERTS = [
   { label: 'Macro', color: '#0EB5C6', sources: ['FRED', 'BCCh', 'OpenBB'] },
@@ -84,7 +84,7 @@ function KnowledgeGraph() {
   });
 
   return (
-    <svg viewBox="0 0 400 384" className="w-full h-auto" role="img" aria-label="Grafo de conocimiento de Bralidus: núcleo conectado a 5 expertos y sus fuentes de datos">
+    <svg viewBox="0 0 400 384" className="w-full h-auto" role="img" aria-label="Grafo de conocimiento de Animus: núcleo conectado a 5 expertos y sus fuentes de datos">
       {/* Web entre expertos */}
       <polygon points={experts.map(e => `${e.x},${e.y}`).join(' ')} fill="none" stroke="currentColor" className="text-gray-200 dark:text-white/[0.08]" strokeWidth="1" />
 
@@ -125,34 +125,34 @@ function KnowledgeGraph() {
       {/* Hub central */}
       <circle cx={cx} cy={cy} r="33" fill="none" stroke="#0EB5C6" strokeOpacity="0.2" strokeWidth="1.5" className="animate-pulse" />
       <circle cx={cx} cy={cy} r="27" fill="#0EB5C6" />
-      <text x={cx} y={cy - 1} textAnchor="middle" fill="#fff" style={{ fontSize: '10px', fontWeight: 800 }}>Bralidus</text>
+      <text x={cx} y={cy - 1} textAnchor="middle" fill="#fff" style={{ fontSize: '10px', fontWeight: 800 }}>Animus</text>
       <text x={cx} y={cy + 9} textAnchor="middle" fill="#fff" fillOpacity="0.85" style={{ fontSize: '6px', fontWeight: 600 }}>GraphRAG</text>
     </svg>
   );
 }
 
-export function BralidusEngine() {
+export function AnimusEngine() {
   return (
-    <section id="bralidus" className="py-16 sm:py-24 bg-white dark:bg-[#12121A] border-t border-gray-100 dark:border-white/[0.06] relative overflow-hidden">
+    <section id="animus" className="py-16 sm:py-24 bg-white dark:bg-[#12121A] border-t border-gray-100 dark:border-white/[0.06] relative overflow-hidden">
       <div className="absolute top-0 right-1/4 w-[500px] h-[400px] bg-[#A78BFA]/[0.05] blur-[120px] rounded-full pointer-events-none" />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-full text-[11px] font-semibold text-[#A78BFA] mb-4 uppercase tracking-wide">
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
-            Motor de inteligencia · Bralidus
+            Motor de inteligencia · Animus
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-4">
-            No es un chatbot opinando.<br className="hidden sm:block" /> Es <span className="gradient-text">Bralidus</span> razonando con datos reales
+            No es un chatbot opinando.<br className="hidden sm:block" /> Es <span className="gradient-text">Animus</span> razonando con datos reales
           </h2>
           <p className="text-gray-500 dark:text-[#8B8AA0] max-w-2xl mx-auto text-base leading-relaxed">
-            Cada veredicto de Validus lo respalda <strong className="text-gray-700 dark:text-[#C4C4D4]">Bralidus</strong>, su motor GraphRAG con <strong className="text-gray-700 dark:text-[#C4C4D4]">5 expertos (Mixture of Experts)</strong>: un grafo de conocimiento que ingesta datos institucionales chilenos y devuelve evidencia citable, no texto inventado.
+            Cada veredicto de Validus lo respalda <strong className="text-gray-700 dark:text-[#C4C4D4]">Animus</strong>, su motor GraphRAG con <strong className="text-gray-700 dark:text-[#C4C4D4]">5 expertos (Mixture of Experts)</strong>: un grafo de conocimiento que ingesta datos institucionales chilenos y devuelve evidencia citable, no texto inventado.
           </p>
         </div>
 
         {/* Pipeline real de /query/moe */}
         <div className="mb-12">
-          <p className="text-[11px] font-semibold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest mb-5 text-center">Lo que hace Bralidus en cada consulta</p>
+          <p className="text-[11px] font-semibold text-gray-400 dark:text-[#afaebb] uppercase tracking-widest mb-5 text-center">Lo que hace Animus en cada consulta</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {PIPELINE.map((step, i) => (
               <div key={step.n} className="relative bg-gray-50 dark:bg-[#0A0A0F] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5">
@@ -177,7 +177,7 @@ export function BralidusEngine() {
             <p className="text-[11px] font-bold text-[#0EB5C6] dark:text-[#38D5E3] uppercase tracking-wide mb-4 text-center">Grafo de conocimiento</p>
             <KnowledgeGraph />
             <p className="text-[11px] text-gray-400 dark:text-[#afaebb] text-center mt-4 leading-relaxed">
-              Hub Bralidus → 5 expertos → sus fuentes en vivo. Cientos de nodos y aristas cruzando macro, mercados, legal y unit economics.
+              Hub Animus → 5 expertos → sus fuentes en vivo. Cientos de nodos y aristas cruzando macro, mercados, legal y unit economics.
             </p>
           </div>
 
@@ -208,7 +208,7 @@ export function BralidusEngine() {
         <div className="mb-10">
           <div className="text-center mb-6">
             <h3 className="font-heading text-2xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-2">5 expertos, un veredicto</h3>
-            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto">Cada experto de Bralidus alimenta una sección distinta de tu dossier. Así se unen el motor y el reporte.</p>
+            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto">Cada experto de Animus alimenta una sección distinta de tu dossier. Así se unen el motor y el reporte.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {EXPERTS.map(e => (
@@ -242,7 +242,7 @@ export function BralidusEngine() {
         <div className="mb-12">
           <div className="text-center mb-6">
             <h3 className="font-heading text-2xl font-bold text-gray-900 dark:text-[#F0EFF8] mb-2">Dos capas de conocimiento</h3>
-            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto">Bralidus fusiona datos institucionales reales de Chile con un corpus curado de doctrina VC. Hechos + criterio.</p>
+            <p className="text-sm text-gray-500 dark:text-[#8B8AA0] max-w-xl mx-auto">Animus fusiona datos institucionales reales de Chile con un corpus curado de doctrina VC. Hechos + criterio.</p>
           </div>
           <div className="grid lg:grid-cols-2 gap-4">
             {/* Capa 1 — Datos en vivo */}
@@ -302,7 +302,7 @@ export function BralidusEngine() {
                 <span className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
                 <span className="w-3 h-3 rounded-full bg-[#28C840]" />
               </div>
-              <span className="font-mono text-[11px] text-[#8B8AA0] truncate">~/bralidus/roadmap.md</span>
+              <span className="font-mono text-[11px] text-[#8B8AA0] truncate">~/animus/roadmap.md</span>
               <span className="ml-auto inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-full bg-[#34D399]/12 text-[#34D399] border border-[#34D399]/20 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse" />
                 Próximamente · API
@@ -323,11 +323,11 @@ export function BralidusEngine() {
                   <p className="font-heading text-base font-bold text-[#F0EFF8]">Luciano Abarca</p>
                   <span className="font-mono text-xs text-[#0EB5C6]">@labarca</span>
                 </div>
-                <p className="font-mono text-[11px] text-[#8B8AA0] mb-3">Creador de Bralidus · Dev</p>
+                <p className="font-mono text-[11px] text-[#8B8AA0] mb-3">Creador de Animus · Dev</p>
 
                 <p className="text-sm text-[#C4C4D4] leading-relaxed mb-4">
                   <span className="font-mono text-[#34D399]">{'// '}</span>
-                  Bralidus tendrá pronto su propia página, operando como una <strong className="text-[#F0EFF8]">API B2B</strong> lista para potenciar productos de terceros con nuestra arquitectura REST y GraphRAG.
+                  Animus tendrá pronto su propia página, operando como una <strong className="text-[#F0EFF8]">API B2B</strong> lista para potenciar productos de terceros con nuestra arquitectura REST y GraphRAG.
                 </p>
 
                 <div className="flex flex-wrap gap-2">

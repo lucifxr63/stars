@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ShieldAlert, BookOpen, Clock, Copy, Check, ExternalLink, Database, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 
-export interface BralidusEvidenceItem {
+export interface AnimusEvidenceItem {
   id?: string;
   claim: string;
   shape?: 'financial' | 'doctrine';
@@ -18,23 +18,23 @@ export interface BralidusEvidenceItem {
   severity?: 'info' | 'warning' | 'critical';
 }
 
-export interface BralidusAlertItem {
+export interface AnimusAlertItem {
   title: string;
   severity: 'info' | 'warning' | 'critical';
   description?: string;
 }
 
 interface Props {
-  evidences: BralidusEvidenceItem[];
-  alerts?: BralidusAlertItem[];
+  evidences: AnimusEvidenceItem[];
+  alerts?: AnimusAlertItem[];
   dataFreshness?: Record<string, string> | null;
   className?: string;
 }
 
-export function BralidusEvidenceWall({ evidences = [], alerts = [], dataFreshness, className = '' }: Props) {
+export function AnimusEvidenceWall({ evidences = [], alerts = [], dataFreshness, className = '' }: Props) {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const handleCopyCitation = (item: BralidusEvidenceItem, index: number) => {
+  const handleCopyCitation = (item: AnimusEvidenceItem, index: number) => {
     let citation = '';
     if (item.shape === 'financial') {
       const val = typeof item.value === 'number' ? item.value.toLocaleString('es-CL') : item.value ?? '';
@@ -56,7 +56,7 @@ export function BralidusEvidenceWall({ evidences = [], alerts = [], dataFreshnes
       <div className={`p-6 rounded-2xl bg-[#12121A] border border-white/5 text-center ${className}`}>
         <Database className="w-8 h-8 text-[#0EB5C6]/40 mx-auto mb-2" />
         <p className="text-sm font-medium text-[#C4C4D4]">Sin evidencias macro o doctrina asociadas a este perfil</p>
-        <p className="text-xs text-white/40 mt-1">El motor GraphRAG Bralidus se actualiza constantemente.</p>
+        <p className="text-xs text-white/40 mt-1">El motor GraphRAG Animus se actualiza constantemente.</p>
       </div>
     );
   }
@@ -71,7 +71,7 @@ export function BralidusEvidenceWall({ evidences = [], alerts = [], dataFreshnes
           </div>
           <div>
             <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              Evidencias Citables Bralidus
+              Evidencias Citables Animus
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#0EB5C6]/20 text-[#0EB5C6] font-mono border border-[#0EB5C6]/30">
                 GraphRAG MoE
               </span>
@@ -159,7 +159,7 @@ export function BralidusEvidenceWall({ evidences = [], alerts = [], dataFreshnes
               {/* Pie de tarjeta con fuente y acción */}
               <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px]">
                 <span className="text-white/40 truncate max-w-[180px]">
-                  {item.source ? `Fuente: ${item.source}` : 'Verificado Bralidus'}
+                  {item.source ? `Fuente: ${item.source}` : 'Verificado Animus'}
                 </span>
 
                 <div className="flex items-center gap-1.5">

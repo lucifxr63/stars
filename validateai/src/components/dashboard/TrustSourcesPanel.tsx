@@ -13,7 +13,7 @@ import { trackEvent } from '@/lib/analytics';
 
 const SOURCE_STATUS: Record<string, { dot: string; label: string; detail: string }> = {
   live:     { dot: 'bg-emerald-500', label: 'En vivo',     detail: 'mindicador.cl' },
-  bralidus: { dot: 'bg-emerald-500', label: 'En vivo',     detail: 'Bralidus' },
+  animus: { dot: 'bg-emerald-500', label: 'En vivo',     detail: 'Animus' },
   mock:     { dot: 'bg-amber-500',   label: 'Datos demo',  detail: 'feed en vivo próximamente' },
 };
 

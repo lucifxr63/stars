@@ -2,10 +2,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { KnowledgeGraph } from '@/components/developers/KnowledgeGraph';
 import { MacroIntelligence } from '@/components/developers/MacroIntelligence';
-import { BralidusEvidenceWall } from '@/components/shared/BralidusEvidenceWall';
-import { BralidusQuotaWidget } from '@/components/shared/BralidusQuotaWidget';
+import { AnimusEvidenceWall } from '@/components/shared/AnimusEvidenceWall';
+import { AnimusQuotaWidget } from '@/components/shared/AnimusQuotaWidget';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
-import { isBralidusDomain } from '@/lib/domain';
+import { isAnimusDomain } from '@/lib/domain';
 import {
   Key, Plus, Trash2, Copy, Check, AlertCircle, BookOpen,
   Play, Activity, Zap, Clock, TrendingUp, ChevronDown, Loader2, ShieldCheck,
@@ -351,7 +351,7 @@ export function Developers() {
     badgeColor?: string;
   }[] = [
     { id: 'overview',   label: 'Resumen',       icon: Activity   },
-    { id: 'costs',      label: 'Costos Bralidus', icon: Zap,      badge: 'RaaS',  badgeColor: 'text-[#0EB5C6] border-[#0EB5C6]/30' },
+    { id: 'costs',      label: 'Costos Animus', icon: Zap,      badge: 'RaaS',  badgeColor: 'text-[#0EB5C6] border-[#0EB5C6]/30' },
     { id: 'evidences',  label: 'Evidencias',    icon: Database, badge: 'MoE',   badgeColor: 'text-purple-400 border-purple-400/30' },
     { id: 'quotas',     label: 'Cuotas & Tiers', icon: ShieldCheck },
     { id: 'financial',  label: 'Inteligencia',  icon: BarChart2,  badge: 'FRED',  badgeColor: 'text-teal-500 border-teal-500/30' },
@@ -363,12 +363,12 @@ export function Developers() {
   ];
 
   useEffect(() => {
-    if (isBralidusDomain()) {
-      document.title = 'Bralidus — MoE GraphRAG & Developer Portal';
+    if (isAnimusDomain()) {
+      document.title = 'Animus — MoE GraphRAG & Developer Portal';
     }
   }, []);
 
-  const isBralidus = isBralidusDomain();
+  const isAnimus = isAnimusDomain();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0F] flex flex-col">
@@ -379,16 +379,16 @@ export function Developers() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">
-                {isBralidus ? 'Bralidus Developer Portal' : 'API & Developers'}
+                {isAnimus ? 'Animus Developer Portal' : 'API & Developers'}
               </h1>
-              {isBralidus && (
+              {isAnimus && (
                 <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#0EB5C6]/10 text-[#0EB5C6] border border-[#0EB5C6]/30">
-                  bralidus.scouttech.lat
+                  animus.scouttech.lat
                 </span>
               )}
             </div>
             <p className="text-sm text-gray-400 mt-1">
-              {isBralidus
+              {isAnimus
                 ? 'Motor MoE & RAG de Inteligencia Macroeconómica, Doctrina Legal y Consumo de APIs.'
                 : 'Gestiona llaves, monitorea el consumo y explora inteligencia macroeconómica.'}
             </p>
@@ -997,7 +997,7 @@ export function Developers() {
           </div>
         )}
 
-        {/* ── Tab: Costos Bralidus ───────────────────────────────────────── */}
+        {/* ── Tab: Costos Animus ───────────────────────────────────────── */}
         {activeTab === 'costs' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1008,7 +1008,7 @@ export function Developers() {
                 <p className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8]">
                   {loading ? '—' : `${((stats.totalTokens || 1250000) * 1.35).toLocaleString('es-CL', { maximumFractionDigits: 0 })}`}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">Tokens acumulados Bralidus MoE</p>
+                <p className="text-xs text-gray-400 mt-0.5">Tokens acumulados Animus MoE</p>
               </div>
 
               <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-4 shadow-sm">
@@ -1056,7 +1056,7 @@ export function Developers() {
               </div>
 
               <div className="bg-white dark:bg-[#12121A] rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Uso por Experto Bralidus MoE</h3>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-[#C4C4D4] mb-4">Uso por Experto Animus MoE</h3>
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   <ResponsiveContainer width="100%" height={230}>
                     <PieChart>
@@ -1145,7 +1145,7 @@ export function Developers() {
         {/* ── Tab: Muro de Evidencias Citables ──────────────────────────── */}
         {activeTab === 'evidences' && (
           <div className="space-y-6">
-            <BralidusEvidenceWall
+            <AnimusEvidenceWall
               evidences={[
                 {
                   claim: 'Tasa de Política Monetaria (TPM) fijada por el Banco Central de Chile',
@@ -1198,7 +1198,7 @@ export function Developers() {
         {/* ── Tab: Cuotas & Créditos RaaS ───────────────────────────────── */}
         {activeTab === 'quotas' && (
           <div className="space-y-6">
-            <BralidusQuotaWidget
+            <AnimusQuotaWidget
               tier="pro"
               usageCount={42}
               limitCount={1000}

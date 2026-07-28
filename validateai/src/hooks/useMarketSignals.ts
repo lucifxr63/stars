@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-// ── Contrato tipado del feed de inteligencia de mercado (Bralidus) ────────────
-// Hoy se sirve con datos mock. El día que BralidusPY esté desplegado en prod,
-// solo hay que setear VITE_BRALIDUS_API_URL y mapear su respuesta a este shape —
+// ── Contrato tipado del feed de inteligencia de mercado (Animus) ────────────
+// Hoy se sirve con datos mock. El día que AnimusPY esté desplegado en prod,
+// solo hay que setear VITE_ANIMUS_API_URL y mapear su respuesta a este shape —
 // el resto de la UI (widget + página) no cambia.
 
 export type Trend = 'up' | 'down' | 'flat';
@@ -29,9 +29,9 @@ export interface MarketSignalsData {
   signals: MarketSignal[];
   asOf: string;                 // ISO date
   // 'live'     = indicadores reales (mindicador.cl vía Edge market-signals)
-  // 'bralidus' = feed GraphRAG real (cuando BralidusPY esté desplegado)
+  // 'animus' = feed GraphRAG real (cuando AnimusPY esté desplegado)
   // 'mock'     = datos de demostración
-  source: 'mock' | 'live' | 'bralidus';
+  source: 'mock' | 'live' | 'animus';
 }
 
 interface UseMarketSignals {
@@ -57,7 +57,7 @@ const MOCK: MarketSignalsData = {
       headline: 'Demanda de SaaS B2B en alza en LatAm',
       detail: 'El interés de búsqueda por herramientas de validación y fintech para PyMEs creció de forma sostenida el último trimestre.',
       sentiment: 'positive',
-      source: 'Bralidus · Señales de mercado',
+      source: 'Animus · Señales de mercado',
     },
     {
       id: 's2',
@@ -71,7 +71,7 @@ const MOCK: MarketSignalsData = {
       headline: 'Atención: presión cambiaria',
       detail: 'La volatilidad USD/CLP puede afectar márgenes de startups con costos en dólares (infra cloud, APIs de IA).',
       sentiment: 'risk',
-      source: 'Bralidus · Forex Chile',
+      source: 'Animus · Forex Chile',
     },
   ],
 };
@@ -79,7 +79,7 @@ const MOCK: MarketSignalsData = {
 /**
  * Feed de inteligencia de mercado para el Command Center.
  * Asíncrono por diseño (nunca bloquea el render del Dashboard).
- * Si VITE_BRALIDUS_API_URL está definido intenta el feed real; si falla o no
+ * Si VITE_ANIMUS_API_URL está definido intenta el feed real; si falla o no
  * está, degrada a mock sin romper la UI.
  */
 export function useMarketSignals(): UseMarketSignals {
@@ -89,10 +89,10 @@ export function useMarketSignals(): UseMarketSignals {
 
   useEffect(() => {
     let cancelled = false;
-    const apiUrl = import.meta.env.VITE_BRALIDUS_API_URL as string | undefined;
+    const apiUrl = import.meta.env.VITE_ANIMUS_API_URL as string | undefined;
 
     async function load() {
-      // 1. Bralidus real (GraphRAG) si está configurado.
+      // 1. Animus real (GraphRAG) si está configurado.
       if (apiUrl) {
         try {
           const res = await fetch(`${apiUrl.replace(/\/$/, '')}/query`, {
@@ -100,12 +100,12 @@ export function useMarketSignals(): UseMarketSignals {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ scope: 'market_signals', country: 'CL' }),
           });
-          if (!res.ok) throw new Error(`bralidus ${res.status}`);
+          if (!res.ok) throw new Error(`animus ${res.status}`);
           const json = (await res.json()) as MarketSignalsData;
-          if (!cancelled) { setData({ ...json, source: 'bralidus' }); setLoading(false); }
+          if (!cancelled) { setData({ ...json, source: 'animus' }); setLoading(false); }
           return;
         } catch (err) {
-          console.warn('[useMarketSignals] bralidus falló, intento Edge:', err);
+          console.warn('[useMarketSignals] animus falló, intento Edge:', err);
         }
       }
 

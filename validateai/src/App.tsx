@@ -72,10 +72,10 @@ function NotFound() {
   );
 }
 
-import { isBralidusDomain } from '@/lib/domain';
+import { isAnimusDomain } from '@/lib/domain';
 
 export default function App() {
-  const isBralidus = isBralidusDomain();
+  const isAnimus = isAnimusDomain();
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -84,7 +84,7 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Rutas públicas */}
-              <Route path="/"               element={isBralidus ? <Developers /> : <Landing />} />
+              <Route path="/"               element={isAnimus ? <Developers /> : <Landing />} />
               <Route path="/login"          element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password"  element={<ResetPassword />} />
@@ -109,7 +109,7 @@ export default function App() {
                 {/* App: todas las rutas con sidebar via AppLayout */}
                 <Route element={<AppLayout />}>
                   <Route path="/validate" element={<Validate />} />
-                  <Route path="/dashboard"              element={isBralidus ? <Developers /> : <Dashboard />} />
+                  <Route path="/dashboard"              element={isAnimus ? <Developers /> : <Dashboard />} />
                   <Route path="/market-intelligence"    element={<MarketIntelligence />} />
                   <Route path="/results"                element={<Results />} />
                   <Route path="/results/:id"            element={<ValidationDetail />} />
@@ -118,8 +118,8 @@ export default function App() {
                   <Route path="/startup"                element={<MyStartup />} />
                   <Route path="/profile"                element={<Profile />} />
                   <Route path="/developers"             element={<Developers />} />
-                  <Route path="/bralidus"               element={<Developers />} />
-                  <Route path="/bralidus/*"             element={<Developers />} />
+                  <Route path="/animus"               element={<Developers />} />
+                  <Route path="/animus/*"             element={<Developers />} />
                   <Route path="/admin"                  element={<Admin />} />
                   <Route path="/surveys"                element={<SurveyList />} />
                   <Route path="/surveys/new"            element={<SurveyBuilder />} />

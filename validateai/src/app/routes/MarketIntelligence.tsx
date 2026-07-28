@@ -31,7 +31,7 @@ export function MarketIntelligence() {
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-[#F0EFF8] leading-tight">Inteligencia de Mercado</h1>
           <p className="text-sm text-gray-500 dark:text-[#8B8AA0]">
-            Señales macro y de demanda para tu startup · motor Bralidus
+            Señales macro y de demanda para tu startup · motor Animus
           </p>
         </div>
       </div>
@@ -95,7 +95,7 @@ export function MarketIntelligence() {
         <div className="mt-6 flex items-center gap-2 px-4 py-3 bg-[#0EB5C6]/5 border border-[#0EB5C6]/15 rounded-xl">
           <span className="w-1.5 h-1.5 rounded-full bg-[#0EB5C6] shrink-0" />
           <p className="text-xs text-gray-500 dark:text-[#8B8AA0]">
-            Estás viendo datos de demostración. El feed en vivo del motor Bralidus (macro BCCh, forex, señales de demanda) se conecta próximamente.
+            Estás viendo datos de demostración. El feed en vivo del motor Animus (macro BCCh, forex, señales de demanda) se conecta próximamente.
           </p>
         </div>
       )}

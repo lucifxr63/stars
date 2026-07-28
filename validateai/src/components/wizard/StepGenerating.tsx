@@ -537,7 +537,7 @@ export function StepGenerating() {
       // El backend ya persiste progreso (generation_progress + status). Disparamos
       // el job en background y redirigimos YA al Dashboard, donde el
       // GenerationStatusWidget muestra el avance. El fundador explora el ecosistema
-      // (Bralidus) mientras Claude trabaja — sin bloqueo síncrono del frontend.
+      // (Animus) mientras Claude trabaja — sin bloqueo síncrono del frontend.
       let context: any = {};
       if (currentMode === 'detailed') {
         context = {

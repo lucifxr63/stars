@@ -420,7 +420,7 @@ export function Dashboard() {
         </UsageBar>
       </div>
 
-      {/* Widget secundario: Inteligencia de Mercado (Bralidus) */}
+      {/* Widget secundario: Inteligencia de Mercado (Animus) */}
       <div className="mb-8">
         <MarketSignalsWidget />
       </div>

@@ -8,7 +8,7 @@ interface Props {
   className?: string;
 }
 
-export function BralidusQuotaWidget({ tier, usageCount = 0, limitCount = 100, className = '' }: Props) {
+export function AnimusQuotaWidget({ tier, usageCount = 0, limitCount = 100, className = '' }: Props) {
   const navigate = useNavigate();
 
   const isUnlimited = tier === 'pro' || tier === 'premium' || tier === 'admin';
@@ -33,7 +33,7 @@ export function BralidusQuotaWidget({ tier, usageCount = 0, limitCount = 100, cl
           </div>
           <div>
             <p className="text-xs font-bold text-white flex items-center gap-1.5">
-              Créditos Bralidus RaaS
+              Créditos Animus RaaS
               <span className={`text-[10px] uppercase font-mono px-2 py-0.2 rounded-full border ${style.bg} ${style.text} ${style.border}`}>
                 {tier}
               </span>
@@ -75,7 +75,7 @@ export function BralidusQuotaWidget({ tier, usageCount = 0, limitCount = 100, cl
       {isUnlimited && (
         <div className="flex items-center gap-1.5 text-[11px] text-[#2DD4BF] pt-1">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Acceso total sin restricciones a Bralidus Intelligence</span>
+          <span>Acceso total sin restricciones a Animus Intelligence</span>
         </div>
       )}
     </div>

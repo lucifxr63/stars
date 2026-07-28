@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { ProductShowcase } from '@/components/landing/ProductShowcase';
 import { ProcessShowcase } from '@/components/landing/ProcessShowcase';
-import { BralidusEngine } from '@/components/landing/BralidusEngine';
+import { AnimusEngine } from '@/components/landing/AnimusEngine';
 import { DenariusPromo } from '@/components/landing/DenariusPromo';
 import { ScouttechSection } from '@/components/landing/ScouttechSection';
 import { FaqSection } from '@/components/landing/FaqSection';
@@ -201,7 +201,7 @@ export function Landing() {
   const NAV_LINKS = [
     { label: 'Cómo funciona', href: '#how' },
     { label: 'Demo', href: '#demo' },
-    { label: 'Motor', href: '#bralidus' },
+    { label: 'Motor', href: '#animus' },
     { label: 'Precios', href: '#pricing' },
   ];
 
@@ -646,8 +646,8 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ══ BRALIDUS — motor de inteligencia ══ */}
-        <BralidusEngine />
+        {/* ══ ANIMUS — motor de inteligencia ══ */}
+        <AnimusEngine />
 
         {/* ══ STATS ══ */}
         <section className="py-16 border-y border-black/[0.05] dark:border-white/[0.06]">
@@ -925,7 +925,7 @@ export function Landing() {
                     <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
                   </a>
                 </li>
-                <li><a href="#bralidus" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Motor Bralidus</a></li>
+                <li><a href="#animus" className="text-xs text-gray-500 dark:text-[#8B8AA0] hover:text-gray-900 dark:hover:text-[#F0EFF8] transition-colors">Motor Animus</a></li>
                 <li><span className="text-xs text-gray-400 dark:text-[#afaebb]">API B2B (pronto)</span></li>
               </ul>
             </div>

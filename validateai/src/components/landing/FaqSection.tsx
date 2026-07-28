@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: '¿Cómo funciona Validus?',
-    a: 'Describes tu idea, mercado y equipo en lenguaje natural. El motor Bralidus cruza tu caso con datos reales de Chile (Banco Central, CMF, SEIA, INAPI) y playbooks de fundraising para entregarte un dossier en unos 10 minutos.',
+    a: 'Describes tu idea, mercado y equipo en lenguaje natural. El motor Animus cruza tu caso con datos reales de Chile (Banco Central, CMF, SEIA, INAPI) y playbooks de fundraising para entregarte un dossier en unos 10 minutos.',
   },
   {
     q: '¿Cuánto cuesta Validus?',
@@ -28,8 +28,8 @@ const FAQS = [
     a: 'Sí. Validus cumple la Ley 21.719 de protección de datos personales de Chile. Los datos se cifran y se anonimizan antes de cualquier análisis agregado.',
   },
   {
-    q: '¿Qué es Bralidus?',
-    a: 'Bralidus es el motor GraphRAG detrás de Validus: un grafo de conocimiento con 5 expertos (macro, mercados, unit economics, legal y estrategia) que razona con datos institucionales reales y entrega evidencia citable con procedencia.',
+    q: '¿Qué es Animus?',
+    a: 'Animus es el motor GraphRAG detrás de Validus: un grafo de conocimiento con 5 expertos (macro, mercados, unit economics, legal y estrategia) que razona con datos institucionales reales y entrega evidencia citable con procedencia.',
   },
 ];
 

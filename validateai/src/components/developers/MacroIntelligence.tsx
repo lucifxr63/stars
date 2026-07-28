@@ -246,7 +246,7 @@ export function MacroIntelligence() {
               Financial Intelligence
             </h2>
             <p className="text-[10px] text-gray-400 dark:text-[#8B8AA0]">
-              BralidusPY · FRED + OpenBB Phase 3 · Federal Reserve / EconDB
+              AnimusPY · FRED + OpenBB Phase 3 · Federal Reserve / EconDB
             </p>
           </div>
         </div>

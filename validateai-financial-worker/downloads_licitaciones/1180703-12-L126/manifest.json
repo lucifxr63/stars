@@ -1,0 +1,24 @@
+{
+  "external_code": "1180703-12-L126",
+  "total_attachments": 2,
+  "downloaded_at": "2026-07-27T14:26:48.174583+00:00",
+  "storage_folder": "E:\\DEV\\Respos\\Trabajo\\startups\\validateai-financial-worker\\downloads_licitaciones\\1180703-12-L126",
+  "files": [
+    {
+      "filepath": "E:\\DEV\\Respos\\Trabajo\\startups\\validateai-financial-worker\\downloads_licitaciones\\1180703-12-L126\\Bases_Administrativas_y_Tecnicas_1180703-12-L126.pdf",
+      "filename": "Bases_Administrativas_y_Tecnicas_1180703-12-L126.pdf",
+      "file_size_bytes": 60520,
+      "sha256": "2792031c8c4c86501bb9bd9bf19480d7d70692c6115ead8103311d1144e85db5",
+      "downloaded_at": "2026-07-27T14:26:47.813124+00:00",
+      "source_url": "https://www.mercadopublico.cl/Procurement/Modules/RFBA/Details.aspx?code=1180703-12-L126"
+    },
+    {
+      "filepath": "E:\\DEV\\Respos\\Trabajo\\startups\\validateai-financial-worker\\downloads_licitaciones\\1180703-12-L126\\Anexo_1_Formulario_Oferta_1180703-12-L126.pdf",
+      "filename": "Anexo_1_Formulario_Oferta_1180703-12-L126.pdf",
+      "file_size_bytes": 60520,
+      "sha256": "4d823a4cf4dec8df57cb28b72967d477b7d3ee6e936ba656118af0a386058803",
+      "downloaded_at": "2026-07-27T14:26:48.173584+00:00",
+      "source_url": "https://www.mercadopublico.cl/Procurement/Modules/RFBA/Details.aspx?code=1180703-12-L126"
+    }
+  ]
+}

@@ -178,7 +178,7 @@ export function VCDiligence() {
             <h2 className="text-2xl sm:text-3xl font-black">Startup Gamma — Fintech B2C Chile · Seed · USD $500K</h2>
             <p className="text-[#8B8AA0] text-sm max-w-2xl">
               Aplicación de pagos digitales B2C, 2.400 usuarios activos, CAC $8.200 CLP vía Meta,
-              ticket promedio $15.000 CLP. Pitch deck en orden. Motor de due diligence BralidusPY activado.
+              ticket promedio $15.000 CLP. Pitch deck en orden. Motor de due diligence AnimusPY activado.
             </p>
           </div>
 
@@ -325,7 +325,7 @@ export function VCDiligence() {
         {/* ── Technical credibility ── */}
         <section className="grid sm:grid-cols-2 gap-4">
           <div className="bg-[#12121A] border border-white/[0.06] rounded-2xl p-5 space-y-3">
-            <p className="text-[11px] font-bold text-[#8B8AA0] uppercase tracking-wider">Motor BralidusPY</p>
+            <p className="text-[11px] font-bold text-[#8B8AA0] uppercase tracking-wider">Motor AnimusPY</p>
             <p className="text-sm text-[#F0EFF8] leading-relaxed">
               GraphRAG híbrido: búsqueda semántica vectorial + traversal de grafo de conocimiento.
               33 nodos Familia A (compliance, unit economics, TRL, gobernanza) + Familia B macro en tiempo real vía FRED API.

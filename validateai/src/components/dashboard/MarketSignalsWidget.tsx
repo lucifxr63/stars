@@ -20,7 +20,7 @@ function deltaCls(delta: number | null): string {
 }
 
 /**
- * Widget secundario del Command Center: inteligencia de mercado (Bralidus).
+ * Widget secundario del Command Center: inteligencia de mercado (Animus).
  * Da una razón para volver al dashboard aunque no haya una validación activa.
  */
 export function MarketSignalsWidget() {
@@ -36,7 +36,7 @@ export function MarketSignalsWidget() {
           </div>
           <div>
             <h2 className="text-sm font-bold text-gray-900 dark:text-[#F0EFF8] leading-tight">Inteligencia de Mercado</h2>
-            <p className="text-[11px] text-gray-400 dark:text-[#8B8AA0] leading-tight">Bralidus · señales para tu PyME</p>
+            <p className="text-[11px] text-gray-400 dark:text-[#8B8AA0] leading-tight">Animus · señales para tu PyME</p>
           </div>
         </div>
         <Link to="/market-intelligence" className="text-xs text-[#0EB5C6] hover:underline font-medium shrink-0">
@@ -94,7 +94,7 @@ export function MarketSignalsWidget() {
       {!loading && data?.source === 'mock' && (
         <div className="px-5 py-2 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/[0.06]">
           <p className="text-[10px] text-gray-400 dark:text-[#afaebb]">
-            Datos de demostración · el feed en vivo de Bralidus se conecta próximamente
+            Datos de demostración · el feed en vivo de Animus se conecta próximamente
           </p>
         </div>
       )}

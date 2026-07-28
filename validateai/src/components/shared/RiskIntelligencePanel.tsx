@@ -107,7 +107,7 @@ export function RiskIntelligencePanel({ alerts, isLoading = false }: Props) {
       event_name: 'paywall_hit',
       context: {
         tier: (tier === 'basic' ? 'basic' : 'free'),
-        action_taken: 'bralidus_panel_blocked',
+        action_taken: 'animus_panel_blocked',
         feature_name: 'risk_intelligence_panel',
       },
     });
@@ -131,7 +131,7 @@ export function RiskIntelligencePanel({ alerts, isLoading = false }: Props) {
           </div>
           <div>
             <p className="text-sm font-bold text-gray-800 dark:text-[#F0EFF8]">Inteligencia de Riesgo</p>
-            <p className="text-[10px] text-gray-400 dark:text-[#4A495E]">Powered by BralidusPY · GraphRAG</p>
+            <p className="text-[10px] text-gray-400 dark:text-[#4A495E]">Powered by AnimusPY · GraphRAG</p>
           </div>
         </div>
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${

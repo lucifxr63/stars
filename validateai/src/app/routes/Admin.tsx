@@ -16,7 +16,7 @@ import { trackEvent } from '@/lib/analytics';
 const WIZARD_STEPS = 4; // Idea, Mercado, Fundador, Generación
 const COLORS = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'pilots' | 'operators' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap' | 'bralidus_costs';
+type Tab = 'metrics' | 'users' | 'validations' | 'ai' | 'feedback' | 'pilots' | 'operators' | 'health' | 'finanzas' | 'content' | 'figma' | 'sitemap' | 'animus_costs';
 
 // ── Operadores admin (Fase 3C) ────────────────────────────────────────────────
 const OPERATOR_ROLES = ['owner', 'admin', 'operator'] as const;
@@ -305,7 +305,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>,
   },
   {
-    id: 'bralidus_costs', label: 'Bralidus RaaS',
+    id: 'animus_costs', label: 'Animus RaaS',
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
   },
 ];
@@ -2348,12 +2348,12 @@ export function Admin() {
             </Suspense>
           )}
 
-          {tab === 'bralidus_costs' && (
+          {tab === 'animus_costs' && (
             <div className="space-y-6">
               {/* KPIs de Inferencia & Telemetría RaaS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <KPI
-                  label="Inferencia Bralidus"
+                  label="Inferencia Animus"
                   value={`${(totalTokens * 1.35).toLocaleString('es-CL', { maximumFractionDigits: 0 })}`}
                   sub="tokens acumulados MoE"
                   accent="#0EB5C6"
@@ -2384,7 +2384,7 @@ export function Admin() {
 
               {/* Gráficos de Tendencia y Expertos */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                <Card title="Consumo de Tokens Bralidus RaaS — últimos 14 días">
+                <Card title="Consumo de Tokens Animus RaaS — últimos 14 días">
                   <ResponsiveContainer width="100%" height={230}>
                     <BarChart data={tokensByDay}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
