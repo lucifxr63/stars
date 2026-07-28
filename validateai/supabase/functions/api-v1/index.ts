@@ -138,12 +138,18 @@ import { servicesHealthHandler } from './routes/health.ts'
 
 const app = new Hono()
 
-// Dynamic CORS middleware
+// Robust Dynamic CORS middleware for all origins and headers
 app.use('*', cors({
   origin: (origin) => origin || '*',
-  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type', 'x-validus-signature', 'x-bralidus-key'],
+  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type', 'x-validus-signature', 'x-bralidus-key', 'x-requested-with', 'accept'],
   allowMethods: ['POST', 'GET', 'DELETE', 'PUT', 'PATCH', 'OPTIONS'],
+  exposeHeaders: ['content-length', 'x-ratelimit-remaining'],
+  maxAge: 86400,
+  credentials: true
 }))
+
+// Explicit 204 response for all OPTIONS preflight requests
+app.options('*', (c) => c.text('', 204))
 
 // Health check & Debug
 app.get('/', (c) => c.json({ status: 'ok', service: 'RaaS API Gateway v1' }))
@@ -151,7 +157,7 @@ app.get('/health/services', servicesHealthHandler)
 app.get('/api/v1/health/services', servicesHealthHandler)
 app.get('/debug', (c) => c.json({ pathname: new URL(c.req.url).pathname }))
 
-// Auth + rate limit + usage on all /api/v1/* routes
+// Auth + rate limit + usage on all /api/v1/* routes (skip OPTIONS inside middlewares)
 app.use('/api/v1/*', authMiddleware)
 app.use('/api/v1/*', rateLimitMiddleware)
 app.use('/api/v1/*', usageMiddleware)

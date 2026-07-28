@@ -1,6 +1,10 @@
 import { getSupabase } from './auth.ts'
 
 export const usageMiddleware = async (c: any, next: any) => {
+  if (c.req.method === 'OPTIONS') {
+    return await next()
+  }
+
   // Wait for the request to complete
   await next()
 
