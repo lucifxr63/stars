@@ -112,6 +112,7 @@ app = FastAPI(
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "")
 _origins = [o.strip() for o in _raw_origins.split(",") if o.strip()] or [
     "https://validus.scouttech.lat",
+    "https://animus.scouttech.lat",
     "http://localhost:5173",
     "http://localhost:3000",
 ]

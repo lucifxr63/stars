@@ -4,6 +4,7 @@
 
 export const ALLOWED_ORIGINS = [
   'https://validus.scouttech.lat',
+  'https://animus.scouttech.lat',
   'https://cashflow.scouttech.lat',
   'https://cashflow-phi-nine.vercel.app',
   'https://denarius.scouttech.lat',

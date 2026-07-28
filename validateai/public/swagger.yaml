@@ -12,7 +12,7 @@ info:
     ```
     Authorization: Bearer val_live_XXXX...
     ```
-    Genera y gestiona tus llaves de acceso en el [Developer Portal](https://bralidus.scouttech.lat/developers).
+    Genera y gestiona tus llaves de acceso en el [Developer Portal](https://animus.scouttech.lat/developers).
 
     ## Rate Limiting & Créditos
     - Cada endpoint consume un monto ponderado de créditos en función de su complejidad.
@@ -20,7 +20,7 @@ info:
 
   contact:
     name: Bralidus API Team
-    url: https://bralidus.scouttech.lat
+    url: https://animus.scouttech.lat
   license:
     name: Propietario
 servers:

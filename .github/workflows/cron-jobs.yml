@@ -1,0 +1,69 @@
+name: Financial Worker Cron Jobs
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+    - cron: '0 */2 * * *'
+    - cron: '15 13,17,21 * * *'
+    - cron: '30 11 * * 1-5'
+    - cron: '0 11 * * 1'
+    - cron: '0 13 * * 6'
+    - cron: '0 12 */3 * *'
+    - cron: '0 3 * * 0'
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Nombre del job a ejecutar (ej: radar_refresh, cache_sweep, cmf_sync, concursal_sync, bcch_sync, empleo_sync, seia_sync, fred_sync, yfinance_sync)'
+        required: true
+        default: 'radar_refresh'
+
+jobs:
+  trigger-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar job de la API (with diagnostics & retry)
+        env:
+          CRON_SECRET: ${{ secrets.BRALIDUS_CRON_SECRET }}
+          API: https://api.animus.scouttech.lat
+          SCHED: ${{ github.event.schedule }}
+          EVENT: ${{ github.event_name }}
+          DISPATCH: ${{ github.event.inputs.job }}
+        run: |
+          set -euo pipefail
+          # Determine which job to trigger
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            JOB="$DISPATCH"
+          else
+            case "$SCHED" in
+              '*/30 * * * *')       JOB=radar_refresh ;;
+              '0 */2 * * *')        JOB=cache_sweep ;;
+              '15 13,17,21 * * *')  JOB=cmf_sync ;;
+              '30 11 * * 1-5')      JOB=concursal_sync ;;
+              '0 11 * * 1')         JOB=bcch_sync ;;
+              '0 13 * * 6')         JOB=empleo_sync ;;
+              '0 12 */3 * *')       JOB=seia_sync ;;
+              '0 3 * * 0')          JOB=fred_sync ;;
+              '0 4 1 * *')          JOB=yfinance_sync ;;
+              *) echo "schedule no mapeado: $SCHED"; exit 1 ;;
+            esac
+          fi
+
+          echo "Disparando job: $JOB"
+          HOST="$(echo "$API" | sed -E 's#https?://([^/]+).*#\1#')"
+          echo "Resolving host: $HOST"
+
+          # install dns tools for debugging
+          sudo apt-get update -y
+          sudo apt-get install -y dnsutils
+
+          nslookup "$HOST" || true
+          dig +short "$HOST" || true
+
+          if [ -z "$(dig +short "$HOST")" ]; then
+            echo "ERROR: DNS lookup for $HOST returned no results. Check DNS records / propagation."
+            exit 2
+          fi
+
+          curl_opts="--fail --show-error --max-time 300 --retry 3 --retry-delay 5 -X POST"
+          curl $curl_opts "$API/jobs/run/$JOB" -H "Authorization: Bearer $CRON_SECRET"
