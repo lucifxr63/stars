@@ -11,6 +11,7 @@ Arquitectura de refresh:
 """
 from __future__ import annotations
 import logging
+import time
 from datetime import datetime, timezone, timedelta
 
 log = logging.getLogger(__name__)
@@ -18,13 +19,49 @@ log = logging.getLogger(__name__)
 STALE_HOURS = 24
 CRITICAL_HOURS = 168  # 7 días — señal de alerta en data_note
 
-# Categoría en knowledge_nodes para cada fuente
+# Categoría en knowledge_nodes para cada fuente.
+#
+# OJO: estos strings deben coincidir EXACTAMENTE con la constante CATEGORY del
+# extractor correspondiente. Si no coinciden, la consulta no devuelve filas,
+# is_stale(None) da True y la fuente queda marcada como vencida para siempre.
+# Eso fue justamente el bug: acá decía "Compras Públicas B2G" mientras
+# src/extractors/mercadopublico_extractor.py escribe "Mercado Público".
 SOURCE_CATEGORIES: dict[str, str] = {
-    "mercado_publico": "Compras Públicas B2G",
+    "mercado_publico": "Mercado Público",  # = mercadopublico_extractor.CATEGORY
     "sii": "SII Chile",
     "bcch": "Banco Central Chile",
     "cmf": "Regulatorio CMF",
 }
+
+# Ventana mínima entre refreshes disparados por consulta, POR FUENTE.
+#
+# Sin esto, una fuente que nunca sincronizó (cero nodos) es "vencida" en cada
+# request: check_category_freshness devuelve None, is_stale(None) es True, y el
+# refresh se dispara en CADA /query/moe que mencione la fuente — sin límite,
+# contra APIs con cuota diaria (la de Mercado Público admite ~1.000 req/día).
+# Corregir el nombre de la categoría no basta: mientras la fuente esté vacía,
+# el disparo sigue siendo permanente. Este cooldown es lo que lo acota.
+REFRESH_COOLDOWN_S = 3600
+
+# Última vez que se disparó refresh por fuente. Vive en memoria del proceso: en
+# serverless se pierde entre instancias frías, igual que el dedupe del
+# circuit breaker y el de ops-alert (mismo trade-off ya aceptado en el
+# ecosistema). Alcanza para cortar el caso real —ráfagas de consultas sobre la
+# misma instancia tibia— sin pretender ser un lock distribuido.
+_last_refresh_at: dict[str, float] = {}
+
+
+def should_trigger_refresh(source: str, cooldown_s: int = REFRESH_COOLDOWN_S) -> bool:
+    """
+    True si corresponde disparar un refresh de `source` ahora. Registra el
+    disparo, así que llamarla dos veces seguidas devuelve True y luego False.
+    """
+    now = time.monotonic()
+    last = _last_refresh_at.get(source)
+    if last is not None and now - last < cooldown_s:
+        return False
+    _last_refresh_at[source] = now
+    return True
 
 _MP_KEYWORDS = {
     "licitacion", "licitación", "mercado público", "mercado publico",
