@@ -124,10 +124,6 @@ import {
   ragDocumentDeleteHandler,
   ragDocumentChunksHandler,
   ragDocumentVersionsHandler,
-  // `ragQueryHandler` NO se importa acá: tambien lo exporta ./routes/rag.ts y
-  // tenerlo dos veces rompia el arranque de la funcion ("Duplicate identifier").
-  // Se conserva el de rag.ts, que es el que efectivamente servia /rag/query
-  // (Hono usa la primera ruta registrada).
   ragContextPackHandler,
   ragEmbeddingProfilesHandler,
   ragEstimateHandler,

@@ -1,5 +1,6 @@
 import { getSupabase } from '../middleware/auth.ts'
 import { isValidRut, formatRutCanonical } from '../utils/validation.ts'
+import { notImplemented } from './_honest.ts'
 
 const MP_BASE = 'https://api.mercadopublico.cl/servicios/v1/publico'
 const CHILECOMPRA_CACHE_TTL_HOURS = 24
@@ -244,15 +245,65 @@ export const licitusActivasHandler = async (c: any) => {
 // ── Mercado Público (API Prima Bralidus v1) ──────────────────────────────────
 
 // GET /api/v1/mercado-publico/health
+// Antes hardcodeaba `status: 'ok'` con ambas fuentes en `operational`: un
+// endpoint de salud que era incapaz de reportar un problema. Ahora mide lo
+// único que este gateway puede medir de verdad — si la tabla canónica responde
+// y qué tan fresco es su dato — y degrada cuando corresponde.
 export const mercadoPublicoHealthHandler = async (c: any) => {
-  return c.json(buildBralidusResponse({
-    status: 'ok',
-    sources: {
-      mercado_publico_v1: 'operational',
-      compra_agil_v2: 'operational',
-    },
-    version: '1.0.0',
-  }, 1, 1, 1))
+  try {
+    const supabase = getSupabase()
+    const { count, error } = await supabase
+      .from('licitaciones_mercado_publico')
+      .select('external_code', { count: 'exact', head: true })
+
+    if (error) {
+      return c.json(
+        buildBralidusResponse(
+          { status: 'error', detail: error.message },
+          1, 1, 0, 'mercado_publico',
+          [{ code: 'SOURCE_UNAVAILABLE', message: 'La tabla canónica no responde.' }],
+        ),
+        503,
+      )
+    }
+
+    const { data: ultima } = await supabase
+      .from('licitaciones_mercado_publico')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const horas = ultima?.updated_at
+      ? (Date.now() - new Date(ultima.updated_at).getTime()) / 3_600_000
+      : null
+
+    // Sin filas o con dato de más de 48 h, la ingesta no está al día.
+    const degradado = (count ?? 0) === 0 || horas === null || horas > 48
+
+    return c.json(
+      buildBralidusResponse(
+        {
+          status: degradado ? 'degraded' : 'ok',
+          registros: count ?? 0,
+          ultima_actualizacion: ultima?.updated_at ?? null,
+          antiguedad_horas: horas === null ? null : Math.round(horas),
+          detalle: degradado
+            ? 'Sin datos o desactualizados: el servicio de ingesta mp-sync no ha escrito recientemente.'
+            : null,
+        },
+        1, 1, count ?? 0,
+      ),
+      degradado ? 503 : 200,
+    )
+  } catch (err) {
+    return c.json(
+      buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [
+        { code: 'SOURCE_UNAVAILABLE', message: String(err) },
+      ]),
+      503,
+    )
+  }
 }
 
 // GET /api/v1/mercado-publico/opportunities (Buscador Unificado: tender + agile_purchase)
@@ -596,731 +647,302 @@ export const chilecompraDataHandler = async (c: any) => {
 // ── FASE 2 COMERCIAL — ENDPOINTS DE ANALÍTICA, STREAMING Y GESTIÓN ─────────────
 
 // 1. Analítica de Precios UNSPSC
-export const mercadoPublicoAnaliticaPreciosHandler = async (c: any) => {
-  const unspsc = c.req.query('unspsc_code') || c.req.query('unspsc') || '43233205'
-  const region = c.req.query('region') || '13'
-  const periodo_meses = Number(c.req.query('periodo_meses') || '12')
-
-  const data = {
-    unspsc_code: unspsc,
-    unspsc_title: unspsc === '43233205' ? 'Software de ciberseguridad y protección de datos' : 'Equipamiento e insumos B2G',
-    region,
-    periodo_meses,
-    currency: 'CLP',
-    total_offers_analyzed: 1420,
-    total_tenders_analyzed: 185,
-    percentiles: {
-      p10: 1850000,
-      p25: 4250000,
-      p50: 8500000,
-      p75: 14200000,
-      p90: 28500000,
-    },
-    avg_unit_price: 9150000,
-    winning_price_median: 7800000,
-    price_variance_yoY: '+4.8%',
-    recommendation: 'Para maximizar win-rate sin perder margen, cotizar en el rango p25-p50 ($4.25M - $8.50M CLP).'
-  }
-
-  c.set('tokens_used', 50)
-  return c.json({ data })
-}
+export const mercadoPublicoAnaliticaPreciosHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 2. Historial de Compradores
-export const mercadoPublicoCompradorHistorialHandler = async (c: any) => {
-  const rut = c.req.param('rut') || '69.070.100-6'
-  const data = {
-    rut_comprador: rut,
-    nombre_organismo: 'Ilustre Municipalidad de Santiago',
-    sector: 'Municipalidades',
-    region: '13 - Región Metropolitana',
-    dias_promedio_pago_real: 38,
-    cumplimiento_pago_ley30dias: '78.5%',
-    tasa_licitaciones_desiertas: '4.2%',
-    reclamos_12M_total: 14,
-    presupuesto_anual_ejecutado: 4850000000,
-    top_proveedores: [
-      { rut: '76.999.888-3', nombre: 'Electromovilidad Latam SpA', total_adjudicado: 240000000 },
-      { rut: '76.543.210-K', nombre: 'Electromedicina Chile SpA', total_adjudicado: 185000000 }
-    ]
-  }
-
-  c.set('tokens_used', 40)
-  return c.json({ data })
-}
+export const mercadoPublicoCompradorHistorialHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 3. Perfil Competitivo de Proveedores
-export const mercadoPublicoProveedorPerfilCompetitivoHandler = async (c: any) => {
-  const rut = c.req.param('rut') || '76.543.210-K'
-  const data = {
-    rut_proveedor: rut,
-    razon_social: 'Electromedicina Chile SpA',
-    win_rate_percentage: 34.8,
-    licitaciones_postuladas: 120,
-    licitaciones_ganadas: 42,
-    ticket_promedio_clp: 18400000,
-    monto_total_adjudicado_12M: 772800000,
-    estado_chileproveedores: 'PROVEEDOR HÁBIL',
-    deudas_previsionales_f30_1: false,
-    principales_competidores: [
-      { rut: '76.444.111-9', nombre: 'Hardware Emergency Response SpA', coincidencia_subastas: '64%' },
-      { rut: '77.888.777-6', nombre: 'HealthAI Tech Innovations SpA', coincidencia_subastas: '48%' }
-    ]
-  }
-
-  c.set('tokens_used', 50)
-  return c.json({ data })
-}
+export const mercadoPublicoProveedorPerfilCompetitivoHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 4. Búsquedas Guardadas
-export const mercadoPublicoBusquedasGuardadasHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const data = {
-    id: 'search_' + Math.random().toString(36).substring(2, 9),
-    name: body.name || 'Licitaciones Ciberseguridad RM',
-    query_params: body.query_params || { region: '13', unspsc: '4323*' },
-    status: 'ACTIVE',
-    created_at: new Date().toISOString(),
-    sync_destination: body.sync_destination || 'CRM_WEBHOOK'
-  }
-
-  c.set('tokens_used', 10)
-  return c.json({ data, message: 'Búsqueda guardada exitosamente' })
-}
+export const mercadoPublicoBusquedasGuardadasHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Gestión de suscripciones (búsquedas guardadas, alertas, webhooks, exportaciones) no implementada: no hay persistencia detrás de estos endpoints.',
+  )
 
 // 5. Alertas Inteligentes
-export const mercadoPublicoAlertasHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const data = {
-    id: 'alert_' + Math.random().toString(36).substring(2, 9),
-    rule_name: body.rule_name || 'Alerta Presupuesto > 1.000 UTM',
-    channels: body.channels || ['SLACK', 'EMAIL'],
-    conditions: body.conditions || { min_amount_clp: 50000000 },
-    created_at: new Date().toISOString()
-  }
-
-  c.set('tokens_used', 15)
-  return c.json({ data, message: 'Regla de alerta creada exitosamente' })
-}
+export const mercadoPublicoAlertasHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Gestión de suscripciones (búsquedas guardadas, alertas, webhooks, exportaciones) no implementada: no hay persistencia detrás de estos endpoints.',
+  )
 
 // 6. Webhooks Push Stream
-export const mercadoPublicoWebhooksHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const data = {
-    subscription_id: 'sub_' + Math.random().toString(36).substring(2, 9),
-    target_url: body.target_url || 'https://api.mi-empresa.cl/webhooks',
-    events: body.events || ['tender.published', 'tender.awarded', 'po.issued'],
-    status: 'ACTIVE',
-    secret: 'whsec_' + Math.random().toString(36).substring(2, 16)
-  }
-
-  c.set('tokens_used', 25)
-  return c.json({ data, message: 'Suscripción de webhook activada' })
-}
+export const mercadoPublicoWebhooksHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Gestión de suscripciones (búsquedas guardadas, alertas, webhooks, exportaciones) no implementada: no hay persistencia detrás de estos endpoints.',
+  )
 
 // 7. Exportaciones Masivas Enterprise
-export const mercadoPublicoExportacionesHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const format = body.format || 'jsonl'
-  const data = {
-    job_id: 'export_' + Math.random().toString(36).substring(2, 9),
-    format,
-    records_count: 120000,
-    download_url: `https://downloads.bralidus.com/dumps/mercado_publico_2026_${format}.gz`,
-    expires_at: new Date(Date.now() + 86400000).toISOString()
-  }
-
-  c.set('tokens_used', 100)
-  return c.json({ data, message: 'Exportación generada exitosamente' })
-}
+export const mercadoPublicoExportacionesHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Gestión de suscripciones (búsquedas guardadas, alertas, webhooks, exportaciones) no implementada: no hay persistencia detrás de estos endpoints.',
+  )
 
 // ── FASE 3 IA PREDICTIVA & MODALIDADES ESPECIALES — HANDLERS ──────────────────
 
 // 1. Convenios Marco
-export const mercadoPublicoConveniosMarcoHandler = async (c: any) => {
-  const data = {
-    total_convenios_vigentes: 18,
-    convenios: [
-      { id: '2239-4-LR24', nombre: 'Convenio Marco Movilidad y Vehículos 2024-2028', vigencia: '2028-12-31', total_proveedores: 42 },
-      { id: '2239-1-LR25', nombre: 'Convenio Marco de Adquisición de Licencias de Software', vigencia: '2027-06-30', total_proveedores: 128 }
-    ]
-  }
-
-  c.set('tokens_used', 25)
-  return c.json({ data })
-}
+export const mercadoPublicoConveniosMarcoHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 2. Grandes Compras
-export const mercadoPublicoGrandesComprasHandler = async (c: any) => {
-  const data = {
-    grandes_compras_activas: 14,
-    items: [
-      { code: 'GC-1057469', title: 'Adquisición Flota Vehículos Eléctricos', buyer: 'Municipalidad de Santiago', budget_clp: 240000000, closing_at: '2026-08-15' },
-      { code: 'GC-2089123', title: 'Licenciamiento Anual Cloud Enterprise', buyer: 'MINSAL', budget_clp: 180000000, closing_at: '2026-08-20' }
-    ]
-  }
-
-  c.set('tokens_used', 30)
-  return c.json({ data })
-}
+export const mercadoPublicoGrandesComprasHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 3. Consultas al Mercado (RFI)
-export const mercadoPublicoConsultasMercadoHandler = async (c: any) => {
-  const data = {
-    rfis_activos: 8,
-    items: [
-      { code: 'RFI-608-2024', title: 'Sondeo de Mercado Radares Aeronáuticos 3D', buyer: 'DGAC', closing_at: '2026-08-28' },
-      { code: 'RFI-120-2026', title: 'Estudio de Precios Sistema IA Diagnóstico Urgencias', buyer: 'Servicio Salud Sur Oriente', closing_at: '2026-09-05' }
-    ]
-  }
-
-  c.set('tokens_used', 20)
-  return c.json({ data })
-}
+export const mercadoPublicoConsultasMercadoHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 4. Tratos Directos
-export const mercadoPublicoTratosDirectosHandler = async (c: any) => {
-  const data = {
-    tratos_directos_registrados: 64,
-    items: [
-      { code: 'TD-1266-9', title: 'Reparación de Emergencia Servidores Datacenter SII', buyer: 'SII', causal: 'Art. 8 Letra C - Emergencia Impostergable', amount_clp: 45000000 },
-      { code: 'TD-990-2026', title: 'Servicios de Seguridad y Vigilancia Especializada', buyer: 'MINVU', causal: 'Art. 8 Letra E - Confidencialidad', amount_clp: 32000000 }
-    ]
-  }
-
-  c.set('tokens_used', 35)
-  return c.json({ data })
-}
+export const mercadoPublicoTratosDirectosHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 5. Scoring de Oportunidades AI
-export const mercadoPublicoAiScoringHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const code = body.external_code || '1180703-12-L126'
-  const data = {
-    external_code: code,
-    opportunity_score: 92,
-    score_level: 'ALTA COMPATIBILIDAD',
-    breakdown: {
-      technical_match: '96/100',
-      budget_feasibility: '90/100',
-      competition_risk: 'BAJO (2-3 competidores esperados)',
-      payment_timeline_score: '88/100'
-    },
-    recommendation: 'Licitación fuertemente recomendada para postulación inmediata.'
-  }
-
-  c.set('tokens_used', 45)
-  return c.json({ data })
-}
+export const mercadoPublicoAiScoringHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Scoring/predicción por IA no implementado: no hay modelo detrás. Las versiones anteriores devolvían resultados fijos con apariencia de inferencia.',
+  )
 
 // 6. Predicción de Adjudicación AI
-export const mercadoPublicoAiPrediccionHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const offer_clp = body.offer_clp || 4850000
-  const data = {
-    external_code: body.external_code || '1180703-12-L126',
-    proposed_offer_clp: offer_clp,
-    win_probability: offer_clp <= 5000000 ? '86.4%' : '54.2%',
-    confidence_interval: 'High Confidence (N=1,420 subastas comparadas)',
-    optimal_offer_target: 4500000,
-    expected_competitors_count: 3
-  }
-
-  c.set('tokens_used', 55)
-  return c.json({ data })
-}
+export const mercadoPublicoAiPrediccionHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Scoring/predicción por IA no implementado: no hay modelo detrás. Las versiones anteriores devolvían resultados fijos con apariencia de inferencia.',
+  )
 
 // ── SECCIÓN 2: DATOS ECONÓMICOS, MACRO & DOMINIOS ESTRUCTURADOS ──────────────────
 
 // 1. Snapshot Económico Consolidado Chile
-export const economyChileSnapshotHandler = async (c: any) => {
-  const data = {
-    chile_snapshot: {
-      uf: { value: 37842.15, unit: 'CLP', date: '2026-07-27', change_ytd: '+2.1%' },
-      utm: { value: 65420.00, unit: 'CLP', month: '2026-07' },
-      ipc: { value: 0.3, unit: '%_monthly', period: '2026-06', yoy: 3.8 },
-      tpm: { value: 5.75, unit: '%_annual', date: '2026-07-27' },
-      usd_clp: { value: 942.50, unit: 'CLP_per_USD', date: '2026-07-27' },
-      imacec: { value: 1.8, unit: '%_yoy', period: '2026-05' },
-      unemployment: { value: 8.3, unit: '%', period: '2026-Q2' }
-    },
-    meta: {
-      source: { provider: 'bcch', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 1
-    }
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyChileSnapshotHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 2. UF Actual e Histórica
-export const economyChileUfHandler = async (c: any) => {
-  const data = {
-    series_id: 'CL_UF_DAILY',
-    name: 'Unidad de Fomento (UF)',
-    current_value: 37842.15,
-    currency: 'CLP',
-    date: '2026-07-27',
-    projection_month_end: 37890.00,
-    meta: {
-      source: { provider: 'bcch', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 1
-    }
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyChileUfHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 3. IPC Inflación
-export const economyChileIpcHandler = async (c: any) => {
-  const data = {
-    series_id: 'CL_IPC_MONTHLY',
-    name: 'Índice de Precios al Consumidor (IPC)',
-    monthly_change: 0.3,
-    accumulated_12m: 3.8,
-    accumulated_ytd: 2.1,
-    period: '2026-06',
-    meta: {
-      source: { provider: 'ine', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 2
-    }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const economyChileIpcHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 4. TPM Tasa de Política Monetaria
-export const economyChileTpmHandler = async (c: any) => {
-  const data = {
-    series_id: 'CL_TPM_RATE',
-    name: 'Tasa de Política Monetaria (TPM)',
-    rate: 5.75,
-    unit: '%',
-    last_decision_date: '2026-06-18',
-    stance: 'moderately_restrictive',
-    meta: {
-      source: { provider: 'bcch', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 1
-    }
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyChileTpmHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 5. Imacec
-export const economyChileImacecHandler = async (c: any) => {
-  const data = {
-    series_id: 'CL_IMACEC_TOTAL',
-    name: 'Imacec Total',
-    change_yoy: 1.8,
-    breakdown: {
-      mining_imacec: 3.4,
-      non_mining_imacec: 1.2,
-      services: 2.1
-    },
-    period: '2026-05',
-    meta: {
-      source: { provider: 'bcch', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 2
-    }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const economyChileImacecHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 6. Tipo de Cambio Dólar
-export const economyChileExchangeRatesHandler = async (c: any) => {
-  const data = {
-    pair: 'USD/CLP',
-    rate: 942.50,
-    date: '2026-07-27',
-    change_day: '+0.45%',
-    meta: {
-      source: { provider: 'bcch', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 1
-    }
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyChileExchangeRatesHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 7. Serie de Tiempo Normalizada
-export const economySeriesHandler = async (c: any) => {
-  const seriesId = c.req.param('series_id') || 'CL_IMACEC_TOTAL'
-  const data = {
-    series_id: seriesId,
-    name: `Serie Macroeconómica ${seriesId}`,
-    observations: [
-      { date: '2026-03-01', value: 1.4, status: 'official' },
-      { date: '2026-04-01', value: 1.6, status: 'official' },
-      { date: '2026-05-01', value: 1.8, status: 'official' },
-      { date: '2026-06-01', value: 2.0, status: 'preliminary' }
-    ],
-    meta: {
-      source: { provider: 'bcch', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 2
-    }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const economySeriesHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 8. Cobre Spot & Futuros
-export const commoditiesCopperHandler = async (c: any) => {
-  const data = {
-    symbol: 'COPPER_HG=F',
-    name: 'Cobre Spot COMEX / LME',
-    price_usd_lb: 4.25,
-    price_usd_ton: 9370.00,
-    change_pct: '+1.85%',
-    data_quality: { level: 'high', is_official: false, delay_minutes: 15 },
-    meta: {
-      source: { provider: 'fred', official: false },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 2
-    }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const commoditiesCopperHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 9. Estado de Insolvencia Empresa por RUT
-export const companiesInsolvencyStatusHandler = async (c: any) => {
-  const rut = c.req.param('rut') || '76.123.456-K'
-  const data = {
-    rut,
-    status: 'clean',
-    status_label: 'Sin Procedimientos Concursales Activos',
-    active_cases_count: 0,
-    last_check_date: new Date().toISOString(),
-    meta: {
-      source: { provider: 'cmf', official: true },
-      retrieved_at: new Date().toISOString(),
-      credits_used: 3
-    }
-  }
-
-  c.set('tokens_used', 3)
-  return c.json({ data })
-}
+export const companiesInsolvencyStatusHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Dato societario no disponible: proviene de S-Pulse y no está integrado en este gateway.',
+  )
 
 // 10. Simulación de Escenario IA Insights
-export const insightsScenarioAnalysisHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const data = {
-    analysis_id: 'scenario_' + Math.random().toString(36).substring(2, 9),
-    inputs: body.scenario || { copper_price_change: -15, usdclp_change: 10, tpm_change_bps: 100 },
-    simulated_impacts: {
-      imacec_growth_adjusted: '+0.9%',
-      inflation_impact: '+0.6% adicional',
-      investment_sentiment: 'MODERADO_RIESGO'
-    },
-    inference_meta: {
-      model: 'bralidus-doctrina-v1',
-      confidence: 0.84,
-      official_source: false,
-      observation_type: 'ai_inference'
-    }
-  }
-
-  c.set('tokens_used', 20)
-  return c.json({ data })
-}
+export const insightsScenarioAnalysisHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 11. Catálogo de Indicadores Disponibles
-export const economyIndicatorsHandler = async (c: any) => {
-  const data = {
-    total_indicators: 24,
-    indicators: [
-      { id: 'CL_UF_DAILY', name: 'Unidad de Fomento', category: 'prices', provider: 'bcch' },
-      { id: 'CL_IPC_MONTHLY', name: 'Índice de Precios al Consumidor', category: 'inflation', provider: 'ine' },
-      { id: 'CL_TPM_RATE', name: 'Tasa de Política Monetaria', category: 'monetary_policy', provider: 'bcch' },
-      { id: 'COPPER_HG=F', name: 'Precio Spot Cobre', category: 'commodities', provider: 'fred' }
-    ]
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyIndicatorsHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 12. Publicaciones Económicas Reclamadas (Releases)
-export const economyReleasesHandler = async (c: any) => {
-  const data = {
-    latest_releases: [
-      { id: 'rel_ipc_2026_06', title: 'Boletín IPC Junio 2026', release_date: '2026-07-08', provider: 'ine' },
-      { id: 'rel_imacec_2026_05', title: 'Imacec Mayo 2026', release_date: '2026-07-01', provider: 'bcch' }
-    ]
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyReleasesHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 13. Calendario Macroeconómico
-export const economyCalendarHandler = async (c: any) => {
-  const data = {
-    upcoming_events: [
-      { event: 'Publicación IPC Julio 2026', expected_date: '2026-08-07', impact: 'HIGH', provider: 'ine' },
-      { event: 'Reunión de Política Monetaria (RPM)', expected_date: '2026-08-18', impact: 'HIGH', provider: 'bcch' }
-    ]
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyCalendarHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 14. PIB Chile
-export const economyChileGdpHandler = async (c: any) => {
-  const data = {
-    gdp_nominal_usd_billions: 340.5,
-    gdp_real_growth_yoy: 2.1,
-    period: '2026-Q1',
-    meta: { source: { provider: 'bcch', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const economyChileGdpHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 15. Balanza Comercial
-export const economyChileTradeBalanceHandler = async (c: any) => {
-  const data = {
-    trade_balance_usd_millions: 1240,
-    exports_usd_millions: 8450,
-    imports_usd_millions: 7210,
-    period: '2026-06',
-    meta: { source: { provider: 'bcch', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 3)
-  return c.json({ data })
-}
+export const economyChileTradeBalanceHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 16. Informes IPoM
-export const economyChileIpomHandler = async (c: any) => {
-  const data = {
-    latest_ipom: {
-      report_id: 'ipom_2026_06',
-      title: 'Informe de Política Monetaria - Junio 2026',
-      gdp_range_forecast: '1.75% - 2.75%',
-      inflation_eoy_forecast: '3.5%',
-      meta: { source: { provider: 'bcch', official: true }, retrieved_at: new Date().toISOString() }
-    }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const economyChileIpomHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 17. Global Snapshot
-export const economyGlobalSnapshotHandler = async (c: any) => {
-  const data = {
-    us_fed_rate: 5.25,
-    us_cpi_yoy: 3.1,
-    us_gdp_growth: 2.4,
-    copper_usd_lb: 4.25,
-    wti_usd_bbl: 78.4,
-    meta: { source: { provider: 'fred', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const economyGlobalSnapshotHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 18. Commodities Snapshot
-export const commoditiesSnapshotHandler = async (c: any) => {
-  const data = {
-    commodities: [
-      { symbol: 'COPPER', name: 'Cobre Spot', price: 4.25, unit: 'USD/lb', change: '+1.85%' },
-      { symbol: 'LITHIUM', name: 'Litio LCE Spot', price: 14200, unit: 'USD/ton', change: '+0.50%' },
-      { symbol: 'WTI', name: 'Petróleo WTI', price: 78.4, unit: 'USD/bbl', change: '-0.75%' }
-    ],
-    meta: { source: { provider: 'fred_yfinance', official: false }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 1)
-  return c.json({ data })
-}
+export const commoditiesSnapshotHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 19. IPSA Bolsa de Santiago
-export const marketsChileIpsaHandler = async (c: any) => {
-  const data = {
-    symbol: '^IPSA',
-    name: 'Índice IPSA Santiago',
-    current_value: 6540.20,
-    change_pct: '+0.65%',
-    ech_etf_usd: 26.40,
-    meta: { source: { provider: 'yfinance', official: false }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const marketsChileIpsaHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 20. Entidades Fiscalizadas CMF
-export const financialSystemEntitiesHandler = async (c: any) => {
-  const data = {
-    total_entities: 480,
-    sample: [
-      { rut: '97.004.000-1', name: 'Banco de Chile', type: 'banco' },
-      { rut: '97.006.000-2', name: 'Banco Estado', type: 'banco' }
-    ],
-    meta: { source: { provider: 'cmf', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const financialSystemEntitiesHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 21. Quiebras e Insolvencias
-export const companiesInsolvenciesHandler = async (c: any) => {
-  const data = {
-    total_active_cases: 12,
-    latest_cases: [
-      { case_id: 'Q-102-2026', rut: '76.888.999-1', company: 'Constructora del Sur SpA', status: 'liquidation', published_date: '2026-07-15' }
-    ],
-    meta: { source: { provider: 'cmf', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 4)
-  return c.json({ data })
-}
+export const companiesInsolvenciesHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Dato societario no disponible: proviene de S-Pulse y no está integrado en este gateway.',
+  )
 
 // 22. Desempleo INE
-export const laborUnemploymentHandler = async (c: any) => {
-  const data = {
-    unemployment_rate_national: 8.3,
-    period: '2026-Q2',
-    regions: [
-      { region: '13 - RM', rate: 8.5 },
-      { region: '02 - Antofagasta', rate: 7.9 }
-    ],
-    meta: { source: { provider: 'ine', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const laborUnemploymentHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 23. Remuneraciones INE
-export const laborWagesHandler = async (c: any) => {
-  const data = {
-    ir_nominal_yoy: 10.6,
-    ir_real_yoy: 6.8,
-    icmo_yoy: 10.9,
-    period: '2026-05',
-    meta: { source: { provider: 'ine', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 2)
-  return c.json({ data })
-}
+export const laborWagesHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 24. Proyectos de Inversión SEIA
-export const investmentProjectsHandler = async (c: any) => {
-  const data = {
-    total_projects: 340,
-    pipeline_capex_usd: 14500000000,
-    sample: [
-      { project_id: 'SEIA-2026-091', title: 'Parque Eólico Coquimbo', capex_usd: 350000000, status: 'approved' }
-    ],
-    meta: { source: { provider: 'seia', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 4)
-  return c.json({ data })
-}
+export const investmentProjectsHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 25. Eventos Societarios Diario Oficial
-export const companyEventsConstitutionsHandler = async (c: any) => {
-  const data = {
-    constitutions_this_month: 1420,
-    sample: [
-      { id: 'DO-88912', rut: '77.999.111-K', company_name: 'Tech Innovations SpA', initial_capital_clp: 10000000, date: '2026-07-26' }
-    ],
-    meta: { source: { provider: 'diario_oficial', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 4)
-  return c.json({ data })
-}
+export const companyEventsConstitutionsHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Dato societario no disponible: proviene de S-Pulse y no está integrado en este gateway.',
+  )
 
 // 26. Perfil Económico Unificado Empresa
-export const companiesEconomicProfileHandler = async (c: any) => {
-  const rut = c.req.param('rut') || '76.123.456-K'
-  const data = {
-    rut,
-    company_name: 'Scouttech SpA',
-    insolvency_risk: 'LOW',
-    financial_health_score: 88,
-    b2g_activity: { total_contracts: 14, total_amount_clp: 125000000 },
-    meta: { source: { provider: 'bralidus_unified', official: false }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 8)
-  return c.json({ data })
-}
+export const companiesEconomicProfileHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Dato societario no disponible: proviene de S-Pulse y no está integrado en este gateway.',
+  )
 
 // 27. Métricas Públicas ChileCompra por RUT (Alias Canónico)
-export const companiesPublicProcurementMetricsHandler = async (c: any) => {
-  const rut = c.req.param('rut') || '76.086.428-5'
-  const data = {
-    rut,
-    metrics: {
-      m1_annual_volume_clp: 125000000,
-      m2_total_pos: 42,
-      m4_average_ticket_clp: 8900000,
-      m8_payment_days_avg: 24
-    },
-    meta: { source: { provider: 'bralidus_db', official: true }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 20)
-  return c.json({ data })
-}
+export const companiesPublicProcurementMetricsHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Funcionalidad de analítica B2G no implementada. Los datos de Mercado Público disponibles se sirven en /api/v1/mercado-publico/opportunities, /compra-agil y /organismos/:id.',
+  )
 
 // 28. Correlaciones Macroeconómicas
-export const analyticsCorrelationsHandler = async (c: any) => {
-  const data = {
-    correlation_matrix: {
-      'COPPER_vs_USDCLP': -0.84,
-      'USDCLP_vs_UF': 0.62,
-      'TPM_vs_IMACEC': -0.45
-    },
-    meta: { source: { provider: 'bralidus_analytics', official: false }, retrieved_at: new Date().toISOString() }
-  }
-
-  c.set('tokens_used', 5)
-  return c.json({ data })
-}
+export const analyticsCorrelationsHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 29. Reporte IA Macro Brief
-export const insightsMacroBriefHandler = async (c: any) => {
-  const data = {
-    brief_id: 'brief_' + Math.random().toString(36).substring(2, 9),
-    summary: 'La economía chilena muestra señales de estabilización en torno al 2.1% PIB con una inflación decreciente hacia el 3.8% anual.',
-    key_drivers: ['Recuperación del Cobre a $4.25/lb', 'Reducción paulatina de la TPM a 5.75%'],
-    inference_meta: { model: 'bralidus-doctrina-v1', confidence: 0.88, official_source: false }
-  }
-
-  c.set('tokens_used', 10)
-  return c.json({ data })
-}
+export const insightsMacroBriefHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Indicador macroeconómico no disponible: este gateway no tiene integración con la fuente oficial. Para datos macro reales usar GET /api/v1/data/economy o /api/v1/data/macro.',
+  )
 
 // 30. Generador de Exportaciones
 export const exportsHandler = async (c: any) => {
@@ -1337,115 +959,63 @@ export const exportsHandler = async (c: any) => {
   return c.json({ data })
 }
 
-// ── 31. S-Pulse: Perfil Societario Canónico ──────────────────────────────────
-export const companyProfileHandler = async (c: any) => {
-  const rut = formatRutCanonical(c.req.param('rut') ?? '')
-  if (!isValidRut(rut)) {
-    return c.json(buildBralidusResponse(null, 1, 1, 0, 's_pulse', [{ code: 'INVALID_RUT', message: 'RUT chileno inválido' }]), 400)
-  }
+// ── 31-36. S-Pulse: datos societarios ────────────────────────────────────────
+//
+// Estos seis endpoints devolvían datos INVENTADOS presentados como reales.
+// Consultaban `company_profiles` / `company_ownership_meshes` —tablas que no
+// existen en este proyecto Supabase— y, al fallar dentro de un `catch {}` mudo,
+// respondían literales con la misma forma que una respuesta legítima y sin
+// ningún `errors[]` que lo delatara.
+//
+// Lo devuelto era grave, no genérico:
+//  - El perfil societario retornaba SIEMPRE "Electromedicina Chile SpA", con
+//    capital social e inscripción de Registro de Comercio inventados, para
+//    cualquier RUT consultado.
+//  - La malla societaria atribuía a una PERSONA REAL, con nombre y RUT, el 60%
+//    de propiedad de cualquier empresa que se consultara.
+//  - El detector de conflictos B2G respondía siempre `conflict_detected: false`:
+//    un control de conflicto de interés incapaz de detectar uno.
+//
+// Estos datos viven de verdad en S-Pulse (grafo societario en Neo4j), no en
+// Supabase. Ahora se proxean allá con `spulseProxyHandler`, que ya se usa para
+// el resto de `/data/spulse/*` y responde 503 honesto cuando el servicio no
+// está disponible — que es justamente el estado actual de S-Pulse.
+export const companyProfileHandler = spulseProxyHandler(
+  (c) => `/companies/${formatRutCanonical(c.req.param('rut') ?? '')}/profile`,
+  15,
+  true,
+)
 
-  try {
-    const supabase = getSupabase()
-    const { data, error } = await supabase.from('company_profiles').select('*').eq('rut', rut).maybeSingle()
-    if (!error && data) {
-      c.set('tokens_used', 15)
-      return c.json(buildBralidusResponse(data, 1, 1, 1, 's_pulse'))
-    }
-  } catch {}
+export const companyOwnershipMeshHandler = spulseProxyHandler(
+  (c) => `/companies/${formatRutCanonical(c.req.param('rut') ?? '')}/network`,
+  25,
+  true,
+)
 
-  const fallback = {
-    rut,
-    legal_name: 'Electromedicina Chile SpA',
-    fantasy_name: 'Electromedicina CL',
-    company_type: 'SpA',
-    constitution_date: '2018-04-12',
-    social_capital_clp: 150000000.0,
-    sii_status: 'activo',
-    diario_oficial_cve: 'CVE-2018-45129',
-    cbr_inscription: 'Fojas 124 N° 89 Registro Comercio Santiago 2018'
-  }
-  c.set('tokens_used', 15)
-  return c.json(buildBralidusResponse(fallback, 1, 1, 1, 's_pulse'))
-}
+export const companyLegalRepsHandler = spulseProxyHandler(
+  (c) => `/entities/${formatRutCanonical(c.req.param('rut') ?? '')}`,
+  15,
+  true,
+)
 
-// ── 32. S-Pulse: Malla Societaria Completa ────────────────────────────────────
-export const companyOwnershipMeshHandler = async (c: any) => {
-  const rut = formatRutCanonical(c.req.param('rut') ?? '')
-  try {
-    const supabase = getSupabase()
-    const { data, error } = await supabase.from('company_ownership_meshes').select('*').eq('target_rut', rut)
-    if (!error && data && data.length > 0) {
-      c.set('tokens_used', 25)
-      return c.json(buildBralidusResponse(data, 1, data.length, data.length, 's_pulse'))
-    }
-  } catch {}
+export const companyRelatedPartiesHandler = spulseProxyHandler(
+  (c) => `/companies/${formatRutCanonical(c.req.param('rut') ?? '')}/network`,
+  20,
+  true,
+)
 
-  const fallback = [
-    { target_rut: rut, partner_rut: '14.567.890-2', partner_name: 'Luciano Alonso Larraín', partner_type: 'person', ownership_percentage: 60.0, role: 'shareholder', entry_date: '2018-04-12' },
-    { target_rut: rut, partner_rut: '14.567.890-2', partner_name: 'Luciano Alonso Larraín', partner_type: 'person', ownership_percentage: 0.0, role: 'legal_representative', entry_date: '2018-04-12' },
-    { target_rut: rut, partner_rut: '76.999.000-8', partner_name: 'Inversiones Médicas del Sur SpA', partner_type: 'company', ownership_percentage: 40.0, role: 'shareholder', entry_date: '2019-11-15' }
-  ]
-  c.set('tokens_used', 25)
-  return c.json(buildBralidusResponse(fallback, 1, fallback.length, fallback.length, 's_pulse'))
-}
+// Sin equivalente en S-Pulse: la detección de conflictos B2G requiere cruzar el
+// grafo societario con los compradores de Mercado Público, y ese cruce no está
+// construido. Antes respondía "sin conflictos" siempre, que es la peor
+// respuesta posible para un control de este tipo.
+export const companyB2GConflictsHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Detección de conflictos B2G no implementada: requiere cruzar el grafo societario de S-Pulse con los compradores de Mercado Público. La versión anterior respondía "sin conflictos" sin comprobar nada.',
+    's_pulse',
+  )
 
-// ── 33. S-Pulse: Representantes Legales ────────────────────────────────────────
-export const companyLegalRepsHandler = async (c: any) => {
-  const rut = formatRutCanonical(c.req.param('rut') ?? '')
-  const data = [
-    { rut: '14.567.890-2', name: 'Luciano Alonso Larraín', role: 'Representante Legal Principal', powers: ['Administración General', 'Firma Bancaria', 'Postulación Licitaciones B2G'], verified_at: new Date().toISOString() }
-  ]
-  c.set('tokens_used', 15)
-  return c.json(buildBralidusResponse(data, 1, 1, 1, 's_pulse'))
-}
-
-// ── 34. S-Pulse: Sociedades Relacionadas ─────────────────────────────────────
-export const companyRelatedPartiesHandler = async (c: any) => {
-  const rut = formatRutCanonical(c.req.param('rut') ?? '')
-  const data = [
-    { related_rut: '76.999.000-8', company_name: 'Inversiones Médicas del Sur SpA', relationship_type: 'matriz', shared_partners: ['Luciano Alonso Larraín'], risk_score: 'BAJO' }
-  ]
-  c.set('tokens_used', 20)
-  return c.json(buildBralidusResponse(data, 1, 1, 1, 's_pulse'))
-}
-
-// ── 35. S-Pulse: Detector de Conflictos B2G & Concentración ──────────────────
-export const companyB2GConflictsHandler = async (c: any) => {
-  const rut = formatRutCanonical(c.req.param('rut') ?? '')
-  const data = {
-    target_rut: rut,
-    conflict_detected: false,
-    risk_level: 'LOW',
-    pep_matches: [],
-    b2g_competitor_overlaps: [
-      { competitor_rut: '77.123.456-7', competitor_name: 'Equipamiento Hospitalario Ltda', shared_directors: 0, overlap_tenders_count: 4 }
-    ],
-    audit_notes: 'Sin vínculos detectados con autoridades ni funcionarios compradores de Mercado Público.'
-  }
-  c.set('tokens_used', 35)
-  return c.json(buildBralidusResponse(data, 1, 1, 1, 's_pulse'))
-}
-
-// ── 36. S-Pulse: Buscador Predictivo ─────────────────────────────────────────
-export const companySearchHandler = async (c: any) => {
-  const q = c.req.query('q') ?? ''
-  try {
-    const supabase = getSupabase()
-    const { data, count, error } = await supabase.from('company_profiles').select('*', { count: 'exact' }).or(`legal_name.ilike.%${q}%,rut.ilike.%${q}%`).limit(10)
-    if (!error && data && data.length > 0) {
-      c.set('tokens_used', 10)
-      return c.json(buildBralidusResponse(data, 1, 10, count ?? data.length, 's_pulse'))
-    }
-  } catch {}
-
-  const fallback = [
-    { rut: '76.543.210-K', legal_name: 'Electromedicina Chile SpA', fantasy_name: 'Electromedicina CL', company_type: 'SpA' },
-    { rut: '77.888.999-1', legal_name: 'Sistemas e Informática Chile SpA', fantasy_name: 'SysInfo Chile', company_type: 'SpA' },
-    { rut: '96.111.444-5', legal_name: 'Mobiliario Corporativo Chile S.A.', fantasy_name: 'Mobileria Corporativa', company_type: 'SA' }
-  ]
-  c.set('tokens_used', 10)
-  return c.json(buildBralidusResponse(fallback, 1, 10, fallback.length, 's_pulse'))
-}
+export const companySearchHandler = spulseProxyHandler(() => '/companies/search', 10)
 
 
 
