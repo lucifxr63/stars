@@ -96,40 +96,19 @@ export const macroDataHandler = async (c: any) => {
 }
 
 // GET /api/v1/data/chilecompra/metricas?rut={rut}
-// Lee las métricas M1-M10 pre-calculadas desde chilecompra_metricas.
-// Para recalcular, llamar directamente a la Edge Function chilecompra-calcular.
-export const chilecompraMetricasHandler = async (c: any) => {
-  const rut: string | undefined = c.req.query('rut')
-  if (!rut) return c.json({ error: 'Parámetro rut requerido' }, 400)
-  const rutNorm = rut.replace(/[^0-9Kk]/g, '').toUpperCase()
-  if (rutNorm.length < 7) return c.json({ error: 'RUT inválido' }, 400)
-
-  try {
-    const supabase = getSupabase()
-    const { data, error } = await supabase
-      .from('chilecompra_metricas')
-      .select('*')
-      .eq('rut', rutNorm)
-      .order('calculado_al', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (error) throw error
-
-    if (!data) {
-      return c.json({
-        error: 'Sin métricas calculadas para este RUT',
-        hint: `Llamar a POST /functions/v1/chilecompra-calcular con { "rut": "${rut}" } para calcularlas`,
-      }, 404)
-    }
-
-    c.set('tokens_used', 20)
-    return c.json(data)
-  } catch (err) {
-    console.error('chilecompraMetricasHandler error:', err)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-}
+//
+// Leía las métricas M1-M10 desde `chilecompra_metricas`, tabla que NO existe en
+// este proyecto (verificado contra el esquema): la consulta lanzaba y el
+// handler devolvía 500 en todos los casos.
+//
+// Para actividad real de compras públicas por proveedor está
+// /api/v1/data/licitus/proveedor/:rut, que proxea a Licitus y sí tiene el dato.
+export const chilecompraMetricasHandler = (c: any) =>
+  notImplemented(
+    c,
+    'Métricas M1-M10 no disponibles: la tabla chilecompra_metricas no existe en este proyecto. Usar /api/v1/data/licitus/proveedor/:rut para actividad real del proveedor.',
+    'chilecompra',
+  )
 
 // ── Licitus (vía BralidusPY) ─────────────────────────────────────────────────
 // Browser → api-v1 (Validus API key) → BralidusPY /licitus/* (Bearer secreto)
@@ -327,16 +306,11 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     if (q) query = query.ilike('title', `%${q}%`)
 
     const { data, count, error } = await query.range(offset, offset + pageSize - 1)
-    if (error) {
-      // Fallback a tabla legacy opportunities si licitaciones_mercado_publico vacante
-      const legacy = await supabase.from('opportunities').select('*', { count: 'exact' }).order('published_at', { ascending: false }).range(offset, offset + pageSize - 1)
-      if (!legacy.error && legacy.data) {
-        const mappedData = legacy.data.map(withOfficialUrl)
-        c.set('tokens_used', 25)
-        return c.json(buildBralidusResponse(mappedData, page, pageSize, legacy.count ?? 0))
-      }
-      throw error
-    }
+    // Acá había un fallback a la tabla `opportunities`, que no existe en este
+    // proyecto (vive en el de Licitus): era código muerto que además habría
+    // lanzado su propio error. Se elimina; si la consulta canónica falla, se
+    // reporta el fallo real.
+    if (error) throw error
 
     const mappedData = (data ?? []).map(withOfficialUrl)
 
@@ -381,8 +355,12 @@ export const mercadoPublicoLicitacionesHandler = async (c: any) => {
     const codigoOrganismo = c.req.query('codigo_organismo') || c.req.query('buyer_rut')
     const q = c.req.query('q')
 
-    let query = supabase.from('opportunities').select('*', { count: 'exact' }).neq('source_type', 'compra_agil').order('published_at', { ascending: false })
-    
+    // Repuntado a la tabla canónica: `opportunities` vive en el proyecto de
+    // Licitus, no en este, así que esta consulta siempre daba 500.
+    // El equivalente de 'compra_agil' en el vocabulario canónico es
+    // 'agile_purchase' (ver canonical.mapper.ts del servicio mp-sync).
+    let query = supabase.from('licitaciones_mercado_publico').select('*', { count: 'exact' }).neq('source_type', 'agile_purchase').order('published_at', { ascending: false })
+
     if (q) query = query.ilike('title', `%${q}%`)
     if (codigoOrganismo) query = query.eq('buyer_org_code', codigoOrganismo)
     if (estado) query = query.eq('status_code', estado)
@@ -407,7 +385,8 @@ export const mercadoPublicoLicitacionDetailHandler = async (c: any) => {
   try {
     const supabase = getSupabase()
     const isUuid = codigo && codigo.includes('-') && codigo.length > 20
-    const query = supabase.from('opportunities').select('*')
+    // Repuntado a la tabla canónica (ver nota en el handler de listado).
+    const query = supabase.from('licitaciones_mercado_publico').select('*')
     const { data, error } = await (isUuid ? query.eq('id', codigo) : query.eq('external_code', codigo)).maybeSingle()
 
     if (error) throw error
@@ -421,53 +400,27 @@ export const mercadoPublicoLicitacionDetailHandler = async (c: any) => {
 }
 
 // GET /api/v1/mercado-publico/ordenes-compra
-export const mercadoPublicoOrdenesHandler = async (c: any) => {
-  try {
-    const supabase = getSupabase()
-    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
-    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
-    const offset = (page - 1) * pageSize
-    
-    const fecha = c.req.query('fecha')
-    const rutProveedor = c.req.query('rut_proveedor') || c.req.query('supplier_rut')
-    const estado = c.req.query('estado') || c.req.query('status')
-    const codigoOrganismo = c.req.query('codigo_organismo') || c.req.query('buyer_rut')
-
-    let query = supabase.from('purchase_orders').select('*', { count: 'exact' }).order('issued_at', { ascending: false })
-    
-    if (rutProveedor) query = query.eq('supplier_code', rutProveedor)
-    if (codigoOrganismo) query = query.eq('buyer_org_code', codigoOrganismo)
-    if (estado) query = query.eq('status', estado)
-    if (fecha) query = query.gte('issued_at', `${fecha}T00:00:00Z`).lte('issued_at', `${fecha}T23:59:59Z`)
-
-    const { data, count, error } = await query.range(offset, offset + pageSize - 1)
-    if (error) throw error
-
-    c.set('tokens_used', 25)
-    return c.json(buildBralidusResponse(data ?? [], page, pageSize, count ?? 0))
-  } catch (err) {
-    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
-  }
-}
-
 // GET /api/v1/mercado-publico/ordenes-compra/:codigo_oc
-export const mercadoPublicoOrdenDetailHandler = async (c: any) => {
-  const codigo = c.req.param('codigo_oc') || c.req.param('id') || c.req.param('code')
-  try {
-    const supabase = getSupabase()
-    const isUuid = codigo && codigo.includes('-') && codigo.length > 20
-    const query = supabase.from('purchase_orders').select('*')
-    const { data, error } = await (isUuid ? query.eq('id', codigo) : query.eq('external_code', codigo)).maybeSingle()
+//
+// Las órdenes de compra NO están en este proyecto: viven en la base de Licitus
+// (`purchase_orders`, proyecto szzibobuwgcopewmnkkl). Estos handlers las
+// consultaban acá y por eso devolvían 500 siempre.
+//
+// Tampoco se pueden proxyar todavía: la superficie /licitus de BralidusPY
+// expone proveedor, benchmarks y licitaciones activas, pero no un listado ni
+// un detalle de OC. Hasta que exista ese endpoint, se responde 501 explícito.
+//
+// Nota: el servicio de ingesta mp-sync escribe las OC solo en la base de
+// Licitus a propósito — la tabla canónica modela mecanismos de contratación,
+// no órdenes post-adjudicación (ver plan del traspaso).
+const OC_FUERA_DE_ALCANCE =
+  'Órdenes de compra no disponibles en este gateway: se almacenan en la base de Licitus y aún no hay endpoint que las exponga. Para actividad de compras usar /api/v1/data/licitus/proveedor/:rut.'
 
-    if (error) throw error
-    if (!data) return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'NOT_FOUND', message: `Orden de Compra ${codigo} no encontrada` }]), 404)
+export const mercadoPublicoOrdenesHandler = (c: any) =>
+  notImplemented(c, OC_FUERA_DE_ALCANCE, 'mercado_publico')
 
-    c.set('tokens_used', 15)
-    return c.json(buildBralidusResponse(data, 1, 1, 1))
-  } catch (err) {
-    return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
-  }
-}
+export const mercadoPublicoOrdenDetailHandler = (c: any) =>
+  notImplemented(c, OC_FUERA_DE_ALCANCE, 'mercado_publico')
 
 // GET /api/v1/mercado-publico/organismos
 export const mercadoPublicoOrganismosHandler = async (c: any) => {
@@ -480,8 +433,11 @@ export const mercadoPublicoOrganismosHandler = async (c: any) => {
     const nombre = c.req.query('nombre') || c.req.query('q')
     const rut = c.req.query('rut')
 
-    let query = supabase.from('purchase_orders').select('buyer_org_code, buyer_name', { count: 'exact' })
-    
+    // Repuntado a la tabla canónica: antes leía `purchase_orders`, que vive en
+    // el proyecto de Licitus. Los organismos compradores también figuran acá,
+    // y así este listado queda consistente con /organismos/:id.
+    let query = supabase.from('licitaciones_mercado_publico').select('buyer_org_code, buyer_name', { count: 'exact' })
+
     if (nombre) query = query.ilike('buyer_name', `%${nombre}%`)
     if (rut) query = query.eq('buyer_org_code', rut)
 

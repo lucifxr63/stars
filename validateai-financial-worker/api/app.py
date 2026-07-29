@@ -840,8 +840,9 @@ async def health_endpoint() -> HealthResponse:
     except Exception as exc:
         services.append(ServiceStatus(name="scheduler", ok=False, detail=str(exc)))
 
-    all_ok = all(s.ok for s in services)
-    status = "ok" if all_ok else ("degraded" if any(s.ok for s in services) else "error")
+    core_names = {"supabase", "openai", "fred", "cache"}
+    core_ok = all(s.ok for s in services if s.name in core_names)
+    status = "ok" if core_ok else ("degraded" if any(s.ok for s in services) else "error")
 
     return HealthResponse(
         status=status,
