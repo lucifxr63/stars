@@ -98,7 +98,7 @@ validateai/
 1. **`ai-validate`**: FunciÃ³n central. 18 prompt types. Routing dual automÃ¡tico (Anthropic/OpenAI). Utiliza RAG con competidores y cachÃ© semÃ¡ntico.
 2. **`market-analyze`**: Obtiene y clasifica datos del mercado chileno.
 3. **`anonymize-idea`**: Genera resúmenes genéricos (Haiku) para la tabla `training_data`.
-4. **`api-v1` (Animus Engine v2.0 / Bralidus RaaS)**: Motor canónico B2G/B2B (Mercado Público ChileCompra, Licitus y Macroeconomía) con fallback de datos reales de instituciones chilenas y rate limiting por tiers (`free` con 500 créditos de testing/mes).
+4. **`api-v1` (Animus Engine v2.0 / Bralidus RaaS)**: Motor canónico B2G/B2B (Mercado Público ChileCompra, Licitus y Macroeconomía) con rate limiting por tiers (`free` con 500 créditos de testing/mes). La tabla canónica `licitaciones_mercado_publico` está **vacía** (falta escribir la ingesta `mp-sync`); mientras tanto los endpoints B2G leen de **Licitus** en vivo y marcan la procedencia con `meta.source = 'licitus_live'`. Si Licitus tampoco responde: 503, nunca datos inventados.
 
 **Variables de entorno requeridas en Supabase:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AI_PROVIDER` (default 'anthropic').
 
@@ -132,7 +132,8 @@ validateai/
 | Planes / Tiers UI | ✅ Funcional |
 | Admin panel | ✅ Funcional |
 | Anonimización (Training Data) | ✅ Funcional |
-| **Animus Engine v2.0 (API v1 B2G & Bralidus RaaS)** | ✅ Funcional en Producción (`api-v1` + Fallback ChileCompra) |
+| **Animus Engine v2.0 (API v1 B2G & Bralidus RaaS)** | ⚠️ En producción, leyendo de Licitus en vivo — la ingesta canónica `mp-sync` no existe aún |
 | **Rate Limits por Tiers (`api-v1/ratelimit.ts`)** | ✅ Funcional (Plan Free: 500 créditos prueba / 30 req/min) |
-| Emails transaccionales | ❌ No implementado |
-| Checkout / Pagos | ❌ No implementado |
+| Datos económicos (`/data/macro`, `/data/economy`) | ⚠️ Crons agendados el 2026-07-29 tras 66 días congelados — ver `20260729000001_cron_economic_data.sql` |
+| Emails transaccionales | ⚠️ `followup-email` desplegada y con cron diario, en DRY RUN hasta DNS de scouttech.lat |
+| Checkout / Pagos | ⚠️ `create-checkout` + `lemonsqueezy-webhook` desplegadas; faltan secrets de LemonSqueezy |

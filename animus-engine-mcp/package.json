@@ -7,7 +7,20 @@
     "animus-engine-mcp": "./dist/index.js"
   },
   "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucifxr63/stars.git",
+    "directory": "animus-engine-mcp"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
+    "prepublishOnly": "npm run build",
     "build": "tsc",
     "start": "node ./dist/index.js",
     "dev": "tsc --watch"

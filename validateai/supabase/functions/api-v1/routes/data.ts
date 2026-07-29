@@ -195,8 +195,12 @@ const withOfficialUrl = (item: any) => {
   if (!item) return item
   const code = item.external_code || item.codigo_externo || item.codigo || ''
   const isAgile = item.source_type === 'agile_purchase' || item.source_type === 'compra_agil' || String(code).toLowerCase().includes('cot')
+  // Compra Ágil vive en su propio subdominio. La ruta anterior
+  // (www.mercadopublico.cl/CompraAgil/Ficha/<code>) responde 200 con una página
+  // vacía en vez de 404, así que el link parecía válido sin serlo: quien lo
+  // seguía no llegaba a la cotización.
   const url = isAgile
-    ? `https://www.mercadopublico.cl/CompraAgil/Ficha/${encodeURIComponent(code)}`
+    ? `https://compra-agil.mercadopublico.cl/resumen-cotizacion/${encodeURIComponent(code)}`
     : `https://www.mercadopublico.cl/Procurement/Modules/RFBA/Details.aspx?code=${encodeURIComponent(code)}`
   return {
     ...item,
@@ -288,216 +292,140 @@ export const mercadoPublicoHealthHandler = async (c: any) => {
   }
 }
 
-// Fallback canónico para garantizar que las consultas de Compra Ágil y Licitaciones de Mercado Público
-// respondan siempre con datos estructurados reales de ChileCompra, incluso si la ingesta mp-sync está pendiente.
-function getFallbackLicitaciones(typeFilter?: string, qFilter?: string) {
-  const now = Date.now()
-  const dataset = [
-    // Compras Ágiles (COT - source_type: 'agile_purchase')
-    {
-      id: '2735-18-COT26',
-      external_code: '2735-18-COT26',
-      source_type: 'agile_purchase',
-      title: 'Adquisición de insumos de impresión y suministros computacionales para DIDECO',
-      buyer_name: 'I. Municipalidad de Providencia',
-      buyer_org_code: '70.812.200-8',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 4).toISOString(),
-      closing_at: new Date(now + 3600_000 * 48).toISOString(),
-      estimated_amount_clp: 2850000,
-      currency: 'CLP',
-      region: 'Región Metropolitana de Santiago',
-      unspsc_code: '44103103',
-    },
-    {
-      id: '1920-14-COT26',
-      external_code: '1920-14-COT26',
-      source_type: 'agile_purchase',
-      title: 'Compra de licencias de software de ciberseguridad EDR para servidores Minsal',
-      buyer_name: 'Subsecretaría de Redes Asistenciales',
-      buyer_org_code: '61.601.000-7',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 7).toISOString(),
-      closing_at: new Date(now + 3600_000 * 72).toISOString(),
-      estimated_amount_clp: 4500000,
-      currency: 'CLP',
-      region: 'Región Metropolitana de Santiago',
-      unspsc_code: '43233205',
-    },
-    {
-      id: '3312-5-COT26',
-      external_code: '3312-5-COT26',
-      source_type: 'agile_purchase',
-      title: 'Suministro urgente de repuestos y mantención para camiones aljibe municipales',
-      buyer_name: 'I. Municipalidad de Antofagasta',
-      buyer_org_code: '69.040.100-2',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 12).toISOString(),
-      closing_at: new Date(now + 3600_000 * 36).toISOString(),
-      estimated_amount_clp: 3200000,
-      currency: 'CLP',
-      region: 'Región de Antofagasta',
-      unspsc_code: '25172502',
-    },
-    {
-      id: '4410-8-COT26',
-      external_code: '4410-8-COT26',
-      source_type: 'agile_purchase',
-      title: 'Adquisición de kits de evaluación neuropsicológica e instrumentos clínicos hospitalarios',
-      buyer_name: 'Hospital Clínico Félix Bulnes',
-      buyer_org_code: '61.608.200-8',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 15).toISOString(),
-      closing_at: new Date(now + 3600_000 * 60).toISOString(),
-      estimated_amount_clp: 1950000,
-      currency: 'CLP',
-      region: 'Región Metropolitana de Santiago',
-      unspsc_code: '42181501',
-    },
-    {
-      id: '5102-12-COT26',
-      external_code: '5102-12-COT26',
-      source_type: 'agile_purchase',
-      title: 'Servicio de mantenimiento correctivo de equipos climáticos sala de servidores SII',
-      buyer_name: 'Servicio de Impuestos Internos (SII)',
-      buyer_org_code: '60.803.000-0',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 18).toISOString(),
-      closing_at: new Date(now + 3600_000 * 48).toISOString(),
-      estimated_amount_clp: 4100000,
-      currency: 'CLP',
-      region: 'Región de Valparaíso',
-      unspsc_code: '72101509',
-    },
-    {
-      id: '1050-3-COT26',
-      external_code: '1050-3-COT26',
-      source_type: 'agile_purchase',
-      title: 'Compra ágil de mobiliario ergonómico para módulos de atención ciudadana MOP',
-      buyer_name: 'Ministerio de Obras Públicas (MOP)',
-      buyer_org_code: '61.202.000-0',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 22).toISOString(),
-      closing_at: new Date(now + 3600_000 * 50).toISOString(),
-      estimated_amount_clp: 2400000,
-      currency: 'CLP',
-      region: 'Región del Biobío',
-      unspsc_code: '56101703',
-    },
-    // Licitaciones Públicas (tender - source_type: 'tender')
-    {
-      id: '1058-29-LE26',
-      external_code: '1058-29-LE26',
-      source_type: 'tender',
-      title: 'Servicio integral de seguridad privada y monitoreo CCTV para recintos hospitalarios',
-      buyer_name: 'Servicio de Salud Metropolitano Oriente',
-      buyer_org_code: '61.608.400-0',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 6).toISOString(),
-      closing_at: new Date(now + 3600_000 * 336).toISOString(),
-      estimated_amount_clp: 180000000,
-      currency: 'CLP',
-      region: 'Región Metropolitana de Santiago',
-      unspsc_code: '92121504',
-    },
-    {
-      id: '2104-15-LP26',
-      external_code: '2104-15-LP26',
-      source_type: 'tender',
-      title: 'Concesión de servicio de alimentación en casinos universitarios campus central',
-      buyer_name: 'Universidad de Chile',
-      buyer_org_code: '60.910.000-1',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 10).toISOString(),
-      closing_at: new Date(now + 3600_000 * 240).toISOString(),
-      estimated_amount_clp: 320000000,
-      currency: 'CLP',
-      region: 'Región Metropolitana de Santiago',
-      unspsc_code: '90101603',
-    },
-    {
-      id: '4090-44-LE26',
-      external_code: '4090-44-LE26',
-      source_type: 'tender',
-      title: 'Renovación de flota de vehículos policiales con mantenimiento preventivo incluido',
-      buyer_name: 'Carabineros de Chile',
-      buyer_org_code: '61.901.000-3',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 14).toISOString(),
-      closing_at: new Date(now + 3600_000 * 500).toISOString(),
-      estimated_amount_clp: 850000000,
-      currency: 'CLP',
-      region: 'Nacional',
-      unspsc_code: '25101502',
-    },
-    {
-      id: '3301-19-LP26',
-      external_code: '3301-19-LP26',
-      source_type: 'tender',
-      title: 'Mejoramiento de infraestructura vial y aceras zona centro cívico de Concepción',
-      buyer_name: 'I. Municipalidad de Concepción',
-      buyer_org_code: '69.180.100-4',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 20).toISOString(),
-      closing_at: new Date(now + 3600_000 * 300).toISOString(),
-      estimated_amount_clp: 420000000,
-      currency: 'CLP',
-      region: 'Región del Biobío',
-      unspsc_code: '72141001',
-    },
-    {
-      id: '1510-12-LE26',
-      external_code: '1510-12-LE26',
-      source_type: 'tender',
-      title: 'Consultoría especializada en migración a nube pública e infraestructura nativa cloud',
-      buyer_name: 'Ministerio de Hacienda',
-      buyer_org_code: '60.801.000-K',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 25).toISOString(),
-      closing_at: new Date(now + 3600_000 * 180).toISOString(),
-      estimated_amount_clp: 145000000,
-      currency: 'CLP',
-      region: 'Región Metropolitana de Santiago',
-      unspsc_code: '81111805',
-    },
-    {
-      id: '2800-7-LE26',
-      external_code: '2800-7-LE26',
-      source_type: 'tender',
-      title: 'Suministro de medicamentos oncológicos e insumos de alta especialidad clínica',
-      buyer_name: 'CENABAST',
-      buyer_org_code: '61.609.000-0',
-      status_code: 'publicada',
-      published_at: new Date(now - 3600_000 * 30).toISOString(),
-      closing_at: new Date(now + 3600_000 * 400).toISOString(),
-      estimated_amount_clp: 1250000000,
-      currency: 'CLP',
-      region: 'Nacional',
-      unspsc_code: '51101500',
-    },
-  ]
+// ── Respaldo en vivo: Licitus ────────────────────────────────────────────────
+//
+// Cuando la tabla canónica está vacía (la ingesta `mp-sync` todavía no existe
+// en este proyecto), estos endpoints NO inventan registros: se consulta Licitus
+// —que sí tiene Mercado Público en vivo— y se traduce su shape al vocabulario
+// canónico de Animus.
+//
+// Por qué existe este comentario: antes había acá un dataset de 12 registros
+// hardcodeados cuyo `published_at` se calculaba como `now - N horas` en CADA
+// request. Dos llamadas seguidas devolvían fechas distintas para el mismo
+// `external_code`, y los `official_url` apuntaban a fichas inexistentes. Un
+// integrador lo detectó en minutos. No se repone: si Licitus tampoco responde,
+// se devuelve 503 y se dice por qué.
 
-  let filtered = dataset
-  if (typeFilter && typeFilter !== 'all') {
-    if (typeFilter === 'agile_purchase') {
-      filtered = filtered.filter((i) => i.source_type === 'agile_purchase')
-    } else if (typeFilter === 'tender') {
-      filtered = filtered.filter((i) => i.source_type !== 'agile_purchase')
-    }
-  }
+const LICITUS_MAX_LIMIT = 100
 
-  if (qFilter) {
-    const qLower = qFilter.toLowerCase()
-    filtered = filtered.filter(
-      (i) =>
-        i.title.toLowerCase().includes(qLower) ||
-        i.buyer_name.toLowerCase().includes(qLower) ||
-        i.external_code.toLowerCase().includes(qLower)
-    )
-  }
+// Licitus usa la nomenclatura de ChileCompra (COT = cotización de Compra Ágil;
+// LE/LP/LR = licitaciones). El vocabulario canónico sólo distingue
+// agile_purchase vs tender.
+const licitusSourceType = (tipo: string) =>
+  String(tipo ?? '').toUpperCase() === 'COT' ? 'agile_purchase' : 'tender'
 
-  return filtered.map(withOfficialUrl)
+const mapLicitusItem = (item: any) => {
+  const codigo = item?.codigo ?? ''
+  const tipo = String(item?.tipo ?? '').toUpperCase()
+  const unspsc = Array.isArray(item?.unspsc) ? (item.unspsc[0] ?? null) : (item?.unspsc ?? null)
+  return withOfficialUrl({
+    id: codigo,
+    external_code: codigo,
+    source_type: licitusSourceType(tipo),
+    process_type: tipo || null,
+    title: item?.nombre ?? null,
+    buyer_name: item?.organismo ?? null,
+    // Licitus no expone el RUT del organismo ni la fecha de publicación en
+    // /mercado/activas: su ventana es "lo que cierra pronto". Quedan en null en
+    // vez de rellenarse — un null es un dato, un valor inventado no lo es.
+    buyer_org_code: null,
+    published_at: null,
+    status_code: 'activa',
+    closing_at: item?.fecha_cierre ?? null,
+    hours_to_close: item?.horas_para_cierre ?? null,
+    estimated_amount_clp: item?.monto_estimado_clp ?? null,
+    currency: 'CLP',
+    region: typeof item?.region === 'string' ? item.region.trim() : null,
+    unspsc_code: unspsc,
+    data_source: 'licitus_live',
+  })
 }
+
+// Devuelve { items, sourceOk } o { items: [], sourceOk: false, error } — nunca
+// lanza. `sourceOk` distingue dos situaciones que NO son lo mismo:
+//   · sourceOk=false → Licitus no respondió (o no está configurado) ⇒ 503.
+//   · sourceOk=true con items=[] → Licitus respondió bien y no hay filas para
+//     ese filtro ⇒ 200 con lista vacía. Devolver 503 acá sería mentir sobre la
+//     salud de la fuente.
+async function fetchLicitusActivas(
+  opts: { type?: string; q?: string } = {},
+): Promise<{ items: any[]; sourceOk: boolean; error?: string }> {
+  if (!BRALIDUS_URL) {
+    return { items: [], sourceOk: false, error: 'BRALIDUS_URL no configurado en este entorno' }
+  }
+  try {
+    const target = `${BRALIDUS_URL.replace(/\/$/, '')}/licitus/mercado/activas?limit=${LICITUS_MAX_LIMIT}`
+    const res = await fetch(target, {
+      headers: BRALIDUS_API_KEY ? { 'Authorization': `Bearer ${BRALIDUS_API_KEY}` } : {},
+      signal: AbortSignal.timeout(12_000),
+    })
+    if (!res.ok) return { items: [], sourceOk: false, error: `Licitus respondió HTTP ${res.status}` }
+
+    const body = await res.json().catch(() => null)
+    const raw = body?.data?.items ?? body?.items ?? (Array.isArray(body?.data) ? body.data : [])
+    let items = (Array.isArray(raw) ? raw : []).map(mapLicitusItem)
+
+    const type = opts.type && opts.type !== 'all' ? opts.type : null
+    if (type) {
+      const wanted = type.split(',').map((t: string) => t.trim())
+      items = items.filter((i) => wanted.includes(i.source_type))
+    }
+    if (opts.q) {
+      const needle = opts.q.toLowerCase()
+      items = items.filter((i) =>
+        String(i.title ?? '').toLowerCase().includes(needle) ||
+        String(i.buyer_name ?? '').toLowerCase().includes(needle) ||
+        String(i.external_code ?? '').toLowerCase().includes(needle)
+      )
+    }
+    return { items, sourceOk: true }
+  } catch (err) {
+    return { items: [], sourceOk: false, error: `Licitus inalcanzable: ${String(err)}` }
+  }
+}
+
+// Pagina en memoria la ventana de Licitus: su endpoint acepta `limit` pero no
+// offset, así que recibimos hasta 100 y recortamos acá para que `page` y
+// `page_size` signifiquen algo. El fallback anterior ignoraba ambos y devolvía
+// siempre el dataset entero, con un meta incoherente.
+const paginate = <T>(items: T[], page: number, pageSize: number) =>
+  items.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
+
+// Meta con procedencia explícita, para que el consumidor sepa si está leyendo
+// la tabla canónica o la ventana en vivo de Licitus.
+const licitusMeta = (page: number, pageSize: number, total: number, extraNote?: string) => ({
+  ...buildAnimusMeta(page, pageSize, total, 'licitus_live'),
+  note:
+    `Ventana en vivo de Licitus (hasta ${LICITUS_MAX_LIMIT} procesos abiertos, ordenados por cierre próximo). ` +
+    'La ingesta canónica mp-sync todavía no puebla licitaciones_mercado_publico, por lo que published_at no está disponible en esta fuente.' +
+    (extraNote ? ` ${extraNote}` : ''),
+})
+
+// La fuente respondió bien pero no hay filas para este filtro. Es un 200 con
+// lista vacía, NO un 503: el consumidor necesita poder distinguir "no hay nada
+// que mostrar" de "la fuente está caída", y un error de servidor para el primer
+// caso rompe reintentos y alertas aguas abajo.
+const emptyButHealthy = (c: any, page: number, pageSize: number, coverage: string) =>
+  c.json({ data: [], meta: licitusMeta(page, pageSize, 0, coverage) })
+
+// Cobertura real de la fuente viva, verificada el 2026-07-29: Licitus
+// /mercado/activas devuelve exclusivamente cotizaciones de Compra Ágil (COT) —
+// 100 de 100 en ventanas de 7, 30 y 90 días sobre 778 resultados totales. Las
+// licitaciones LE/LP/LR no tienen fuente conectada hasta que exista mp-sync.
+const COVERAGE_TENDERS =
+  'Cobertura actual: la fuente viva (Licitus) sólo publica Compra Ágil (COT); las licitaciones LE/LP/LR no tienen origen conectado hasta que se implemente la ingesta mp-sync. Para procesos abiertos hoy, usar /mercado-publico/compra-agil.'
+
+// 503 sólo cuando la fuente realmente falló: sin BRALIDUS_URL, HTTP no-2xx o
+// timeout. Nunca por ausencia de filas.
+const sourceUnavailable = (c: any, detail?: string) =>
+  c.json(
+    buildAnimusResponse(null, 1, 20, 0, 'mercado_publico', [{
+      code: 'SOURCE_UNAVAILABLE',
+      message: 'Sin datos de Mercado Público: la tabla canónica está vacía y Licitus no respondió.',
+      ...(detail ? { detail } : {}),
+    }]),
+    503,
+  )
 
 // GET /api/v1/mercado-publico/opportunities (Buscador Unificado: tender + agile_purchase)
 export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
@@ -526,16 +454,18 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     // reporta el fallo real.
     if (error) throw error
 
-    let mappedData = (data ?? []).map(withOfficialUrl)
-    let totalCount = count ?? 0
+    const mappedData = (data ?? []).map(withOfficialUrl)
 
-    if (mappedData.length === 0 && page === 1) {
-      mappedData = getFallbackLicitaciones(typeParam || 'all', q)
-      totalCount = mappedData.length
+    if (mappedData.length === 0) {
+      const { items, sourceOk, error: licitusError } = await fetchLicitusActivas({ type: typeParam, q })
+      if (!sourceOk) return sourceUnavailable(c, licitusError)
+      if (items.length === 0) return emptyButHealthy(c, page, pageSize, COVERAGE_TENDERS)
+      c.set('tokens_used', 25)
+      return c.json({ data: paginate(items, page, pageSize), meta: licitusMeta(page, pageSize, items.length) })
     }
 
     c.set('tokens_used', 25)
-    return c.json(buildBralidusResponse(mappedData, page, pageSize, totalCount))
+    return c.json(buildBralidusResponse(mappedData, page, pageSize, count ?? 0))
   } catch (err) {
     console.error('mercadoPublicoOpportunitiesHandler error:', err)
     return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
@@ -553,10 +483,13 @@ export const mercadoPublicoOpportunityDetailHandler = async (c: any) => {
 
     if (error) throw error
     if (!data) {
-      const fallbackItem = getFallbackLicitaciones('all').find(i => i.id === id || i.external_code === id)
-      if (fallbackItem) {
+      // Sin fila canónica, se busca el proceso en la ventana viva de Licitus
+      // antes de declarar 404: puede estar abierto y simplemente no ingestado.
+      const { items } = await fetchLicitusActivas()
+      const live = items.find((i) => i.id === id || i.external_code === id)
+      if (live) {
         c.set('tokens_used', 15)
-        return c.json(buildBralidusResponse(fallbackItem, 1, 1, 1))
+        return c.json({ data: live, meta: licitusMeta(1, 1, 1) })
       }
       return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'NOT_FOUND', message: `Oportunidad ${id} no encontrada` }]), 404)
     }
@@ -597,16 +530,18 @@ export const mercadoPublicoLicitacionesHandler = async (c: any) => {
     const { data, count, error } = await query.range(offset, offset + pageSize - 1)
     if (error) throw error
 
-    let mappedData = (data ?? []).map(withOfficialUrl)
-    let totalCount = count ?? 0
+    const mappedData = (data ?? []).map(withOfficialUrl)
 
-    if (mappedData.length === 0 && page === 1) {
-      mappedData = getFallbackLicitaciones('tender', q)
-      totalCount = mappedData.length
+    if (mappedData.length === 0) {
+      const { items, sourceOk, error: licitusError } = await fetchLicitusActivas({ type: 'tender', q })
+      if (!sourceOk) return sourceUnavailable(c, licitusError)
+      if (items.length === 0) return emptyButHealthy(c, page, pageSize, COVERAGE_TENDERS)
+      c.set('tokens_used', 25)
+      return c.json({ data: paginate(items, page, pageSize), meta: licitusMeta(page, pageSize, items.length) })
     }
 
     c.set('tokens_used', 25)
-    return c.json(buildBralidusResponse(mappedData, page, pageSize, totalCount))
+    return c.json(buildBralidusResponse(mappedData, page, pageSize, count ?? 0))
   } catch (err) {
     return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
   }
@@ -1247,16 +1182,20 @@ export const mercadoPublicoCompraAgilHandler = async (c: any) => {
     const { data, count, error } = await query.range(offset, offset + pageSize - 1)
     if (error) throw error
 
-    let mappedData = (data ?? []).map(withOfficialUrl)
-    let totalCount = count ?? 0
+    const mappedData = (data ?? []).map(withOfficialUrl)
 
-    if (mappedData.length === 0 && page === 1) {
-      mappedData = getFallbackLicitaciones('agile_purchase', q)
-      totalCount = mappedData.length
+    if (mappedData.length === 0) {
+      const { items, sourceOk, error: licitusError } = await fetchLicitusActivas({ type: 'agile_purchase', q })
+      if (!sourceOk) return sourceUnavailable(c, licitusError)
+      if (items.length === 0) {
+        return emptyButHealthy(c, page, pageSize, 'Sin cotizaciones de Compra Ágil abiertas que coincidan con el filtro.')
+      }
+      c.set('tokens_used', 20)
+      return c.json({ data: paginate(items, page, pageSize), meta: licitusMeta(page, pageSize, items.length) })
     }
 
     c.set('tokens_used', 20)
-    return c.json(buildBralidusResponse(mappedData, page, pageSize, totalCount))
+    return c.json(buildBralidusResponse(mappedData, page, pageSize, count ?? 0))
   } catch (err) {
     return c.json(
       buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]),

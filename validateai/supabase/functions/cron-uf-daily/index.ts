@@ -13,22 +13,33 @@ serve(async (_req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // CMF endpoint público (no requiere apikey para el valor actual)
-    const res = await fetch('https://api.cmfchile.cl/api-sbifv3/recursos_api/uf?formato=json', {
+    // Fuente: mindicador.cl — libre y sin auth, republica la UF oficial que fija
+    // el Banco Central y publica la CMF.
+    //
+    // Antes esto llamaba a api.cmfchile.cl/api-sbifv3 con el comentario "no
+    // requiere apikey". Sí la requiere: sin ella devuelve HTTP 422, así que la
+    // función respondía 500 en cada invocación. Como además nunca estuvo
+    // agendada en cron.job, nadie vio los 500 y `economic_knowledge` quedó
+    // congelada en su última escritura manual (2026-05-24) durante ~66 días,
+    // mientras /data/macro servía ese valor como si fuera vigente.
+    const res = await fetch('https://mindicador.cl/api/uf', {
       signal: AbortSignal.timeout(8000),
     });
 
-    if (!res.ok) throw new Error(`CMF API error ${res.status}`);
+    if (!res.ok) throw new Error(`mindicador.cl error ${res.status}`);
 
     const raw = await res.json();
-    const latest = raw?.UFs?.[0];
-    if (!latest) throw new Error('CMF respondió sin datos de UF');
+    const latest = raw?.serie?.[0];
+    if (!latest) throw new Error('mindicador.cl respondió sin serie de UF');
 
-    const valor: number = parseFloat(String(latest.Valor).replace('.', '').replace(',', '.'));
-    const fecha: string = latest.Fecha; // '2026-05-23'
+    const valor: number = Number(latest.valor);
+    if (!Number.isFinite(valor)) throw new Error(`Valor de UF no numérico: ${latest.valor}`);
+    // La serie viene con timestamp ISO ('2026-07-29T04:00:00.000Z'); se guarda
+    // sólo la fecha, que es la granularidad real del indicador.
+    const fecha: string = String(latest.fecha).slice(0, 10);
 
-    const dataJson = { valor, fecha };
-    const contextText = `UF diaria: $${valor.toFixed(2)} CLP al ${fecha} (fuente: CMF Chile)`;
+    const dataJson = { valor, fecha, fuente: 'mindicador.cl' };
+    const contextText = `UF diaria: $${valor.toFixed(2)} CLP al ${fecha} (fuente: mindicador.cl, UF oficial CMF/BCCh)`;
 
     const { error } = await supabase
       .from('economic_knowledge')
