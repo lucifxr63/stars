@@ -76,6 +76,7 @@ if (filas.length === 0) {
 let conRag = 0, sinRag = 0, sinInstrumentar = 0;
 const razones = new Map();
 const rubrosSinGrounding = new Map();
+const fuentes = new Map();
 let competidoresTotal = 0;
 
 for (const f of filas) {
@@ -84,6 +85,8 @@ for (const f of filas) {
   if (rag.grounded) {
     conRag++;
     competidoresTotal += rag.competitors ?? 0;
+    const src = rag.source ?? 'desconocida';
+    fuentes.set(src, (fuentes.get(src) ?? 0) + 1);
   } else {
     sinRag++;
     const r = rag.reason ?? 'desconocida';
@@ -105,6 +108,17 @@ console.log('');
 console.log(`  CON grounding              ${conRag}  (${pct(conRag)}%)` +
   (conRag ? `   promedio ${(competidoresTotal / conRag).toFixed(1)} competidores` : ''));
 console.log(`  SIN grounding              ${sinRag}  (${pct(sinRag)}%)`);
+
+if (fuentes.size) {
+  // corpus = pegó en `competitors` (gratis). serpapi = hubo que buscar en vivo.
+  // Que la proporción de 'corpus' suba con el tiempo es la señal de que el
+  // corpus se está construyendo solo a partir del uso real.
+  console.log('\n  De dónde salieron los competidores:');
+  for (const [s, n] of [...fuentes].sort((a, b) => b[1] - a[1])) {
+    const etiqueta = s === 'corpus' ? 'corpus (ya poblado)' : s === 'serpapi' ? 'SerpApi (búsqueda en vivo)' : s;
+    console.log(`    ${etiqueta.padEnd(34)} ${n}`);
+  }
+}
 
 if (razones.size) {
   console.log('\n  Por qué falla el grounding:');

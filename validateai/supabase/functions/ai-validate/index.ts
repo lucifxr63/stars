@@ -6,6 +6,7 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 import { type PromptType, SYSTEM_PROMPTS, PLAYBOOK_MASTER_PROMPT } from '../_shared/prompts.ts';
 import { CAC_MULTIPLIERS_BY_CHANNEL, SECTOR_BENCHMARKS } from '../_shared/benchmarks.ts';
 import { retrieveRelevantCompetitors, retrieveRagPlaybooks, retrieveHybridGraphRAG, checkAnalysisCache, saveAnalysisCache, RAG_TAGS_BY_PROMPT } from '../_shared/rag.ts';
+import { discoverCompetitors } from '../_shared/competitorDiscovery.ts';
 import { callAI, preprocessIdea } from '../_shared/aiProvider.ts';
 import { validateOutput } from '../_shared/outputSchemas.ts';
 import { buildPersistUpdates } from '../_shared/persist.ts';
@@ -169,6 +170,8 @@ serve(async (req) => {
       attempted: boolean;
       competitors: number;
       grounded: boolean;
+      /** De dónde salieron: el corpus ya poblado, o una búsqueda en vivo. */
+      source?: 'corpus' | 'serpapi';
       reason?: string;
     } = { attempted: false, competitors: 0, grounded: false };
 
@@ -179,12 +182,28 @@ serve(async (req) => {
         ragGrounding.reason = 'sin_structured_idea';
       } else {
         const rag = await retrieveRelevantCompetitors(supabase, structuredIdea);
-        ragGrounding.competitors = rag.length;
-        ragGrounding.grounded = rag.length > 0;
+
         if (rag.length > 0) {
+          ragGrounding.competitors = rag.length;
+          ragGrounding.grounded = true;
+          ragGrounding.source = 'corpus';
           enrichedContext = { ...enrichedContext, rag_competitors: rag };
         } else {
-          ragGrounding.reason = 'sin_matches_sobre_umbral_0.75';
+          // El corpus no cubre este rubro todavía. Se buscan competidores
+          // reales en vivo y se persisten: la próxima idea parecida ya pega
+          // en el corpus y no gasta búsqueda. Ver _shared/competitorDiscovery.
+          const hallazgo = await discoverCompetitors(supabase, structuredIdea, {
+            industry: (context.idea_industry ?? context.industry) as string | undefined,
+            country: context.target_country as string | undefined,
+          });
+          ragGrounding.competitors = hallazgo.competitors.length;
+          ragGrounding.grounded = hallazgo.competitors.length > 0;
+          ragGrounding.source = 'serpapi';
+          if (hallazgo.competitors.length > 0) {
+            enrichedContext = { ...enrichedContext, rag_competitors: hallazgo.competitors };
+          } else {
+            ragGrounding.reason = hallazgo.reason ?? 'sin_resultados';
+          }
         }
       }
     }

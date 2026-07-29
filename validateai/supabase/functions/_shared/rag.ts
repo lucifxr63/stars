@@ -6,7 +6,10 @@ import type { StructuredIdea } from './types.ts';
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
-async function generateEmbedding(text: string): Promise<number[] | null> {
+// Exportada para que competitorDiscovery.ts embeba los competidores que
+// descubre — mismo modelo y mismas dimensiones que usa la búsqueda, que es
+// condición para que `search_competitors` los encuentre después.
+export async function generateEmbedding(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY) return null;
   try {
     const res = await fetch('https://api.openai.com/v1/embeddings', {
