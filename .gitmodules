@@ -1,0 +1,19 @@
+# Submódulos del monorepo.
+#
+# Ambos directorios ya estaban registrados como gitlink (modo 160000) pero este
+# archivo NO existía, así que un `git clone` dejaba las carpetas vacías y
+# `git submodule update --init` no hacía nada: sin .gitmodules, git no sabe de
+# dónde traerlos. El monorepo no se podía clonar completo.
+#
+# Comprobado el 2026-07-29: el commit al que apunta cada gitlink existe en su
+# remoto, así que las referencias son resolubles.
+
+[submodule "validateai-developer-portal"]
+	path = validateai-developer-portal
+	url = https://github.com/lucifxr63/Bralidus.git
+	branch = master
+
+[submodule "validateai-knowledge-vault"]
+	path = validateai-knowledge-vault
+	url = https://github.com/lucifxr63/validateai-knowledge-vault.git
+	branch = main
