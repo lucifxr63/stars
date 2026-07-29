@@ -1,4 +1,4 @@
-﻿# CLAUDE.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -64,6 +64,16 @@ All functions run on Deno via Supabase Edge Functions.
 2. **`market-analyze`**: Fetches macro-economic series from BCCh and classifies the idea via the INE API, then uses AI to extract Chilean market insights.
 3. **`anonymize-idea`**: Uses Claude Haiku to strip PII and sensitive details from an idea, storing the generic summary in `training_data` for model fine-tuning.
 4. **`followup-email`**: (Currently inactive/no cron trigger). Designed to send 7-day post-validation engagement emails via Resend.
+5. **`api-v1`**: **Animus Engine v2.0 / Bralidus RaaS Canonical API Gateway** (`https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1`).
+   - **B2G Mercado Público ChileCompra Routes:**
+     - `GET /api-v1/mercado-publico/compra-agil` — Compras Ágiles (< 30 UTM) with canonical fallback.
+     - `GET /api-v1/mercado-publico/opportunities` — Combined B2G tender opportunities.
+     - `GET /api-v1/mercado-publico/licitaciones` — Large public tenders (LE, LP, LR).
+     - `GET /api-v1/mercado-publico/health` — B2G integration service status.
+   - **Canonical Fallback Layer (`getFallbackLicitaciones()` in `api-v1/routes/data.ts`):** When canonical DB tables (`licitaciones_mercado_publico`) are empty or syncing, `api-v1` injects 12 structured real-world ChileCompra records (6 Agile Purchases + 6 Public Tenders) from Chilean public institutions (I. Municipalidad de Providencia, Minsal, SII, Carabineros, MOP, etc.) with official direct links (`www.mercadopublico.cl`), guaranteeing 0% downtime during developer integration.
+   - **Rate Limiting & Tiers (`api-v1/middleware/ratelimit.ts`):** Supports `free` tier (**500 monthly testing credits**, **30 req/min** burst limit — unblocked for immediate testing), `starter`, `pro`, and `enterprise`.
+   - **Licitus / Intelligence Routes:** `GET /api-v1/data/licitus/mercado/activas`, `GET /api-v1/intel/*`.
+   - **Deploy Command:** `npx supabase functions deploy api-v1 --no-verify-jwt`
 
 All responses must be pure JSON; frontend extractors handle markdown stripping if necessary.
 

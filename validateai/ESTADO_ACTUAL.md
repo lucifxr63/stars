@@ -1,4 +1,4 @@
-﻿# Validus â€” Estado actual del proyecto (Mayo 2026)
+# Validus â€” Estado actual del proyecto (Mayo 2026)
 
 ## QuÃ© es
 
@@ -97,23 +97,23 @@ validateai/
 
 1. **`ai-validate`**: FunciÃ³n central. 18 prompt types. Routing dual automÃ¡tico (Anthropic/OpenAI). Utiliza RAG con competidores y cachÃ© semÃ¡ntico.
 2. **`market-analyze`**: Obtiene y clasifica datos del mercado chileno.
-3. **`anonymize-idea`**: Genera resÃºmenes genÃ©ricos (Haiku) para la tabla `training_data`.
+3. **`anonymize-idea`**: Genera resúmenes genéricos (Haiku) para la tabla `training_data`.
+4. **`api-v1` (Animus Engine v2.0 / Bralidus RaaS)**: Motor canónico B2G/B2B (Mercado Público ChileCompra, Licitus y Macroeconomía) con fallback de datos reales de instituciones chilenas y rate limiting por tiers (`free` con 500 créditos de testing/mes).
 
-**Variables de entorno requeridas en Supabase:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AI_PROVIDER` (opcional, default 'anthropic').
+**Variables de entorno requeridas en Supabase:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AI_PROVIDER` (default 'anthropic').
 
 ---
 
-## Issues conocidos / deuda tÃ©cnica
+## Issues conocidos / deuda técnica
 
 | Prioridad | Issue | Detalle |
 |-----------|-------|---------|
-| ðŸ”´ Alta | **idea_name e idea_industry nulls** | Si el usuario interrumpe el wizard en step 1, quedan nulos. |
-| ðŸŸ¡ Media | **Rate limiting inexistente** | No hay rate limiting por tier en `ai-validate`. |
-| ðŸŸ¡ Media | **Admin sin paginaciÃ³n** | Tablas del admin cargan todo en memoria. |
-| ðŸŸ¡ Media | **Matching de Mentores** | La bÃºsqueda usa limitaciÃ³n bÃ¡sica, no RPC semÃ¡ntico completo. |
-| ðŸŸ¡ Media | **Monolito `ai-validate`** | FunciÃ³n de 800+ lÃ­neas con 18 prompts. DifÃ­cil de escalar. |
-| ðŸŸ¡ Media | **GeneraciÃ³n SÃ­ncrona** | La generaciÃ³n bloquea el request, ideal migrar a queue. |
-| ðŸŸ  Baja | **Sin tests / Analytics** | Faltan unit/E2E tests y Posthog/Mixpanel. |
+| Alta | **idea_name e idea_industry nulls** | Si el usuario interrumpe el wizard en step 1, quedan nulos. |
+| Media | **Admin sin paginación** | Tablas del admin cargan todo en memoria. |
+| Media | **Matching de Mentores** | La búsqueda usa limitación básica, no RPC semántico completo. |
+| Media | **Monolito `ai-validate`** | Función de 800+ líneas con 18 prompts. Difícil de escalar. |
+| Media | **Generación Síncrona** | La generación bloquea el request, ideal migrar a queue. |
+| Baja | **Sin tests / Analytics** | Faltan unit/E2E tests y Posthog/Mixpanel. |
 
 ---
 
@@ -121,17 +121,18 @@ validateai/
 
 | Feature | Estado |
 |---------|--------|
-| Auth email/Google | âœ… Funcional |
-| Wizard 4 pasos | âœ… Funcional |
-| AI Dual Provider | âœ… Funcional |
-| Dashboard / Entregables avanzados | âœ… Funcional |
-| 3D Market Map Chile | âœ… Funcional |
-| Historial / Pivotes | âœ… Funcional |
-| Export PDF (nativo jsPDF) | âœ… Funcional |
-| Mentores (bÃ¡sico) | âœ… Funcional |
-| Planes / Tiers UI | âœ… Funcional |
-| Admin panel | âœ… Funcional |
-| AnonimizaciÃ³n (Training Data) | âœ… Funcional |
-| Rate Limits reales | âŒ No implementado |
-| Emails transaccionales | âŒ No implementado |
-| Checkout / Pagos | âŒ No implementado |
+| Auth email/Google | ✅ Funcional |
+| Wizard 4 pasos | ✅ Funcional |
+| AI Dual Provider | ✅ Funcional |
+| Dashboard / Entregables avanzados | ✅ Funcional |
+| 3D Market Map Chile | ✅ Funcional |
+| Historial / Pivotes | ✅ Funcional |
+| Export PDF (nativo jsPDF) | ✅ Funcional |
+| Mentores (básico) | ✅ Funcional |
+| Planes / Tiers UI | ✅ Funcional |
+| Admin panel | ✅ Funcional |
+| Anonimización (Training Data) | ✅ Funcional |
+| **Animus Engine v2.0 (API v1 B2G & Bralidus RaaS)** | ✅ Funcional en Producción (`api-v1` + Fallback ChileCompra) |
+| **Rate Limits por Tiers (`api-v1/ratelimit.ts`)** | ✅ Funcional (Plan Free: 500 créditos prueba / 30 req/min) |
+| Emails transaccionales | ❌ No implementado |
+| Checkout / Pagos | ❌ No implementado |

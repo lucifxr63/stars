@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <img src="https://via.placeholder.com/150/0F172A/10B981?text=Validus" alt="Validus Logo" width="120" style="border-radius: 20px;" />
 
   # Validus
@@ -32,11 +32,12 @@ Validus guÃ­a a emprendedores e inversores a travÃ©s de un **wizard interact
 
 ## âš¡ CaracterÃ­sticas Principales
 
-- **ðŸ¤– Motor Multi-IA:** Optimizado con **Anthropic Claude Sonnet 4** (Prompt Caching) y fallback a **OpenAI GPT-4o Mini**.
-- **ðŸ§  CachÃ© SemÃ¡ntico Inteligente:** Uso de `pgvector` para buscar y reutilizar anÃ¡lisis similares (Threshold: 0.92), reduciendo costos de API.
-- **ðŸ“ˆ Datos MacroeconÃ³micos reales:** IntegraciÃ³n con el **Banco Central de Chile** e **INE** para clasificaciones industriales y series econÃ³micas.
-- **ðŸŽ¨ UX/UI Premium:** DiseÃ±o enfocado en la usabilidad ("Bento Box" Layout) con **Tailwind CSS v4** y animaciones fluidas con **Framer Motion**.
-- **ðŸ“‘ GeneraciÃ³n de Entregables:** ExportaciÃ³n de reportes a PDF on-demand con `jsPDF`.
+- **🤖 Motor Multi-IA:** Optimizado con **Anthropic Claude Sonnet 4** (Prompt Caching) y fallback a **OpenAI GPT-4o Mini**.
+- **🧠 Caché Semántico Inteligente:** Uso de `pgvector` para buscar y reutilizar análisis similares (Threshold: 0.92), reduciendo costos de API.
+- **📈 Datos Macroeconómicos reales:** Integración con el **Banco Central de Chile** e **INE** para clasificaciones industriales y series económicas.
+- **⚡ Animus Engine v2.0 / Bralidus RaaS API (`api-v1`):** API Gateway B2G/B2B canónico con endpoints Mercado Público ChileCompra (`/compra-agil`, `/opportunities`, `/licitaciones`), capa de resiliencia con 12 procesos chilenos de prueba, y Rate Limiting por Tiers (Plan Free: 500 créditos prueba/mes).
+- **🎨 UX/UI Premium:** Diseño enfocado en la usabilidad ("Bento Box" Layout) con **Tailwind CSS v4** y animaciones fluidas con **Framer Motion**.
+- **📄 Generación de Entregables:** Exportación de reportes a PDF on-demand con `jsPDF`.
 
 ---
 
