@@ -1448,3 +1448,117 @@ export const companySearchHandler = async (c: any) => {
 }
 
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Handlers que index.ts importaba pero data.ts nunca exportó.
+//
+// El commit 8931f8e ("Bralidus v2.0 domain-driven routes") registró estas tres
+// rutas e importó sus handlers, pero no llegó a escribirlos. Deno resuelve los
+// imports al arrancar, así que la función entera moría con BOOT_ERROR y el
+// gateway completo respondía 503 — no solo estas rutas.
+//
+// Se implementan contra `licitaciones_mercado_publico`, que es la tabla que
+// existe en ESTE proyecto (fcdhcntyvsydnvjwopfe) y la que puebla el servicio
+// de ingesta mp-sync. Ojo: varios handlers vecinos consultan `purchase_orders`
+// / `opportunities`, que viven en el proyecto de Licitus y NO existen acá —
+// por eso responden 500. Es deuda aparte, anterior a este arreglo.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /api/v1/mercado-publico/compra-agil
+// Procesos de Compra Ágil (COT, ≤100 UTM). En la tabla canónica son las filas
+// con source_type = 'agile_purchase'.
+export const mercadoPublicoCompraAgilHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
+    const offset = (page - 1) * pageSize
+    const q = c.req.query('q')
+    const estado = c.req.query('estado') || c.req.query('status')
+
+    let query = supabase
+      .from('licitaciones_mercado_publico')
+      .select('*', { count: 'exact' })
+      .eq('source_type', 'agile_purchase')
+      .order('published_at', { ascending: false })
+
+    if (q) query = query.ilike('title', `%${q}%`)
+    if (estado) query = query.eq('status_code', estado)
+
+    const { data, count, error } = await query.range(offset, offset + pageSize - 1)
+    if (error) throw error
+
+    c.set('tokens_used', 20)
+    return c.json(buildBralidusResponse((data ?? []).map(withOfficialUrl), page, pageSize, count ?? 0))
+  } catch (err) {
+    return c.json(
+      buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]),
+      500,
+    )
+  }
+}
+
+// GET /api/v1/mercado-publico/organismos/:id
+// Ficha de un organismo comprador: sus datos + actividad licitatoria agregada.
+export const mercadoPublicoCompradorHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const id = c.req.param('id')
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
+
+    const { data, error } = await supabase
+      .from('licitaciones_mercado_publico')
+      .select('*', { count: 'exact' })
+      .eq('buyer_org_code', id)
+      .order('published_at', { ascending: false })
+      .limit(pageSize)
+
+    if (error) throw error
+
+    if (!data || data.length === 0) {
+      return c.json(
+        buildBralidusResponse(null, 1, pageSize, 0, 'mercado_publico', [
+          { code: 'NOT_FOUND', message: `Organismo '${id}' sin registros` },
+        ]),
+        404,
+      )
+    }
+
+    const montos = data.map((r: any) => Number(r.amount_estimated) || 0)
+    const perfil = {
+      buyer_org_code: id,
+      buyer_name: data[0].buyer_name,
+      buyer_rut: data[0].buyer_rut,
+      total_procesos: data.length,
+      monto_total: montos.reduce((a: number, b: number) => a + b, 0),
+      monto_promedio: montos.length ? montos.reduce((a: number, b: number) => a + b, 0) / montos.length : 0,
+      ultima_publicacion: data[0].published_at,
+      procesos_recientes: data.map(withOfficialUrl),
+    }
+
+    c.set('tokens_used', 20)
+    return c.json(buildBralidusResponse(perfil, 1, pageSize, data.length))
+  } catch (err) {
+    return c.json(
+      buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]),
+      500,
+    )
+  }
+}
+
+// GET /api/v1/mercado-publico/ai/recomendaciones/:rut
+// Sin implementar: requiere el motor de matching, que vive en Licitus y no está
+// expuesto acá. Se responde 501 explícito en vez de devolver recomendaciones
+// inventadas, que es lo peor que puede hacer un endpoint de este tipo.
+export const mercadoPublicoAiRecomendacionesHandler = async (c: any) => {
+  return c.json(
+    buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [
+      {
+        code: 'NOT_IMPLEMENTED',
+        message:
+          'Recomendaciones por RUT aún no disponibles: dependen del motor de matching de Licitus.',
+      },
+    ]),
+    501,
+  )
+}

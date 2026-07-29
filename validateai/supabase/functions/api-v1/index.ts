@@ -124,7 +124,10 @@ import {
   ragDocumentDeleteHandler,
   ragDocumentChunksHandler,
   ragDocumentVersionsHandler,
-  ragQueryHandler,
+  // `ragQueryHandler` NO se importa acá: tambien lo exporta ./routes/rag.ts y
+  // tenerlo dos veces rompia el arranque de la funcion ("Duplicate identifier").
+  // Se conserva el de rag.ts, que es el que efectivamente servia /rag/query
+  // (Hono usa la primera ruta registrada).
   ragContextPackHandler,
   ragEmbeddingProfilesHandler,
   ragEstimateHandler,
@@ -328,7 +331,8 @@ app.delete('/api/v1/rag/documents/:document_id', ragDocumentDeleteHandler)
 app.get('/api/v1/rag/documents/:document_id/chunks', ragDocumentChunksHandler)
 app.get('/api/v1/rag/documents/:document_id/versions', ragDocumentVersionsHandler)
 
-app.post('/api/v1/rag/query', ragQueryHandler)
+// /api/v1/rag/query ya se registra mas arriba (con el handler de rag.ts);
+// repetirlo aca era codigo muerto porque Hono resuelve con la primera coincidencia.
 app.post('/api/v1/rag/context', ragContextPackHandler)
 app.get('/api/v1/rag/embedding-profiles', ragEmbeddingProfilesHandler)
 app.post('/api/v1/rag/estimate', ragEstimateHandler)
