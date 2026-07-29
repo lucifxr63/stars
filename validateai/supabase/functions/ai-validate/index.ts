@@ -153,10 +153,39 @@ serve(async (req) => {
     }
 
     // RAG: inyectar competidores relevantes para competitive_analysis
-    if (prompt_type === 'competitive_analysis' && structuredIdea) {
-      const rag = await retrieveRelevantCompetitors(supabase, structuredIdea);
-      if (rag.length > 0) {
-        enrichedContext = { ...enrichedContext, rag_competitors: rag };
+    //
+    // INSTRUMENTACIÓN — se registra si el análisis tuvo grounding real.
+    //
+    // Hasta ahora esto degradaba en silencio: si `search_competitors` no
+    // devolvía nada (umbral 0.75), el prompt salía igual y nadie sabía que el
+    // "análisis competitivo con RAG" corrió sin un solo competidor real
+    // delante. La tabla `competitors` está VACÍA en producción, así que hoy
+    // eso es lo que pasa SIEMPRE.
+    //
+    // No se corrige el corpus todavía a propósito: primero se mide cuántos
+    // análisis y de qué rubros corren sin grounding, y con ese dato se decide
+    // de dónde sacar los competidores. Ver `scripts/rag-grounding-report.mjs`.
+    const ragGrounding: {
+      attempted: boolean;
+      competitors: number;
+      grounded: boolean;
+      reason?: string;
+    } = { attempted: false, competitors: 0, grounded: false };
+
+    if (prompt_type === 'competitive_analysis') {
+      ragGrounding.attempted = true;
+      if (!structuredIdea) {
+        // Sin idea estructurada no hay con qué construir el embedding.
+        ragGrounding.reason = 'sin_structured_idea';
+      } else {
+        const rag = await retrieveRelevantCompetitors(supabase, structuredIdea);
+        ragGrounding.competitors = rag.length;
+        ragGrounding.grounded = rag.length > 0;
+        if (rag.length > 0) {
+          enrichedContext = { ...enrichedContext, rag_competitors: rag };
+        } else {
+          ragGrounding.reason = 'sin_matches_sobre_umbral_0.75';
+        }
       }
     }
 
@@ -336,12 +365,17 @@ serve(async (req) => {
     }
 
     // Log de interacciÃ³n (no bloqueante)
+    //
+    // `_rag` va dentro de input_data porque es parte de lo que el modelo tuvo
+    // delante, no de lo que produjo. Sin este campo no habia forma de saber,
+    // a posteriori, si un competitive_analysis se apoyo en competidores reales
+    // o lo invento el LLM por su cuenta.
     supabase.from('ai_interactions').insert({
       user_id: user.id,
       validation_id,
       step,
       prompt_type,
-      input_data: context,
+      input_data: ragGrounding.attempted ? { ...context, _rag: ragGrounding } : context,
       output_data: parsed,
       tokens_used: inputTokens + outputTokens,
       model,
