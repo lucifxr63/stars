@@ -366,8 +366,9 @@ export function ValidationDetail() {
           verdictSummary: (dd.verdict_summary as string) ?? '',
         });
       }
-      if (dd?.animus_alerts) {
-        setAnimusPYAlerts((dd.animus_alerts as BraliduAlert[]) ?? []);
+      const ddAlerts = (dd?.bralidus_alerts || dd?.animus_alerts) as BraliduAlert[] | undefined;
+      if (ddAlerts) {
+        setAnimusPYAlerts(ddAlerts);
       }
       trackTelemetryEvent({
         event_name: 'deliverable_viewed',
@@ -567,10 +568,11 @@ export function ValidationDetail() {
       if (!response.ok) throw new Error('Error al generar Due Diligence');
 
       const result = await response.json();
-      const { due_diligence_score, data_warnings, sources_used, sources_skipped, from_cache, animus_alerts } = result;
+      const { due_diligence_score, data_warnings, sources_used, sources_skipped, from_cache, animus_alerts, bralidus_alerts } = result;
 
       setData((prev) => prev ? { ...prev, due_diligence_score } : prev);
-      if (animus_alerts) setAnimusPYAlerts(animus_alerts as BraliduAlert[]);
+      const fetchedAlerts = bralidus_alerts || animus_alerts;
+      if (fetchedAlerts) setAnimusPYAlerts(fetchedAlerts as BraliduAlert[]);
 
       // Guardar audit trail para renderizado
       setDdAuditTrail({
@@ -2308,12 +2310,12 @@ export function ValidationDetail() {
                     <AnimusEvidenceWall
                       evidences={(() => {
                         const dd = data.due_diligence_score as unknown as Record<string, unknown> | null;
-                        return (dd?.evidences as any[]) ?? [];
+                        return ((dd?.bralidus_evidence || dd?.evidences) as any[]) ?? [];
                       })()}
                       alerts={animusPYAlerts as any[]}
                       dataFreshness={(() => {
                         const dd = data.due_diligence_score as unknown as Record<string, unknown> | null;
-                        return (dd?.data_freshness as Record<string, string>) ?? null;
+                        return ((dd?.bralidus_data_freshness || dd?.data_freshness) as Record<string, string>) ?? null;
                       })()}
                     />
                   </ErrorBoundary>

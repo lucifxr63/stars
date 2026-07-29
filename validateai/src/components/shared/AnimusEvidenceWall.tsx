@@ -126,14 +126,14 @@ export function AnimusEvidenceWall({ evidences = [], alerts = [], dataFreshness,
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span
-                    className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md ${
+                    className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md ${
                       isFinancial
-                        ? 'bg-[#0EB5C6]/15 text-[#0EB5C6] border border-[#0EB5C6]/20'
-                        : 'bg-purple-500/15 text-purple-300 border border-purple-500/20'
+                        ? 'bg-[#2DD4BF]/15 text-[#2DD4BF] border border-[#2DD4BF]/30'
+                        : 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
                     }`}
                   >
                     {isFinancial ? <Database className="w-3 h-3" /> : <BookOpen className="w-3 h-3" />}
-                    {isFinancial ? 'Dato Macro' : 'Doctrina'}
+                    {isFinancial ? 'Dato Oficial Fechado' : 'Doctrina Normativa'}
                   </span>
 
                   {item.date && (
