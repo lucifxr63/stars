@@ -1,0 +1,35 @@
+{
+  "name": "animus-engine-mcp",
+  "version": "1.0.0",
+  "description": "Servidor Model Context Protocol (MCP) oficial para Animus Engine / Bralidus RaaS. Conecta IA (Claude Desktop, Cursor, Agentes) a inteligencia económica y B2G en vivo.",
+  "type": "module",
+  "bin": {
+    "animus-engine-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "animus-engine",
+    "bralidus",
+    "raas",
+    "graphrag",
+    "chile",
+    "mercado-publico"
+  ],
+  "author": "Animus Engine / Bralidus",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "typescript": "^5.5.2"
+  }
+}

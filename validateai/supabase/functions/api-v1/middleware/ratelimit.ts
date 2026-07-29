@@ -71,7 +71,9 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
     .eq('id', profileId)
     .maybeSingle()
 
-  const tier = (profile?.tier ?? 'free') as string
+  const authType = c.get('auth_type') || ''
+  const defaultTier = (authType === 'demo' || authType === 'anonymous') ? 'basic' : 'free'
+  const tier = (profile?.tier ?? defaultTier) as string
   const creditLimit = TIER_CREDIT_LIMITS[tier] ?? 0
   const burstLimit = TIER_BURST_LIMITS[tier] ?? 60
 

@@ -58,9 +58,9 @@ export const macroDataHandler = async (c: any) => {
 
     const { data: rows, error } = await supabase
       .from('economic_knowledge')
-      .select('indicator, data_json, updated_at')
-      .eq('provider', 'FRED')
+      .select('provider, indicator, data_json, updated_at')
       .order('updated_at', { ascending: false })
+      .limit(100)
 
     if (error) {
       console.error('Macro data fetch error:', error)
@@ -70,13 +70,16 @@ export const macroDataHandler = async (c: any) => {
     if (!rows || rows.length === 0) {
       return c.json({
         error: 'No macro data available',
-        hint: 'Run fred-sync to populate FRED indicators',
+        hint: 'No economic indicators found in economic_knowledge',
       }, 503)
     }
 
     const indicators: Record<string, unknown> = {}
     for (const row of rows) {
-      indicators[row.indicator] = {
+      const key = `${row.provider}_${row.indicator}`
+      indicators[key] = {
+        provider: row.provider,
+        indicator: row.indicator,
         ...(row.data_json as Record<string, unknown>),
         _updated_at: row.updated_at,
       }
@@ -84,7 +87,7 @@ export const macroDataHandler = async (c: any) => {
 
     c.set('tokens_used', 30)
     return c.json({
-      source: 'FRED — Federal Reserve Bank of St. Louis',
+      source: 'Animus Macroeconomic Intelligence (Multi-Provider)',
       indicators,
       count: rows.length,
     })
