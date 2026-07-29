@@ -2,7 +2,7 @@ import { getSupabase } from './auth.ts'
 
 // Tier Monthly Credit Quotas (weighted credits per calendar month)
 export const TIER_CREDIT_LIMITS: Record<string, number> = {
-  free:       0,        // Free tier has no API access
+  free:       500,      // Free tier para pruebas de desarrolladores (500 créditos/mes)
   basic:      1000,     // ~$19/mo (approx 200 light reqs or ~30 GraphRAG calls)
   pro:        15000,    // ~$79/mo (approx 1000 GraphRAG calls or ~400 MoE calls)
   premium:    100000,   // ~$299/mo (enterprise-grade high throughput)
@@ -12,7 +12,7 @@ export const TIER_CREDIT_LIMITS: Record<string, number> = {
 
 // Burst limit per minute based on plan
 export const TIER_BURST_LIMITS: Record<string, number> = {
-  free:       0,
+  free:       30,
   basic:      60,
   pro:        180,
   premium:    300,
@@ -77,10 +77,10 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
   const creditLimit = TIER_CREDIT_LIMITS[tier] ?? 0
   const burstLimit = TIER_BURST_LIMITS[tier] ?? 60
 
-  // Free tier has no API key access
-  if (tier !== 'admin' && creditLimit === 0) {
+  // Free tier tiene 500 créditos mensuales para que desarrolladores prueben la API
+  if (creditLimit === 0 && tier !== 'admin') {
     return c.json({
-      error: 'Acceso API deshabilitado en el plan Free. Actualiza a Basic o superior.',
+      error: 'Acceso API deshabilitado en este plan. Actualiza tu cuenta en el portal de desarrolladores.',
       code: 'TIER_INSUFFICIENT',
       upgrade_url: 'https://validus.scouttech.lat/pricing',
     }, 403)
