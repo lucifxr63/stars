@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/src/pages/Landing.tsx": {
-    "mtime": 1785210180.0445764,
-    "ast_hash": "0ef27b4af7e62774c69634a85cd5412b",
+    "mtime": 1785386962.3342214,
+    "ast_hash": "ae4665af9c3d95afc893758b572212d9",
     "semantic_hash": ""
   },
   "validateai-developer-portal/src/pages/Login.tsx": {
@@ -2920,8 +2920,8 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/public/version.json": {
-    "mtime": 1785304366.6541004,
-    "ast_hash": "cae319503cc46c46e8753a02836dbdbb",
+    "mtime": 1785386978.1888227,
+    "ast_hash": "8a11bfe305272ec603858bafc06dbad9",
     "semantic_hash": ""
   },
   "validateai-developer-portal/scripts/all-endpoints.json": {
@@ -4932,6 +4932,11 @@
   "validateai/src/assets/vite.svg": {
     "mtime": 1778130585.8090236,
     "ast_hash": "6d5180a782d64c8cf51ba01c2a2184d8",
+    "semantic_hash": ""
+  },
+  "ANIMUS_ENGINE_FRONTEND_SPEC.md": {
+    "mtime": 1785377983.7328677,
+    "ast_hash": "ca4f7189b4d30b1fbaa4fe4bcfcb1099",
     "semantic_hash": ""
   }
 }

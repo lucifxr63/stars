@@ -1,16 +1,16 @@
-# Graph Report - startups  (2026-07-29)
+# Graph Report - startups  (2026-07-30)
 
 ## Corpus Check
-- 913 files · ~1,129,891 words
+- 914 files · ~1,135,440 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6425 nodes · 9941 edges · 511 communities (404 shown, 107 thin omitted)
+- 6446 nodes · 9963 edges · 508 communities (398 shown, 110 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 124 edges (avg confidence: 0.67)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0f720626`
+- Built from commit: `f21554bc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -397,7 +397,7 @@
 - 2. Tesorería General de la República (TGR) — Deudas Tributarias
 - 3. Diario Oficial — Estructura Societaria
 - developers/CorrelationChart.tsx
-- IdeationTrendLine.tsx
+- @supabase/supabase-js
 - ✅ Cambios Implementados
 - 📄 Brief Estratégico y MVP: Motor de Data Storytelling para Redes Sociales
 - Documento de Mesa Directiva: Estructura Sprint A y Lógica de Negocio
@@ -425,7 +425,6 @@
 - Demo100.MD
 - Validus — Feed de Inteligencia de Mercado (dashboard)
 - Task — Auditoría: Fixes Críticos + Limpieza
-- shared/AnimusEvidenceWall.tsx
 - test_mcp_stdio.js
 - CASHFLOW_PRD.md - Producto de Flujo de Caja (MVP)
 - CASHFLOW_PRD_PART_4.md
@@ -451,8 +450,6 @@
 - vacuum_inapi.mjs
 - CLAUDE.md
 - rag_01_validacion.md
-- eslint
-- globals
 - @xyflow/react
 - eslint
 - pg
@@ -487,27 +484,27 @@
 ## Import Cycles
 - None detected.
 
-## Communities (511 total, 107 thin omitted)
+## Communities (508 total, 110 thin omitted)
 
 ### Community 0 - "api-v1/index.ts"
 Cohesion: 0.13
 Nodes (20): authMiddleware(), getSupabase(), hashApiKey(), ENDPOINT_CREDITS, getEndpointCreditCost(), rateLimitMiddleware(), TIER_BURST_LIMITS, TIER_CREDIT_LIMITS (+12 more)
 
 ### Community 1 - "types/validation.ts"
-Cohesion: 0.05
-Nodes (43): CAP_TABLE_COLORS, GovernanceCard(), INAPI_LABEL, Props, RISK_CONFIG, BUSINESS_MODEL_LABELS, BUSINESS_STAGE_LABELS, FormData (+35 more)
+Cohesion: 0.04
+Nodes (57): EDGE_URL, LinkedInCallback(), STEP_COMPONENTS_DETAILED, STEP_COMPONENTS_PREMIUM, STEP_COMPONENTS_QUICK, STEP_TITLES_DETAILED, STEP_TITLES_PREMIUM, STEP_TITLES_QUICK (+49 more)
 
 ### Community 2 - "ValidationDetail.tsx"
 Cohesion: 0.05
-Nodes (40): DASHBOARD_TABS, DashboardTab, LOCK_BADGE, TAB_REQUIRED_TIER, TAB_SHORT, EmptyStateAI(), EmptyStateAIProps, fitLabel() (+32 more)
+Nodes (47): DASHBOARD_TABS, DashboardTab, LOCK_BADGE, TAB_REQUIRED_TIER, TAB_SHORT, ValidationDetail(), CompetitiveAnalysis(), CONFIDENCE_DOTS (+39 more)
 
 ### Community 3 - "bcch_extractor.py"
 Cohesion: 0.10
 Nodes (31): _build_anchor_node(), _build_nodes(), _chunk_by_section(), _extract_perspectivas_section(), _extract_text(), fetch_all_as_nodes(), fetch_all_as_signals(), _fetch_content() (+23 more)
 
 ### Community 4 - "scheduler.py"
-Cohesion: 0.08
-Nodes (53): _run_ingest_pipeline(), list_jobs(), api/jobs.py — Disparadores HTTP de los jobs del scheduler.  En serverless (Ver, _require_cron_secret(), run_job(), _job_bcch_sync(), _job_cache_sweep(), _job_cmf_sync() (+45 more)
+Cohesion: 0.09
+Nodes (49): _run_ingest_pipeline(), list_jobs(), api/jobs.py — Disparadores HTTP de los jobs del scheduler.  En serverless (Ver, _require_cron_secret(), run_job(), _job_bcch_sync(), _job_cache_sweep(), _job_cmf_sync() (+41 more)
 
 ### Community 5 - "ai-validate/index.ts"
 Cohesion: 0.06
@@ -538,8 +535,8 @@ Cohesion: 0.09
 Nodes (11): ALLOWED_ORIGINS, callClaude(), checkDueDiligenceCache(), ContextFilter, DataSource, generateEmbedding(), KnowledgeChunk, OPENAI_API_KEY (+3 more)
 
 ### Community 12 - "app.py"
-Cohesion: 0.07
-Nodes (50): BackgroundTasks, BaseModel, FastAPI, HTTPAuthorizationCredentials, Request, cache_stats(), get_db(), health_endpoint() (+42 more)
+Cohesion: 0.09
+Nodes (42): BackgroundTasks, BaseModel, FastAPI, get_db(), health_endpoint(), ingest_endpoint(), lifespan(), list_entities() (+34 more)
 
 ### Community 13 - "formatCLP"
 Cohesion: 0.09
@@ -559,15 +556,15 @@ Nodes (9): AggregateRadarChart(), AggregateRadarChartProps, Dim, DIMS, extractSc
 
 ### Community 17 - "StepIdeaQuick.tsx"
 Cohesion: 0.08
-Nodes (23): ROLES, StartupForm, ProgressBar(), STEPS_PREMIUM, STEPS_QUICK, DEFAULT_COPY, FlowCopy, FlowSelector() (+15 more)
+Nodes (24): ROLES, StartupForm, ProgressBar(), STEPS_PREMIUM, STEPS_QUICK, DEFAULT_COPY, FlowCopy, FlowSelector() (+16 more)
 
 ### Community 18 - "validateai/src/App.tsx"
-Cohesion: 0.05
-Nodes (41): Admin, AIPolicy, App(), AuthCallback, CheckoutSuccess, Dashboard, Demo, Developers (+33 more)
+Cohesion: 0.06
+Nodes (32): Admin, AIPolicy, AuthCallback, CheckoutSuccess, Dashboard, Demo, Developers, FigmaCallback (+24 more)
 
 ### Community 19 - "validateai/src/app/routes/Dashboard.tsx"
-Cohesion: 0.06
-Nodes (41): Dashboard(), formatDate(), scoreBg(), STATUS_COLOR, STATUS_LABEL, titleOf(), TRUST_BY_MODE, TrustChip (+33 more)
+Cohesion: 0.09
+Nodes (29): Dashboard(), formatDate(), scoreBg(), STATUS_COLOR, STATUS_LABEL, titleOf(), TRUST_BY_MODE, TrustChip (+21 more)
 
 ### Community 20 - "useRestrictedCash.ts"
 Cohesion: 0.13
@@ -582,12 +579,12 @@ Cohesion: 0.07
 Nodes (31): App(), AuthCallback(), CompanyIdentityGate(), GoogleIcon(), RequireAuth(), signInWithGoogle(), CompanyIdentity, getCompanyIdentity() (+23 more)
 
 ### Community 23 - "validateai/src/lib/supabase.ts"
-Cohesion: 0.13
-Nodes (11): EDGE_URL, EDGE_URL, LinkedInCallback(), ConsentModal(), ConsentModalProps, formatRut(), validarRut(), Options (+3 more)
+Cohesion: 0.07
+Nodes (28): 1. Visión Global: ¿Qué es Animus Engine / Bralidus RaaS?, 2.1 URL Base del API Gateway, 2.2 Autenticación vía API Key, 2.3 Estructura Estándar de Respuesta JSON, 2.4 Códigos HTTP de Error Estándar, 2.5 Resiliencia Frontend: Capa de Fallback B2G y Alertas de Actualización, 2. Convenciones Base y Autenticación para el Frontend, 3. Catálogo de Tiers y Límites de Consumo (Quotas) (+20 more)
 
 ### Community 24 - "PitchDeckOutline.tsx"
-Cohesion: 0.09
-Nodes (20): ComplianceRoadmapPDF(), LawCard(), priorityColor(), priorityLabel(), Props, riskColor(), riskLabel(), approachLabel() (+12 more)
+Cohesion: 0.07
+Nodes (27): ComplianceRoadmapPDF(), LawCard(), priorityColor(), priorityLabel(), Props, riskColor(), riskLabel(), approachLabel() (+19 more)
 
 ### Community 25 - "useValidationStore"
 Cohesion: 0.10
@@ -603,15 +600,15 @@ Nodes (21): AgentLog, EvidenceWall(), isDemoSource(), Props, RedditData, RedditP
 
 ### Community 28 - "StepGenerating.tsx"
 Cohesion: 0.05
-Nodes (50): initPostHog(), useAnalytics(), ValidationDetail(), LockedSection(), Props, TIER_LABELS, DEFAULT_DIMENSIONS, RATINGS (+42 more)
+Nodes (45): initPostHog(), useAnalytics(), Validate(), LockedSection(), Props, TIER_LABELS, BraliduAlert, Props (+37 more)
 
 ### Community 29 - "golden-mediconnect.ts"
 Cohesion: 0.09
 Nodes (28): buildGoldenAgentsLog(), buildGoldenValidation(), COMPETITIVE_ANALYSIS, FOUNDER_CONTEXT, FOUNDER_FIT, FUNDRAISING_ROADMAP, GOVERNANCE_ASSESSMENT, MARKET_SIGNALS (+20 more)
 
 ### Community 30 - "pdf.ts"
-Cohesion: 0.14
-Nodes (40): SharedValidation, ValidationFull, ExportPDF(), DocConfig, DocId, DOCS, Props, ValidationData (+32 more)
+Cohesion: 0.09
+Nodes (46): SharedValidation, ValidationFull, ComplianceView(), CUSTOM_IDS, DeliverableData, DeliverableId, DELIVERABLES, DeliverableTabs() (+38 more)
 
 ### Community 31 - "FigmaPanel.tsx"
 Cohesion: 0.10
@@ -626,16 +623,16 @@ Cohesion: 0.07
 Nodes (28): @anthropic-ai/sdk, axios, csv-writer, author, dependencies, @anthropic-ai/sdk, axios, csv-writer (+20 more)
 
 ### Community 34 - "licitus.py"
-Cohesion: 0.26
-Nodes (10): build_relationship_context(), _or_503(), api/spulse.py — Integración con S-Pulse (B2B Relationship Intelligence).  Dos, Arma un bloque Markdown de inteligencia de relaciones para una empresa.      D, spulse_entity(), spulse_network(), spulse_opportunities(), spulse_profile() (+2 more)
+Cohesion: 0.17
+Nodes (14): HTTPAuthorizationCredentials, Request, Dependency inyectable en endpoints protegidos.      Si BRALIDUS_API_KEY no está, require_api_key(), build_relationship_context(), _or_503(), api/spulse.py — Integración con S-Pulse (B2B Relationship Intelligence).  Dos, Arma un bloque Markdown de inteligencia de relaciones para una empresa.      D (+6 more)
 
 ### Community 35 - "InvestmentDossier.tsx"
-Cohesion: 0.10
-Nodes (17): CoverPage(), FinancialsPage(), formatTier(), gridPoints(), InvestmentPage(), MarketPage(), polygonPoints(), RADAR_KEYS (+9 more)
+Cohesion: 0.08
+Nodes (23): CoverPage(), FinancialsPage(), formatTier(), gridPoints(), InvestmentPage(), MarketPage(), polygonPoints(), RADAR_KEYS (+15 more)
 
 ### Community 36 - "useUserTier.ts"
-Cohesion: 0.12
-Nodes (21): dispatchPaywallHit(), PromptType, dispatchUsageUpdated(), UsageSummary, useUsage(), UseUsageResult, ALL_SECTIONS, getUserSections() (+13 more)
+Cohesion: 0.08
+Nodes (30): OnboardingOverlay(), Props, STEPS, useOnboarding(), DEFAULT_DIMENSIONS, RATINGS, ReportFeedback(), ReportFeedbackProps (+22 more)
 
 ### Community 37 - "pages/Dashboard.tsx"
 Cohesion: 0.13
@@ -654,8 +651,8 @@ Cohesion: 0.07
 Nodes (26): compilerOptions, allowImportingTsExtensions, isolatedModules, jsx, lib, module, moduleDetection, moduleResolution (+18 more)
 
 ### Community 41 - "Validate.tsx"
-Cohesion: 0.05
-Nodes (44): STEP_COMPONENTS_DETAILED, STEP_COMPONENTS_PREMIUM, STEP_COMPONENTS_QUICK, STEP_TITLES_DETAILED, STEP_TITLES_PREMIUM, STEP_TITLES_QUICK, TIER_BADGE_CONFIG, Validate() (+36 more)
+Cohesion: 0.16
+Nodes (16): PLANS, Pricing(), Tier, FEATURE_NAME, PaywallHitDetail, reasonText(), TIER_INFO, UpgradeModal() (+8 more)
 
 ### Community 42 - "useUserTier"
 Cohesion: 0.05
@@ -670,12 +667,12 @@ Cohesion: 0.13
 Nodes (13): Any, Response, True si /health responde 200. No usa auth (endpoint público en S-Pulse)., Ficha 360° de una empresa: datos + socios/reps + triggers recientes., Grafo de relaciones listo para render: {nodes:[...], edges:[...]}., Lookup genérico por RUT: Empresa o PersonaNatural + sus relaciones., Fuente auditable de una relación (sourceUrl, sourceType, documentHash)., Oportunidades del tenant, ordenadas por matched_at desc. (+5 more)
 
 ### Community 45 - "Sidebar.tsx"
-Cohesion: 0.07
-Nodes (20): AppLayout(), Phase, ResetPassword(), Header(), PREVIEW_COLORS, ANIMUS_NAV_ITEMS, NAV_ITEMS, Sidebar() (+12 more)
+Cohesion: 0.08
+Nodes (18): AppLayout(), Phase, ResetPassword(), Header(), PREVIEW_COLORS, ANIMUS_NAV_ITEMS, NAV_ITEMS, Sidebar() (+10 more)
 
 ### Community 46 - "validateai/src/app/routes/Landing.tsx"
-Cohesion: 0.14
-Nodes (7): DenariusPromo(), FEATURES, TXNS, FAQS, FaqSection(), ProductShowcase(), ScouttechSection()
+Cohesion: 0.09
+Nodes (14): AnimusEngine(), EVIDENCE, EXPERTS, GRAPH_EXPERTS, PIPELINE, PLAYBOOKS, SOURCES, DenariusPromo() (+6 more)
 
 ### Community 47 - "compilerOptions"
 Cohesion: 0.08
@@ -690,16 +687,16 @@ Cohesion: 0.12
 Nodes (23): embed_text(), enrich_nodes_with_metadata(), _parse_embedding(), Client, rag.py — Capa de consulta GraphRAG.  Flujo:   1. embed_text()  → vector[1536] pa, Scan en memoria: fallback de emergencia solo para KG < 2000 nodos.     Deprecate, Embeddea un texto arbitrario usando el mismo pipeline que los nodos., El RPC solo devuelve source_type, document_title, content, relevance.     Este p (+15 more)
 
 ### Community 50 - "layout.tsx"
-Cohesion: 0.13
-Nodes (20): PREVIEW_COLORS, ProtectedLayout(), CompanyIdentityModal(), ConsentStatus, useConsentGuard(), CompanyIdentity, getCompanyIdentity(), saveCompanyIdentity() (+12 more)
+Cohesion: 0.16
+Nodes (18): PREVIEW_COLORS, ProtectedLayout(), CompanyIdentityModal(), ConsentModal(), ConsentModalProps, formatRut(), validarRut(), useConsentGuard() (+10 more)
 
 ### Community 51 - "DeliverableTabs.tsx"
-Cohesion: 0.11
-Nodes (17): ComplianceView(), CUSTOM_IDS, DeliverableData, DeliverableId, DELIVERABLES, DeliverableTabs(), FinancialProjectionView(), LeanRoadmapView() (+9 more)
+Cohesion: 0.12
+Nodes (26): chunkEvents(), notifyLicitus(), PostIngestEvent, classifyEnrichment(), EnrichmentOutcome, EnrichStats, esThrottling(), runEnrichOrdenesJob() (+18 more)
 
 ### Community 52 - "UpgradeModal.tsx"
-Cohesion: 0.06
-Nodes (49): CheckoutSuccess(), Landing(), Login(), Onboarding(), OnboardingForm, ROLES, STEP_META, PLANS (+41 more)
+Cohesion: 0.08
+Nodes (32): CheckoutSuccess(), Landing(), Login(), Onboarding(), OnboardingForm, ROLES, STEP_META, BULLETS (+24 more)
 
 ### Community 53 - "SurveyResults.tsx"
 Cohesion: 0.15
@@ -715,7 +712,7 @@ Nodes (23): dependencies, class-variance-authority, clsx, framer-motion, lucide-
 
 ### Community 56 - "devDependencies"
 Cohesion: 0.09
-Nodes (23): devDependencies, autoprefixer, eslint-plugin-react-hooks, eslint-plugin-react-refresh, postcss, tailwindcss, @types/node, @types/react (+15 more)
+Nodes (23): devDependencies, eslint, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, postcss, tailwindcss, @types/node (+15 more)
 
 ### Community 57 - "components.json"
 Cohesion: 0.09
@@ -730,16 +727,16 @@ Cohesion: 0.16
 Nodes (13): json(), MARKET_SIGNALS_FIXTURE, mockAuth(), mockEdgeFunctions(), mockMarketSignals(), mockUnauthenticated(), TEST_PROFILE, TEST_SESSION (+5 more)
 
 ### Community 60 - "RadarSignal"
-Cohesion: 0.08
-Nodes (26): Expert, Expert, experts.py — Definición de los 5 Expertos del sistema MoE.  Cada Expert encapsul, Expande group_ids → document_titles únicos (preserva orden de grupos)., GatingNetwork, MoERoutingResult, moe_router.py — Gating Network de 2 etapas para el sistema MoE.  Flujo:   Etapa, Score normalizado por experto: hits / total_keywords.         Normalizar evita q (+18 more)
+Cohesion: 0.12
+Nodes (17): classify_headline(), _haiku_classify(), _keyword_classify(), _primary_sector(), api/radar/classifier.py — Clasificador de señales del Radar Forense.  Etapa 1 —, Punto de entrada principal. Intenta keyword primero; si falla, llama Haiku., Infiere el sector principal desde la lista de industrias afectadas., RadarSignal (+9 more)
 
 ### Community 61 - "trackEvent"
 Cohesion: 0.06
-Nodes (31): createHttpClient(), HttpClient, HttpError, isHttpError(), RequestOptions, CircuitBreaker, CircuitBreakerOptions, CircuitState (+23 more)
+Nodes (30): createHttpClient(), HttpClient, HttpError, isHttpError(), RequestOptions, CircuitBreaker, CircuitBreakerOptions, CircuitState (+22 more)
 
 ### Community 62 - "Developers.tsx"
-Cohesion: 0.12
-Nodes (18): ApiKey, ApiUsageLog, AuditLog, AuditSummary, CHART_COLORS, Developers(), ENDPOINTS, METHOD_COLORS (+10 more)
+Cohesion: 0.10
+Nodes (18): ApiKey, ApiUsageLog, AuditLog, AuditSummary, CHART_COLORS, ENDPOINTS, METHOD_COLORS, ServiceInfo (+10 more)
 
 ### Community 63 - "compilerOptions"
 Cohesion: 0.10
@@ -758,8 +755,8 @@ Cohesion: 0.14
 Nodes (12): LicitusClient, Any, Response, Licitus no expone /v1/health: se usa la llamada más barata del contrato, Actividad de un proveedor en Mercado Público: OCs, buyer_intelligence, categoría, Benchmarks de mercado: volumen, percentiles p25/mediana/p75, top compradores., Licitaciones activas filtrables por rubro/región/monto/ventana de cierre., Cliente stateless de la API /v1 de Licitus. Thread-safe (requests es seguro). (+4 more)
 
 ### Community 67 - "shared/ThemeToggle.tsx"
-Cohesion: 0.08
-Nodes (39): Logger, MpItemLicitacion, MpItemOrdenCompra, MpMonedaAdicional, NormalizedLicitacion, NormalizedLicitacionItem, NormalizedOrdenCompraItem, buildNormalizedPayload() (+31 more)
+Cohesion: 0.07
+Nodes (40): bralidusQuery(), Logger, MpItemLicitacion, MpItemOrdenCompra, MpMonedaAdicional, NormalizedLicitacion, NormalizedLicitacionItem, NormalizedOrdenCompraItem (+32 more)
 
 ### Community 68 - "integration-test-saas.mjs"
 Cohesion: 0.15
@@ -818,12 +815,12 @@ Cohesion: 0.12
 Nodes (6): formatDelta(), MetricCard(), TONE, WIDGET_REGISTRY, WidgetProps, WidgetMetric
 
 ### Community 82 - "validateai-developer-portal/src/pages/Landing.tsx"
-Cohesion: 0.12
-Nodes (7): CODE_LINES, DATA_SOURCES, DataSource, Expert, EXPERTS, HOW_IT_WORKS, STATS
+Cohesion: 0.22
+Nodes (8): CONSOLE_TABS, ConsoleTab, ConsoleTabId, CORE_MODULES, CoreModule, FAQ_ITEMS, Landing(), SECURITY_ITEMS
 
 ### Community 83 - "entity_router.py"
-Cohesion: 0.21
-Nodes (9): _normalize_industry(), entity_router.py — Motor de routing dinámico de entidades.  Dado el perfil de un, Convierte el contexto de una startup en una lista de document_titles     para ac, Normaliza la industria a una clave de INDUSTRY_ROUTING.     Intenta match exacto, route(), RoutingResult, assert_case(), tests/test_moe_routing.py — Validación del sistema MoE (Sprint MoE-2).  Corre si (+1 more)
+Cohesion: 0.12
+Nodes (20): CompraAgilConvocatoria, CompraAgilDetalle, CompraAgilDocumento, CompraAgilEnvelope, CompraAgilError, CompraAgilEstado, CompraAgilEstadoCodigo, CompraAgilInstitucion (+12 more)
 
 ### Community 84 - "phase2_batch_api.py"
 Cohesion: 0.18
@@ -850,8 +847,8 @@ Cohesion: 0.12
 Nodes (15): author, bugs, url, description, homepage, keywords, license, main (+7 more)
 
 ### Community 91 - "openai_embedder.py"
-Cohesion: 0.25
-Nodes (8): _build_content(), fetch_all(), _fetch_observations(), _parse_value(), Extrae todos los series configurados y los devuelve como lista de nodos., Texto semántico para el campo content (usado por el motor RAG + pgvector).     D, Transforma una serie FRED en un dict compatible con knowledge_nodes., series_to_node()
+Cohesion: 0.16
+Nodes (12): _build_embed_text(), _embed_batch(), Texto enriquecido que se vectoriza.     - Nodos Familia A (entity_type presente), Llama a la API en un solo request. Devuelve embeddings en el mismo orden., _build_content(), fetch_all(), _fetch_observations(), _parse_value() (+4 more)
 
 ### Community 92 - "test_licitus_client.py"
 Cohesion: 0.28
@@ -907,7 +904,7 @@ Nodes (7): JobHealthMonitor, _JobState, datetime, api/health_monitor.py — Moni
 
 ### Community 105 - "cmf_extractor.py"
 Cohesion: 0.27
-Nodes (12): _classify_industries(), _detect_tipo(), fetch_all_as_nodes(), fetch_all_as_signals(), fetch_hechos_esenciales(), _get(), he_to_node(), he_to_signal() (+4 more)
+Nodes (11): _classify_industries(), _detect_tipo(), fetch_all_as_signals(), fetch_hechos_esenciales(), _get(), he_to_node(), he_to_signal(), _parse_fecha() (+3 more)
 
 ### Community 106 - "mercadopublico_extractor.py"
 Cohesion: 0.24
@@ -926,8 +923,8 @@ Cohesion: 0.05
 Nodes (39): ReputationLabel, ReputationScore, ApiErrorResponse, ApiResponse, CLP, ISODateString, PaginationParams, SortOrder (+31 more)
 
 ### Community 110 - "StepUpload.tsx"
-Cohesion: 0.17
-Nodes (7): ACCEPTED_MIME, AcceptedMime, Phase, StepUpload(), Props, TaskCardStream(), DD_TASK_CARDS
+Cohesion: 0.18
+Nodes (12): App(), ErrorBoundary, Props, State, initAnalytics(), installChunkReloadHandler(), isChunkLoadError(), reloadForStaleChunk() (+4 more)
 
 ### Community 112 - "audit-rag.ts"
 Cohesion: 0.24
@@ -946,8 +943,8 @@ Cohesion: 0.40
 Nodes (10): APP_URL, fail(), FUNCTIONS, pass(), phase(), phase1(), phase2(), phase3() (+2 more)
 
 ### Community 116 - "cashflow/src/components/CompanyIdentityGate.tsx"
-Cohesion: 0.11
-Nodes (35): BatchResult, beginLicitacionesDate(), chunk(), completeLicitacionesDate(), computeDates(), DateSyncResult, fetchListadoForDate(), isoToDate() (+27 more)
+Cohesion: 0.13
+Nodes (34): BatchResult, beginLicitacionesDate(), chunk(), completeLicitacionesDate(), computeDates(), DateSyncResult, fetchListadoForDate(), isoToDate() (+26 more)
 
 ### Community 117 - "phase2_embeddings.py"
 Cohesion: 0.25
@@ -962,8 +959,8 @@ Cohesion: 0.12
 Nodes (15): name, private, scripts, build, dev, gen:types, lint, preview (+7 more)
 
 ### Community 120 - "IdeaHistory.tsx"
-Cohesion: 0.25
-Nodes (6): IdeaHistory(), ViewMode, Props, VersionTimeline(), useValidationHistory(), ValidationVersion
+Cohesion: 0.05
+Nodes (28): EDGE_URL, IdeaHistory(), ViewMode, ChartPoint, ObsPoint, Props, PymeMetric, tooltipStyle (+20 more)
 
 ### Community 121 - "ComplianceRoadmapPDF.tsx"
 Cohesion: 0.05
@@ -990,8 +987,8 @@ Cohesion: 0.20
 Nodes (5): allEdges, allNodes, docTitles, HEADERS, mdFiles
 
 ### Community 127 - "SignalCache"
-Cohesion: 0.22
-Nodes (5): Cache en memoria de RadarSignals activos. Thread-safe para lectura concurrente., Retorna la lista de señales activas. Si el cache expiró y se provee         un c, Inyecta señales directamente (usado por el scheduler tras escribir en Supabase)., Lee radar_signals de Supabase filtrando por expires_at > NOW() y         severit, SignalCache
+Cohesion: 0.09
+Nodes (22): _normalize_industry(), entity_router.py — Motor de routing dinámico de entidades.  Dado el perfil de un, Convierte el contexto de una startup en una lista de document_titles     para ac, Normaliza la industria a una clave de INDUSTRY_ROUTING.     Intenta match exacto, route(), RoutingResult, Expert, experts.py — Definición de los 5 Expertos del sistema MoE.  Cada Expert encapsul (+14 more)
 
 ### Community 128 - "empleo_extractor.py"
 Cohesion: 0.33
@@ -1002,8 +999,8 @@ Cohesion: 0.20
 Nodes (7): EDGES_DEF, nodeTypes, PageMeta, PAGES, PageType, TYPE_LABELS, TYPE_STYLES
 
 ### Community 130 - "validateai/src/lib/database.types.ts"
-Cohesion: 0.20
-Nodes (9): CompositeTypes, Constants, DatabaseWithoutInternals, DefaultSchema, Enums, Json, Tables, TablesInsert (+1 more)
+Cohesion: 0.14
+Nodes (13): Developers(), CompositeTypes, Constants, Database, DatabaseWithoutInternals, DefaultSchema, Enums, Json (+5 more)
 
 ### Community 131 - "inapi-fetch/index.ts"
 Cohesion: 0.22
@@ -1038,8 +1035,8 @@ Cohesion: 0.05
 Nodes (36): hono, nitro, rollup, @types/pg, dependencies, dotenv, hono, pg (+28 more)
 
 ### Community 139 - "ScoreBreakdown.tsx"
-Cohesion: 0.11
-Nodes (17): CompetitiveAnalysis(), CONFIDENCE_DOTS, CONFIDENCE_LABELS, CONFIDENCE_STYLES, CONFIDENCE_STYLES, formatUSD(), ICONS, MarketFunnel() (+9 more)
+Cohesion: 0.28
+Nodes (7): DIMENSION_DESCRIPTIONS, extractScore(), isInsufficient(), LABELS, RawBreakdown, RawDimension, ScoreBreakdown()
 
 ### Community 140 - "inapiClassifier.ts"
 Cohesion: 0.36
@@ -1106,16 +1103,16 @@ Cohesion: 0.06
 Nodes (34): 10. Documentos que debemos crear, 11. Roadmap recomendado 30 / 60 / 90 días, 1. Resumen ejecutivo, 2. Estado actual del proyecto, 30 días — Confianza y blindaje, 3. Hallazgos principales, 4.1 Marca Validus vs. ValidateAI (estratificada), 4.2 Evidencia simulada vs. evidencia real (+26 more)
 
 ### Community 158 - "ServiceModal.tsx"
-Cohesion: 0.13
-Nodes (12): AnimusPanel(), CAT_COLORS, CatCount, ENDPOINTS, JOBS, TT, buildMeta(), Props (+4 more)
+Cohesion: 0.22
+Nodes (7): AnimusPanel(), CAT_COLORS, CatCount, ENDPOINTS, JOBS, TT, buildAggregates()
 
 ### Community 159 - "cache.py"
-Cohesion: 0.60
-Nodes (4): get(), _make_key(), cache.py — LRU cache para embeddings de queries.  Cada llamada a POST /query gen, set()
+Cohesion: 0.38
+Nodes (6): cache_stats(), get(), _make_key(), cache.py — LRU cache para embeddings de queries.  Cada llamada a POST /query gen, set(), stats()
 
 ### Community 160 - "fetch_all"
-Cohesion: 0.11
-Nodes (27): Env, envSchema, chunkEvents(), notifyLicitus(), PostIngestEvent, createLogger(), emit(), levelIndex() (+19 more)
+Cohesion: 0.20
+Nodes (11): mapRowToSupplierCategory(), mapRowToSupplierKeyword(), mapRowToSupplierProfile(), CreateSupplierProfileInput, SupplierProfileRepository, toSnakeCase(), UpdateSupplierProfileInput, SupplierCategory (+3 more)
 
 ### Community 161 - "seed-corpus-piloto.ts"
 Cohesion: 0.38
@@ -1174,8 +1171,8 @@ Cohesion: 0.53
 Nodes (5): deleteForm(), fetchForms(), SUPABASE_URL, SurveyList(), togglePublish()
 
 ### Community 176 - "FundraisingRoadmapCard.tsx"
-Cohesion: 0.40
-Nodes (4): formatUSD(), FundraisingRoadmapCard(), INSTRUMENT_LABELS, Props
+Cohesion: 0.14
+Nodes (9): query(), queryOne(), BuyerProfile, BuyerProfileRepository, mapRow(), UpsertBuyerProfileInput, BuyerReputation, BuyerReputationRepository (+1 more)
 
 ### Community 177 - "regionalData.ts"
 Cohesion: 0.33
@@ -1198,16 +1195,16 @@ Cohesion: 0.40
 Nodes (3): EvaluateParams, RiskAssessment, UseRiskEvaluatorReturn
 
 ### Community 185 - "BralidusCostsPanel.tsx"
-Cohesion: 0.16
-Nodes (31): notifyIngested(), clampPageSize(), isQuotaExhausted(), beginCompraAgilDate(), buildDateWindow(), buildIncrementalWindow(), completeCompraAgilDate(), CompraAgilJobOptions (+23 more)
+Cohesion: 0.15
+Nodes (32): notifyIngested(), clampPageSize(), isQuotaExhausted(), beginCompraAgilDate(), buildDateWindow(), buildIncrementalWindow(), completeCompraAgilDate(), CompraAgilJobOptions (+24 more)
 
 ### Community 186 - "components/BralidusEvidenceWall.tsx"
 Cohesion: 0.06
 Nodes (31): 1. IDENTIDAD, 2. LOGO, 3. COLORES — TOKENS, 4. TIPOGRAFÍA, 5. EFECTOS, 6. COMPONENTES — ESPECIFICACIÓN, 7. BRANDING — LOGO EN COMPONENTES, 8. PÁGINAS — SCOPE DEL REDESIGN (+23 more)
 
 ### Community 187 - "validateai/package.json"
-Cohesion: 0.09
-Nodes (26): CompraAgilConvocatoria, CompraAgilDocumento, CompraAgilEnvelope, CompraAgilError, CompraAgilEstado, CompraAgilEstadoCodigo, CompraAgilInstitucion, CompraAgilListItem (+18 more)
+Cohesion: 0.18
+Nodes (13): createApp(), jobsRoutes, DbPing, getBralidusPool(), getPool(), getPoolFor(), pingPool(), POOL_CONFIG (+5 more)
 
 ### Community 188 - "generate-chile-geojson.cjs"
 Cohesion: 0.40
@@ -1230,8 +1227,8 @@ Cohesion: 0.50
 Nodes (3): buildCommand, outputDirectory, rewrites
 
 ### Community 195 - "useAnalytics"
-Cohesion: 0.16
-Nodes (29): beginOrdenesDate(), chunk(), completeOrdenesDate(), fetchAllOCsForDate(), isoToDate(), OcDateSyncResult, OcSliceResult, OcSyncRunPlan (+21 more)
+Cohesion: 0.17
+Nodes (28): beginOrdenesDate(), chunk(), completeOrdenesDate(), fetchAllOCsForDate(), isoToDate(), OcDateSyncResult, OcSliceResult, OcSyncRunPlan (+20 more)
 
 ### Community 198 - "validateai-developer-portal/src/lib/rut.ts"
 Cohesion: 0.23
@@ -1254,8 +1251,8 @@ Cohesion: 0.50
 Nodes (3): buildCommand, outputDirectory, rewrites
 
 ### Community 215 - "components/BralidusQuotaWidget.tsx"
-Cohesion: 0.14
-Nodes (15): OpportunityArea, resolveArea(), mapRowToOpportunity(), mapRowToOpportunityItem(), buildFilterQuery(), OpportunityFilters, OpportunityRepository, RefreshCandidate (+7 more)
+Cohesion: 0.16
+Nodes (13): mapRowToOpportunity(), mapRowToOpportunityItem(), buildFilterQuery(), OpportunityFilters, OpportunityRepository, RefreshCandidate, buildInsertOpportunityItems(), SQL (+5 more)
 
 ### Community 218 - "validateai-developer-portal/vercel.json"
 Cohesion: 0.50
@@ -1302,12 +1299,12 @@ Cohesion: 0.14
 Nodes (22): BraliduAlert, BRALIDUS_BY_PROMPT, BRALIDUS_MACRO_OVERRIDE, BRALIDUS_TIER, BralidusBundle, BralidusContext, BralidusEvidence, BralidusExpert (+14 more)
 
 ### Community 259 - "react-chartjs-2"
-Cohesion: 0.13
-Nodes (14): JOBS, JobStarter, RunOptions, deriveJobHealth(), JOB_EXPECTED_INTERVAL_HOURS, JobHealth, JobHealthRaw, JobHealthStatus (+6 more)
+Cohesion: 0.08
+Nodes (27): Env, envSchema, JOBS, JobStarter, RunOptions, createLogger(), emit(), levelIndex() (+19 more)
 
 ### Community 260 - "react-is"
-Cohesion: 0.20
-Nodes (11): mapRowToSupplierCategory(), mapRowToSupplierKeyword(), mapRowToSupplierProfile(), CreateSupplierProfileInput, SupplierProfileRepository, toSnakeCase(), UpdateSupplierProfileInput, SupplierCategory (+3 more)
+Cohesion: 0.15
+Nodes (4): MercadoPublicoApiError, MercadoPublicoNotFoundError, AppError, ErrorCode
 
 ### Community 261 - "@react-pdf/renderer"
 Cohesion: 0.09
@@ -1326,8 +1323,12 @@ Cohesion: 0.10
 Nodes (19): Autenticación, Comportamiento ante RUT no encontrado, Contacto y repo, Contexto, Cuando resuelvan el sync de OCs, Endpoint 1 — Inteligencia de proveedor por RUT, Endpoint 2 — Benchmarks de mercado por sector, Endpoint 3 — Licitaciones activas por sector (+11 more)
 
 ### Community 266 - "@tailwindcss/forms"
-Cohesion: 0.14
-Nodes (9): query(), queryOne(), BuyerProfile, BuyerProfileRepository, mapRow(), UpsertBuyerProfileInput, BuyerReputation, BuyerReputationRepository (+1 more)
+Cohesion: 0.04
+Nodes (48): CAP_TABLE_COLORS, GovernanceCard(), INAPI_LABEL, Props, RISK_CONFIG, AVAILABILITY_CONFIG, EXPERTISE_COLORS, MentorCard() (+40 more)
+
+### Community 268 - "@types/dagre"
+Cohesion: 0.11
+Nodes (20): DisplayState, displayStateOf(), Results(), STATE_CONFIG, StateConfig, ValidationCard(), calcStreak(), CustomTooltip() (+12 more)
 
 ### Community 282 - "class-variance-authority"
 Cohesion: 0.10
@@ -1342,8 +1343,8 @@ Cohesion: 0.11
 Nodes (18): compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, lib, module, moduleResolution, outDir (+10 more)
 
 ### Community 289 - "react-hook-form"
-Cohesion: 0.23
-Nodes (9): withTransaction(), NormalizedOrdenCompra, IngestOrdenCompraUseCase, mapRowToPurchaseOrder(), mapRowToPurchaseOrderItem(), buildInsertPurchaseOrderItems(), PurchaseOrderRepository, PurchaseOrder (+1 more)
+Cohesion: 0.17
+Nodes (16): withTransaction(), NormalizedOrdenCompra, buildNormalizedPayload(), extractBuyerOrgCode(), extractBuyerOrgName(), extractBuyerUnitCode(), extractBuyerUnitName(), normalizeOrdenCompra() (+8 more)
 
 ### Community 290 - "react-router-dom"
 Cohesion: 0.11
@@ -1366,8 +1367,8 @@ Cohesion: 0.11
 Nodes (17): 1. Gestión de API Keys, 2. Monitoreo y Cuotas (Tiers), 3. Playground Interactivo & API Connection Hub, Animus Engine / Bralidus — Developer Portal, Estructura del proyecto, Flujo de autenticación, Funcionalidades Principales, Instalación (+9 more)
 
 ### Community 299 - "eslint-plugin-react-refresh"
-Cohesion: 0.18
-Nodes (14): createApp(), jobsRoutes, bralidusQuery(), DbPing, getBralidusPool(), getPool(), getPoolFor(), pingPool() (+6 more)
+Cohesion: 0.28
+Nodes (3): OpportunityArea, resolveArea(), normalizeText()
 
 ### Community 301 - "postcss"
 Cohesion: 0.11
@@ -1384,10 +1385,6 @@ Nodes (16): Beneficio I+D (Ley 20.241), Capital Semilla Corfo (Concurso Nacional
 ### Community 307 - "@eslint/js"
 Cohesion: 0.12
 Nodes (15): 0. TL;DR para la Mesa, 1. Visión Global — cómo encaja todo, 2. Stack común (lo que comparten todas las piezas), 3.1 VALIDUS — `validateai/` (producto estrella), 3.2 BRALIDUS — `validateai-developer-portal/` (RaaS / API B2B), 3.3 BRALIDUS-PY — `validateai-financial-worker/` (motor de inteligencia), 3.4 KNOWLEDGE VAULT — `validateai-knowledge-vault/`, 3.5 Proyectos satélite (+7 more)
-
-### Community 334 - "AppError"
-Cohesion: 0.15
-Nodes (4): MercadoPublicoApiError, MercadoPublicoNotFoundError, AppError, ErrorCode
 
 ### Community 335 - "Variables de Entorno — Checklist completo"
 Cohesion: 0.12
@@ -1424,10 +1421,6 @@ Nodes (14): src/**/*.ts, compilerOptions, esModuleInterop, forceConsistentCasing
 ### Community 343 - "Animus Engine / Bralidus Developer Portal — CLAUDE.md"
 Cohesion: 0.13
 Nodes (14): 1. Animus Engine v2.0 API Gateway & Fallback Layer, 2. Rate Limiting Quotas & Tiers (`ratelimit.ts`), 3. Fintoc-style Unauthenticated Testing & API Connection Hub, 4. LLM & AI Agent Standard (`/llms.txt`), 5. SPA Version Detector & Hard Refresh (`VersionUpdateAlert`, `useVersionCheck`), 6. Interactive User Manual (`UserManualModal.tsx`), Animus Engine / Bralidus Developer Portal — CLAUDE.md, Core Architectural Features (+6 more)
-
-### Community 344 - "enrich-ordenes.job.ts"
-Cohesion: 0.24
-Nodes (12): classifyEnrichment(), EnrichmentOutcome, EnrichStats, esThrottling(), runEnrichOrdenesJob(), sleep(), deriveRunStatus(), RunCounters (+4 more)
 
 ### Community 345 - "1. Mapa del flujo actual"
 Cohesion: 0.13
@@ -1482,8 +1475,8 @@ Cohesion: 0.19
 Nodes (11): AdminData, CenterId, COLOR_MAP, ContentStudio(), DATA_CENTERS, FRAMES, PLATFORMS, Props (+3 more)
 
 ### Community 358 - "MentorCard.tsx"
-Cohesion: 0.22
-Nodes (9): AVAILABILITY_CONFIG, EXPERTISE_COLORS, MentorCard(), Props, MentorRecommendations(), Props, useMentors(), Mentor (+1 more)
+Cohesion: 0.33
+Nodes (5): buildMeta(), Props, ServiceInfo, ServiceMeta, ServiceModal()
 
 ### Community 359 - "Plan de ejecución — cierre de la integración (sin romper nada)"
 Cohesion: 0.17
@@ -1546,8 +1539,8 @@ Cohesion: 0.20
 Nodes (6): bcnConfigured(), BcnNormJson, BcnNormModification, BcnNormRelation, BcnNormSummary, searchBcnNorms()
 
 ### Community 374 - "UnitEconomicsPDF.tsx"
-Cohesion: 0.27
-Nodes (7): assessmentColor(), CacLtvBars(), Props, strategyLabel(), UnitEconomicsPDF(), verdictColor(), verdictLabel()
+Cohesion: 0.38
+Nodes (6): _batch_download(), _build_node(), fetch_all(), yfinance_extractor.py — BralidusPY Phase 2 Extrae precios historicos mensuales v, Descarga todos los simbolos en UN solo request usando yfinance >= 1.4.1.      mu, Descarga todos los tickers en un batch y construye los nodos GraphRAG.     Un so
 
 ### Community 375 - "Runbook de Lanzamiento — Inicio de Etapa Ops (Demo100)"
 Cohesion: 0.20
@@ -1580,10 +1573,6 @@ Nodes (9): ApiKey, ApiUsageLog, AuditLogEntry, AuditSummary, PortalStats, Servic
 ### Community 382 - "1. Dirección del Trabajo (DT) — Morosidad Previsional"
 Cohesion: 0.20
 Nodes (10): 1. Dirección del Trabajo (DT) — Morosidad Previsional, Autenticación, Cron sugerido, Dato a extraer, Edge Function wrapper, Fricción principal: CAPTCHA, Método de scraping, Por qué es crítico (+2 more)
-
-### Community 383 - "apply_familia_a.py"
-Cohesion: 0.18
-Nodes (7): apply(), check(), scripts/apply_familia_a.py Aplica los nodos y aristas de Familia A (Sprints 1-3), Cuenta nodos Familia A existentes en la DB., Inserta nodos y aristas de los 3 sprints., apply(), scripts/apply_sprint5.py Sprint 5 — VC-Grade Nodes: Retención y Cohortes, Efici
 
 ### Community 384 - "Contexto y Directrices de Desarrollo: MVP Flujo de Caja (Esquema `cashflow`)"
 Cohesion: 0.22
@@ -1636,10 +1625,6 @@ Nodes (9): 5. OpenSanctions + OFAC — Compliance Global, Dato a extraer, Fricci
 ### Community 396 - "rag-grounding-report.mjs"
 Cohesion: 0.22
 Nodes (7): desde, dIdx, env, fuentes, here, razones, rubrosSinGrounding
-
-### Community 397 - "AnimusEngine.tsx"
-Cohesion: 0.22
-Nodes (7): AnimusEngine(), EVIDENCE, EXPERTS, GRAPH_EXPERTS, PIPELINE, PLAYBOOKS, SOURCES
 
 ### Community 398 - "routes/rag.ts"
 Cohesion: 0.39
@@ -1700,14 +1685,6 @@ Nodes (8): 2. Tesorería General de la República (TGR) — Deudas Tributarias, 
 ### Community 412 - "3. Diario Oficial — Estructura Societaria"
 Cohesion: 0.25
 Nodes (8): 3. Diario Oficial — Estructura Societaria, Cron sugerido, Dato a extraer, Fricción conocida: PDFs mal formateados, Método de ingesta, Por qué es crítico, Tabla destino, URL objetivo
-
-### Community 413 - "developers/CorrelationChart.tsx"
-Cohesion: 0.25
-Nodes (5): ChartPoint, ObsPoint, Props, PymeMetric, tooltipStyle
-
-### Community 414 - "IdeationTrendLine.tsx"
-Cohesion: 0.39
-Nodes (7): calcStreak(), CustomTooltip(), IdeationTrendLine(), IdeationTrendLineProps, isoWeekStart(), shortLabel(), ValidationForTrend
 
 ### Community 415 - "✅ Cambios Implementados"
 Cohesion: 0.25
@@ -1813,10 +1790,6 @@ Nodes (4): Cómo resuelve la fuente (orden de prioridad), D-full (pendiente, ext
 Cohesion: 0.40
 Nodes (4): Fase 1 — Eliminación de archivos muertos, Fase 2 — Fixes Críticos, Fase 3 — Reescribir Documentación, Task — Auditoría: Fixes Críticos + Limpieza
 
-### Community 442 - "shared/AnimusEvidenceWall.tsx"
-Cohesion: 0.40
-Nodes (4): AnimusAlertItem, AnimusEvidenceItem, AnimusEvidenceWall(), Props
-
 ### Community 444 - "CASHFLOW_PRD.md - Producto de Flujo de Caja (MVP)"
 Cohesion: 0.50
 Nodes (3): 1. Reglas de Negocio Centrales y Resultados Esperados (KPIs), 2. Arquitectura de Base de Datos (Esquema: `cashflow`), CASHFLOW_PRD.md - Producto de Flujo de Caja (MVP)
@@ -1838,24 +1811,24 @@ Cohesion: 0.67
 Nodes (3): meta(), sourceUnavailable(), stub()
 
 ## Knowledge Gaps
-- **2627 isolated node(s):** `name`, `version`, `description`, `type`, `animus-engine-mcp` (+2622 more)
+- **2644 isolated node(s):** `name`, `version`, `description`, `type`, `animus-engine-mcp` (+2639 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **107 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **110 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `dependencies` to `react-dom`, `@xyflow/react`, `@radix-ui/react-dialog`, `@sentry/react`, `tailwind-merge`, `zod`, `tailwind-scrollbar-hide`, `zustand`, `three`, `@types/dagre`, `d3-geo`, `dagre`, `scripts`, `next-themes`, `framer-motion`, `@hookform/resolvers`, `carouselExport.ts`, `@fontsource-variable/geist`?**
-  _High betweenness centrality (0.068) - this node is a cross-community bridge._
-- **Why does `jspdf` connect `carouselExport.ts` to `dependencies`, `pdf.ts`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `react-dom`, `@xyflow/react`, `@radix-ui/react-dialog`, `@sentry/react`, `tailwind-merge`, `zod`, `tailwind-scrollbar-hide`, `zustand`, `three`, `d3-geo`, `dagre`, `scripts`, `next-themes`, `framer-motion`, `@hookform/resolvers`, `carouselExport.ts`, `developers/CorrelationChart.tsx`, `@fontsource-variable/geist`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Why does `devDependencies` connect `devDependencies` to `eslint`, `pg`, `@vitejs/plugin-react`, `vitest`, `@vitest/coverage-v8`, `globals`, `@types/three`, `@types/node`, `@types/react`, `typescript`, `phase2_embeddings.py`, `scripts`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+  _High betweenness centrality (0.061) - this node is a cross-community bridge._
+- **Why does `jspdf` connect `carouselExport.ts` to `dependencies`, `pdf.ts`?**
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `description` to the rest of the system?**
-  _2627 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2644 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `api-v1/index.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.12681159420289856 - nodes in this community are weakly interconnected._
 - **Should `types/validation.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.047872340425531915 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04034929238181271 - nodes in this community are weakly interconnected._
 - **Should `ValidationDetail.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.050072568940493466 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.046007403490216814 - nodes in this community are weakly interconnected._
