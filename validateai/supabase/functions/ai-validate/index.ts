@@ -7,6 +7,7 @@ import { type PromptType, SYSTEM_PROMPTS, PLAYBOOK_MASTER_PROMPT } from '../_sha
 import { CAC_MULTIPLIERS_BY_CHANNEL, SECTOR_BENCHMARKS } from '../_shared/benchmarks.ts';
 import { retrieveRelevantCompetitors, retrieveRagPlaybooks, retrieveHybridGraphRAG, checkAnalysisCache, saveAnalysisCache, RAG_TAGS_BY_PROMPT } from '../_shared/rag.ts';
 import { discoverCompetitors } from '../_shared/competitorDiscovery.ts';
+import { sendOpsAlert } from '../_shared/opsAlert.ts';
 import { callAI, preprocessIdea } from '../_shared/aiProvider.ts';
 import { validateOutput } from '../_shared/outputSchemas.ts';
 import { buildPersistUpdates } from '../_shared/persist.ts';
@@ -118,6 +119,27 @@ serve(async (req) => {
         monthly_limit:   `Limite mensual de ${rateCheck?.limit} analisis para el plan ${userTier} alcanzado.`,
         expensive_limit: `Limite de ${rateCheck?.limit} analisis de mercado para el plan ${userTier} alcanzado.`,
       };
+
+      // Un paywall alcanzado es senal de PRODUCTO, no de infraestructura: es
+      // alguien que quiso usar mas de lo que su plan permite. Va al canal de
+      // negocio, donde esa informacion vale, y no a incidentes, donde seria
+      // ruido que ensucia el unico canal que exige accion.
+      void sendOpsAlert({
+        level: 'info',
+        channel: 'negocio',
+        title: 'Limite de plan alcanzado',
+        detail: MSG[reason] ?? 'Limite alcanzado.',
+        fields: [
+          { name: 'Plan', value: userTier },
+          { name: 'Motivo', value: reason },
+          { name: 'Uso', value: `${rateCheck?.used ?? '?'} / ${rateCheck?.limit ?? '?'}` },
+          { name: 'Analisis', value: prompt_type },
+        ],
+        footer: 'ai-validate',
+        // Por usuario y motivo: la ventana de dedupe evita que alguien que
+        // reintenta cinco veces genere cinco avisos identicos.
+        dedupeKey: `paywall:${user.id}:${reason}`,
+      });
       return new Response(JSON.stringify({
         error:   reason,
         message: MSG[reason] ?? 'Limite alcanzado.',
@@ -203,6 +225,28 @@ serve(async (req) => {
             enrichedContext = { ...enrichedContext, rag_competitors: hallazgo.competitors };
           } else {
             ragGrounding.reason = hallazgo.reason ?? 'sin_resultados';
+
+            // Ni el corpus ni la busqueda en vivo dieron nada: el analisis
+            // competitivo sale igual, pero apoyado unicamente en lo que el
+            // modelo ya sabia. Es exactamente el tipo de degradacion que no
+            // falla y por eso nadie ve — de ahi que tenga canal propio.
+            void sendOpsAlert({
+              level: 'warn',
+              channel: 'degradacion',
+              title: 'Analisis competitivo SIN grounding',
+              detail:
+                'Ni el corpus ni SerpApi devolvieron competidores. El analisis ' +
+                'sale con el conocimiento del modelo, sin datos reales delante.',
+              fields: [
+                { name: 'Motivo', value: hallazgo.reason ?? 'sin_resultados' },
+                { name: 'Rubro', value: String(context.idea_industry ?? context.industry ?? '—') },
+                { name: 'Pais', value: String(context.target_country ?? '—') },
+              ],
+              footer: 'ai-validate',
+              // Por motivo y rubro: interesa saber QUE rubros quedan sin
+              // cobertura, no cuantas veces lo intento el mismo usuario.
+              dedupeKey: `rag-sin-grounding:${hallazgo.reason}:${context.idea_industry ?? 'na'}`,
+            });
           }
         }
       }

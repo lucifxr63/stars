@@ -1,4 +1,5 @@
 import { getSupabase } from '../middleware/auth.ts'
+import { sendOpsAlert } from '../../_shared/opsAlert.ts'
 import { isValidRut, formatRutCanonical } from '../utils/validation.ts'
 import { notImplemented } from './_honest.ts'
 
@@ -417,8 +418,25 @@ const COVERAGE_TENDERS =
 
 // 503 sólo cuando la fuente realmente falló: sin BRALIDUS_URL, HTTP no-2xx o
 // timeout. Nunca por ausencia de filas.
-const sourceUnavailable = (c: any, detail?: string) =>
-  c.json(
+const sourceUnavailable = (c: any, detail?: string) => {
+  // Un 503 acá lo ve el INTEGRADOR: es el gateway público quedándose sin nada
+  // que servir. Es de las pocas cosas de api-v1 que justifican despertar a
+  // alguien, así que va a incidentes. El dedupe por código evita que una caída
+  // sostenida inunde el canal request por request.
+  void sendOpsAlert({
+    level: 'error',
+    channel: 'incidentes',
+    title: 'Gateway sin fuente de Mercado Público',
+    detail: 'La tabla canónica está vacía y Licitus no respondió. Los endpoints B2G devuelven 503.',
+    fields: [
+      { name: 'Endpoint', value: new URL(c.req.url).pathname },
+      ...(detail ? [{ name: 'Detalle', value: detail.slice(0, 300), inline: false }] : []),
+    ],
+    footer: 'api-v1',
+    dedupeKey: 'api-v1-source-unavailable',
+  })
+
+  return c.json(
     buildAnimusResponse(null, 1, 20, 0, 'mercado_publico', [{
       code: 'SOURCE_UNAVAILABLE',
       message: 'Sin datos de Mercado Público: la tabla canónica está vacía y Licitus no respondió.',
@@ -426,6 +444,7 @@ const sourceUnavailable = (c: any, detail?: string) =>
     }]),
     503,
   )
+}
 
 // GET /api/v1/mercado-publico/opportunities (Buscador Unificado: tender + agile_purchase)
 export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
