@@ -12,9 +12,11 @@ está configurado, el check se saltea (sólo dev — nunca dejar sin setear en p
 """
 
 import os
+import time
 
 from fastapi import APIRouter, Header, HTTPException
 
+from api.ops_alert import send_ops_alert
 from api.scheduler import (
     _job_bcch_sync,
     _job_cache_sweep,
@@ -66,5 +68,37 @@ async def run_job(job_id: str, authorization: str | None = Header(default=None))
     job = _JOBS.get(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail=f"job desconocido: {job_id}")
-    await job()
-    return {"ok": True, "job": job_id}
+
+    # Se reporta TODA corrida, no sólo las que fallan. Un canal que sólo habla
+    # cuando algo se rompe deja un silencio indistinguible de "todo bien": la
+    # ingesta de Mercado Público estuvo tres días detenida así. Con un latido por
+    # corrida, la ausencia de mensajes pasa a ser una señal.
+    inicio = time.monotonic()
+    try:
+        await job()
+    except Exception as err:
+        duracion = time.monotonic() - inicio
+        send_ops_alert(
+            nivel="error",
+            canal="incidentes",
+            titulo=f"Job '{job_id}' falló",
+            detalle=f"```\n{type(err).__name__}: {str(err)[:300]}\n```",
+            campos=[("Job", job_id), ("Duración", f"{duracion:.1f}s")],
+            footer="bralidus",
+            # Cada corrida es un hecho distinto, pero un job que falla en bucle
+            # no debe inundar el canal: la clave es por job, no por corrida.
+            dedupe_key=f"job-failed:{job_id}",
+        )
+        raise
+
+    duracion = time.monotonic() - inicio
+    send_ops_alert(
+        nivel="info",
+        canal="latido",
+        titulo=f"{job_id} — success",
+        campos=[("Job", job_id), ("Duración", f"{duracion:.1f}s")],
+        footer="bralidus",
+        # Sin dedupe efectivo: cada corrida exitosa es un latido y se quiere ver.
+        dedupe_key=f"job-ok:{job_id}:{int(inicio)}",
+    )
+    return {"ok": True, "job": job_id, "duracion_s": round(duracion, 1)}

@@ -71,3 +71,52 @@ jobs:
             echo "── Deploying $fn ──"
             supabase functions deploy "$fn" --project-ref "$PROJECT_REF"
           done
+
+      # Avisa a la sala de control QUE cambió y CUANDO. Sin esto no hay forma de
+      # responder "se rompió solo o lo rompimos?" cuando algo empieza a fallar:
+      # el canal de incidentes muestra el sintoma y este muestra la causa
+      # candidata a la misma hora.
+      #
+      # `always()` a proposito: un deploy FALLIDO es justamente lo que hay que
+      # saber. Sin el, el paso se saltea y el silencio se lee como exito.
+      - name: Notificar a Discord
+        if: always() && steps.plan.outputs.funcs != ''
+        env:
+          HOOK: ${{ secrets.DISCORD_DEPLOYS_WEBHOOK }}
+        run: |
+          # `if` y no `[ -z ] && { ... }`: con HOOK seteado ese test devuelve 1,
+          # la linea entera devuelve 1 y bash -e (el shell por defecto de
+          # Actions) mata el paso justo cuando SI habia que avisar.
+          if [ -z "${HOOK:-}" ]; then
+            echo "Sin DISCORD_DEPLOYS_WEBHOOK — se omite el aviso"
+            exit 0
+          fi
+
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR=5234826; EMOJI="🟢"; ESTADO="desplegado"
+          else
+            COLOR=14700383; EMOJI="🔴"; ESTADO="FALLÓ"
+          fi
+
+          # jq -Rs escapa el mensaje de commit: los titulos traen comillas,
+          # backticks y saltos de linea que romperian el JSON a mano.
+          MSG=$(git log -1 --pretty=%s | jq -Rs '.')
+          SHA=$(git rev-parse --short HEAD)
+          FUNCS="${{ steps.plan.outputs.funcs }}"
+
+          jq -n --argjson msg "$MSG" \
+                --arg emoji "$EMOJI" --arg estado "$ESTADO" --arg sha "$SHA" \
+                --arg funcs "$FUNCS" --arg actor "${{ github.actor }}" \
+                --argjson color "$COLOR" \
+                '{embeds:[{
+                   title: ($emoji + "  Edge Functions " + $estado),
+                   description: $msg,
+                   color: $color,
+                   fields: [
+                     {name:"Funciones", value:$funcs, inline:true},
+                     {name:"Commit",    value:$sha,   inline:true},
+                     {name:"Autor",     value:$actor, inline:true}
+                   ],
+                   footer:{text:"deploy-functions · Deploys"}
+                 }]}' \
+            | curl -sS -X POST -H 'content-type: application/json' -d @- "$HOOK" >/dev/null
