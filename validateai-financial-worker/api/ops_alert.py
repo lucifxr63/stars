@@ -9,9 +9,13 @@ POR QUÉ EXISTE
 --------------
 BralidusPY era el último servicio mudo del ecosistema. Corre 9 jobs de ingesta
 (FRED, CMF, BCCh, SEIA, concursal, empleo, radar…) disparados por cron externo:
-si uno se caía, no había señal fuera de los logs de Railway. Es exactamente la
+si uno se caía, no había señal fuera de los logs del runtime. Es exactamente la
 situación que dejó la ingesta de Mercado Público tres días detenida sin que
 nadie lo notara.
+
+Corre en Vercel (proyecto `bralidus-api`, dominio api.animus.scouttech.lat).
+Las variables OPS_WEBHOOK_* se setean ahí; sin ellas el helper loguea y no
+envía, sin romper nada.
 
 Los canales se separan por QUÉ HACER al ver el mensaje:
     incidentes   → algo está roto AHORA. Sólo rojo.

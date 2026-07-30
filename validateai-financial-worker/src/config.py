@@ -11,7 +11,7 @@ def _require(key: str) -> str:
     return value
 
 
-# Accept SUPABASE_URL (Railway/prod standard) or VITE_SUPABASE_URL (local dev / Vite legacy)
+# Accept SUPABASE_URL (estándar en prod) or VITE_SUPABASE_URL (local dev / Vite legacy)
 SUPABASE_URL: str = os.getenv("SUPABASE_URL") or _require("VITE_SUPABASE_URL")
 SUPABASE_SERVICE_KEY: str = _require("SUPABASE_SERVICE_ROLE_KEY")
 FRED_API_KEY: str = _require("FRED_API_KEY")
@@ -25,7 +25,12 @@ CMF_BEST_KEY: str = os.getenv("CMF_BEST_KEY", "")     # api.cmfchile.cl
 # Bralidus actúa como "host app" de S-Pulse (grafo societario chileno + trazabilidad
 # legal). Si BASE_URL no está configurada, la integración se desactiva por completo
 # (degrada a None, nunca crashea). El API key es un secreto COMPARTIDO, no un JWT.
-SPULSE_BASE_URL: str = os.getenv("SPULSE_BASE_URL", "").rstrip("/")  # ej: https://s-pulse.up.railway.app/api
+# OJO: la URL lleva el sufijo /api — sin él todas las llamadas dan 404.
+# El ejemplo de acá apuntaba a s-pulse.up.railway.app, que ya no existe: S-Pulse
+# se migró a Vercel. Al 2026-07-30 su dominio (api.nexus.scouttech.lat) NO
+# resuelve en DNS, y por eso el /health de este servicio reporta
+# `spulse: configurada pero no responde`. Es DNS pendiente, no código.
+SPULSE_BASE_URL: str = os.getenv("SPULSE_BASE_URL", "").rstrip("/")  # ej: https://api.nexus.scouttech.lat/api
 SPULSE_INTERNAL_API_KEY: str = os.getenv("SPULSE_INTERNAL_API_KEY", "")
 SPULSE_TIMEOUT_S: float = float(os.getenv("SPULSE_TIMEOUT_S", "8"))  # timeout duro por request
 
