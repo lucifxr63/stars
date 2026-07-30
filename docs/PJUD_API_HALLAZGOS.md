@@ -152,3 +152,36 @@ Es un receptor pasivo con HMAC que espera que *alguien empuje* datos hacia
 
 **Esta auditoría la responde: no hace falta ninguno.** La API se consulta
 directo. La ingesta por pull reemplaza al webhook, no lo complementa.
+
+### Qué dice el código, una vez recuperado (2026-07-30)
+
+Se bajó el fuente desplegado con `supabase functions download webhook-pjud`.
+Tres hallazgos, en orden de gravedad:
+
+**1. La verificación de firma no verifica nada.** `verifyHmacSignature()` importa
+la clave HMAC y después ignora todo y hace `return true`, con este comentario:
+
+> *"Para simplificar el mock, omitiremos la verificación real en este código
+> boilerplate"*
+
+O sea que el `if (!isValid)` de abajo nunca se cumple. Cualquier payload con un
+header `x-pjud-signature` cualquiera pasa el control.
+
+**2. Escribe con service role a partir de ese payload.** El handler toma
+`payload.metadata.user_id` y `payload.metadata.validation_id` del cuerpo —sin
+validarlos contra nada— y los inserta con un cliente creado con
+`SUPABASE_SERVICE_ROLE_KEY`, que salta RLS. La función tiene `verify_jwt: true`,
+pero la anon key es un JWT válido para ese control y es pública por diseño.
+Combinado con el punto 1, el gate real es ninguno.
+
+**3. Escribe a una tabla que no existe.** No hay `temp_context` en la base. Todo
+insert falla y la función devuelve 500. Nunca funcionó.
+
+**Conclusión: sobra y conviene borrarla.** No es que esté sin usar — es que no
+puede funcionar, espera callbacks de un servicio que no los emite, y mientras
+tanto es una escritura con service role detrás de un control de firma apagado.
+Lo que sí anda es la ingesta por pull: `sync-pjud.job.ts` → `pjud_estadisticas`.
+
+El fuente recuperado **no se versiona a propósito**: `deploy-functions.yml`
+dispara con `validateai/supabase/functions/**`, así que commitearlo la
+redesplegaría. Queda citado acá y se borra del árbol.
