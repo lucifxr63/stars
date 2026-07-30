@@ -89,6 +89,31 @@ def _debe_enviar(clave: str) -> bool:
     return True
 
 
+def _registrar_envio(canal: str, ok: bool, error: str | None = None) -> None:
+    """Deja constancia en base del resultado del envío.
+
+    POR QUÉ: este helper nunca lanza, así que un webhook revocado falla para
+    siempre en silencio — y el canal de `latido` es el que más sufre, porque su
+    valor está en que el silencio signifique algo. Con la URL muerta, un canal
+    sano y un servicio detenido se ven idénticos.
+
+    La tabla `ops_webhook_health` es la fuente de verdad sobre la salud del
+    alerting, independiente del alerting mismo. El reporte de frescura de
+    mp-sync la lee y avisa por un canal que SÍ funcione.
+
+    Nunca lanza: sería absurdo que el medidor de fallos rompa lo que mide.
+    """
+    try:
+        from src.db.supabase_client import get_client  # import perezoso
+
+        get_client().rpc(
+            "registrar_envio_webhook",
+            {"p_servicio": "bralidus", "p_canal": canal, "p_ok": ok, "p_error": error},
+        ).execute()
+    except Exception as err:  # noqa: BLE001
+        log.debug("[ops-alert] no se pudo registrar la salud del webhook: %s", err)
+
+
 def _texto_plano(nivel: str, titulo: str, detalle: str | None, campos: list[tuple[str, str]]) -> str:
     partes = [f"{_EMOJI[nivel]} **{titulo}**"]
     if detalle:
@@ -149,9 +174,25 @@ def send_ops_alert(
             json={"embeds": [embed], "text": plano},
             timeout=_TIMEOUT_S,
         )
-        if res.status_code >= 400:
-            # Un embed mal formado da 400 y el aviso se perdería del todo.
-            # Mejor feo que mudo.
-            requests.post(url, json={"content": plano, "text": plano}, timeout=_TIMEOUT_S)
+        if res.status_code < 400:
+            _registrar_envio(canal_final, True)
+            return
+
+        # Un embed mal formado da 400 y el aviso se perdería del todo.
+        # Mejor feo que mudo.
+        reintento = requests.post(
+            url, json={"content": plano, "text": plano}, timeout=_TIMEOUT_S
+        )
+        # El resultado del reintento se MIRA: antes se descartaba, así que un
+        # webhook revocado (401/404) fallaba para siempre sin dejar rastro.
+        if reintento.status_code < 400:
+            _registrar_envio(canal_final, True)
+        else:
+            _registrar_envio(
+                canal_final,
+                False,
+                f"HTTP {res.status_code} (reintento HTTP {reintento.status_code})",
+            )
     except Exception as err:  # noqa: BLE001 — el alerting nunca debe propagar
         log.warning("[ops-alert] fallo al enviar webhook: %s", err)
+        _registrar_envio(canal_final, False, str(err))

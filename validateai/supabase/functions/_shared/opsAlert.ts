@@ -137,15 +137,72 @@ export async function sendOpsAlert(alert: OpsAlert): Promise<void> {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ embeds: [embed], text: plano }),
     });
-    if (!res.ok) {
-      // Un embed mal formado da 400 y el aviso se perdería. Mejor feo que mudo.
-      await fetch(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ content: plano, text: plano }),
-      }).catch(() => {});
+
+    if (res.ok) {
+      registrarEnvioWebhook(channel, true);
+      return;
+    }
+
+    // Un embed mal formado da 400 y el aviso se perdería. Mejor feo que mudo.
+    const reintento = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ content: plano, text: plano }),
+    }).catch(() => null);
+
+    // El resultado del reintento se MIRA. Antes se descartaba con
+    // `.catch(() => {})`, así que un webhook revocado (401/404) fallaba para
+    // siempre sin dejar más rastro que una línea en los logs.
+    if (reintento?.ok) {
+      registrarEnvioWebhook(channel, true);
+    } else {
+      registrarEnvioWebhook(
+        channel,
+        false,
+        `HTTP ${res.status}${reintento ? ` (reintento HTTP ${reintento.status})` : ' (reintento sin respuesta)'}`,
+      );
     }
   } catch (err) {
     console.warn('[ops-alert] fallo al enviar webhook:', err);
+    registrarEnvioWebhook(channel, false, err instanceof Error ? err.message : String(err));
   }
+}
+
+/**
+ * Deja constancia en base del resultado del envío.
+ *
+ * POR QUÉ: este helper nunca lanza, así que un webhook revocado falla para
+ * siempre en silencio — y el canal de `latido` es el que más sufre, porque su
+ * valor está en que el silencio signifique algo. Con la URL muerta, un canal
+ * sano y un servicio detenido se ven idénticos.
+ *
+ * `ops_webhook_health` es la fuente de verdad sobre la salud del alerting,
+ * independiente del alerting mismo. El reporte de frescura de mp-sync la lee y
+ * avisa por un canal que SÍ funcione.
+ *
+ * Fire-and-forget y nunca lanza: sería absurdo que el medidor de fallos rompa
+ * lo que mide.
+ */
+function registrarEnvioWebhook(canal: string, ok: boolean, error?: string): void {
+  const url = Deno.env.get('SUPABASE_URL');
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !key) return;
+
+  void fetch(`${url}/rest/v1/rpc/registrar_envio_webhook`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      apikey: key,
+      authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      p_servicio: 'edge-functions',
+      p_canal: canal,
+      p_ok: ok,
+      p_error: error ?? null,
+    }),
+  }).catch(() => {
+    // Sin log: si la base no responde ya hay ruido de sobra en otros lados y
+    // este es el menos importante de todos.
+  });
 }
