@@ -36,7 +36,6 @@ from api.moe_router import gating_network
 from api.experts import EXPERTS
 from api.radar.signal_cache import signal_cache
 from api.auth import require_api_key
-from api.spulse import router as spulse_router, build_relationship_context
 from api.licitus import router as licitus_router, build_procurement_context
 from api.jobs import router as jobs_router
 from api import rag, cache
@@ -124,9 +123,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Router proxy read-only de S-Pulse (/spulse/*). Protegido por require_api_key.
-app.include_router(spulse_router)
-
 # Router proxy read-only de Licitus (/licitus/*). Protegido por require_api_key.
 app.include_router(licitus_router)
 
@@ -135,25 +131,14 @@ app.include_router(licitus_router)
 app.include_router(jobs_router)
 
 
-# ── Helper: inyección de inteligencia de relaciones (S-Pulse, Fase 2) ──────────
-
-async def _maybe_append_spulse(
-    context: str, startup_context, tenant_id: str | None
-) -> str:
-    """
-    Si el startup_context trae un company_rut y S-Pulse está configurado, anexa un
-    bloque de inteligencia de relaciones societarias citable. Degrada a `context`
-    sin cambios ante cualquier fallo (nunca bloquea ni rompe la respuesta).
-    """
-    rut = getattr(startup_context, "company_rut", None) if startup_context else None
-    if not rut:
-        return context
-    try:
-        rel = await asyncio.to_thread(build_relationship_context, rut, tenant_id)
-    except Exception as exc:  # defensivo — build_* ya degrada, esto es doble red
-        log.warning("[spulse] build_relationship_context falló (%s).", exc)
-        return context
-    return f"{context}\n\n{rel}" if rel else context
+# S-Pulse dejo de ser un servicio independiente (se movio dentro de Animus y no
+# expone API). Aca vivia `_maybe_append_spulse`, que anexaba un bloque de
+# relaciones societarias al contexto via HTTP. Se retira junto con su cliente y
+# su router proxy: apuntaba a un host que ya no resuelve.
+#
+# Para reponerlo cuando vuelva: espeja `_maybe_append_licitus` de abajo — mismo
+# contrato (lee company_rut del startup_context, degrada a `context` intacto
+# ante cualquier fallo) y se llama en los mismos dos puntos de /query.
 
 
 async def _maybe_append_licitus(context: str, startup_context) -> str:
@@ -161,7 +146,7 @@ async def _maybe_append_licitus(context: str, startup_context) -> str:
     Si el startup_context trae un company_rut y Licitus está configurado, anexa
     un bloque de actividad en compras públicas (OCs reales + benchmarks de
     Mercado Público) citable. Degrada a `context` sin cambios ante cualquier
-    fallo — mismo contrato que _maybe_append_spulse.
+    fallo.
     """
     rut = getattr(startup_context, "company_rut", None) if startup_context else None
     if not rut:
@@ -243,10 +228,7 @@ async def query_endpoint(req: QueryRequest) -> QueryResponse:
     # 5. Ensamblar contexto
     context = rag.assemble_context(enriched)
 
-    # 5b. Inteligencia de relaciones societarias (S-Pulse) — opcional, degrada a nada
-    context = await _maybe_append_spulse(context, req.startup_context, req.tenant_id)
-
-    # 5c. Actividad en compras públicas (Licitus) — opcional, degrada a nada
+    # 5b. Actividad en compras públicas (Licitus) — opcional, degrada a nada
     context = await _maybe_append_licitus(context, req.startup_context)
 
     node_results = [
@@ -397,9 +379,6 @@ async def query_moe_endpoint(
     # ── 4. Enriquecer + ensamblar contexto ────────────────────────────────────
     enriched = await asyncio.to_thread(rag.enrich_nodes_with_metadata, client, raw_nodes)
     context = rag.assemble_context(enriched)
-
-    # Inteligencia de relaciones societarias (S-Pulse) — opcional, degrada a nada
-    context = await _maybe_append_spulse(context, req.startup_context, req.tenant_id)
 
     # Actividad en compras públicas (Licitus) — opcional, degrada a nada
     context = await _maybe_append_licitus(context, req.startup_context)
@@ -766,23 +745,6 @@ async def health_endpoint() -> HealthResponse:
     except Exception as exc:
         services.append(ServiceStatus(name="fred", ok=False, detail=str(exc)))
 
-    # S-Pulse (integración opcional — deshabilitada NO cuenta como fallo)
-    try:
-        from src.clients.spulse_client import spulse
-        if not spulse.is_enabled():
-            services.append(ServiceStatus(name="spulse", ok=True, detail="deshabilitada (sin BASE_URL)"))
-        else:
-            reachable = spulse.health()
-            services.append(
-                ServiceStatus(
-                    name="spulse",
-                    ok=reachable,
-                    detail="alcanzable" if reachable else "configurada pero no responde /health",
-                )
-            )
-    except Exception as exc:
-        services.append(ServiceStatus(name="spulse", ok=False, detail=str(exc)))
-
     # Licitus (integración opcional — deshabilitada NO cuenta como fallo)
     try:
         from src.clients.licitus_client import licitus
@@ -815,11 +777,21 @@ async def health_endpoint() -> HealthResponse:
         from api.scheduler import scheduler
         from api.health_monitor import job_health
         jobs = scheduler.get_jobs()
+        # `scheduler.running` es False A PROPOSITO en serverless: el lifespan no
+        # levanta APScheduler y los jobs los dispara un cron externo contra
+        # /jobs/*. Reportarlo como ok=False marcaba el health en rojo de forma
+        # permanente por un estado que es el esperado — una alarma que suena
+        # siempre es una alarma que nadie mira. Lo que importa es que los jobs
+        # esten registrados; su salud real la reportan las lineas `job:*`.
         services.append(
             ServiceStatus(
                 name="scheduler",
-                ok=scheduler.running,
-                detail=f"{len(jobs)} jobs activos",
+                ok=len(jobs) > 0,
+                detail=(
+                    f"{len(jobs)} jobs registrados, disparados por cron externo"
+                    if not scheduler.running
+                    else f"{len(jobs)} jobs activos (APScheduler en proceso)"
+                ),
             )
         )
         for job_id, state in job_health.status().items():

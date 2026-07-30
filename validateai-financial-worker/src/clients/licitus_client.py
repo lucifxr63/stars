@@ -6,13 +6,14 @@ real de un proveedor en compras públicas (OCs de `purchase_orders`), benchmarks
 mercado por rubro UNSPSC/región, y licitaciones activas. Auth por secreto compartido
 `Authorization: Bearer <LICITUS_API_KEY>` (Licitus también acepta x-api-key).
 
-Filosofía de degradación (idéntica a spulse_client): CUALQUIER fallo — Licitus no
+Filosofía de degradación: CUALQUIER fallo — Licitus no
 configurado, timeout, 4xx/5xx, JSON malformado — degrada a `None`. El llamador
 nunca crashea; a lo sumo pierde la capa de inteligencia de compras públicas.
 
-⚠️ Diferencia clave vs. S-Pulse: el contrato /v1 de Licitus devuelve JSON PLANO,
-SIN la envoltura `{success, data}`. `_get` retorna `resp.json()` directo — NO hay
-`payload.get("data")` ni validación de `payload["success"]`.
+⚠️ El contrato /v1 de Licitus devuelve JSON PLANO, SIN la envoltura
+`{success, data}`. `_get` retorna `resp.json()` directo — NO hay
+`payload.get("data")` ni validación de `payload["success"]`. (Es la diferencia
+que costó un bug cuando convivía con un cliente que sí venía envuelto.)
 
 Contrato consumido (ver docs/LICITUS_BRALIDUS_INTEGRATION_PLAN.md §1):
   GET /proveedor/:rut?periodo_meses=            (404 si el RUT no tiene actividad)

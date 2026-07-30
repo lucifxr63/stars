@@ -57,7 +57,7 @@ def test_get_activas_devuelve_lista_plana():
     assert result == activas
 
 
-def test_wrapper_estilo_spulse_no_se_desenvuelve():
+def test_respuesta_envuelta_no_se_desenvuelve():
     """Si algún día Licitus envolviera, el cliente NO debe extraer 'data' mágicamente."""
     envuelto = {"success": True, "data": {"x": 1}}
     client = make_client()

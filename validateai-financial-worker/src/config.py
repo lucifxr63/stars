@@ -21,18 +21,13 @@ OPENAI_API_KEY: str = _require("OPENAI_API_KEY")
 # Mercado Público: ingestado por proceso externo, no se necesita key aquí.
 CMF_BEST_KEY: str = os.getenv("CMF_BEST_KEY", "")     # api.cmfchile.cl
 
-# ── S-Pulse — B2B Relationship Intelligence (host↔S-Pulse, opcional) ───────────
-# Bralidus actúa como "host app" de S-Pulse (grafo societario chileno + trazabilidad
-# legal). Si BASE_URL no está configurada, la integración se desactiva por completo
-# (degrada a None, nunca crashea). El API key es un secreto COMPARTIDO, no un JWT.
-# OJO: la URL lleva el sufijo /api — sin él todas las llamadas dan 404.
-# El ejemplo de acá apuntaba a s-pulse.up.railway.app, que ya no existe: S-Pulse
-# se migró a Vercel. Al 2026-07-30 su dominio (api.nexus.scouttech.lat) NO
-# resuelve en DNS, y por eso el /health de este servicio reporta
-# `spulse: configurada pero no responde`. Es DNS pendiente, no código.
-SPULSE_BASE_URL: str = os.getenv("SPULSE_BASE_URL", "").rstrip("/")  # ej: https://api.nexus.scouttech.lat/api
-SPULSE_INTERNAL_API_KEY: str = os.getenv("SPULSE_INTERNAL_API_KEY", "")
-SPULSE_TIMEOUT_S: float = float(os.getenv("SPULSE_TIMEOUT_S", "8"))  # timeout duro por request
+# S-Pulse (grafo societario) quedó en stand-by: dejó de ser un servicio
+# independiente, se movió dentro de Animus y no expone API ni frontend. Acá
+# vivían SPULSE_BASE_URL / SPULSE_INTERNAL_API_KEY / SPULSE_TIMEOUT_S, que
+# alimentaban un cliente HTTP hacia un host que ya no resuelve en DNS.
+#
+# Si vuelve a exponerse, el dato que costó descubrir: la URL lleva sufijo /api
+# — sin él todas las llamadas devuelven 404.
 
 # ── Licitus — Inteligencia de Mercado Público (host↔Licitus, opcional) ─────────
 # Bralidus consume la API B2B /v1 de Licitus (actividad de proveedores en compras
