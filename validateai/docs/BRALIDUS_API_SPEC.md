@@ -1,55 +1,59 @@
 # Bralidus Engine — Especificación Técnica, Puntos de Mejora y Decálogo de Seguridad
 
-> **Versión del Sistema:** 1.2.0 (Fase Bralidus Integration & Gateway RaaS)  
+> **Versión del Sistema:** 1.3.0 (Fase MoE, PJUD Corte Suprema, Licitus Enriquecido & MCP Server)  
 > **Servicio Backend:** `BralidusPY` (Python FastApi / GraphRAG MoE en Railway) + `api-v1` (Edge Gateway Hono en Supabase)  
-> **Portal Frontend:** `/developers` (`Developers.tsx`, `MacroIntelligence.tsx`, `KnowledgeGraph.tsx`, `CorrelationChart.tsx`)
+> **Portal Frontend:** `/developers` (`Developers.tsx`, `MacroIntelligence.tsx`, `KnowledgeGraph.tsx`, `CorrelationChart.tsx`)  
+> **Conectores LLM:** `@bralidus/mcp` / `animus-engine-mcp` (Servidor Model Context Protocol nativo para Cursor IDE y Claude Desktop)
 
 ---
 
 ## 1. Arquitectura y Especificación de la API de Bralidus
 
-Bralidus es el motor de Inteligencia de Mercado, Doctrina Normativa, Grafo Societario e Inteligencia B2G del ecosistema. Proporciona una superficie unificada de GraphRAG a través de la API Gateway `api-v1`.
+Bralidus es el motor de Inteligencia de Mercado, Doctrina Normativa, Grafo Societario e Inteligencia B2G del ecosistema. Proporciona una superficie unificada de GraphRAG y enrutamiento dinámico de expertos (Mixture-of-Experts) a través de la API Gateway `api-v1` y servidores MCP.
 
-### Endpoints Principales
+### 1.1 Endpoints Principales — API Gateway (`api-v1`)
 
 | Método | Ruta API Gateway | Destino BralidusPY / Backend | Descripción |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/v1/intel/query` | `/query` | GraphRAG unificado (macro + doctrina + S-Pulse/Licitus si hay `company_rut`). |
-| `POST` | `/api/v1/intel/query/moe` | `/query/moe` | Mixture-of-Experts con `GatingNetwork` para enrutamiento por dominio. |
+| `POST` | `/api/v1/intel/query/moe` | `/query/moe` | Mixture-of-Experts con `GatingNetwork` (5 expertos + Radar Forense para alertas vivas). |
 | `GET` | `/api/v1/data/spulse/companies/search` | `/spulse/companies/search` | Búsqueda semántica en el grafo societario chileno. |
-| `GET` | `/api/v1/data/spulse/companies/:rut/profile` | `/spulse/companies/:rut/profile` | Estructura legal, socios y poderes. |
-| `GET` | `/api/v1/data/spulse/companies/:rut/network` | `/spulse/companies/:rut/network` | Malla societaria e interconexiones societarias. |
+| `GET` | `/api/v1/data/spulse/companies/:rut/profile` | `/spulse/companies/:rut/profile` | Estructura legal, socios, poderes y nivel de riesgo. |
+| `GET` | `/api/v1/data/spulse/companies/:rut/network` | `/spulse/companies/:rut/network` | Malla societaria e interconexiones societarias 360°. |
 | `GET` | `/api/v1/data/licitus/proveedor/:rut` | `/licitus/proveedor/:rut` | Órdenes de compra y comportamiento histórico en Mercado Público. |
-| `GET` | `/api/v1/data/licitus/mercado/benchmarks` | `/licitus/mercado/benchmarks` | Tiempos de adjudicación y precios de referencia B2G. |
-| `GET` | `/api/v1/data/licitus/mercado/activas` | `/licitus/mercado/activas` | Licitaciones activas filtradas por código UNSPSC y región. |
+| `GET` | `/api/v1/data/licitus/mercado/benchmarks` | `/licitus/mercado/benchmarks` | Tiempos de adjudicación y precios de referencia B2G (percentiles p25/mediana/p75). |
+| `GET` | `/api/v1/data/licitus/mercado/activas` | `/licitus/mercado/activas` | Licitaciones activas filtradas por código UNSPSC, región y monto. |
+| `GET` | `/api/v1/data/chilecompra/metricas` | `chilecompra-calcular` | Métricas propietarias M1-M10 e historial analítico B2G. |
+
+### 1.2 Fuentes de Datos Especializadas Integradas en Doctrina y Grafo
+- **Doctrina Normativa y Poder Judicial (PJUD):**  
+  - Ingesta integral de causas judiciales de la **Corte Suprema** (`pjud_suprema_detalle` con 124.245 filas y causa de término).  
+  - Cuadratura e identidad forense garantizada mediante la clave de conflicto `(LIBRO, ROL, ANO_ROL, FECHA_FALLO, SALA)`, resolviendo reiteraciones de fallos en diferentes semestres.
+  - Estadísticas judiciales consolidadas (`pjud_estadisticas`) y auditoría de origen.
+- **Inteligencia B2G y Enriquecimiento Continuo (Licitus / Mercado Público):**  
+  - Pipeline de enriquecimiento escalable en Durable Workflows (`enrich-ordenes.workflow.ts`).  
+  - Encadenamiento de hasta 10 pasadas por disparo, con lotes calibrados de 90 OCs por step (~252s de ejecución por invocación) para asegurar 16% de margen de seguridad frente al límite de 300s del runtime, drenando el backlog B2G (~12.000 OCs/día) sin interrupciones ni timeouts.
 
 ---
 
-## 2. Puntos de Mejora Identificados (Roadmap de Optimización)
+## 2. Puntos de Mejora y Roadmap de Optimización (Estado Real vs. Próximos Hitos)
 
-1. **Caché Multinivel de Perfil (`bralidus_context_cache`):**
-   - *Estado actual:* Se cachea la 4-tupla `(scope, industry, stage, geography)`.
-   - *Mejora:* Implementar una invalidación proactiva (*stale-while-revalidate*) cuando cambian indicadores macro críticos (como UF o Tasa de Política Monetaria) para evitar entregar evidencias desactualizadas durante ventanas de 24h.
-
-2. **Canonización entre Licitus y ChileCompra:**
-   - *Estado actual:* `/data/licitus/*` entrega órdenes de compra reales desde la base de Licitus, mientras `/data/chilecompra/metricas` calcula métricas propietarias `M1-M10`.
-   - *Mejora:* Consolidar un esquema de respuesta normalizado `LicitusNormalizedPayload` para evitar duplicidad de contratos en el frontend.
-
-3. **Compresión Dinámica de Evidencias (`compressBralidus`):**
-   - *Estado actual:* `compressBralidus` concatena evidencias en texto plano para el prompt del LLM.
-   - *Mejora:* Implementar deduplicación sintáctica de fragmentos legales repetidos en doctrina y acotar los extractos a máximo 350 tokens por evidencia para no saturar la ventana de contexto.
-
-4. **Resiliencia de Conexión y Circuit Breaker en Edge Gateway:**
-   - *Estado actual:* `AbortSignal.timeout(30_000)` en Edge Functions.
-   - *Mejora:* Incorporar un patrón Circuit Breaker en `api-v1` para que, tras 3 fallos consecutivos de BralidusPY (HTTP 5xx / timeout), responda inmediatamente con fallback degradado en caché sin agotar el timeout de Deno Deno.serve.
-
-5. **Métricas de Rendimiento y Latencia MoE:**
-   - *Estado actual:* No se registra el tiempo de inferencia de cada experto.
-   - *Mejora:* Retornar en las respuestas de `/intel/query/moe` la cabecera/propiedad `_latency_breakdown` (ej. `gating_ms`, `retrieval_ms`, `expert_exec_ms`).
+1. **Enriquecimiento Escalable B2G (`enrich-ordenes`): [COMPLETADO]**
+   - *Logro:* Se resolvió el cuello de botella de 100 OCs/día mediante encadenamiento de pasadas (`use step`) con margen defensivo del 16% (90 ítems por lote), aumentando el caudal a ~1.000 OCs por disparo (12 corridas diarias).
+2. **Cuadratura Judicial e Identidad Forense PJUD: [COMPLETADO]**
+   - *Logro:* Se descubrió e implementó la identidad formal con `FECHA_FALLO` y deduplicación por clave de conflicto en `pjud_suprema_detalle`, eliminando pérdidas silenciosas en el batch de inserción de Postgres.
+3. **Caché Multinivel de Perfil (`bralidus_context_cache`): [EN CURSO]**
+   - *Estado actual:* Se cachea la 4-tupla `(scope, industry, stage, geography)` con control RLS estricto.
+   - *Mejora pendiente:* Implementar invalidación proactiva (*stale-while-revalidate*) al detectar cambios macro críticos (UF, TPM, IPC BCCh).
+4. **Procedencia Comprobable y Citas Verificables (`evidence[]`): [EN CURSO]**
+   - *Estado actual:* `compressBralidus` concatena evidencias en texto plano para el prompt.
+   - *Mejora pendiente:* Estandarizar citas inline del formato `[FUENTE Bralidus · {experto}] {document_title}: {ultimo_valor} {unidad} ({ultima_fecha})` y renderizarlas en el `EvidenceWall` con badge de frescura.
+5. **Canonización entre Licitus y ChileCompra: [BACKLOG]**
+   - *Mejora pendiente:* Consolidar el esquema de respuesta normalizado `LicitusNormalizedPayload` entre `/data/licitus/*` (órdenes de compra) y `/data/chilecompra/metricas` (M1-M10).
 
 ---
 
-## 3. Decálogo de Seguridad para Bralidus y API Gateway
+## 3. Decálogo de Seguridad y Resiliencia para Bralidus y API Gateway
 
 1. **Aislamiento Absoluto de Secretos (Zero-Leak Proxy Pattern):**
    - La API Key máster de `BRALIDUS_API_KEY` reside **únicamente** en las variables de entorno server-side de Supabase Edge Functions. El cliente/navegador nunca ve esta llave; autentica contra `api-v1` usando su propia `Developer API Key` (`val_live_...`).
@@ -78,5 +82,9 @@ Bralidus es el motor de Inteligencia de Mercado, Doctrina Normativa, Grafo Socie
 9. **Timeouts Defensivos y AbortSignal:**
    - Cada llamada HTTP desde Edge Gateway hacia BralidusPY está acotada mediante `AbortSignal.timeout(12_000)` o `30_000`. Esto previene el agotamiento de sockets de red y ataques de colgado de conexiones en Edge Runtime.
 
-10. **Encabezados CORS Restringidos y Encabezados de Seguridad:**
+10. **Telemetría y Observabilidad en Sala de Control (Ops Control Room):**
+    - Despliegues automáticos de Edge Functions y alarmas de degradación en canales de avisos emiten alertas automáticas a la Sala de Control (`DISCORD_DEPLOYS_WEBHOOK`, `ops_webhook_health`), con trazabilidad inmediata de versión y commit.
+
+11. **Encabezados CORS Restringidos y Encabezados de Seguridad:**
     - Respuestas HTTP con control explícito de origen y cabeceras permitidas (`Authorization`, `Content-Type`, `X-Client-Info`), previniendo vulnerabilidades de Cross-Origin Resource Sharing (CORS) e intercepción maliciosa.
+

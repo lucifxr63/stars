@@ -700,9 +700,9 @@
     "semantic_hash": "efe1cc0d2752e184c2b44b25f4233dc6"
   },
   "validateai-financial-worker/api/jobs.py": {
-    "mtime": 1784172127.7764242,
-    "ast_hash": "b498b8df76e7aa6a6e37f885fda4bad5",
-    "semantic_hash": "b498b8df76e7aa6a6e37f885fda4bad5"
+    "mtime": 1785431033.9177692,
+    "ast_hash": "993786422b3543b87e7024e39e31fb61",
+    "semantic_hash": ""
   },
   "validateai-financial-worker/api/licitus.py": {
     "mtime": 1784841121.7788305,
@@ -2320,8 +2320,8 @@
     "semantic_hash": "7c086fde2baf15237796a2d56748999b"
   },
   "validateai/supabase/functions/ai-validate/index.ts": {
-    "mtime": 1785362390.0139747,
-    "ast_hash": "a83230c9274a0962944153a3f4964385",
+    "mtime": 1785430661.7117975,
+    "ast_hash": "dd6e7cb80e045209b807684fdda0053b",
     "semantic_hash": ""
   },
   "validateai/supabase/functions/anonymize-idea/index.ts": {
@@ -2350,8 +2350,8 @@
     "semantic_hash": ""
   },
   "validateai/supabase/functions/api-v1/routes/data.ts": {
-    "mtime": 1785306282.8189719,
-    "ast_hash": "723e758552116a76adc99b38c41a63d4",
+    "mtime": 1785430716.250164,
+    "ast_hash": "071f48331628f40dfb7640068780d47a",
     "semantic_hash": ""
   },
   "validateai/supabase/functions/api-v1/routes/health.ts": {
@@ -2990,13 +2990,13 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/app/env.ts": {
-    "mtime": 1785373549.0072157,
-    "ast_hash": "efd1dedc9e479686fbfe14f2b68298bf",
+    "mtime": 1785427596.0619426,
+    "ast_hash": "3544f71819ec3cf007379f63c293bf8e",
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/app/jobs.routes.ts": {
-    "mtime": 1785374006.8978071,
-    "ast_hash": "27b5e41e50c230d371d77745d85a6906",
+    "mtime": 1785423810.112645,
+    "ast_hash": "5c52bff4cc5e07f64e9d016099ed135a",
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/index.ts": {
@@ -3030,8 +3030,8 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/infrastructure/mercado-publico/compra-agil.client.ts": {
-    "mtime": 1785273607.7880924,
-    "ast_hash": "f312a0061fb9e6d9e3252229ffe8ef94",
+    "mtime": 1785389320.6329813,
+    "ast_hash": "a32cb098e02e7db999a4697942135b9a",
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/infrastructure/mercado-publico/compra-agil.types.ts": {
@@ -3070,8 +3070,8 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/infrastructure/ops-alert/ops-alert.ts": {
-    "mtime": 1785358055.9458568,
-    "ast_hash": "66ef22de574908a1669976ca27ac5bf8",
+    "mtime": 1785428615.6320105,
+    "ast_hash": "1315a87b17de306981aca300fbaac357",
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/jobs/build-buyer-profiles.job.ts": {
@@ -3085,8 +3085,8 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/jobs/enrich-ordenes.job.ts": {
-    "mtime": 1785373533.4558363,
-    "ast_hash": "22b7ea62706fde297fab352e16266d98",
+    "mtime": 1785389340.902609,
+    "ast_hash": "52ed05564bdce57e32a8dd013ab55ad3",
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/jobs/refresh-opportunities.job.ts": {
@@ -3210,8 +3210,8 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/modules/sync/infrastructure/sync-log.repository.ts": {
-    "mtime": 1785358090.8162894,
-    "ast_hash": "7ea1830f140a814d542a643984ac1dc8",
+    "mtime": 1785428641.5731995,
+    "ast_hash": "e0ed96204f03bc0d8eaec5340542a84b",
     "semantic_hash": ""
   },
   "validateai-developer-portal/services/mercado-publico/src/shared/constants/tender-types.ts": {
@@ -3905,8 +3905,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/deploy-functions.yml": {
-    "mtime": 1781740548.3251817,
-    "ast_hash": "a225a4f69502e6842214eed53537fb55",
+    "mtime": 1785431767.2099395,
+    "ast_hash": "11c26f9cbf1f2a953b58c5eb6bc12d8c",
     "semantic_hash": ""
   },
   ".github/workflows/frontend-ci.yml": {
@@ -4355,13 +4355,13 @@
     "semantic_hash": ""
   },
   "validateai-developer-portal/.github/workflows/ci-cd.yml": {
-    "mtime": 1784752878.0385823,
-    "ast_hash": "4247874e58a6367b71ac906e6ee22833",
+    "mtime": 1785431758.545031,
+    "ast_hash": "483efdd6b8677a6e6adaf51232e5b376",
     "semantic_hash": ""
   },
   "validateai-developer-portal/.github/workflows/mp-sync-cron.yml": {
-    "mtime": 1785370437.6577919,
-    "ast_hash": "cf391a6ba8a2a2c6888f3b067c93ef67",
+    "mtime": 1785424571.8776062,
+    "ast_hash": "f4c463e8b9e09f6f2a6b73871323b5c0",
     "semantic_hash": ""
   },
   "validateai-developer-portal/CLAUDE.md": {
@@ -4937,6 +4937,56 @@
   "ANIMUS_ENGINE_FRONTEND_SPEC.md": {
     "mtime": 1785377983.7328677,
     "ast_hash": "ca4f7189b4d30b1fbaa4fe4bcfcb1099",
+    "semantic_hash": ""
+  },
+  "validateai-developer-portal/services/mercado-publico/src/infrastructure/pjud/pjud.client.ts": {
+    "mtime": 1785423729.5707202,
+    "ast_hash": "fe8251e94c300f554771441aac4bc9f7",
+    "semantic_hash": ""
+  },
+  "validateai-developer-portal/services/mercado-publico/src/jobs/reporte-frescura.job.ts": {
+    "mtime": 1785438634.7314117,
+    "ast_hash": "fa62a603fe21ade38ce6ee0115c7f625",
+    "semantic_hash": ""
+  },
+  "validateai-developer-portal/services/mercado-publico/src/jobs/sync-pjud.job.ts": {
+    "mtime": 1785428668.0007787,
+    "ast_hash": "061e451d7c26bf5d12e8152d63696b52",
+    "semantic_hash": ""
+  },
+  "validateai-developer-portal/services/mercado-publico/src/workflows/reporte-frescura.workflow.ts": {
+    "mtime": 1785389422.93993,
+    "ast_hash": "1b36840dcee6f5aa6dbd339f699cf217",
+    "semantic_hash": ""
+  },
+  "validateai-developer-portal/services/mercado-publico/src/workflows/sync-pjud.workflow.ts": {
+    "mtime": 1785423786.0744574,
+    "ast_hash": "89046fbcb84308e84482a44cca6ef415",
+    "semantic_hash": ""
+  },
+  "validateai-financial-worker/api/ops_alert.py": {
+    "mtime": 1785431011.8830476,
+    "ast_hash": "339fdac1177a9c28d2df2615b380fd3a",
+    "semantic_hash": ""
+  },
+  "validateai/supabase/functions/_shared/opsAlert.ts": {
+    "mtime": 1785430619.450309,
+    "ast_hash": "eff35f70810704c7300710404239a88b",
+    "semantic_hash": ""
+  },
+  "validateai/supabase/migrations/20260730000001_pjud_estadisticas.sql": {
+    "mtime": 1785423673.0158353,
+    "ast_hash": "4a1cae8b63d416511ffbe2fee9fe80b0",
+    "semantic_hash": ""
+  },
+  "validateai/supabase/migrations/20260730000002_pjud_unique_coalesce.sql": {
+    "mtime": 1785424238.552353,
+    "ast_hash": "1de510b7010a983067e3504533028840",
+    "semantic_hash": ""
+  },
+  "docs/PJUD_API_HALLAZGOS.md": {
+    "mtime": 1785423639.4387977,
+    "ast_hash": "0633a8f4802e1ed730dc256018fa0204",
     "semantic_hash": ""
   }
 }
