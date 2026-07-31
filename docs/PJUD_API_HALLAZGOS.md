@@ -60,20 +60,52 @@ ni año que se haya probado.
 Lo más valioso de toda la API. Los `_detalle` **no son agregados**: son causa por
 causa.
 
-| Endpoint | Filas (2024) | Contenido |
-|---|---|---|
-| `/pjen/terminos_suprema_detalle/{c}/{a}` | 95.075 | `RECURSOS`, `AGRUPADOR_RECURSOS`, `LIBRO`, `ROL` |
-| `/pjen/terminos_sala_suprema_detalle/{c}/{a}` | 95.075 | ídem, por sala |
-| `/pjen/ingresos_recursos_suprema_detalle/{c}/{a}` | 62.009 | recursos ingresados |
-| `/pjen/inventario_suprema_detalle/{c}/{a}` | 7.469 | causas en inventario |
-| `/pjen/duracion_causas_suprema/{c}/{a}` | 7 | duración promedio por tipo de recurso |
+| Endpoint | Filas (2024) | Peso | Descarga | Contenido |
+|---|---|---|---|---|
+| `/pjen/terminos_suprema_detalle/{c}/{a}` | 95.075 | 36,5 MB | 5,3 s | 14 campos: causa, sala, fechas de ingreso y fallo, grupo de término |
+| `/pjen/terminos_sala_suprema_detalle/{c}/{a}` | 95.075 | 36,5 MB | 5,3 s | ⚠️ **duplicado exacto del anterior** — ver abajo |
+| `/pjen/ingresos_recursos_suprema_detalle/{c}/{a}` | 62.009 | 21,1 MB | 3,0 s | recursos ingresados, con `MATERIA` y sala |
+| `/pjen/inventario_suprema_detalle/{c}/{a}` | 7.469 | 2,2 MB | 0,4 s | causas en inventario, con `MATERIA_PROTECCION` |
+| `/pjen/duracion_causas_suprema/{c}/{a}` | 7 | — | 1,1 s | duración promedio por tipo de recurso |
 
 `duracion_causas_suprema` trae `{key, value, prom}` — duración media por vía de
 tramitación (ej. "CUENTA (SECRETARIA)": 17,2 días vs promedio 91,7).
 
-**Ojo con el volumen:** 95.075 filas en una sola respuesta JSON. Cualquier
-ingesta tiene que asumir payloads de varios MB y no cargarlos en memoria a la
-ligera.
+### Tres cosas que hay que saber antes de ingerir esto
+
+**1. `terminos_sala_suprema_detalle` es el MISMO endpoint con otro nombre.**
+Devuelve un payload idéntico byte a byte a `terminos_suprema_detalle`: mismo
+SHA256, mismos 36.536.309 bytes. No es "lo mismo desglosado por sala". Ingerir
+las dos serían 95.075 filas duplicadas por año. Se ingiere sólo una.
+
+**2. La API es rápida; el cuello está en escribir.** Una primera medición dio
+44 s para 2 MB y de ahí se dedujo que estas series no cabían en una función
+serverless. Era falso: medía la lentitud del cliente HTTP usado para probar
+(PowerShell atragantándose con payloads grandes), no la de la fuente. Con `curl`
+los 36,5 MB llegan en 5,3 s. Lo que hay que resolver es la escritura: 95.075
+filas de a una son 95.075 viajes a la base.
+
+**No pagina:** `?page`, `?limit` y `?offset` se ignoran; siempre devuelve el
+conjunto entero. El troceo va del lado del consumidor.
+
+**3. La identidad de una fila no es la causa.** `(LIBRO, ROL, ANO_ROL)` parece la
+clave natural y no alcanza para los términos: 95.075 filas dan 95.064
+combinaciones. Los 11 casos **no son duplicados** — son causas terminadas dos
+veces (Familia|241225|2023 aparece "Inadmisibles" el 2024-01-25 y "Rechazados"
+el 2024-12-16). Hay que incluir `FECHA_FALLO`.
+
+Además la fuente **sí publica repeticiones reales**: en 2025,
+`terminos_suprema_detalle` trae dos veces la causa Criminal|59045|2024 fallada
+el 2025-12-15, idéntica en los 14 campos. Si las dos caen en el mismo INSERT,
+Postgres rechaza el statement completo (*"ON CONFLICT DO UPDATE command cannot
+affect row a second time"*) y se pierde el lote entero. Hay que deduplicar antes
+de escribir.
+
+**Los campos varían entre filas** de una misma respuesta (hay filas de términos
+con `SALA_FALLO` y otras sin él), y la fuente agrega columnas sin avisar: esta
+tabla listaba 4 campos y el endpoint devuelve 14. Conviene guardar la fila cruda.
+
+Implementado en `sync-pjud-suprema` → tabla `pjud_suprema_detalle`.
 
 ### 2. Cuenta Pública — nacional, año contra año (6 endpoints)
 
