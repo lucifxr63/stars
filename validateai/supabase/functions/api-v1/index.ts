@@ -85,6 +85,7 @@ import {
   pjudSupremaCausasHandler,
   pjudSupremaCausaHandler,
   pjudSupremaResumenHandler,
+  pjudSupremaTendenciasHandler,
   pjudEstadisticasHandler,
 } from './routes/pjud.ts'
 
@@ -186,6 +187,10 @@ app.get('/api/v1/data/chilecompra/metricas', chilecompraMetricasHandler)
 app.get('/api/v1/data/pjud/suprema/causas', pjudSupremaCausasHandler)
 app.get('/api/v1/data/pjud/suprema/causas/:libro/:rol/:ano_rol', pjudSupremaCausaHandler)
 app.get('/api/v1/data/pjud/suprema/resumen', pjudSupremaResumenHandler)
+// Series por año con filtros: es lo que convierte el dato en analisis. Sin
+// esto, obtener la evolucion de la tasa de confirmacion exigiria bajarse las
+// 794.935 causas terminadas y agregarlas del lado del cliente.
+app.get('/api/v1/data/pjud/suprema/tendencias', pjudSupremaTendenciasHandler)
 app.get('/api/v1/data/pjud/estadisticas', pjudEstadisticasHandler)
 
 // ── Mercado Público (API Canónica Bralidus v1) ──────────────────────────────────

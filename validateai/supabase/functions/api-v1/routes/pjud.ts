@@ -246,6 +246,52 @@ export const pjudSupremaResumenHandler = async (c: any) => {
 }
 
 /**
+ * GET /api/v1/data/pjud/suprema/tendencias?libro=&tipo_recurso=&sala=
+ *
+ * Series por año: volumen, composición del fallo y duración media.
+ *
+ * POR QUÉ ES UN ENDPOINT Y NO ALGO QUE EL CLIENTE CALCULA: para obtener la
+ * evolución de la tasa de confirmación habría que bajarse las 794.935 causas
+ * terminadas y agregarlas. Acá se resuelve en la base.
+ *
+ * Sólo cubre `terminos_suprema_detalle`: `grupo_termino` y `fecha_fallo` no
+ * existen en ingresos ni en inventario, así que mezclarlas daría promedios
+ * sobre universos distintos.
+ */
+export const pjudSupremaTendenciasHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+
+    const { data, error } = await supabase.rpc('pjud_suprema_tendencias', {
+      p_libro: c.req.query('libro') ?? null,
+      p_tipo: c.req.query('tipo_recurso') ?? null,
+      p_sala: c.req.query('sala') ?? null,
+    })
+
+    if (error) {
+      console.error('[pjud] tendencias:', error)
+      return c.json(
+        { data: null, meta: meta(1, 0, 0), errors: [{ code: 'QUERY_FAILED', message: error.message }] },
+        500,
+      )
+    }
+
+    const series = (data?.series ?? []) as unknown[]
+    c.set('tokens_used', 10)
+    return c.json({
+      data,
+      meta: meta(1, series.length, series.length, {
+        serie: 'terminos_suprema_detalle',
+        nota: 'La duración media se calcula sólo sobre causas con fecha de ingreso y de fallo; `con_ambas_fechas` dice cuántas son.',
+      }),
+    })
+  } catch (err) {
+    console.error('[pjud] tendencias handler:', err)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+}
+
+/**
  * GET /api/v1/data/pjud/estadisticas?serie=&anio=
  *
  * Las series agregadas (distintas del grano por causa): presupuesto, dotación,
