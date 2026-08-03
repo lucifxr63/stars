@@ -84,8 +84,69 @@ export const intelQueryHandler = async (c: any) => {
   }
 }
 
-// Alias histórico.
-export const intelMoeQueryHandler = intelQueryHandler
+/**
+ * POST /api/v1/intel/query/moe — Mixture of Experts, de verdad.
+ *
+ * ERA UN ALIAS. La línea decía literalmente
+ *     export const intelMoeQueryHandler = intelQueryHandler
+ * con el comentario "alias histórico", así que este endpoint hacía búsqueda
+ * vectorial plana mientras el portal lo documentaba como "MoE 5 Expertos" y la
+ * calculadora le cobraba 35 créditos. Los cinco expertos existen y funcionan —
+ * en BralidusPY, bajo `POST /query/moe` — pero el gateway nunca los llamaba.
+ *
+ * Se verificó comparando respuestas: `/intel/query/moe` devolvía
+ * `entities_activated` y `routing_reason`, que son los campos de `/query`; los
+ * de `/query/moe` (activación por experto) no aparecían nunca.
+ *
+ * Timeout mayor que el de `/query`: el MoE evalúa cinco expertos y cada uno hace
+ * su propia recuperación.
+ */
+export const intelMoeQueryHandler = async (c: any) => {
+  if (!BRALIDUS_URL) {
+    return sourceUnavailable(
+      c,
+      'BRALIDUS_URL no configurada: el motor de inteligencia no está disponible desde este gateway.',
+      'bralidus',
+    )
+  }
+
+  let body: any = {}
+  try {
+    body = await c.req.json()
+  } catch {
+    body = {}
+  }
+
+  try {
+    const res = await fetch(`${BRALIDUS_URL.replace(/\/$/, '')}/query/moe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(BRALIDUS_API_KEY ? { Authorization: `Bearer ${BRALIDUS_API_KEY}` } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30_000),
+    })
+
+    if (!res.ok) {
+      return sourceUnavailable(
+        c,
+        `El motor MoE respondió ${res.status}.`,
+        'bralidus',
+      )
+    }
+
+    const payload = await res.json()
+    c.set('tokens_used', 35)
+    return c.json(payload)
+  } catch (err) {
+    return sourceUnavailable(
+      c,
+      `No se pudo contactar al motor MoE: ${String(err)}`,
+      'bralidus',
+    )
+  }
+}
 
 // ── Catálogo y expertos ─────────────────────────────────────────────────────
 export const intelExpertsListHandler = stub(SIN_MOTOR)

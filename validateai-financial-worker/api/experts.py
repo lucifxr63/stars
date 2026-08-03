@@ -139,6 +139,7 @@ EXPERTS: dict[str, Expert] = {
             "ciberseguridad",
             "propiedad_intelectual",
             "b2g_chile",
+            "jurisprudencia_suprema",
         ],
         keywords=[
             "ley", "cmf", "gdpr", "spa", "s.p.a.", "vesting", "cliff",
@@ -150,6 +151,11 @@ EXPERTS: dict[str, Expert] = {
             "registro", "fiscalización", "fiscalizacion",
             "finanzas abiertas", "sfa", "open banking",
             "propiedad intelectual", "clase niza",
+            # Jurisprudencia: el experto legal ahora tambien sabe como falla
+            # la Corte Suprema, no solo que dice la norma.
+            "corte suprema", "jurisprudencia", "recurso", "casacion", "casación",
+            "amparo", "proteccion", "protección", "fallo", "sentencia",
+            "apelacion", "apelación", "queja", "nulidad", "sala",
         ],
         match_threshold=0.33,
         top_k=6,

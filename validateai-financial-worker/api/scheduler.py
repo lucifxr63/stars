@@ -556,3 +556,34 @@ scheduler.add_job(
     misfire_grace_time=3600,
     replace_existing=True,
 )
+
+
+async def _job_embeddings_pendientes() -> None:
+    """
+    Vectoriza CUALQUIER nodo sin embedding, sin importar su categoria.
+
+    POR QUE EXISTE: cada job de ingesta embebe solo lo suyo (fred_sync ->
+    "Macroeconomia", el pipeline de /ingest -> una lista fija de 8 categorias).
+    Un nodo en una categoria nueva se inserta bien y NUNCA recibe embedding:
+    queda en la tabla y es invisible para el RAG. Paso exactamente eso con los
+    20 nodos de Jurisprudencia generados desde mp-sync.
+
+    Un nodo sin vector no falla, no avisa y no aparece. Este job cierra ese
+    agujero para todas las categorias, presentes y futuras.
+    """
+    from src.db.supabase_client import (
+        get_client, fetch_nodes_pending_embedding, bulk_update_embeddings,
+    )
+    from src.embeddings.openai_embedder import embed_nodes
+
+    client = get_client()
+    # category=None y categories=None -> todos los pendientes.
+    pendientes = await asyncio.to_thread(fetch_nodes_pending_embedding, client, None, None)
+    if not pendientes:
+        log.info("[embeddings] no hay nodos pendientes.")
+        return
+
+    vectores = await asyncio.to_thread(embed_nodes, pendientes)
+    updates = [{"id": n["id"], "embedding": v} for n, v in zip(pendientes, vectores)]
+    await asyncio.to_thread(bulk_update_embeddings, client, updates)
+    log.info("[embeddings] %d nodos vectorizados.", len(updates))

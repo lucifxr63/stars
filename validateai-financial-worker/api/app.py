@@ -629,6 +629,9 @@ async def _run_ingest_pipeline() -> None:
     WORKER_CATEGORIES = [
         "Macroeconomia", "Mercados", "Mercados Chile", "Mercados LATAM",
         "Commodities", "Forex Chile", "Riesgo", "Tasas USA",
+        # Sin esta categoria los nodos de jurisprudencia se insertan pero nunca
+        # reciben embedding: quedan en la tabla e invisibles para el RAG.
+        "Jurisprudencia",
     ]
 
     try:

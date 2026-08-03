@@ -20,6 +20,7 @@ from api.ops_alert import send_ops_alert
 from api.scheduler import (
     _job_bcch_sync,
     _job_cache_sweep,
+    _job_embeddings_pendientes,
     _job_cmf_sync,
     _job_concursal_sync,
     _job_empleo_sync,
@@ -34,6 +35,9 @@ _JOBS = {
     "fred_sync": _job_fred_sync,
     "yfinance_sync": _job_yfinance_sync,
     "cache_sweep": _job_cache_sweep,
+    # Vectoriza nodos de cualquier categoria. Sin el, un nodo de una categoria
+    # nueva se inserta y nunca recibe embedding: invisible para el RAG.
+    "embeddings_pendientes": _job_embeddings_pendientes,
     "radar_refresh": _job_radar_refresh,
     "cmf_sync": _job_cmf_sync,
     "seia_sync": _job_seia_sync,

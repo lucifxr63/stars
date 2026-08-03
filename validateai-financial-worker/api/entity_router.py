@@ -171,6 +171,29 @@ ENTITY_GROUPS: dict[str, list[str]] = {
 
     # ── Sprint 6 — Compras Públicas B2G ──────────────────────────────────────
     # Activado cuando modelo de negocio incluye ventas al Estado chileno.
+    # Jurisprudencia de la Corte Suprema: sintesis de 1.706.941 causas (2020-2025)
+    # en nodos citables. Los genera sync-jurisprudencia-grafo en mp-sync.
+    #
+    # Complementa a los grupos de compliance: esos dicen QUE DICE la ley, estos
+    # dicen COMO LA APLICA la Corte. Un experto legal que cita la norma sin saber
+    # como se falla responde la mitad de la pregunta.
+    "jurisprudencia_suprema": [
+        "Corte Suprema de Chile — Panorama estadístico",
+        "Corte Suprema — (Civil) Apelación Protección",
+        "Corte Suprema — (Crimen) Apelación Amparo",
+        "Corte Suprema — (Civil) Casación Fondo",
+        "Corte Suprema — (Civil) Casación Forma y Fondo",
+        "Corte Suprema — (Laboral) Unificación de Jurisprudencia",
+        "Corte Suprema — (Penal) Nulidad",
+        "Corte Suprema — (Civil) Queja",
+        "Corte Suprema — (Laboral) Queja",
+        "Corte Suprema — (Penal) Queja",
+        "Corte Suprema — (Familia) Casación Fondo",
+        "Corte Suprema — Sala Tercera, CONSTITUCIONAL",
+        "Corte Suprema — Sala Segunda, PENAL",
+        "Corte Suprema — Sala Primera, CIVIL",
+        "Corte Suprema — Sala Cuarta, MIXTA",
+    ],
     "b2g_chile": [
         "Mercado Público y Convenio Marco — Estrategia B2G Chile",
     ],
