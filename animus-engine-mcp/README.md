@@ -1,10 +1,35 @@
 # Animus Engine MCP Server (`animus-engine-mcp`)
 
-El servidor **Model Context Protocol (MCP)** oficial para el ecosistema **Animus Engine / Bralidus RaaS**. Permite a modelos de lenguaje (LLMs) dentro de Cursor IDE, Windsurf, Claude Desktop, y agentes automáticos acceder de forma nativa a **datos macroeconómicos chilenos (CMF/SII/BCCh)**, **licitaciones de Mercado Público (B2G)** y al **Grafo de Conocimiento MoE (Mixture of Experts)** en tiempo real sin mocks ni intermediarios.
+El servidor **Model Context Protocol (MCP)** oficial para el ecosistema **Animus Engine / Bralidus RaaS**. Permite a modelos de lenguaje (LLMs) dentro de Cursor IDE, Windsurf, Claude Desktop, y agentes automáticos acceder de forma nativa a **jurisprudencia de la Corte Suprema de Chile**, **datos macroeconómicos chilenos (CMF/SII/BCCh)**, **licitaciones de Mercado Público (B2G)** y al **Grafo de Conocimiento MoE (Mixture of Experts)** en tiempo real sin mocks ni intermediarios.
 
 ---
 
 ## 🌟 1. Herramientas Disponibles (MCP Tools)
+
+### ⚖️ Corte Suprema de Chile
+
+1.706.941 causas entre 2020 y 2025, tomadas de la API pública de estadísticas
+del Poder Judicial y verificadas año por año contra la fuente.
+
+| Tool | Descripción | Parámetros |
+|:---|:---|:---|
+| `animus_pjud_tendencias` | Serie por año: causas falladas, % confirmados y revocados, duración media entre ingreso y fallo. | `libro?`, `tipo_recurso?`, `sala?` |
+| `animus_pjud_resumen` | Totales por año, serie, libro, tipo de recurso, sala y grupo de término. | `anio?`, `serie?` |
+| `animus_pjud_causas` | Causas individuales con rol, libro, tipo, sala y fechas. | `anio?`, `libro?`, `tipo_recurso?`, `grupo_termino?`, `sala?`, `page?`, `page_size?` |
+| `animus_pjud_causa` | Historia completa de UNA causa. | `libro`, `rol`, `ano_rol` |
+
+**Dos cosas que conviene saber antes de interpretar estos datos:**
+
+- `animus_pjud_tendencias` cubre **sólo causas ya falladas**. No sirve para
+  medir causas pendientes, y **restar ingresos menos términos del mismo año no
+  da un backlog**: una causa ingresada un año puede fallarse en otro (2024
+  arroja 153 % "resuelto" si se hace esa resta). La medida real de pendientes
+  es el inventario, disponible vía `animus_pjud_resumen`.
+- `animus_pjud_causa` devuelve un **arreglo**, no un registro. La misma causa
+  puede figurar como ingresada, en inventario y con más de un término, con
+  distinto resultado cada vez. No asumas que la primera fila es la definitiva.
+
+### 📊 Economía, B2G e inteligencia
 
 | Tool | Descripción | Parámetros |
 |:---|:---|:---|

@@ -1,7 +1,7 @@
 {
   "name": "animus-engine-mcp",
   "version": "1.0.0",
-  "description": "Servidor Model Context Protocol (MCP) oficial para Animus Engine / Bralidus RaaS. Conecta IA (Claude Desktop, Cursor, Agentes) a inteligencia económica y B2G en vivo.",
+  "description": "Servidor Model Context Protocol (MCP) oficial para Animus Engine / Bralidus RaaS. Conecta IA (Claude Desktop, Cursor, agentes) a jurisprudencia de la Corte Suprema de Chile, inteligencia economica y datos B2G de Mercado Publico, en vivo.",
   "type": "module",
   "bin": {
     "animus-engine-mcp": "./dist/index.js"
@@ -33,7 +33,11 @@
     "raas",
     "graphrag",
     "chile",
-    "mercado-publico"
+    "mercado-publico",
+    "corte-suprema",
+    "jurisprudencia",
+    "poder-judicial",
+    "legaltech"
   ],
   "author": "Animus Engine / Bralidus",
   "license": "MIT",
