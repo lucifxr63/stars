@@ -5,8 +5,8 @@ import { usageMiddleware } from './middleware/usage.ts'
 import { rateLimitMiddleware } from './middleware/ratelimit.ts'
 import { ragQueryHandler } from './routes/rag.ts'
 import { 
-  economicDataHandler, 
-  macroDataHandler, 
+  economicDataHandler,
+  macroDataHandler,
   chilecompraDataHandler, 
   chilecompraMetricasHandler, 
   licitusProveedorHandler, 
@@ -81,6 +81,12 @@ import {
   companyB2GConflictsHandler,
   companySearchHandler
 } from './routes/data.ts'
+import {
+  pjudSupremaCausasHandler,
+  pjudSupremaCausaHandler,
+  pjudSupremaResumenHandler,
+  pjudEstadisticasHandler,
+} from './routes/pjud.ts'
 
 import { 
   intelQueryHandler, 
@@ -168,6 +174,19 @@ app.get('/api/v1/data/economy', economicDataHandler)
 app.get('/api/v1/data/macro', macroDataHandler)
 app.get('/api/v1/data/chilecompra', chilecompraDataHandler)
 app.get('/api/v1/data/chilecompra/metricas', chilecompraMetricasHandler)
+
+// ── Poder Judicial — Corte Suprema ──────────────────────────────────────────
+// 124.245 causas con grano individual (rol, libro, sala, tipo de recurso,
+// fechas) mas 266 series agregadas, que hasta ahora no tenian NINGUNA forma de
+// consultarse: era el unico lugar del sistema con dato valioso y cero API.
+//
+// El detalle va ANTES del listado en el archivo pero Hono resuelve por
+// especificidad de patron, no por orden de registro, asi que no hay ambiguedad
+// entre /causas y /causas/:libro/:rol/:ano_rol.
+app.get('/api/v1/data/pjud/suprema/causas', pjudSupremaCausasHandler)
+app.get('/api/v1/data/pjud/suprema/causas/:libro/:rol/:ano_rol', pjudSupremaCausaHandler)
+app.get('/api/v1/data/pjud/suprema/resumen', pjudSupremaResumenHandler)
+app.get('/api/v1/data/pjud/estadisticas', pjudEstadisticasHandler)
 
 // ── Mercado Público (API Canónica Bralidus v1) ──────────────────────────────────
 app.get('/api/v1/mercado-publico/health', mercadoPublicoHealthHandler)
