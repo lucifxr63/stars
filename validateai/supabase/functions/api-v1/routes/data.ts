@@ -209,7 +209,54 @@ const withOfficialUrl = (item: any) => {
   }
 }
 
-export const licitusBenchmarksHandler = licitusProxyHandler(() => '/mercado/benchmarks', 30)
+/**
+ * Umbral de plausibilidad de la tendencia de benchmarks.
+ *
+ * El histórico de Licitus está incompleto, así que el período anterior queda
+ * casi vacío y el porcentaje se dispara: medido el 2026-08-03, este endpoint
+ * devolvía `tendencia_vs_periodo_anterior_pct: 47208.5`. Un 47.208 % no es una
+ * tendencia, es un artefacto de dividir por casi cero.
+ *
+ * BralidusPY YA descarta estos valores al armar el contexto del LLM
+ * (`_benchmark_lines` en api/licitus.py, con test propio), con el mismo umbral
+ * de ±300 %. Pero el endpoint crudo no aplicaba ese criterio y entregaba el
+ * número tal cual a cualquier consumidor de la API — incluido el servidor MCP,
+ * donde un modelo lo repetiría como dato duro.
+ *
+ * Se extiende la misma regla al borde de la API: si no es plausible, el campo
+ * se anula y se explica por qué. Anular y decirlo es preferible a omitir en
+ * silencio: quien lo consumía sigue encontrando la clave, con un motivo.
+ */
+const TENDENCIA_MAX_PLAUSIBLE = 300
+
+const sanearTendencia = (payload: any): any => {
+  const vol = payload?.data?.volumen ?? payload?.volumen
+  if (!vol || typeof vol !== 'object') return payload
+
+  const t = Number(vol.tendencia_vs_periodo_anterior_pct)
+  if (Number.isFinite(t) && Math.abs(t) > TENDENCIA_MAX_PLAUSIBLE) {
+    vol.tendencia_vs_periodo_anterior_pct = null
+    vol.tendencia_omitida_motivo =
+      `Valor descartado (${t}%): el histórico de la fuente está incompleto y el ` +
+      `período anterior queda casi vacío, así que el porcentaje no es interpretable. ` +
+      `Umbral de plausibilidad: ±${TENDENCIA_MAX_PLAUSIBLE}%.`
+  }
+  return payload
+}
+
+const benchmarksBase = licitusProxyHandler(() => '/mercado/benchmarks', 30)
+
+export const licitusBenchmarksHandler = async (c: any) => {
+  const res = await benchmarksBase(c)
+  try {
+    const payload = await res.clone().json()
+    return c.json(sanearTendencia(payload), res.status)
+  } catch {
+    // Si no es JSON parseable, se devuelve tal cual: sanear no debe romper una
+    // respuesta que ya venía mal.
+    return res
+  }
+}
 // GET /api/v1/data/licitus/mercado/activas?unspsc&region&monto_min&cierre_desde_horas&limit
 export const licitusActivasHandler = async (c: any) => {
   try {
@@ -1088,19 +1135,35 @@ export const insightsMacroBriefHandler = (c: any) =>
   )
 
 // 30. Generador de Exportaciones
-export const exportsHandler = async (c: any) => {
-  const body = await c.req.json().catch(() => ({}))
-  const format = body.format || 'json'
-  const data = {
-    export_id: 'exp_' + Math.random().toString(36).substring(2, 9),
-    format,
-    download_url: `https://downloads.bralidus.com/exports/macro_data_${format}.gz`,
-    status: 'READY'
-  }
-
-  c.set('tokens_used', 10)
-  return c.json({ data })
-}
+/**
+ * POST /api/v1/data/exports — 501. No existe.
+ *
+ * ANTES FABRICABA. Devolvía, con HTTP 200:
+ *
+ *     export_id:    'exp_' + Math.random().toString(36)   ← inventado por llamada
+ *     download_url: https://downloads.bralidus.com/...    ← dominio que NO resuelve
+ *     status:       'READY'                               ← siempre
+ *
+ * O sea que le entregaba al consumidor un enlace de descarga que no podía
+ * funcionar, afirmando que estaba listo. Comprobado el 2026-08-03: el dominio no
+ * resuelve en DNS y dos llamadas seguidas devuelven ids distintos.
+ *
+ * Es el mismo patrón que ya se corrigió en las licitaciones inventadas (commit
+ * e01c47e): una respuesta exitosa e indistinguible de una real, que miente.
+ * Iba a ser peor acá, porque el servidor MCP lo habría expuesto a un modelo que
+ * le diría al usuario "tu exportación está lista, descargala en este enlace".
+ *
+ * Implementar exportaciones de verdad es un proyecto —almacenamiento,
+ * expiración, URLs firmadas— y no se justifica hasta que alguien lo pida. Un 501
+ * es información honesta y se puede reemplazar el día que exista.
+ */
+export const exportsHandler = (c: any) =>
+  notImplemented(
+    c,
+    'La exportación de datos no está implementada. La versión anterior devolvía un ' +
+      'enlace de descarga inventado hacia un dominio inexistente; se retiró en vez de ' +
+      'seguir prometiendo un archivo que nunca se generaba.',
+  )
 
 // ── 31-36. S-Pulse: datos societarios ────────────────────────────────────────
 //

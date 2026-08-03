@@ -45,6 +45,15 @@ import {
 } from './tools/pjudTools.js';
 
 import {
+  MpOrganismosSchema,
+  MpOportunidadesSchema,
+  PjudEstadisticasSchema,
+  executeMpOrganismos,
+  executeMpOportunidades,
+  executePjudEstadisticas,
+} from './tools/mercadoPublicoTools.js';
+
+import {
   API_DOCS_RESOURCE,
   HEALTH_RESOURCE,
   readResource,
@@ -117,6 +126,45 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             ano_rol: { type: 'number' },
           },
           required: ['libro', 'rol', 'ano_rol'],
+        },
+      },
+      {
+        name: 'animus_mp_organismos',
+        description: 'Directorio de organismos compradores del Estado de Chile (33.682). Devuelve nombre y codigo de organismo, util para cruzar con licitaciones. Buscar por nombre parcial.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nombre: { type: 'string', description: 'Busqueda parcial. Ej: "MINEDUC", "MUNICIPALIDAD".' },
+            page: { type: 'number' },
+            page_size: { type: 'number', description: 'Default 20.' },
+          },
+        },
+      },
+      {
+        name: 'animus_mp_oportunidades',
+        description: 'Buscador UNIFICADO de oportunidades B2G: combina licitaciones tradicionales y compras agiles en una sola consulta. Usar cuando no se sabe por cual de las dos vias se publico lo buscado.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            q: { type: 'string', description: 'Termino de busqueda libre.' },
+            type: { type: 'string', description: 'tender | agile_purchase' },
+            status: { type: 'string', description: 'publicada | cerrada | adjudicada' },
+            page: { type: 'number' },
+            page_size: { type: 'number', description: 'Default 20.' },
+          },
+        },
+      },
+      {
+        name: 'animus_pjud_estadisticas',
+        description: 'Series AGREGADAS del Poder Judicial: presupuesto, dotacion, adquisiciones y cuenta publica. Distintas de las causas individuales — aca no hay roles ni fallos, son totales institucionales.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            serie: { type: 'string', description: 'Parcial: "cuenta-publica", "presupuesto", "adquisiciones".' },
+            anio: { type: 'number' },
+            page: { type: 'number' },
+            page_size: { type: 'number' },
+          },
         },
       },
       {
@@ -226,6 +274,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       case 'animus_pjud_causa': {
         return await executePjudCausa(PjudCausaSchema.parse(args));
+      }
+      case 'animus_mp_organismos': {
+        return await executeMpOrganismos(MpOrganismosSchema.parse(args ?? {}));
+      }
+      case 'animus_mp_oportunidades': {
+        return await executeMpOportunidades(MpOportunidadesSchema.parse(args ?? {}));
+      }
+      case 'animus_pjud_estadisticas': {
+        return await executePjudEstadisticas(PjudEstadisticasSchema.parse(args ?? {}));
       }
       case 'animus_api_docs': {
         return await executeApiDocs();
