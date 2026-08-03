@@ -17,6 +17,7 @@ del Poder Judicial y verificadas año por año contra la fuente.
 | `animus_pjud_resumen` | Totales por año, serie, libro, tipo de recurso, sala y grupo de término. | `anio?`, `serie?` |
 | `animus_pjud_causas` | Causas individuales con rol, libro, tipo, sala y fechas. | `anio?`, `libro?`, `tipo_recurso?`, `grupo_termino?`, `sala?`, `page?`, `page_size?` |
 | `animus_pjud_causa` | Historia completa de UNA causa. | `libro`, `rol`, `ano_rol` |
+| `animus_pjud_estadisticas` | Series agregadas del Poder Judicial: presupuesto, dotación, adquisiciones, cuenta pública. | `serie?`, `anio?`, `page?`, `page_size?` |
 
 **Dos cosas que conviene saber antes de interpretar estos datos:**
 
@@ -39,6 +40,26 @@ del Poder Judicial y verificadas año por año contra la fuente.
 | `animus_economic_catalog` | Catálogo completo de series en la base de datos multi-proveedor. | Ninguno |
 | `animus_licitus_activas` | Licitaciones públicas B2G abiertas en tiempo real en Mercado Público. | `limit?: number` (default 10) |
 | `animus_licitus_compra_agil` | Oportunidades en tiempo real de Compras Ágiles en Mercado Público. | `limit?: number` (default 10) |
+| `animus_mp_oportunidades` | Buscador **unificado**: licitaciones y compras ágiles en una sola consulta. | `q?`, `type?`, `status?`, `page?`, `page_size?` |
+| `animus_mp_organismos` | Directorio de organismos compradores del Estado (33.682). | `nombre?`, `page?`, `page_size?` |
+
+---
+
+## 🔑 Autenticación
+
+`ANIMUS_API_KEY` es **obligatoria**. Sin ella el servidor arranca, avisa por
+stderr y cada herramienta devuelve un error explicando cómo configurarla.
+
+Se obtiene en [bralidus.vercel.app](https://bralidus.vercel.app) y va en el
+bloque `env` de la configuración MCP:
+
+```json
+"env": { "ANIMUS_API_KEY": "tu_clave" }
+```
+
+No hay clave por defecto a propósito: una clave compartida entre todos los
+usuarios mezcla el consumo, deja que terceros gasten el rate limit y hace
+imposible saber quién hizo qué.
 
 ---
 
