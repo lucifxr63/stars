@@ -3,12 +3,29 @@
 
 const DEFAULT_BASE_URL = 'https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1';
 
+/**
+ * API key del gateway. OBLIGATORIA — no hay valor por defecto.
+ *
+ * POR QUÉ NO HAY DEFAULT: hasta 0.1.0 el cliente caía a `demo_public_key`, así
+ * que cualquiera que instalara el paquete consultaba el gateway sin traer nada
+ * propio. Publicado en npm eso convierte una clave compartida en la clave de
+ * facto de todos los usuarios: el consumo se mezcla, el rate limit lo gastan
+ * terceros, y no hay forma de saber quién hizo qué.
+ *
+ * Falla temprano y con instrucciones. Un MCP que arranca y recién falla en la
+ * primera herramienta deja al usuario mirando un error de red sin saber que le
+ * falta configurar una variable.
+ */
 export function getApiKey(): string {
-  return (
-    process.env.ANIMUS_API_KEY ||
-    process.env.BRALIDUS_API_KEY ||
-    'demo_public_key'
-  );
+  const key = process.env.ANIMUS_API_KEY || process.env.BRALIDUS_API_KEY;
+  if (!key || !key.trim()) {
+    throw new Error(
+      'Falta ANIMUS_API_KEY. Obtené una en https://bralidus.vercel.app y agregala ' +
+        'al bloque "env" de tu configuración MCP:\n' +
+        '  "env": { "ANIMUS_API_KEY": "tu_clave" }',
+    );
+  }
+  return key.trim();
 }
 
 export function getBaseUrl(): string {

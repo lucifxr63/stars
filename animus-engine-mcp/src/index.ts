@@ -275,6 +275,21 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 
 // ── 5. Arranque del Servidor Stdio ──────────────────────────────────────
 async function main() {
+  // Aviso al arrancar, no al usar la primera herramienta: sin esto el usuario
+  // ve el servidor "conectado" y recién descubre que le falta la clave cuando
+  // una consulta falla, con un error que no dice qué hacer.
+  //
+  // No se aborta a propósito: el cliente MCP mostraría sólo "desconectado", que
+  // es aún menos informativo. Se conecta, se avisa fuerte y las herramientas
+  // fallan con el mensaje que explica cómo arreglarlo.
+  if (!process.env.ANIMUS_API_KEY && !process.env.BRALIDUS_API_KEY) {
+    console.error(
+      '⚠️  Falta ANIMUS_API_KEY: las herramientas van a fallar.\n' +
+        '   Obtené una clave en https://bralidus.vercel.app y agregala al bloque\n' +
+        '   "env" de tu configuración MCP:  "env": { "ANIMUS_API_KEY": "tu_clave" }',
+    );
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('🚀 Animus Engine MCP Server corriendo exitosamente sobre stdio.');
