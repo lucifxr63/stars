@@ -31,6 +31,19 @@ import {
   executeLicitusCompraAgil,
 } from './tools/licitusTools.js';
 
+// Corte Suprema: 1.706.941 causas (2020-2025). Sin estas herramientas el MCP no
+// llegaba al dato judicial — solo se lo rozaba en prosa via animus_intel_query.
+import {
+  PjudTendenciasSchema,
+  PjudResumenSchema,
+  PjudCausasSchema,
+  PjudCausaSchema,
+  executePjudTendencias,
+  executePjudResumen,
+  executePjudCausas,
+  executePjudCausa,
+} from './tools/pjudTools.js';
+
 import {
   API_DOCS_RESOURCE,
   HEALTH_RESOURCE,
@@ -54,6 +67,58 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      {
+        name: 'animus_pjud_tendencias',
+        description: 'Serie por año de la Corte Suprema de Chile (2020-2025): causas falladas, % confirmados, % revocados y duración media entre ingreso y fallo. Filtrable por libro, tipo de recurso y sala. OJO: cubre SOLO causas ya falladas; no mide causas pendientes ni permite restar ingresos menos términos del mismo año, porque una causa ingresada un año puede fallarse en otro.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            libro: { type: 'string', description: 'Civil, Criminal, Familia, Reforma Laboral, etc.' },
+            tipo_recurso: { type: 'string', description: 'Coincidencia parcial: "Protección", "Amparo", "Casación".' },
+            sala: { type: 'string', description: 'Coincidencia parcial: "CONSTITUCIONAL", "PENAL", "MIXTA".' },
+          },
+        },
+      },
+      {
+        name: 'animus_pjud_resumen',
+        description: 'Totales de la Corte Suprema por año, serie, libro, tipo de recurso, sala y grupo de término. Usar para ver la distribución global antes de pedir el detalle.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            anio: { type: 'number', description: 'Año. Sin esto agrega 2020-2025.' },
+            serie: { type: 'string', description: 'terminos_suprema_detalle | ingresos_recursos_suprema_detalle | inventario_suprema_detalle' },
+          },
+        },
+      },
+      {
+        name: 'animus_pjud_causas',
+        description: 'Causas individuales de la Corte Suprema con rol, libro, tipo de recurso, sala y fechas. Usar para revisar los casos concretos detrás de una cifra agregada.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            anio: { type: 'number' },
+            libro: { type: 'string' },
+            tipo_recurso: { type: 'string', description: 'Coincidencia parcial.' },
+            grupo_termino: { type: 'string', description: 'Confirmados, Revocados, Rechazados, Inadmisibles, Acogidos.' },
+            sala: { type: 'string', description: 'Coincidencia parcial.' },
+            page: { type: 'number' },
+            page_size: { type: 'number', description: 'Máximo 200.' },
+          },
+        },
+      },
+      {
+        name: 'animus_pjud_causa',
+        description: 'Historia completa de UNA causa de la Corte Suprema. Devuelve un ARREGLO: la misma causa puede figurar como ingresada, en inventario y con más de un término, con distinto resultado cada vez. No asumir que la primera fila es la definitiva.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            libro: { type: 'string', description: 'Ej: Reforma, Civil, Criminal, Familia.' },
+            rol: { type: 'number' },
+            ano_rol: { type: 'number' },
+          },
+          required: ['libro', 'rol', 'ano_rol'],
+        },
+      },
       {
         name: 'animus_api_docs',
         description: 'Obtener la documentación pública, especificación técnica y guía de integración del API Animus Engine / Bralidus RaaS (NO REQUIERE AUTENTICACIÓN NI API KEY). Úsalo primero si el usuario pregunta por documentación o cómo integrar.',
@@ -149,6 +214,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'animus_rag_search': {
         const parsed = RagSearchSchema.parse(args);
         return await executeRagSearch(parsed);
+      }
+      case 'animus_pjud_tendencias': {
+        return await executePjudTendencias(PjudTendenciasSchema.parse(args ?? {}));
+      }
+      case 'animus_pjud_resumen': {
+        return await executePjudResumen(PjudResumenSchema.parse(args ?? {}));
+      }
+      case 'animus_pjud_causas': {
+        return await executePjudCausas(PjudCausasSchema.parse(args ?? {}));
+      }
+      case 'animus_pjud_causa': {
+        return await executePjudCausa(PjudCausaSchema.parse(args));
       }
       case 'animus_api_docs': {
         return await executeApiDocs();
