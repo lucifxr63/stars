@@ -11,7 +11,7 @@ export async function executeEconomicMacro() {
     content: [
       {
         type: 'text',
-        text: JSON.stringify(result, null, 2),
+        text: JSON.stringify(result),
       },
     ],
   };
@@ -23,7 +23,7 @@ export async function executeEconomicCatalog() {
     content: [
       {
         type: 'text',
-        text: JSON.stringify(result, null, 2),
+        text: JSON.stringify(result),
       },
     ],
   };

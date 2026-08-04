@@ -55,7 +55,7 @@ export const PjudEstadisticasSchema = z
   );
 
 const texto = (result: unknown) => ({
-  content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+  content: [{ type: 'text', text: JSON.stringify(result) }],
 });
 
 const params = (args: Record<string, unknown>) => {

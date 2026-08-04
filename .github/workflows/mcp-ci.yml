@@ -1,0 +1,129 @@
+name: Animus MCP — build y prueba del paquete
+
+# POR QUÉ EXISTE ESTE WORKFLOW
+#
+# Hasta el 2026-08-04 NINGÚN workflow cubría animus-engine-mcp. `test_mcp_stdio.js`
+# existía en el repo y no lo corría nadie.
+#
+# Eso no es teórico: el `bin` estaba declarado como "./dist/index.js", npm lo
+# descartaba al publicar ("script name dist/index.js was invalid and removed") y
+# el paquete habría quedado en el registro SIN ejecutable — rompiendo el
+# `npx -y animus-engine-mcp` que documenta el README y que va en la config de
+# Claude Desktop. Sólo no salió porque el 2FA falló primero.
+#
+# El punto clave: eso NO lo detecta compilar el código fuente. Hay que probar el
+# ARTEFACTO EMPAQUETADO, instalado como lo recibe un usuario. Eso es lo que hace
+# el job `paquete`.
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'animus-engine-mcp/**'
+      - '.github/workflows/mcp-ci.yml'
+  pull_request:
+    paths:
+      - 'animus-engine-mcp/**'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: animus-engine-mcp
+
+jobs:
+  paquete:
+    name: Compilar, empaquetar y ejercitar el tarball
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm ci || npm install
+
+      - name: Compilar
+        run: npm run build
+
+      - name: La versión del código coincide con la de package.json
+        # Se declaraba a mano en dos sitios y los dos mentían: index.ts y el
+        # encabezado X-Client decían 1.0.0 con el paquete en 0.1.0. Un número
+        # que nadie sincroniza deja de ser un dato.
+        run: |
+          # El paquete es ESM ("type":"module"), asi que `require` sobre el build
+          # falla: hay que usar import dinamico.
+          PKG=$(node -p "require('./package.json').version")
+          SRC=$(node -e "import('./dist/client/raasClient.js').then(m=>console.log(m.VERSION))")
+          echo "package.json=$PKG  codigo=$SRC"
+          if [ "$PKG" != "$SRC" ]; then
+            echo "::error::La version del codigo ($SRC) no coincide con package.json ($PKG)"
+            exit 1
+          fi
+
+      - name: Empaquetar e instalar limpio, como un usuario
+        run: |
+          TARBALL=$(npm pack --silent)
+          echo "tarball: $TARBALL"
+          mkdir -p /tmp/limpio && cd /tmp/limpio
+          npm init -y >/dev/null
+          npm install "$GITHUB_WORKSPACE/animus-engine-mcp/$TARBALL"
+
+      - name: El ejecutable existe y arranca
+        # Esto es lo que habría atrapado el bug del bin.
+        run: |
+          cd /tmp/limpio
+          if [ ! -x node_modules/.bin/animus-engine-mcp ]; then
+            echo "::error::npm no creo el ejecutable: el campo bin del package.json esta mal"
+            ls -la node_modules/.bin/ || true
+            exit 1
+          fi
+          head -1 node_modules/animus-engine-mcp/dist/index.js | grep -q '^#!' \
+            || { echo "::error::falta el shebang en dist/index.js"; exit 1; }
+
+      - name: Lista sus 14 herramientas por stdio
+        # Sin API key a propósito: `tools/list` no debe requerirla. Si alguna vez
+        # empieza a pedirla, el servidor se volvio inusable antes de configurarse.
+        run: |
+          cd /tmp/limpio
+          SALIDA=$(printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+            | timeout 60 ./node_modules/.bin/animus-engine-mcp 2>/dev/null)
+          N=$(printf '%s' "$SALIDA" | grep -o '"name":"animus_' | wc -l)
+          echo "herramientas expuestas: $N"
+          if [ "$N" -lt 14 ]; then
+            echo "::error::se esperaban 14 herramientas, se listaron $N"
+            exit 1
+          fi
+
+      - name: Sin ANIMUS_API_KEY falla con instrucciones, no con un error de red
+        # La key es obligatoria; lo que se verifica es que el fallo EXPLIQUE que
+        # falta configurarla, en vez de dejar al usuario mirando un stack trace.
+        run: |
+          cd /tmp/limpio
+          SALIDA=$(printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"animus_economic_macro","arguments":{}}}' \
+            | env -u ANIMUS_API_KEY -u BRALIDUS_API_KEY timeout 60 ./node_modules/.bin/animus-engine-mcp 2>/dev/null)
+          printf '%s' "$SALIDA" > /tmp/salida.txt
+          grep -q 'ANIMUS_API_KEY' /tmp/salida.txt \
+            || { echo "::error::el error no menciona ANIMUS_API_KEY"; cat /tmp/salida.txt; exit 1; }
+
+      - name: El timeout corta y lo dice
+        # `fetch` sin signal no vuelve nunca. Se apunta a un host inexistente con
+        # presupuesto minimo: debe devolver un error legible, no colgarse.
+        run: |
+          cd /tmp/limpio
+          SALIDA=$(printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"animus_economic_macro","arguments":{}}}' \
+            | ANIMUS_API_KEY=x ANIMUS_GATEWAY_URL=https://10.255.255.1 ANIMUS_TIMEOUT_MS=2000 \
+              timeout 60 ./node_modules/.bin/animus-engine-mcp 2>/dev/null)
+          printf '%s' "$SALIDA" > /tmp/t.txt
+          grep -qiE 'super. el l.mite|no se pudo contactar' /tmp/t.txt \
+            || { echo "::error::no devolvio un error de timeout/red legible"; cat /tmp/t.txt; exit 1; }

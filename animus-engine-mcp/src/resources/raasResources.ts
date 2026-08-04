@@ -52,7 +52,7 @@ export async function readResource(uri: string) {
         {
           uri: HEALTH_RESOURCE.uri,
           mimeType: HEALTH_RESOURCE.mimeType,
-          text: JSON.stringify(health, null, 2),
+          text: JSON.stringify(health),
         },
       ],
     };

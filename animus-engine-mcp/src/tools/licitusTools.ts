@@ -22,7 +22,7 @@ export async function executeLicitusActivas(args: z.infer<typeof LicitusActivasS
     content: [
       {
         type: 'text',
-        text: JSON.stringify(result, null, 2),
+        text: JSON.stringify(result),
       },
     ],
   };
@@ -34,7 +34,7 @@ export async function executeLicitusCompraAgil(args: z.infer<typeof LicitusCompr
     content: [
       {
         type: 'text',
-        text: JSON.stringify(result, null, 2),
+        text: JSON.stringify(result),
       },
     ],
   };

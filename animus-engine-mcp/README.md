@@ -19,7 +19,14 @@ del Poder Judicial y verificadas año por año contra la fuente.
 | `animus_pjud_causa` | Historia completa de UNA causa. | `libro`, `rol`, `ano_rol` |
 | `animus_pjud_estadisticas` | Series agregadas del Poder Judicial: presupuesto, dotación, adquisiciones, cuenta pública. | `serie?`, `anio?`, `page?`, `page_size?` |
 
-**Dos cosas que conviene saber antes de interpretar estos datos:**
+**Estas advertencias viajan en la propia respuesta.** No están sólo acá: cada
+herramienta de PJUD antepone a sus datos las que apliquen, porque el modelo que
+llama la herramienta no lee este README — sólo ve la descripción y el resultado.
+Sin eso, lo previsible es que alguien pida tendencias y publique "la Corte
+Suprema revoca el 56 % de las causas", que es justo la lectura que el dato no
+soporta.
+
+**Lo que conviene saber antes de interpretar estos datos:**
 
 - `animus_pjud_tendencias` cubre **sólo causas ya falladas**. No sirve para
   medir causas pendientes, y **restar ingresos menos términos del mismo año no
@@ -29,6 +36,16 @@ del Poder Judicial y verificadas año por año contra la fuente.
 - `animus_pjud_causa` devuelve un **arreglo**, no un registro. La misma causa
   puede figurar como ingresada, en inventario y con más de un término, con
   distinto resultado cada vez. No asumas que la primera fila es la definitiva.
+- Cualquier porcentaje global describe casi sólo **recursos de protección**:
+  694.025 de los 794.935 términos (87,3 %) son `(Civil) Apelación Protección`.
+  Y la tasa de revocación **no es estable**: dentro de ese mismo recurso va de
+  17,0 % (2020) a 80,6 % (2022) y baja a 20,0 % (2025). Un promedio del período
+  no describe la serie. Si ese salto corresponde a la ola de recursos contra
+  isapres está **pendiente de validación por un experto**.
+- El vocabulario de resultados depende del **tipo de recurso**, no del libro. En
+  apelación se confirma o revoca; en casación y unificación se declara
+  inadmisible, se rechaza o se acoge. En Reforma Laboral, confirmados y
+  revocados suman 0,4 %: un 0 % ahí no significa que no pase nada.
 
 ### 📊 Economía, B2G e inteligencia
 
@@ -60,6 +77,27 @@ bloque `env` de la configuración MCP:
 No hay clave por defecto a propósito: una clave compartida entre todos los
 usuarios mezcla el consumo, deja que terceros gasten el rate limit y hace
 imposible saber quién hizo qué.
+
+### Variables opcionales
+
+| Variable | Para qué |
+|:---|:---|
+| `ANIMUS_TIMEOUT_MS` | Presupuesto por petición. Por defecto 30 s, y 90 s en las rutas que hacen trabajo de LLM (`intel/query`, `rag/query`). Súbelo si tu red es lenta. |
+| `ANIMUS_GATEWAY_URL` | Apuntar a otro gateway. Sólo para desarrollo. |
+
+### Qué pasa cuando algo falla
+
+Los errores del gateway vienen traducidos a algo accionable, no como volcado de
+JSON. Los tres que te puedes encontrar:
+
+| Situación | Lo que verás |
+|:---|:---|
+| Key mal copiada o revocada | Te dice que revises `ANIMUS_API_KEY` y dónde generar otra |
+| Cuota mensual agotada | Cuántos créditos usaste de cuántos, y cuándo se reinicia |
+| Límite por minuto | Cuántos segundos esperar antes de reintentar |
+
+Si la petición supera el presupuesto de tiempo, se cancela y te lo dice. No se
+queda colgada.
 
 ---
 

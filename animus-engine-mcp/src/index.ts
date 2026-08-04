@@ -59,10 +59,15 @@ import {
   readResource,
 } from './resources/raasResources.js';
 
+import { VERSION } from './client/raasClient.js';
+
 const server = new Server(
   {
     name: 'Animus Engine MCP Server',
-    version: '1.0.0',
+    // Se toma de la constante compartida: acá decía '1.0.0' mientras el paquete
+    // publicado era 0.1.0, así que el handshake le informaba al cliente una
+    // versión que no existe.
+    version: VERSION,
   },
   {
     capabilities: {

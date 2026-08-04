@@ -15,7 +15,7 @@ export async function executeIntelQuery(args: z.infer<typeof IntelQuerySchema>) 
     content: [
       {
         type: 'text',
-        text: JSON.stringify(result, null, 2),
+        text: JSON.stringify(result),
       },
     ],
   };
@@ -28,8 +28,8 @@ export async function executeRagSearch(args: z.infer<typeof RagSearchSchema>) {
       {
         type: 'text',
         text: typeof result.answer === 'string'
-          ? `# Respuesta Normativa Animus (Vector RAG)\n\n${result.answer}\n\n## Citas y Referencias\n\`\`\`json\n${JSON.stringify(result.citations || [], null, 2)}\n\`\`\``
-          : JSON.stringify(result, null, 2),
+          ? `# Respuesta Normativa Animus (Vector RAG)\n\n${result.answer}\n\n## Citas y Referencias\n\`\`\`json\n${JSON.stringify(result.citations || [])}\n\`\`\``
+          : JSON.stringify(result),
       },
     ],
   };

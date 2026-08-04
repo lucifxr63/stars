@@ -87,23 +87,94 @@ export const PjudCausaSchema = z
       'más de una vez, con distinto resultado cada vez.',
   );
 
-const texto = (result: unknown) => ({
-  content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-});
+/**
+ * ADVERTENCIAS QUE VIAJAN CON LOS DATOS
+ * -------------------------------------
+ * Estas tres cosas se sabían desde antes y estaban escritas en el README y en
+ * `docs/PJUD_VALIDACION_EXPERTO.md`. El problema es que **el modelo que llama la
+ * herramienta no lee ninguno de los dos**: sólo ve la descripción de la
+ * herramienta —que compite con otras 13— y la respuesta.
+ *
+ * El resultado previsible es que alguien pida tendencias y publique "la Corte
+ * Suprema revoca el 56 % de las causas", que es exactamente el error de lectura
+ * que le estamos pidiendo a un abogado que detecte. Poner el aviso en la
+ * RESPUESTA es lo único que garantiza que el modelo lo tenga delante en el
+ * momento de interpretar.
+ *
+ * Las cifras están verificadas contra la base el 2026-08-04.
+ */
+const AVISOS = {
+  SOLO_FALLADAS:
+    'Cubre SÓLO causas ya falladas (serie de términos). No sirve para medir causas pendientes.',
+
+  SERIES_DISJUNTAS:
+    'Ingresos (797.187), inventario (114.819) y términos (794.935) son series DISJUNTAS. ' +
+    'Restar ingresos menos términos NO da causas pendientes: una causa ingresada un año puede ' +
+    'fallarse en otro, y esa resta arroja 153 % de "resolución" en 2024. El pendiente real es el inventario.',
+
+  PROTECCION_DOMINA:
+    'Cualquier porcentaje global describe casi sólo recursos de PROTECCIÓN: 694.025 de los 794.935 ' +
+    'términos (87,3 %) son "(Civil) Apelación Protección". No lo presentes como "la Corte Suprema" ' +
+    'sin decir de qué recurso se trata.',
+
+  SERIE_INESTABLE:
+    'La tasa de revocación NO es estable: dentro de apelación de protección va 17,0 % (2020) → ' +
+    '80,6 % (2022) → 20,0 % (2025). Un promedio del período no describe la serie. Si el salto de ' +
+    '2022-2023 corresponde a la ola de recursos contra isapres está PENDIENTE DE VALIDACIÓN por un experto: ' +
+    'no lo afirmes como causa.',
+
+  VOCABULARIO_POR_RECURSO:
+    'El vocabulario de resultados depende del TIPO DE RECURSO, no del libro. En apelación se ' +
+    'confirma/revoca; en casación y unificación se declara inadmisible, se rechaza o se acoge. En ' +
+    'Reforma Laboral confirmados+revocados suman 0,4 %: un 0 % ahí no significa que no pase nada.',
+
+  CAUSA_ES_ARREGLO:
+    'Esto es un ARREGLO, no un registro. La misma causa aparece en ingresos, inventario y con uno o ' +
+    'más términos, con distinto resultado cada vez (ej: Civil 289-2023 es Inadmisible en 2023-08-16 y ' +
+    'Rechazado en 2025-01-24). Cuál de los términos vale está PENDIENTE DE CRITERIO EXPERTO: no asumas ' +
+    'que la primera fila ni la última es la definitiva.',
+} as const;
+
+/**
+ * `JSON.stringify` SIN indentar: esto lo lee un modelo, no una persona, y la
+ * indentación inflaba las respuestas entre 20 % y 30 % sin aportar nada
+ * (`animus_intel_query` llegaba a 25.455 caracteres, ~7.000 tokens).
+ */
+const texto = (result: unknown, avisos: readonly string[] = []) => {
+  const encabezado = avisos.length
+    ? `⚠️ CÓMO LEER ESTOS DATOS — aplica esto ANTES de afirmar nada:\n` +
+      avisos.map((a) => `• ${a}`).join('\n') +
+      `\n\n`
+    : '';
+  return { content: [{ type: 'text', text: `${encabezado}${JSON.stringify(result)}` }] };
+};
 
 export async function executePjudTendencias(args: z.infer<typeof PjudTendenciasSchema>) {
   const params: Record<string, string> = {};
   if (args.libro) params.libro = args.libro;
   if (args.tipo_recurso) params.tipo_recurso = args.tipo_recurso;
   if (args.sala) params.sala = args.sala;
-  return texto(await raasGet('/data/pjud/suprema/tendencias', params));
+
+  const avisos = [AVISOS.SOLO_FALLADAS, AVISOS.SERIE_INESTABLE, AVISOS.VOCABULARIO_POR_RECURSO];
+  // Si ya filtró por tipo de recurso, la cifra no es global y advertir que
+  // "esto es casi todo protección" sería ruido que contradice lo que pidió.
+  if (!args.tipo_recurso) avisos.splice(1, 0, AVISOS.PROTECCION_DOMINA);
+
+  return texto(await raasGet('/data/pjud/suprema/tendencias', params), avisos);
 }
 
 export async function executePjudResumen(args: z.infer<typeof PjudResumenSchema>) {
   const params: Record<string, string | number> = {};
   if (args.anio) params.anio = args.anio;
   if (args.serie) params.serie = args.serie;
-  return texto(await raasGet('/data/pjud/suprema/resumen', params));
+
+  // Sin `serie` la respuesta mezcla las tres, que es justo donde nace la resta
+  // inválida; con `serie` explícita ya eligió una y el aviso sobra.
+  const avisos = args.serie
+    ? [AVISOS.VOCABULARIO_POR_RECURSO]
+    : [AVISOS.SERIES_DISJUNTAS, AVISOS.VOCABULARIO_POR_RECURSO];
+
+  return texto(await raasGet('/data/pjud/suprema/resumen', params), avisos);
 }
 
 export async function executePjudCausas(args: z.infer<typeof PjudCausasSchema>) {
@@ -111,10 +182,10 @@ export async function executePjudCausas(args: z.infer<typeof PjudCausasSchema>) 
   for (const [k, v] of Object.entries(args)) {
     if (v !== undefined && v !== null) params[k] = v as string | number;
   }
-  return texto(await raasGet('/data/pjud/suprema/causas', params));
+  return texto(await raasGet('/data/pjud/suprema/causas', params), [AVISOS.SERIES_DISJUNTAS]);
 }
 
 export async function executePjudCausa(args: z.infer<typeof PjudCausaSchema>) {
   const ruta = `/data/pjud/suprema/causas/${encodeURIComponent(args.libro)}/${args.rol}/${args.ano_rol}`;
-  return texto(await raasGet(ruta));
+  return texto(await raasGet(ruta), [AVISOS.CAUSA_ES_ARREGLO]);
 }
