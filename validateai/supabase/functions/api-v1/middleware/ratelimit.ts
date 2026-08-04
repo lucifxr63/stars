@@ -1,7 +1,15 @@
-import { getSupabase } from './auth.ts'
+import { getSupabase, uuidONulo } from './auth.ts'
 
 // Tier Monthly Credit Quotas (weighted credits per calendar month)
 export const TIER_CREDIT_LIMITS: Record<string, number> = {
+  // Sin API key. Existe para que el playground del portal y las demos de la
+  // landing funcionen sin registro, NO para consumir la API en serio.
+  //
+  // Antes el tráfico anónimo caía a `basic` (1.000 créditos, 60 req/min), o sea
+  // MÁS que un usuario registrado en `free` (500 y 30): no autenticarse daba el
+  // doble de cuota que autenticarse. Quedaba premiado justamente lo que se
+  // quiere desalentar.
+  anon:       150,      // alcanza para probar; no para integrar
   free:       500,      // Free tier para pruebas de desarrolladores (500 créditos/mes)
   basic:      1000,     // ~$19/mo (approx 200 light reqs or ~30 GraphRAG calls)
   pro:        15000,    // ~$79/mo (approx 1000 GraphRAG calls or ~400 MoE calls)
@@ -12,6 +20,7 @@ export const TIER_CREDIT_LIMITS: Record<string, number> = {
 
 // Burst limit per minute based on plan
 export const TIER_BURST_LIMITS: Record<string, number> = {
+  anon:       10,      // suficiente para clicar el playground, no para un script
   free:       30,
   basic:      60,
   pro:        180,
@@ -55,24 +64,28 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
     return await next()
   }
 
-  const apiKeyId: string = c.get('api_key_id') || 'demo_public_key'
-  const profileId: string = c.get('profile_id') || '00000000-0000-0000-0000-000000000000'
-
-  if (!apiKeyId || !profileId) {
+  if (!c.get('auth_type')) {
     return await next()
   }
+
+  // El sujeto que se cobra, con la MISMA normalización que usa usage.ts al
+  // escribir. Si acá se contara por un criterio y allá se escribiera por otro,
+  // el limitador leería un balde distinto del que se llena y la cuota volvería
+  // a ser decorativa.
+  const apiKeyId = uuidONulo(c.get('api_key_id'))
+  const profileId = uuidONulo(c.get('profile_id'))
 
   const supabase = getSupabase()
 
   // 1. Fetch user profile tier
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tier')
-    .eq('id', profileId)
-    .maybeSingle()
+  const { data: profile } = profileId
+    ? await supabase.from('profiles').select('tier').eq('id', profileId).maybeSingle()
+    : { data: null }
 
   const authType = c.get('auth_type') || ''
-  const defaultTier = (authType === 'demo' || authType === 'anonymous') ? 'basic' : 'free'
+  // Sin credencial -> tier 'anon', el mas bajo. Antes esto decia 'basic', que le
+  // daba al trafico sin autenticar MAS cuota que a un usuario registrado.
+  const defaultTier = (authType === 'demo' || authType === 'anonymous') ? 'anon' : 'free'
   const tier = (profile?.tier ?? defaultTier) as string
   const creditLimit = TIER_CREDIT_LIMITS[tier] ?? 0
   const burstLimit = TIER_BURST_LIMITS[tier] ?? 60
@@ -94,21 +107,34 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const oneMinuteAgo = new Date(now.getTime() - 60_000).toISOString()
 
+  // Acota la consulta al mismo sujeto con que usage.ts escribe la fila:
+  //   - con API key      -> por la key (aunque el dueño tenga varias)
+  //   - sesión logueada  -> por el perfil
+  //   - sin credencial   -> el balde común de todo el tráfico anónimo
+  const porSujeto = (q: any) =>
+    apiKeyId
+      ? q.eq('api_key_id', apiKeyId)
+      : profileId
+        ? q.is('api_key_id', null).eq('profile_id', profileId)
+        : q.is('api_key_id', null).is('profile_id', null)
+
   // Count requests in last minute and total credits used this month
   const [creditsRes, minuteRes] = await Promise.all([
-    supabase
-      .from('api_usage_logs')
-      .select('tokens_used')
-      .eq('api_key_id', apiKeyId)
-      .gte('created_at', startOfMonth),
-    supabase
-      .from('api_usage_logs')
-      .select('id', { count: 'exact', head: true })
-      .eq('api_key_id', apiKeyId)
-      .gte('created_at', oneMinuteAgo),
+    porSujeto(
+      supabase.from('api_usage_logs').select('credits_used').gte('created_at', startOfMonth),
+    ),
+    porSujeto(
+      supabase
+        .from('api_usage_logs')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', oneMinuteAgo),
+    ),
   ])
 
-  const currentCreditsUsed = (creditsRes.data ?? []).reduce((acc: number, row: any) => acc + (row.tokens_used || 1), 0)
+  // Se suma `credits_used`, la misma unidad del tope y del header. Antes se
+  // sumaba `tokens_used`, que es un conteo de tokens: comparar tokens contra un
+  // límite de créditos hacía que 3 llamadas triviales gastaran 61 de 150.
+  const currentCreditsUsed = (creditsRes.data ?? []).reduce((acc: number, row: any) => acc + (row.credits_used ?? 1), 0)
   const minuteReqs = (minuteRes.count ?? 0)
 
   // Enforce burst limit per minute

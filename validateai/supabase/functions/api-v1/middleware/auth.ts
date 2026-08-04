@@ -1,5 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// Perfil ficticio que se le asigna al tráfico sin credencial. NO existe como
+// fila en profiles (ni podría: profiles.id tiene FK a auth.users), así que no
+// puede escribirse en ninguna columna con FK. Quien mida consumo debe tratarlo
+// como "sin identificar", no como un usuario.
+export const PERFIL_ANONIMO = '00000000-0000-0000-0000-000000000000'
+
+const RE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Devuelve el uuid si el valor es un uuid real y no el centinela anónimo; si no,
+ * null. Existe porque el contexto de Hono mezcla uuids con literales como
+ * 'demo_public_key', y meter ese literal en una columna uuid revienta el insert
+ * en silencio (era la causa de que api_usage_logs no registrara nada desde
+ * mayo, y con ello de que la cuota nunca se aplicara).
+ */
+export const uuidONulo = (v: unknown): string | null =>
+  typeof v === 'string' && RE_UUID.test(v) && v !== PERFIL_ANONIMO ? v : null
+
 // Utility to create a service role client (bypasses RLS)
 export const getSupabase = () => {
   return createClient(
@@ -55,6 +73,11 @@ export const authMiddleware = async (c: any, next: any) => {
       if (user && !userError) {
         c.set('profile_id', user.id)
         c.set('user_email', user.email)
+        // Explícito: una sesión no tiene API key. Antes esto quedaba sin setear
+        // y el middleware de uso cortaba en su guarda `if (!apiKeyId) return`,
+        // así que el tráfico de usuarios logueados no se registraba nunca y el
+        // limitador lo contaba dentro del cupo anónimo compartido.
+        c.set('api_key_id', null)
         c.set('auth_type', 'session')
         return await next()
       }
