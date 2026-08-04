@@ -55,10 +55,27 @@ soporta.
 | `animus_rag_search` | Búsqueda semántica (Vector RAG) sobre leyes y regulación chilena (ej: Ley Fintech 21.521). | `query: string` |
 | `animus_economic_macro` | Indicadores macroeconómicos chilenos normalizados (UF del día en CMF, UTM, TPM, etc.). | Ninguno |
 | `animus_economic_catalog` | Catálogo completo de series en la base de datos multi-proveedor. | Ninguno |
-| `animus_licitus_activas` | Licitaciones públicas B2G abiertas en tiempo real en Mercado Público. | `limit?: number` (default 10) |
-| `animus_licitus_compra_agil` | Oportunidades en tiempo real de Compras Ágiles en Mercado Público. | `limit?: number` (default 10) |
-| `animus_mp_oportunidades` | Buscador **unificado**: licitaciones y compras ágiles en una sola consulta. | `q?`, `type?`, `status?`, `page?`, `page_size?` |
-| `animus_mp_organismos` | Directorio de organismos compradores del Estado (33.682). | `nombre?`, `page?`, `page_size?` |
+| `animus_mp_oportunidades` | Buscador **unificado** de las cuatro vías de compra del Estado. | `q?`, `type?`, `status?`, `page?`, `page_size?` |
+| `animus_mp_detalle` | Ficha completa de UNA oportunidad: ítems, adjuntos, montos, comprador. | `codigo` (el `external_code` del buscador) |
+| `animus_mp_organismos` | Directorio de organismos compradores del Estado. | `nombre?`, `page?`, `page_size?` |
+
+**Las cuatro vías por las que el Estado compra** (`type`, volúmenes al 2026-08-04):
+
+| `type` | Qué es | Registros |
+|:---|:---|---:|
+| `tender` | Licitación tradicional | 13.990 |
+| `agile_purchase` | Compra ágil: monto menor, proceso rápido | 24.043 |
+| `convenio_marco` | Compra contra catálogo ya licitado | 242 |
+| `trato_directo` | Adjudicación **sin competencia**, por excepción legal | 30 |
+
+Omitir `type` busca en las cuatro. `trato_directo` es la vía con menos
+competencia y la de mayor interés para auditoría.
+
+> **Nota de la 0.1.1:** se retiraron `animus_licitus_activas` y
+> `animus_licitus_compra_agil`. Pegaban al mismo endpoint canónico que el
+> buscador unificado, así que devolvían lo mismo con otro nombre —y "Licitus" es
+> vocabulario interno que no significa nada para quien usa la herramienta. Usa
+> `animus_mp_oportunidades` con `type: "tender"` o `type: "agile_purchase"`.
 
 ---
 

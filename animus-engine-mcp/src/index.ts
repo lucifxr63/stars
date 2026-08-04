@@ -24,13 +24,6 @@ import {
   executeEconomicCatalog,
 } from './tools/economyTools.js';
 
-import {
-  LicitusActivasSchema,
-  LicitusCompraAgilSchema,
-  executeLicitusActivas,
-  executeLicitusCompraAgil,
-} from './tools/licitusTools.js';
-
 // Corte Suprema: 1.706.941 causas (2020-2025). Sin estas herramientas el MCP no
 // llegaba al dato judicial — solo se lo rozaba en prosa via animus_intel_query.
 import {
@@ -47,9 +40,11 @@ import {
 import {
   MpOrganismosSchema,
   MpOportunidadesSchema,
+  MpDetalleSchema,
   PjudEstadisticasSchema,
   executeMpOrganismos,
   executeMpOportunidades,
+  executeMpDetalle,
   executePjudEstadisticas,
 } from './tools/mercadoPublicoTools.js';
 
@@ -147,16 +142,50 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'animus_mp_oportunidades',
-        description: 'Buscador UNIFICADO de oportunidades B2G: combina licitaciones tradicionales y compras agiles en una sola consulta. Usar cuando no se sabe por cual de las dos vias se publico lo buscado.',
+        description:
+          'Buscador UNIFICADO de compras del Estado de Chile (Mercado Publico). Es la puerta de ' +
+          'entrada a las CUATRO vias por las que el Estado compra, en una sola consulta. Usalo ' +
+          'siempre que no sepas de antemano por cual se publico lo que buscas.',
         inputSchema: {
           type: 'object',
           properties: {
-            q: { type: 'string', description: 'Termino de busqueda libre.' },
-            type: { type: 'string', description: 'tender | agile_purchase' },
+            q: { type: 'string', description: 'Termino de busqueda libre sobre el titulo.' },
+            type: {
+              type: 'string',
+              // Antes decia solo 'tender | agile_purchase'. Los otros dos existen y son
+              // consultables, pero al no estar declarados el modelo no podia saberlo y nunca
+              // los pedia: 272 registros invisibles por una descripcion incompleta.
+              description:
+                'Via de compra. Omitir para buscar en las cuatro. ' +
+                'tender = licitacion tradicional (13.990). ' +
+                'agile_purchase = compra agil, monto menor y proceso rapido (24.043). ' +
+                'convenio_marco = compra contra catalogo ya licitado (242). ' +
+                'trato_directo = adjudicacion SIN competencia, por excepcion legal (30) — ' +
+                'es la via con menos competencia y la de mayor interes para auditoria.',
+            },
             status: { type: 'string', description: 'publicada | cerrada | adjudicada' },
             page: { type: 'number' },
-            page_size: { type: 'number', description: 'Default 20.' },
+            page_size: { type: 'number', description: 'Default 20. Subelo solo si hace falta: cada item es voluminoso.' },
           },
+        },
+      },
+      {
+        name: 'animus_mp_detalle',
+        description:
+          'Ficha completa de UNA oportunidad de Mercado Publico: items, adjuntos, montos, ' +
+          'organismo comprador y fechas. Usalo despues de animus_mp_oportunidades, cuando ya ' +
+          'identificaste cual te interesa y necesitas el detalle que el listado no trae.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            codigo: {
+              type: 'string',
+              description:
+                'Codigo externo tal como lo devuelve el buscador en external_code ' +
+                '(ej: "4429-45-L126" para licitacion, "1233619-464-COT26" para compra agil).',
+            },
+          },
+          required: ['codigo'],
         },
       },
       {
@@ -224,32 +253,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {},
         },
       },
-      {
-        name: 'animus_licitus_activas',
-        description: 'Búsqueda de licitaciones públicas B2G abiertas y activas en Mercado Público a través de Animus Engine.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            limit: {
-              type: 'number',
-              description: 'Número máximo de licitaciones a obtener (default 10, máximo 50).',
-            },
-          },
-        },
-      },
-      {
-        name: 'animus_licitus_compra_agil',
-        description: 'Obtener oportunidades en tiempo real de Compras Ágiles públicas en Mercado Público.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            limit: {
-              type: 'number',
-              description: 'Número máximo de compras ágiles a obtener (default 10, máximo 50).',
-            },
-          },
-        },
-      },
     ],
   };
 });
@@ -286,6 +289,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'animus_mp_oportunidades': {
         return await executeMpOportunidades(MpOportunidadesSchema.parse(args ?? {}));
       }
+      case 'animus_mp_detalle': {
+        const parsed = MpDetalleSchema.parse(args);
+        return await executeMpDetalle(parsed);
+      }
       case 'animus_pjud_estadisticas': {
         return await executePjudEstadisticas(PjudEstadisticasSchema.parse(args ?? {}));
       }
@@ -297,14 +304,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       case 'animus_economic_catalog': {
         return await executeEconomicCatalog();
-      }
-      case 'animus_licitus_activas': {
-        const parsed = LicitusActivasSchema.parse(args);
-        return await executeLicitusActivas(parsed);
-      }
-      case 'animus_licitus_compra_agil': {
-        const parsed = LicitusCompraAgilSchema.parse(args);
-        return await executeLicitusCompraAgil(parsed);
       }
       default:
         throw new Error(`Herramienta Animus desconocida: ${name}`);

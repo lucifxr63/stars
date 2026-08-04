@@ -56,11 +56,13 @@ La clave se obtiene en https://animus.scouttech.lat y es **obligatoria**: no hay
 - \`animus_pjud_causa\`: historia completa de una causa (devuelve un ARREGLO)
 - \`animus_pjud_estadisticas\`: series agregadas (presupuesto, dotación, cuenta pública)
 
-### Mercado Público (B2G)
-- \`animus_mp_oportunidades\`: buscador unificado de licitaciones y compras ágiles
-- \`animus_mp_organismos\`: directorio de 33.682 organismos compradores
-- \`animus_licitus_activas\`: licitaciones abiertas
-- \`animus_licitus_compra_agil\`: compras ágiles
+### Mercado Público — compras del Estado (B2G)
+- \`animus_mp_oportunidades\`: buscador unificado de las CUATRO vías de compra.
+  \`type\`: \`tender\` licitación (13.990) · \`agile_purchase\` compra ágil (24.043) ·
+  \`convenio_marco\` catálogo ya licitado (242) · \`trato_directo\` adjudicación sin
+  competencia (30). Omitir \`type\` busca en las cuatro.
+- \`animus_mp_detalle\`: ficha completa de una oportunidad, por su \`external_code\`
+- \`animus_mp_organismos\`: directorio de organismos compradores
 
 ### Economía e inteligencia
 - \`animus_economic_macro\`: UF diaria CMF, UTM, USD/CLP, cobre, WTI, Fed funds, IPC USA

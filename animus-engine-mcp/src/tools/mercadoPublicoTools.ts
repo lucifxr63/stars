@@ -2,12 +2,12 @@ import { z } from 'zod';
 import { raasGet } from '../client/raasClient.js';
 
 /**
- * Mercado Público: organismos compradores y buscador unificado.
+ * Mercado Público: buscador unificado, ficha de detalle y organismos compradores.
  *
  * Se pagina con `page_size`, NO con `limit`: el gateway ignora el segundo. Las
- * herramientas de Licitus enviaban `limit` y por eso devolvían siempre 20 ítems
- * (~92 KB) sin importar lo pedido — en un MCP eso llena el contexto del modelo
- * en cada llamada.
+ * herramientas retiradas en 0.1.1 (`animus_licitus_*`) enviaban `limit` y por eso
+ * devolvían siempre 20 ítems (~92 KB) sin importar lo pedido — en un MCP eso
+ * llena el contexto del modelo en cada llamada.
  */
 
 export const MpOrganismosSchema = z
@@ -24,18 +24,51 @@ export const MpOrganismosSchema = z
       'Devuelve nombre y código de organismo, que sirve para cruzar con licitaciones.',
   );
 
+/**
+ * Las cuatro vías por las que el Estado de Chile compra, con su volumen real
+ * verificado el 2026-08-04 contra `licitaciones_mercado_publico`.
+ *
+ * Acá decía sólo `tender | agile_purchase`. Las otras dos existen en la tabla y
+ * son perfectamente consultables —`?type=trato_directo` devuelve sus 30 filas—
+ * pero al no estar declaradas el modelo no tenía forma de saberlo y nunca las
+ * pedía: 272 registros invisibles por una descripción incompleta, no por falta
+ * de endpoint.
+ */
+const VIAS_DE_COMPRA =
+  'Vía de compra. Omitir para buscar en las cuatro. ' +
+  'tender = licitación tradicional (13.990). ' +
+  'agile_purchase = compra ágil, monto menor y proceso rápido (24.043). ' +
+  'convenio_marco = compra contra catálogo ya licitado (242). ' +
+  'trato_directo = adjudicación SIN competencia, por excepción legal (30) — es la vía con ' +
+  'menos competencia y la de mayor interés para auditoría.'
+
 export const MpOportunidadesSchema = z
   .object({
-    q: z.string().optional().describe('Término de búsqueda libre.'),
-    type: z.string().optional().describe('tender (licitación) | agile_purchase (compra ágil).'),
+    q: z.string().optional().describe('Término de búsqueda libre sobre el título.'),
+    type: z.string().optional().describe(VIAS_DE_COMPRA),
     status: z.string().optional().describe('publicada | cerrada | adjudicada.'),
     page: z.number().optional(),
-    page_size: z.number().optional().describe('Default 20.'),
+    page_size: z.number().optional().describe('Default 20. Súbelo sólo si hace falta: cada ítem es voluminoso.'),
   })
   .describe(
-    'Buscador UNIFICADO de oportunidades B2G: combina licitaciones tradicionales y compras ' +
-      'ágiles en una sola consulta. Usar cuando no se sabe de antemano por cuál de las dos ' +
-      'vías se publicó lo que se busca.',
+    'Buscador UNIFICADO de compras del Estado de Chile (Mercado Público). Es la puerta de ' +
+      'entrada a las cuatro vías por las que el Estado compra, en una sola consulta. Usar ' +
+      'siempre que no se sepa de antemano por cuál se publicó lo que se busca.',
+  );
+
+export const MpDetalleSchema = z
+  .object({
+    codigo: z
+      .string()
+      .describe(
+        'Código externo tal como lo devuelve el buscador en `external_code` ' +
+          '(ej: "4429-45-L126" para licitación, "1233619-464-COT26" para compra ágil).',
+      ),
+  })
+  .describe(
+    'Ficha completa de UNA oportunidad: ítems, adjuntos, montos, organismo comprador y fechas. ' +
+      'Usar después de `animus_mp_oportunidades`, cuando ya se identificó cuál interesa y hace ' +
+      'falta el detalle que el listado no trae.',
   );
 
 export const PjudEstadisticasSchema = z
@@ -72,6 +105,18 @@ export async function executeMpOrganismos(args: z.infer<typeof MpOrganismosSchem
 
 export async function executeMpOportunidades(args: z.infer<typeof MpOportunidadesSchema>) {
   return texto(await raasGet('/mercado-publico/opportunities', params(args)));
+}
+
+/**
+ * La ruta se llama `/licitaciones/:codigo` por historia, pero resuelve cualquier
+ * `external_code`: verificado el 2026-08-04 contra los cuatro tipos —licitación
+ * (4429-45-L126), compra ágil (1233619-464-COT26), convenio marco (3134-50-CO26)
+ * y trato directo (3890-130-E226)—, los cuatro responden 200. Por eso la
+ * herramienta puede prometer las cuatro vías sin mentir.
+ */
+export async function executeMpDetalle(args: z.infer<typeof MpDetalleSchema>) {
+  const codigo = encodeURIComponent(args.codigo.trim());
+  return texto(await raasGet(`/mercado-publico/licitaciones/${codigo}`));
 }
 
 export async function executePjudEstadisticas(args: z.infer<typeof PjudEstadisticasSchema>) {
