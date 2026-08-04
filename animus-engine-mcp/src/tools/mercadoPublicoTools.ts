@@ -56,6 +56,29 @@ export const MpOportunidadesSchema = z
       'siempre que no se sepa de antemano por cuál se publicó lo que se busca.',
   );
 
+export const MpOfertasSchema = z
+  .object({
+    codigo: z
+      .string()
+      .optional()
+      .describe('external_code de una compra ágil. Devuelve TODOS los que cotizaron por ella.'),
+    rut: z
+      .string()
+      .optional()
+      .describe('RUT del proveedor, con o sin puntos. Devuelve su historial y su tasa de adjudicación.'),
+    solo_adjudicadas: z.boolean().optional().describe('Sólo las ofertas que ganaron.'),
+    page: z.number().optional(),
+    page_size: z.number().optional().describe('Default 20.'),
+  })
+  .describe(
+    'La COMPETENCIA real de las compras del Estado: quién cotizó, por cuánto, quién ganó y con ' +
+      'qué argumento se declaró inadmisible al resto. Requiere `codigo` (para ver quiénes ' +
+      'compitieron por una compra) o `rut` (para ver cómo le va a un proveedor).\n' +
+      'LÍMITE: sólo compras ágiles concluidas. Licitaciones, convenios marco y tratos directos ' +
+      'no publican oferentes en esta fuente, y las compras aún abiertas todavía no los muestran: ' +
+      'hay datos de 1.308 de las 24.043 compras ágiles.',
+  );
+
 export const MpDetalleSchema = z
   .object({
     codigo: z
@@ -117,6 +140,21 @@ export async function executeMpOportunidades(args: z.infer<typeof MpOportunidade
 export async function executeMpDetalle(args: z.infer<typeof MpDetalleSchema>) {
   const codigo = encodeURIComponent(args.codigo.trim());
   return texto(await raasGet(`/mercado-publico/licitaciones/${codigo}`));
+}
+
+/**
+ * El gateway exige `codigo` o `rut` y devuelve 400 si no llega ninguno. Se
+ * valida también acá para no gastar una llamada —y un crédito— en un error que
+ * se puede detectar antes de salir.
+ */
+export async function executeMpOfertas(args: z.infer<typeof MpOfertasSchema>) {
+  if (!args.codigo && !args.rut) {
+    throw new Error(
+      'Indica `codigo` (para ver quiénes compitieron por una compra ágil) o `rut` ' +
+        '(para ver el historial de un proveedor). Sin filtro serían 7.111 ofertas.',
+    );
+  }
+  return texto(await raasGet('/mercado-publico/ofertas', params(args)));
 }
 
 export async function executePjudEstadisticas(args: z.infer<typeof PjudEstadisticasSchema>) {

@@ -62,6 +62,9 @@ La clave se obtiene en https://animus.scouttech.lat y es **obligatoria**: no hay
   \`convenio_marco\` catálogo ya licitado (242) · \`trato_directo\` adjudicación sin
   competencia (30). Omitir \`type\` busca en las cuatro.
 - \`animus_mp_detalle\`: ficha completa de una oportunidad, por su \`external_code\`
+- \`animus_mp_ofertas\`: la COMPETENCIA — quién cotizó, cuánto, quién ganó y por qué
+  se declaró inadmisible al resto. Por \`codigo\` (una compra) o por \`rut\` (un
+  proveedor, con su tasa de adjudicación). Sólo compras ágiles concluidas.
 - \`animus_mp_organismos\`: directorio de organismos compradores
 
 ### Economía e inteligencia

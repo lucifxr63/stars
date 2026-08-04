@@ -690,6 +690,96 @@ export const mercadoPublicoOrganismosHandler = async (c: any) => {
   }
 }
 
+/**
+ * GET /api/v1/mercado-publico/ofertas
+ *
+ * La competencia real de las compras ágiles: quién cotizó, cuánto, quién ganó y
+ * por qué se descartó al resto. Sale de `mp_ofertas`, extraída del payload donde
+ * estaba enterrada (ver migración 20260804000005).
+ *
+ * Dos usos con el mismo endpoint, porque son la misma pregunta desde dos lados:
+ *   ?codigo=1233619-464-COT26  -> quiénes compitieron por esta compra
+ *   ?rut=89752800-2            -> cómo le va a este proveedor
+ *
+ * Con `rut` se agrega un `resumen` con su tasa de adjudicación, que es lo que
+ * de verdad se quiere saber y que obligaría a paginar todo para calcularlo.
+ *
+ * LÍMITES QUE HAY QUE DECIR: sólo hay datos de COMPRA ÁGIL —licitaciones,
+ * convenios marco y tratos directos no publican oferentes en esta fuente— y las
+ * ofertas aparecen recién cuando el proceso concluye. De 24.043 compras ágiles,
+ * 1.308 tienen ofertas: las 16.920 'publicada' y 5.400 'cerrada' todavía no.
+ */
+export const mercadoPublicoOfertasHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
+    const offset = (page - 1) * pageSize
+
+    const codigo = c.req.query('codigo')
+    const rutCrudo = c.req.query('rut')
+    const soloAdjudicadas = c.req.query('solo_adjudicadas') === 'true'
+
+    if (!codigo && !rutCrudo) {
+      return c.json(
+        buildBralidusResponse(null, page, pageSize, 0, 'mercado_publico', [{
+          code: 'PARAM_REQUIRED',
+          message: 'Se requiere `codigo` (external_code de una compra ágil) o `rut` (proveedor). Sin filtro serían 7.111 ofertas.',
+        }]),
+        400,
+      )
+    }
+
+    // Mismo criterio que la extracción: sin puntos y con K en mayúscula. Si no
+    // se normaliza acá, un RUT con puntos —que es como lo escribe cualquiera—
+    // no encuentra nada y parece que el proveedor no existe.
+    const rut = rutCrudo ? rutCrudo.replace(/[.\s]/g, '').toUpperCase() : null
+
+    let query = supabase
+      .from('mp_ofertas')
+      .select('external_code, proveedor_rut, proveedor_razon_social, monto_neto, monto_total, adjudicada, admisible, motivo_inadmisibilidad, fecha_cotizacion', { count: 'exact' })
+
+    if (codigo) query = query.eq('external_code', codigo)
+    if (rut) query = query.eq('proveedor_rut', rut)
+    if (soloAdjudicadas) query = query.eq('adjudicada', true)
+
+    const { data, count, error } = await query
+      .order('adjudicada', { ascending: false })
+      .order('monto_total', { ascending: true, nullsFirst: false })
+      .range(offset, offset + pageSize - 1)
+    if (error) throw error
+
+    const meta: Record<string, unknown> = {
+      fuente: 'compras ágiles concluidas. Licitaciones, convenios marco y tratos directos no publican oferentes en esta fuente.',
+    }
+
+    // El resumen del proveedor no se puede calcular desde la página actual, y es
+    // justamente el número por el que se consulta.
+    if (rut) {
+      const { data: todas } = await supabase
+        .from('mp_ofertas')
+        .select('adjudicada, monto_total')
+        .eq('proveedor_rut', rut)
+      const filas = todas ?? []
+      const ganadas = filas.filter((o: any) => o.adjudicada)
+      meta.resumen = {
+        rut,
+        ofertas_presentadas: filas.length,
+        adjudicadas: ganadas.length,
+        tasa_adjudicacion_pct: filas.length ? Number(((ganadas.length / filas.length) * 100).toFixed(1)) : 0,
+        monto_adjudicado: ganadas.reduce((a: number, o: any) => a + Number(o.monto_total ?? 0), 0),
+      }
+    }
+
+    c.set('tokens_used', 15)
+    const respuesta = buildBralidusResponse(data ?? [], page, pageSize, count ?? 0)
+    respuesta.meta = { ...respuesta.meta, ...meta }
+    return c.json(respuesta)
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
 // Aliases para proveedores
 export const mercadoPublicoProveedorHandler = licitusProveedorHandler
 export const mercadoPublicoProveedorVsMercadoHandler = licitusProveedorVsMercadoHandler

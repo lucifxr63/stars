@@ -41,10 +41,12 @@ import {
   MpOrganismosSchema,
   MpOportunidadesSchema,
   MpDetalleSchema,
+  MpOfertasSchema,
   PjudEstadisticasSchema,
   executeMpOrganismos,
   executeMpOportunidades,
   executeMpDetalle,
+  executeMpOfertas,
   executePjudEstadisticas,
 } from './tools/mercadoPublicoTools.js';
 
@@ -189,6 +191,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'animus_mp_ofertas',
+        description:
+          'La COMPETENCIA real de las compras del Estado: quien cotizo, por cuanto, quien gano y ' +
+          'con que argumento se declaro inadmisible al resto. Requiere `codigo` (quienes ' +
+          'compitieron por una compra) o `rut` (como le va a un proveedor, con su tasa de ' +
+          'adjudicacion). LIMITE: solo compras agiles concluidas — hay datos de 1.308 de 24.043.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            codigo: { type: 'string', description: 'external_code de una compra agil.' },
+            rut: { type: 'string', description: 'RUT del proveedor, con o sin puntos.' },
+            solo_adjudicadas: { type: 'boolean', description: 'Solo las ofertas que ganaron.' },
+            page: { type: 'number' },
+            page_size: { type: 'number', description: 'Default 20.' },
+          },
+        },
+      },
+      {
         name: 'animus_pjud_estadisticas',
         description: 'Series AGREGADAS del Poder Judicial: presupuesto, dotacion, adquisiciones y cuenta publica. Distintas de las causas individuales — aca no hay roles ni fallos, son totales institucionales.',
         inputSchema: {
@@ -292,6 +312,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'animus_mp_detalle': {
         const parsed = MpDetalleSchema.parse(args);
         return await executeMpDetalle(parsed);
+      }
+      case 'animus_mp_ofertas': {
+        const parsed = MpOfertasSchema.parse(args);
+        return await executeMpOfertas(parsed);
       }
       case 'animus_pjud_estadisticas': {
         return await executePjudEstadisticas(PjudEstadisticasSchema.parse(args ?? {}));

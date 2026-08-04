@@ -57,7 +57,19 @@ soporta.
 | `animus_economic_catalog` | Catálogo completo de series en la base de datos multi-proveedor. | Ninguno |
 | `animus_mp_oportunidades` | Buscador **unificado** de las cuatro vías de compra del Estado. | `q?`, `type?`, `status?`, `page?`, `page_size?` |
 | `animus_mp_detalle` | Ficha completa de UNA oportunidad: ítems, adjuntos, montos, comprador. | `codigo` (el `external_code` del buscador) |
+| `animus_mp_ofertas` | **La competencia real**: quién cotizó, por cuánto, quién ganó y por qué se rechazó al resto. | `codigo?` o `rut?` (uno obligatorio), `solo_adjudicadas?` |
 | `animus_mp_organismos` | Directorio de organismos compradores del Estado. | `nombre?`, `page?`, `page_size?` |
+
+**Sobre `animus_mp_ofertas`.** Es lo que un listado de licitaciones no da. Con
+`rut` devuelve el historial de un proveedor y su tasa de adjudicación; con
+`codigo`, todos los que compitieron por esa compra, ordenados con el ganador
+primero. Los datos salen de 7.111 ofertas sobre 2.369 proveedores, con 1.033
+motivos de inadmisibilidad escritos.
+
+> **Límite que conviene tener presente:** sólo hay oferentes de **compras
+> ágiles concluidas**. Licitaciones, convenios marco y tratos directos no los
+> publican en esta fuente, y las compras aún abiertas todavía no los muestran:
+> hay datos de 1.308 de las 24.043 compras ágiles.
 
 **Las cuatro vías por las que el Estado compra** (`type`, volúmenes al 2026-08-04):
 

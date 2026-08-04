@@ -26,6 +26,7 @@ import {
   mercadoPublicoOrdenesHandler,
   mercadoPublicoOrdenDetailHandler,
   mercadoPublicoOrganismosHandler,
+  mercadoPublicoOfertasHandler,
   mercadoPublicoCompradorHandler,
   mercadoPublicoProveedorHandler,
   mercadoPublicoProveedorVsMercadoHandler,
@@ -222,6 +223,8 @@ app.get('/api/v1/mercado-publico/ordenes-compra', mercadoPublicoOrdenesHandler)
 app.get('/api/v1/mercado-publico/ordenes-compra/:codigo_oc', mercadoPublicoOrdenDetailHandler)
 // 3. Organismos y Proveedores
 app.get('/api/v1/mercado-publico/organismos', mercadoPublicoOrganismosHandler)
+// Competencia real de las compras agiles: quien cotizo, cuanto y quien gano.
+app.get('/api/v1/mercado-publico/ofertas', mercadoPublicoOfertasHandler)
 app.get('/api/v1/mercado-publico/organismos/:id', mercadoPublicoCompradorHandler)
 app.get('/api/v1/mercado-publico/proveedores/:rut', mercadoPublicoProveedorHandler)
 app.get('/api/v1/mercado-publico/proveedores/:rut/vs-mercado', mercadoPublicoProveedorVsMercadoHandler)
