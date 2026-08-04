@@ -44,24 +44,23 @@ export const authMiddleware = async (c: any, next: any) => {
   const authHeader = c.req.header('Authorization') || c.req.header('x-bralidus-key') || c.req.header('apikey') || c.req.query('apikey')
   const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : ''
 
-  // Sin token: perfil público demo (consultas abiertas del portal/playground).
-  // Este es el ÚNICO caso que degrada a demo — errores reales de auth (key
-  // inválida, fallo de DB, excepción) deben rechazar, no dejar pasar (bug
-  // corregido 2026-07-28: la versión anterior caía a "demo" también en esos
-  // casos, dejando el gateway efectivamente sin autenticación).
+  // Sin credencial no se pasa. Antes había DOS puertas abiertas acá:
+  //
+  //   1. sin token  -> auth_type 'anonymous'
+  //   2. el literal 'demo_public_key' / 'demo_*' / 'sb_publishable_*' -> 'demo'
+  //
+  // Cerrar sólo la primera no habría servido de nada: la segunda la abre
+  // cualquiera que mande esa cadena, que además está publicada en la doc.
+  //
+  // Esto NO afecta al panel de estado de la portada pública: /health/services se
+  // registra en index.ts antes del app.use de este middleware, así que nunca
+  // pasa por acá (verificado: responde 200 sin token y sin headers de cuota).
   if (!token) {
-    c.set('profile_id', '00000000-0000-0000-0000-000000000000')
-    c.set('api_key_id', 'demo_public_key')
-    c.set('auth_type', 'anonymous')
-    return await next()
-  }
-
-  // Soporte explícito para llaves demo/publishable conocidas del portal.
-  if (token === 'demo_public_key' || token.startsWith('demo_') || token.startsWith('sb_publishable_')) {
-    c.set('profile_id', '00000000-0000-0000-0000-000000000000')
-    c.set('api_key_id', 'demo_public_key')
-    c.set('auth_type', 'demo')
-    return await next()
+    return c.json({
+      error: 'Se requiere una API key. Obtén la tuya en https://animus.scouttech.lat',
+      code: 'AUTH_REQUIRED',
+      docs: 'https://animus.scouttech.lat/llms.txt',
+    }, 401)
   }
 
   try {

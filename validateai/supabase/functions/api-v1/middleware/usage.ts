@@ -27,7 +27,27 @@ export const usageMiddleware = async (c: any, next: any) => {
   const tokensUsed = c.get('tokens_used') ?? creditsCost
   const endpoint = new URL(c.req.url).pathname
 
-  const ipAddress = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown'
+  // `ip_address` salía NULL en el 100% de las filas, incluidas las de mayo, y no
+  // era culpa del trigger: `anonymize_ip` (BEFORE INSERT, sprint de privacidad)
+  // trunca a /24 y devuelve NULL ante cualquier formato que no sea una IP
+  // limpia, a propósito, "para no crear falsa trazabilidad". Se le pasaban dos
+  // cosas que nunca iban a matchear:
+  //
+  //   - la cadena cruda de x-forwarded-for, que es una LISTA: "cliente, proxy1"
+  //   - el literal 'unknown' cuando no había header
+  //
+  // Sin IP no se puede distinguir un abusador de muchos usuarios legítimos, que
+  // es justo lo que hay que saber para dimensionar cualquier cupo compartido.
+  // Se toma sólo la primera entrada (el cliente) y se manda null si no hay nada:
+  // null es honesto, 'unknown' era ruido que terminaba en null igual.
+  const primeraIp = (v: string | undefined | null): string | null => {
+    const ip = (v ?? '').split(',')[0].trim()
+    return ip.length > 0 ? ip : null
+  }
+  const ipAddress =
+    primeraIp(c.req.header('x-forwarded-for')) ??
+    primeraIp(c.req.header('x-real-ip')) ??
+    primeraIp(c.req.header('cf-connecting-ip'))
 
   // Asynchronously log usage
   try {

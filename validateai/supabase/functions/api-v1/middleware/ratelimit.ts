@@ -83,9 +83,13 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
     : { data: null }
 
   const authType = c.get('auth_type') || ''
-  // Sin credencial -> tier 'anon', el mas bajo. Antes esto decia 'basic', que le
-  // daba al trafico sin autenticar MAS cuota que a un usuario registrado.
-  const defaultTier = (authType === 'demo' || authType === 'anonymous') ? 'anon' : 'free'
+  // Deny by default también en el tier: sólo una credencial verificada hereda
+  // 'free'; cualquier otra cosa cae en 'anon', el más bajo. Hoy authMiddleware
+  // ya rechaza el tráfico sin credencial, así que la rama 'anon' no debería
+  // alcanzarse — se conserva a propósito para que, si alguien reabre un camino
+  // anónimo, herede el cupo más restrictivo y no el de un usuario registrado
+  // (que es exactamente lo que pasaba antes, cuando el default era 'basic').
+  const defaultTier = (authType === 'session' || authType === 'api_key') ? 'free' : 'anon'
   const tier = (profile?.tier ?? defaultTier) as string
   const creditLimit = TIER_CREDIT_LIMITS[tier] ?? 0
   const burstLimit = TIER_BURST_LIMITS[tier] ?? 60

@@ -157,12 +157,28 @@ app.use('*', cors({
 // Explicit 204 response for all OPTIONS preflight requests
 app.options('*', (c) => c.text('', 204))
 
-// Health check & Debug
+// ⚠️ ZONA PÚBLICA — todo lo registrado ACÁ ARRIBA queda SIN autenticar.
+//
+// Hono resuelve en orden de registro, así que estas rutas se atienden y
+// responden antes de llegar al `app.use(...)` de auth de más abajo. No es una
+// excepción declarada en ningún lado: es una consecuencia de dónde está escrita
+// cada línea. Verificado: GET /api/v1/health/services responde 200 sin token y
+// sin emitir un solo header x-ratelimit.
+//
+// Es deliberado para el panel de estado, porque la portada pública de
+// animus.scouttech.lat lo muestra a visitantes sin sesión (App.tsx monta
+// <Developers /> como ruta pública) y no expone datos: sólo si los servicios
+// responden.
+//
+// Agregar acá una ruta que devuelva datos la publica al mundo sin cuota ni
+// registro, y nada va a fallar para avisarlo. Las rutas nuevas van DEBAJO del
+// bloque de middlewares.
 app.get('/', (c) => c.json({ status: 'ok', service: 'RaaS API Gateway v1' }))
 app.get('/health/services', servicesHealthHandler)
 app.get('/api/v1/health/services', servicesHealthHandler)
 app.get('/debug', (c) => c.json({ pathname: new URL(c.req.url).pathname }))
 
+// ── FIN DE LA ZONA PÚBLICA ──────────────────────────────────────────────────
 // Auth + rate limit + usage on all /api/v1/* routes (skip OPTIONS inside middlewares)
 app.use('/api/v1/*', authMiddleware)
 app.use('/api/v1/*', rateLimitMiddleware)
