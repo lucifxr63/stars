@@ -780,6 +780,49 @@ export const mercadoPublicoOfertasHandler = async (c: any) => {
   }
 }
 
+/**
+ * GET /api/v1/mercado-publico/precios
+ *
+ * Cuánto se paga en el Estado por un producto, según lo que cotizaron los
+ * proveedores. Se apoya en `mp_precios_producto`, que hace el trabajo sucio:
+ * descarta las líneas donde el proveedor metió la canasta entera como si fuera
+ * un precio unitario, y devuelve cuartiles en vez de un número solo.
+ *
+ * Se devuelven p25/mediana/p75 y NO un "precio de mercado", porque un mismo
+ * código UNSPSC agrupa productos heterogéneos: en 44103103 el rango
+ * intercuartil es 1,5x —eso es un precio— y en otros llega a 6x, donde la
+ * mediana es el promedio de cosas distintas. Cada fila trae su `fiabilidad`
+ * para que quien la lea pueda distinguir un caso del otro.
+ */
+export const mercadoPublicoPreciosHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const codigo = c.req.query('codigo_producto') ?? null
+    const q = c.req.query('q') ?? null
+    const minN = Math.max(Number(c.req.query('min_muestras') ?? 5), 1)
+
+    const { data, error } = await supabase.rpc('mp_precios_producto', {
+      p_codigo: codigo,
+      p_q: q,
+      p_min_n: minN,
+    })
+    if (error) throw error
+
+    const filas = data ?? []
+    c.set('tokens_used', 20)
+    const respuesta = buildBralidusResponse(filas, 1, filas.length, filas.length)
+    respuesta.meta = {
+      ...respuesta.meta,
+      base: 'ofertas de compras ágiles concluidas',
+      excluido: 'líneas con precio <= 1 (marcadores), cantidad = 1, y descripciones que remiten a un adjunto: son la canasta completa puesta como precio unitario',
+      como_leer: 'Usa la mediana con el rango p25-p75. `ratio_p75_p25` alto significa que ese código agrupa productos distintos y la mediana NO representa un precio.',
+    }
+    return c.json(respuesta)
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
 // Aliases para proveedores
 export const mercadoPublicoProveedorHandler = licitusProveedorHandler
 export const mercadoPublicoProveedorVsMercadoHandler = licitusProveedorVsMercadoHandler

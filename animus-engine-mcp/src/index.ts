@@ -42,11 +42,13 @@ import {
   MpOportunidadesSchema,
   MpDetalleSchema,
   MpOfertasSchema,
+  MpPreciosSchema,
   PjudEstadisticasSchema,
   executeMpOrganismos,
   executeMpOportunidades,
   executeMpDetalle,
   executeMpOfertas,
+  executeMpPrecios,
   executePjudEstadisticas,
 } from './tools/mercadoPublicoTools.js';
 
@@ -209,6 +211,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'animus_mp_precios',
+        description:
+          'Precios de referencia por producto: cuanto se paga en el Estado, segun lo que ' +
+          'realmente cotizaron los proveedores. COMO LEERLO: usa `mediana` con el rango ' +
+          '`p25`-`p75`, nunca minimo/maximo. Cada fila trae `fiabilidad` y `ratio_p75_p25`: si ' +
+          'el ratio es alto, ese codigo agrupa productos distintos y la mediana NO es un precio.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            q: { type: 'string', description: 'Nombre de producto. Ej: "guantes", "toner".' },
+            codigo_producto: { type: 'string', description: 'Codigo UNSPSC exacto.' },
+            min_muestras: { type: 'number', description: 'Minimo de cotizaciones. Default 5.' },
+          },
+        },
+      },
+      {
         name: 'animus_pjud_estadisticas',
         description: 'Series AGREGADAS del Poder Judicial: presupuesto, dotacion, adquisiciones y cuenta publica. Distintas de las causas individuales — aca no hay roles ni fallos, son totales institucionales.',
         inputSchema: {
@@ -316,6 +334,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'animus_mp_ofertas': {
         const parsed = MpOfertasSchema.parse(args);
         return await executeMpOfertas(parsed);
+      }
+      case 'animus_mp_precios': {
+        const parsed = MpPreciosSchema.parse(args);
+        return await executeMpPrecios(parsed);
       }
       case 'animus_pjud_estadisticas': {
         return await executePjudEstadisticas(PjudEstadisticasSchema.parse(args ?? {}));

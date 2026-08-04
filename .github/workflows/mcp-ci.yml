@@ -97,8 +97,8 @@ jobs:
           # al MISMO endpoint canonico) y se agrego animus_mp_detalle.
           N=$(printf '%s' "$SALIDA" | grep -o '"name":"animus_' | wc -l)
           echo "herramientas expuestas: $N"
-          if [ "$N" -ne 14 ]; then
-            echo "::error::se esperaban 14 herramientas, se listaron $N"
+          if [ "$N" -ne 15 ]; then
+            echo "::error::se esperaban 15 herramientas, se listaron $N"
             printf '%s' "$SALIDA" | grep -o '"name":"animus_[a-z_]*"' | sort
             exit 1
           fi

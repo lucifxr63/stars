@@ -58,6 +58,7 @@ soporta.
 | `animus_mp_oportunidades` | Buscador **unificado** de las cuatro vías de compra del Estado. | `q?`, `type?`, `status?`, `page?`, `page_size?` |
 | `animus_mp_detalle` | Ficha completa de UNA oportunidad: ítems, adjuntos, montos, comprador. | `codigo` (el `external_code` del buscador) |
 | `animus_mp_ofertas` | **La competencia real**: quién cotizó, por cuánto, quién ganó y por qué se rechazó al resto. | `codigo?` o `rut?` (uno obligatorio), `solo_adjudicadas?` |
+| `animus_mp_precios` | **Precios de referencia** por producto, con señal de fiabilidad. | `q?`, `codigo_producto?`, `min_muestras?` |
 | `animus_mp_organismos` | Directorio de organismos compradores del Estado. | `nombre?`, `page?`, `page_size?` |
 
 **Sobre `animus_mp_ofertas`.** Es lo que un listado de licitaciones no da. Con
@@ -70,6 +71,15 @@ motivos de inadmisibilidad escritos.
 > ágiles concluidas**. Licitaciones, convenios marco y tratos directos no los
 > publican en esta fuente, y las compras aún abiertas todavía no los muestran:
 > hay datos de 1.308 de las 24.043 compras ágiles.
+
+**Sobre `animus_mp_precios`.** Devuelve `mediana` con el rango `p25`–`p75`, no un
+"precio de mercado". La razón: `precio_unitario` mezclaba precios reales con
+canastas enteras puestas en una sola línea —en un código, 7 pesos por cápsula de
+papel convivía con 1.030.568 por "SEGÚN LISTADO EN ADJUNTO"—. Esas líneas se
+excluyen, pero queda dispersión real porque un código UNSPSC agrupa productos
+heterogéneos. Por eso cada fila trae `ratio_p75_p25` y `fiabilidad`: con ratio
+1,5 la mediana es un precio; con ratio 6 es el promedio de cosas que no se
+comparan.
 
 **Las cuatro vías por las que el Estado compra** (`type`, volúmenes al 2026-08-04):
 

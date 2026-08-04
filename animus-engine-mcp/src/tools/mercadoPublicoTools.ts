@@ -79,6 +79,21 @@ export const MpOfertasSchema = z
       'hay datos de 1.308 de las 24.043 compras ágiles.',
   );
 
+export const MpPreciosSchema = z
+  .object({
+    q: z.string().optional().describe('Búsqueda por nombre de producto. Ej: "guantes", "toner", "papel".'),
+    codigo_producto: z.string().optional().describe('Código UNSPSC exacto, si ya se conoce.'),
+    min_muestras: z.number().optional().describe('Mínimo de cotizaciones para incluir un código. Default 5.'),
+  })
+  .describe(
+    'Precios de referencia por producto: cuánto se paga en el Estado, según lo que realmente ' +
+      'cotizaron los proveedores.\n' +
+      'CÓMO LEER EL RESULTADO: usa `mediana` junto al rango `p25`–`p75`, nunca mínimo/máximo. ' +
+      'Cada fila trae `fiabilidad` y `ratio_p75_p25`: si el ratio es alto, ese código UNSPSC ' +
+      'agrupa productos distintos y la mediana NO es un precio, es el promedio de cosas que no ' +
+      'se comparan. No presentes un número sin mirar antes esa señal.',
+  );
+
 export const MpDetalleSchema = z
   .object({
     codigo: z
@@ -155,6 +170,10 @@ export async function executeMpOfertas(args: z.infer<typeof MpOfertasSchema>) {
     );
   }
   return texto(await raasGet('/mercado-publico/ofertas', params(args)));
+}
+
+export async function executeMpPrecios(args: z.infer<typeof MpPreciosSchema>) {
+  return texto(await raasGet('/mercado-publico/precios', params(args)));
 }
 
 export async function executePjudEstadisticas(args: z.infer<typeof PjudEstadisticasSchema>) {
