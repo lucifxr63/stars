@@ -83,9 +83,17 @@ def fetch_hechos_esenciales(
     Obtiene Hechos Esenciales desde la API CMF.
     desde/hasta: formato YYYY-MM-DD. Default: últimos 7 días.
     """
-    api_key = os.getenv("CMF_BEST_KEY", "")
+    # La cabecera de este archivo documenta CMF_API_KEY y el codigo leia
+    # CMF_BEST_KEY: quien siguiera la doc configuraba una variable que nadie
+    # lee. Se aceptan ambos nombres para que el mismatch no vuelva a costar
+    # semanas de sincronizaciones vacias.
+    api_key = os.getenv("CMF_API_KEY", "") or os.getenv("CMF_BEST_KEY", "")
     if not api_key:
-        log.warning("[cmf] CMF_BEST_KEY no configurado — omitiendo extractor.")
+        log.error(
+            "[cmf] Sin credencial: define CMF_API_KEY (se obtiene en "
+            "api.cmfchile.cl). El extractor devuelve vacio y el job va a contar "
+            "0 resultados."
+        )
         return []
 
     now = datetime.now(timezone.utc)

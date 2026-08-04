@@ -61,9 +61,17 @@ def fetch_licitaciones(
     Obtiene licitaciones adjudicadas del día indicado.
     fecha: formato DDMMYYYY. Default: ayer.
     """
-    ticket = os.getenv("MP_API_KEY", "")
+    # Se aceptan los DOS nombres a proposito. El ticket de Mercado Publico ya
+    # existe en produccion, pero en el proyecto `mp-sync` y bajo el nombre
+    # MERCADO_PUBLICO_TICKET; este worker lo buscaba solo como MP_API_KEY, no lo
+    # encontraba y se omitia en silencio. Resultado: 0 nodos 'Mercado Publico'
+    # desde siempre, con el job reportando verde cada dia.
+    ticket = os.getenv("MP_API_KEY", "") or os.getenv("MERCADO_PUBLICO_TICKET", "")
     if not ticket:
-        log.warning("[mp] MP_API_KEY no configurado — omitiendo extractor.")
+        log.error(
+            "[mp] Sin credencial: define MP_API_KEY o MERCADO_PUBLICO_TICKET. "
+            "El extractor devuelve vacio y el job va a contar 0 resultados."
+        )
         return []
 
     if not fecha:
