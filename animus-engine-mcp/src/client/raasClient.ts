@@ -20,7 +20,7 @@ export function getApiKey(): string {
   const key = process.env.ANIMUS_API_KEY || process.env.BRALIDUS_API_KEY;
   if (!key || !key.trim()) {
     throw new Error(
-      'Falta ANIMUS_API_KEY. Obtené una en https://bralidus.vercel.app y agregala ' +
+      'Falta ANIMUS_API_KEY. Obtené una en https://animus.scouttech.lat y agregala ' +
         'al bloque "env" de tu configuración MCP:\n' +
         '  "env": { "ANIMUS_API_KEY": "tu_clave" }',
     );

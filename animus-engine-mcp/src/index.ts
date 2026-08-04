@@ -342,7 +342,7 @@ async function main() {
   if (!process.env.ANIMUS_API_KEY && !process.env.BRALIDUS_API_KEY) {
     console.error(
       '⚠️  Falta ANIMUS_API_KEY: las herramientas van a fallar.\n' +
-        '   Obtené una clave en https://bralidus.vercel.app y agregala al bloque\n' +
+        '   Obtené una clave en https://animus.scouttech.lat y agregala al bloque\n' +
         '   "env" de tu configuración MCP:  "env": { "ANIMUS_API_KEY": "tu_clave" }',
     );
   }

@@ -50,7 +50,7 @@ del Poder Judicial y verificadas año por año contra la fuente.
 `ANIMUS_API_KEY` es **obligatoria**. Sin ella el servidor arranca, avisa por
 stderr y cada herramienta devuelve un error explicando cómo configurarla.
 
-Se obtiene en [bralidus.vercel.app](https://bralidus.vercel.app) y va en el
+Se obtiene en [animus.scouttech.lat](https://animus.scouttech.lat) y va en el
 bloque `env` de la configuración MCP:
 
 ```json
@@ -75,17 +75,17 @@ Edita el archivo de configuración en:
 {
   "mcpServers": {
     "animus-engine": {
-      "command": "node",
-      "args": ["E:/DEV/Respos/Trabajo/startups/animus-engine-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "animus-engine-mcp"],
       "env": {
-        "ANIMUS_API_KEY": "demo_public_key"
+        "ANIMUS_API_KEY": "tu_clave_aqui"
       }
     }
   }
 }
 ```
 
-> **Nota**: Reemplaza `"demo_public_key"` por tu propia API Key generada en el Developer Portal para límites de cuota completos y reportes de auditoría en tu organización.
+> Reemplaza `tu_clave_aqui` por tu API Key de [animus.scouttech.lat](https://animus.scouttech.lat). Sin ella las herramientas no funcionan.
 
 ---
 
@@ -95,9 +95,27 @@ Edita el archivo de configuración en:
 2. Completa los campos:
    - **Name**: `Animus Engine`
    - **Type**: `stdio`
-   - **Command**: `node E:/DEV/Respos/Trabajo/startups/animus-engine-mcp/dist/index.js`
+   - **Command**: `npx -y animus-engine-mcp`
    - **Environment Variables**:
-     - `ANIMUS_API_KEY=demo_public_key`
+     - `ANIMUS_API_KEY=tu_clave_aqui`
+
+---
+
+### Opción C: desde el repositorio (desarrollo)
+
+Si trabajas sobre el código en vez de instalarlo:
+
+```json
+{
+  "mcpServers": {
+    "animus-engine": {
+      "command": "node",
+      "args": ["/ruta/absoluta/a/animus-engine-mcp/dist/index.js"],
+      "env": { "ANIMUS_API_KEY": "tu_clave_aqui" }
+    }
+  }
+}
+```
 
 ---
 

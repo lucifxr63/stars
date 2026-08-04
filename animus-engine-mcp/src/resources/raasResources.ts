@@ -29,7 +29,8 @@ Animus Engine RaaS Gateway sirve datos en tiempo real (0 mocks) desde Supabase y
 - **GET /health/services**: Monitoreo de 28 microservicios del ecosistema.
 
 ## 3. Autenticación
-Todas las peticiones requieren \`Authorization: Bearer <API_KEY>\`. Se puede utilizar la clave pública de pruebas \`demo_public_key\`.`;
+Todas las peticiones requieren \`Authorization: Bearer <API_KEY>\`.
+La clave se obtiene en https://animus.scouttech.lat y es **obligatoria**: no existe una clave pública compartida.`;
 
 export async function readResource(uri: string) {
   if (uri === API_DOCS_RESOURCE.uri) {

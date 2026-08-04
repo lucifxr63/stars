@@ -42,18 +42,32 @@ export async function executeApiDocs() {
 
 **Base URL de Producción**: https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1
 **Autenticación**: Encabezado HTTP \`Authorization: Bearer <TU_API_KEY>\` (o \`?apikey=<TU_API_KEY>\`).
-**Clave de Demostración Pública**: \`demo_public_key\`
+La clave se obtiene en https://animus.scouttech.lat y es **obligatoria**: no hay clave pública compartida.
 
-## Endpoints Principales disponibles en este MCP
-- \`animus_economic_macro\`: UF oficial diaria CMF, UTM, TPM, USD/CLP (GET /data/macro)
-- \`animus_intel_query\`: Consulta en lenguaje natural al Grafo MoE de 696 nodos (POST /intel/query)
-- \`animus_rag_search\`: Búsqueda normativa con citas de leyes chilenas (POST /rag/query)
-- \`animus_licitus_activas\`: Licitaciones públicas B2G abiertas en Mercado Público (GET /mercado-publico/licitaciones)
-- \`animus_licitus_compra_agil\`: Compras ágiles en tiempo real (GET /mercado-publico/compra-agil)
+## Herramientas disponibles en este MCP
+
+### Corte Suprema de Chile (1.706.941 causas, 2020-2025)
+- \`animus_pjud_tendencias\`: serie por año — volumen, % confirmados/revocados, duración media
+- \`animus_pjud_resumen\`: totales por año, serie, libro, tipo de recurso, sala
+- \`animus_pjud_causas\`: causas individuales, filtrables
+- \`animus_pjud_causa\`: historia completa de una causa (devuelve un ARREGLO)
+- \`animus_pjud_estadisticas\`: series agregadas (presupuesto, dotación, cuenta pública)
+
+### Mercado Público (B2G)
+- \`animus_mp_oportunidades\`: buscador unificado de licitaciones y compras ágiles
+- \`animus_mp_organismos\`: directorio de 33.682 organismos compradores
+- \`animus_licitus_activas\`: licitaciones abiertas
+- \`animus_licitus_compra_agil\`: compras ágiles
+
+### Economía e inteligencia
+- \`animus_economic_macro\`: UF diaria CMF, UTM, USD/CLP, cobre, WTI, Fed funds, IPC USA
+- \`animus_economic_catalog\`: catálogo completo de series
+- \`animus_intel_query\`: consulta en lenguaje natural al Grafo MoE
+- \`animus_rag_search\`: búsqueda normativa con citas de leyes chilenas
 
 ## Integración Directa por cURL / HTTP
-Puedes ejecutar peticiones HTTP directamente a la Base URL indicando \`Authorization: Bearer demo_public_key\`.
-Documentación pública web: https://bralidus.vercel.app/llms.txt`;
+Peticiones HTTP directas a la Base URL con \`Authorization: Bearer <TU_API_KEY>\`.
+Documentación pública web: https://animus.scouttech.lat/llms.txt`;
 
   return {
     content: [
