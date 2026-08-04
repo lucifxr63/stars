@@ -32,6 +32,29 @@ export function getBaseUrl(): string {
   return process.env.ANIMUS_GATEWAY_URL || DEFAULT_BASE_URL;
 }
 
+// Debe coincidir con la versión de package.json. Decía 1.0.0 mientras el paquete
+// era 0.1.0, o sea que la telemetría del servidor atribuía el tráfico a una
+// versión que no existe.
+const VERSION_CLIENTE = '0.1.0';
+
+/**
+ * Cabeceras comunes. La API key va SÓLO acá, nunca en la query string.
+ *
+ * Antes se mandaba además como `?apikey=`, "como fallback". Era redundante —el
+ * gateway lee Authorization primero— y bastante peor: las query strings quedan
+ * escritas en los logs del servidor, en los de cualquier proxy intermedio y en
+ * los historiales. Publicado en npm, eso significa filtrar la clave de cada
+ * usuario a un registro de acceso que nadie va a auditar.
+ */
+function cabeceras(extra?: Record<string, string>): Record<string, string> {
+  return {
+    'Authorization': `Bearer ${getApiKey()}`,
+    'Accept': 'application/json',
+    'X-Client': `Animus-Engine-MCP/${VERSION_CLIENTE}`,
+    ...extra,
+  };
+}
+
 export async function raasGet(path: string, queryParams?: Record<string, string | number>): Promise<any> {
   const baseUrl = getBaseUrl();
   const url = new URL(`${baseUrl}${path.startsWith('/') ? path : `/${path}`}`);
@@ -44,19 +67,9 @@ export async function raasGet(path: string, queryParams?: Record<string, string 
     }
   }
 
-  // Siempre enviar apikey como fallback en query o header
-  const apiKey = getApiKey();
-  if (!url.searchParams.has('apikey')) {
-    url.searchParams.set('apikey', apiKey);
-  }
-
   const response = await fetch(url.toString(), {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Accept': 'application/json',
-      'X-Client': 'Animus-Engine-MCP/1.0.0',
-    },
+    headers: cabeceras(),
   });
 
   if (!response.ok) {
@@ -69,21 +82,11 @@ export async function raasGet(path: string, queryParams?: Record<string, string 
 
 export async function raasPost(path: string, body?: Record<string, unknown>): Promise<any> {
   const baseUrl = getBaseUrl();
-  const apiKey = getApiKey();
   const url = new URL(`${baseUrl}${path.startsWith('/') ? path : `/${path}`}`);
-
-  if (!url.searchParams.has('apikey')) {
-    url.searchParams.set('apikey', apiKey);
-  }
 
   const response = await fetch(url.toString(), {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Client': 'Animus-Engine-MCP/1.0.0',
-    },
+    headers: cabeceras({ 'Content-Type': 'application/json' }),
     body: body ? JSON.stringify(body) : undefined,
   });
 

@@ -41,7 +41,10 @@ export async function executeApiDocs() {
   const docsText = `# Especificación Oficial Animus Engine / Bralidus RaaS API v1
 
 **Base URL de Producción**: https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1
-**Autenticación**: Encabezado HTTP \`Authorization: Bearer <TU_API_KEY>\` (o \`?apikey=<TU_API_KEY>\`).
+**Autenticación**: Encabezado HTTP \`Authorization: Bearer <TU_API_KEY>\`.
+El gateway todavía acepta \`?apikey=\` por compatibilidad, pero **no lo uses**: las
+query strings quedan escritas en los logs del servidor, en los de cualquier proxy
+intermedio y en los historiales.
 La clave se obtiene en https://animus.scouttech.lat y es **obligatoria**: no hay clave pública compartida.
 
 ## Herramientas disponibles en este MCP
