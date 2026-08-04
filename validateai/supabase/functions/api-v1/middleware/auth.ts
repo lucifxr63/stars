@@ -35,6 +35,36 @@ export const hashApiKey = async (apiKey: string): Promise<string> => {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
+/**
+ * Cuenta un rechazo de autenticación. Es el fallo que MÁS necesitamos ver —con
+ * él choca todo usuario nuevo que pega mal su key— y hasta ahora era
+ * completamente invisible: este middleware devuelve sin llamar a `next()`, así
+ * que `usageMiddleware`, que va después en la cadena, nunca llegaba a correr.
+ * Comprobado: 4 peticiones rechazadas producían 0 filas.
+ *
+ * Va a un CONTADOR agregado por (prefijo de IP, día) y no a un historial, porque
+ * es el único rechazo que puede provocar cualquiera desde fuera sin credencial:
+ * una fila por intento dejaría que un tercero haga crecer la tabla sin techo.
+ *
+ * No bloquea la respuesta: el usuario ya sabe que su key falló, no tiene por qué
+ * esperar a que lo anotemos.
+ */
+const contarFalloAuth = (c: any, code: string) => {
+  try {
+    const crudo = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? ''
+    const ip = String(crudo).split(',')[0].trim()
+    const escritura = getSupabase()
+      .rpc('registrar_fallo_auth', { p_ip: ip || null, p_code: code })
+      .then(({ error }: { error: unknown }) => {
+        if (error) console.error('No se contó el fallo de auth:', error)
+      })
+    const runtime = (globalThis as any).EdgeRuntime
+    if (runtime?.waitUntil) runtime.waitUntil(escritura)
+  } catch (err) {
+    console.error('contarFalloAuth:', err)
+  }
+}
+
 export const authMiddleware = async (c: any, next: any) => {
   // 0. HTTP OPTIONS requests (CORS Preflight) always pass instantly
   if (c.req.method === 'OPTIONS') {
@@ -56,6 +86,7 @@ export const authMiddleware = async (c: any, next: any) => {
   // registra en index.ts antes del app.use de este middleware, así que nunca
   // pasa por acá (verificado: responde 200 sin token y sin headers de cuota).
   if (!token) {
+    contarFalloAuth(c, 'AUTH_REQUIRED')
     return c.json({
       error: 'Se requiere una API key. Obtén la tuya en https://animus.scouttech.lat',
       code: 'AUTH_REQUIRED',
@@ -97,10 +128,12 @@ export const authMiddleware = async (c: any, next: any) => {
     }
 
     if (!keyRecord) {
+      contarFalloAuth(c, 'INVALID_KEY')
       return c.json({ error: 'Invalid API key or session token' }, 401)
     }
 
     if (!keyRecord.is_active) {
+      contarFalloAuth(c, 'KEY_REVOKED')
       return c.json({ error: 'API key has been revoked' }, 403)
     }
 

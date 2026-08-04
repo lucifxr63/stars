@@ -1,4 +1,5 @@
 import { getSupabase, uuidONulo } from './auth.ts'
+import { normalizarRuta } from './usage.ts'
 
 // Tier Monthly Credit Quotas (weighted credits per calendar month)
 export const TIER_CREDIT_LIMITS: Record<string, number> = {
@@ -141,8 +142,39 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
   const currentCreditsUsed = (creditsRes.data ?? []).reduce((acc: number, row: any) => acc + (row.credits_used ?? 1), 0)
   const minuteReqs = (minuteRes.count ?? 0)
 
+  // Los rechazos por cuota eran INVISIBLES: este middleware devuelve sin llamar
+  // a next(), así que `usageMiddleware` —que va después en la cadena— nunca se
+  // ejecutaba. Para un producto medido por créditos, no ver el agotamiento de
+  // cuota es no ver la señal de que a alguien le quedó chico el plan.
+  //
+  // Se registran con 0 créditos cobrados: la petición se rechazó, no se sirvió.
+  // Está acotado por definición —sólo lo alcanza quien ya tiene credencial
+  // válida, y su propio límite lo frena— así que no permite inflar la tabla.
+  const registrarRechazo = (status: number) => {
+    const fila: Record<string, unknown> = {
+      api_key_id: apiKeyId,
+      profile_id: profileId,
+      // NO se usa `c.req.routePath` acá: este middleware rechaza ANTES de que
+      // Hono resuelva el handler, así que sólo vería el patrón del propio
+      // middleware ('/api/v1/*') y se perdería qué endpoint fue rechazado.
+      endpoint: normalizarRuta(pathname),
+      requests_count: 1,
+      credits_used: 0,
+      tokens_used: 0,
+      status,
+      client: (c.req.header('x-client') ?? '').slice(0, 120) || null,
+      latency_ms: 0,
+    }
+    const escritura = supabase.from('api_usage_logs').insert(fila).then(
+      ({ error }: { error: unknown }) => { if (error) console.error('No se registró el rechazo:', error) },
+    )
+    const runtime = (globalThis as any).EdgeRuntime
+    if (runtime?.waitUntil) runtime.waitUntil(escritura)
+  }
+
   // Enforce burst limit per minute
   if (minuteReqs >= burstLimit) {
+    registrarRechazo(429)
     return c.json({
       error: `Límite por minuto alcanzado (${burstLimit} req/min para tu plan ${tier}).`,
       code: 'RATE_LIMIT_BURST',
@@ -152,6 +184,7 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
 
   // Enforce monthly credit quota
   if (currentCreditsUsed + costOfCurrentReq > creditLimit) {
+    registrarRechazo(429)
     return c.json({
       error: `Cuota mensual de créditos agotada (${currentCreditsUsed.toLocaleString()}/${creditLimit.toLocaleString()} créditos en plan ${tier}).`,
       code: 'RATE_LIMIT_MONTHLY',

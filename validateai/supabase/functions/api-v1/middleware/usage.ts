@@ -1,12 +1,70 @@
 import { getSupabase, uuidONulo } from './auth.ts'
 
+/**
+ * Devuelve la PLANTILLA de la ruta, nunca la ruta concreta.
+ *
+ * POR QUÉ: acá se guardaba `new URL(c.req.url).pathname`. El gateway tiene 47
+ * rutas con parámetros en la URL, así que lo que quedaba escrito en el log de
+ * uso era el identificador real:
+ *
+ *   /api/v1/data/pjud/suprema/causas/Civil/289/2023   ← una causa con partes reales
+ *   /api/v1/data/companies/76543210-K/profile          ← el RUT de una empresa
+ *
+ * Eso es la agenda de investigación del usuario —qué causas revisa un abogado,
+ * qué empresas mira un analista, con fecha y hora— y no hace falta para nada de
+ * lo que esta tabla existe, que es medir consumo.
+ *
+ * Se usa `c.req.routePath`, que es el patrón que Hono YA resolvió al hacer el
+ * match, en vez de una lista de 47 rutas mantenida a mano que se desincronizaría
+ * al agregar la 48.
+ *
+ * El respaldo por regex existe por si `routePath` no está disponible: prefiere
+ * enmascarar de más (un segmento legítimo confundido con un id sólo degrada la
+ * métrica) antes que dejar pasar un identificador.
+ */
+export function plantillaDeRuta(c: any): string {
+  // `routePath` sólo sirve DESPUÉS de que Hono resolvió el handler. Este
+  // middleware corre tras `await next()`, así que acá ya está disponible; el
+  // limitador, en cambio, rechaza ANTES y sólo vería el patrón del propio
+  // middleware ('/api/v1/*'), por eso usa `normalizarRuta` directamente.
+  const patron = c.req?.routePath
+  if (typeof patron === 'string' && patron.length > 0 && !patron.endsWith('*')) {
+    return patron
+  }
+  return normalizarRuta(new URL(c.req.url).pathname)
+}
+
+/**
+ * Respaldo por regex, y única opción cuando todavía no hay ruta resuelta.
+ * Prefiere enmascarar de más —un segmento legítimo confundido con un id sólo
+ * degrada la métrica— antes que dejar pasar un identificador real.
+ */
+export function normalizarRuta(crudo: string): string {
+  return crudo
+    .split('/')
+    .map((seg) => {
+      if (!seg) return seg
+      if (/^\d+$/.test(seg)) return ':id'                       // rol, año, ids numéricos
+      if (/^\d{1,3}\.?\d{3}\.?\d{3}-[\dkK]$/.test(seg)) return ':rut'
+      if (/^\d{7,8}-[\dkK]$/.test(seg)) return ':rut'
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg)) return ':uuid'
+      if (/^\d+-\d+-[A-Z]{2}\d+$/i.test(seg)) return ':codigo'  // códigos de Mercado Público
+      return seg
+    })
+    .join('/')
+}
+
 export const usageMiddleware = async (c: any, next: any) => {
   if (c.req.method === 'OPTIONS') {
     return await next()
   }
 
+  const arranque = Date.now()
+
   // Wait for the request to complete
   await next()
+
+  const latencyMs = Date.now() - arranque
 
   // La guarda anterior era `if (!apiKeyId) return`, y descartaba justamente el
   // tráfico de sesión (que no tiene API key). Lo que hay que descartar es lo que
@@ -25,7 +83,7 @@ export const usageMiddleware = async (c: any, next: any) => {
   // contra un tope en créditos: se cotizaba 1 y se cobraba 30.
   const creditsCost = c.get('credits_cost') || 1
   const tokensUsed = c.get('tokens_used') ?? creditsCost
-  const endpoint = new URL(c.req.url).pathname
+  const endpoint = plantillaDeRuta(c)
 
   // `ip_address` salía NULL en el 100% de las filas, incluidas las de mayo, y no
   // era culpa del trigger: `anonymize_ip` (BEFORE INSERT, sprint de privacidad)
@@ -68,6 +126,13 @@ export const usageMiddleware = async (c: any, next: any) => {
       credits_used: creditsCost,
       tokens_used: tokensUsed,
       ip_address: ipAddress,
+      // Sin esto un 200 y un 500 del handler quedaban idénticos en la tabla.
+      status: c.res?.status ?? null,
+      // Ya venía en cada petición y se descartaba. El MCP manda
+      // 'Animus-Engine-MCP/<version>': permite separar su tráfico del de curl o
+      // del portal, y saber quién actualizó cuando se publica un arreglo.
+      client: (c.req.header('x-client') ?? '').slice(0, 120) || null,
+      latency_ms: latencyMs,
     }
 
     const escritura = supabase
