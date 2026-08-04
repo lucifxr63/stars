@@ -1,9 +1,13 @@
 {
   "name": "startups",
   "version": "1.0.0",
+  "_comentario_private": "private:true hace que npm SE NIEGUE a publicar desde la raíz. El 2026-08-04 se corrió `npm publish` acá por error en vez de en animus-engine-mcp/, y el tarball incluía todo el monorepo: graphify-out/, los PDF de pitch/, refs/, el portal, el worker y supabase/.temp/pooler-url. Sólo no salió porque el nombre 'startups' ya pertenece a otra cuenta desde 2015 y npm devolvió 403. Sin esa colisión habría quedado público e inmutable. Esta línea es lo que impide que vuelva a depender de la suerte.",
+  "private": true,
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "_comentario_prepublish": "Segundo cerrojo, independiente de `private`. Se agrega porque `private: true` NO se puede verificar con --dry-run (dry-run no aplica ese chequeo, lo hace recien en el PUT real), y un guard que no se puede probar no es un guard. Este si se prueba: `npm publish` corre prepublishOnly antes de empaquetar, y un exit 1 aborta la publicacion.",
+    "prepublishOnly": "echo \"ABORTADO: este es el monorepo, no un paquete publicable. Para publicar el MCP: cd animus-engine-mcp && npm publish --access public\" && exit 1"
   },
   "repository": {
     "type": "git",

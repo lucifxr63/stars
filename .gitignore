@@ -19,3 +19,7 @@ cashflow/modelos.md
 # Temporales del CLI de Supabase
 validateai/supabase/.temp/
 .env*
+
+# Estado local del CLI de Supabase (project ref, pooler url, versiones).
+# Estaba trackeado en un repo PUBLICO: no es codigo ni configuracion compartible.
+supabase/.temp/
