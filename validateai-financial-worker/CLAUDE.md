@@ -189,6 +189,29 @@ Tres reglas que salieron de encontrar una alucinación propia:
    cero filas **sin decirlo**. El grafo promete contexto que el join descarta, y
    el modelo llena el hueco. Ver la nota de aristas en el CLAUDE.md del portal.
 
+### Integridad del grafo — tres triggers (migración 20260805000002)
+
+`knowledge_edges` sigue enlazando por título, pero desde el 2026-08-05 la base
+impone semántica de foreign key:
+
+| Trigger | Qué hace |
+|:---|:---|
+| `trg_knowledge_edges_extremos` | Rechaza toda arista cuyos extremos no existan (`23503`) |
+| `trg_knowledge_nodes_renombre` | Renombrar un nodo propaga el título a sus aristas |
+| `trg_knowledge_nodes_borrado` | **Borrar un nodo borra sus aristas, en cascada** |
+
+**El tercero es destructivo por diseño.** Borrar un nodo ahora se lleva sus
+relaciones sin preguntar. Es lo correcto —una arista sin extremo no sirve y el
+INNER JOIN ya la descartaba— pero conviene saberlo antes de borrar nodos a mano.
+
+**Insertar una arista mala ahora REVIENTA.** Ese es el punto: era un fallo
+silencioso y pasó a ser un error. Los cinco insertadores vivos se relevaron
+antes de aplicarlo y ninguno viola la restricción — pero un job nuevo mal
+escrito va a fallar en producción en vez de corromper el grafo callado.
+
+Verificado contra la base: 6 de 6 pruebas (rechaza source y target inexistentes,
+acepta válidas, el renombre propaga sin dejar huérfanas, el borrado cascadea).
+
 ### ⚠️ `updated_at` NO sirve para medir frescura
 
 `bulk_insert_nodes` (`src/db/supabase_client.py`) upsertea sólo las claves del
