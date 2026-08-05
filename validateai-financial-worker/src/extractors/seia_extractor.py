@@ -19,6 +19,7 @@ para riesgo negativo. Las aprobaciones enriquecen el contexto del RAG.
 """
 from __future__ import annotations
 import logging
+import json
 import os
 import re
 from datetime import datetime, timedelta, timezone
@@ -29,7 +30,10 @@ CATEGORY = "SEIA"
 ANCHOR_TITLE = "SEIA Proyectos Aprobados Chile — Estado Actual"
 
 _BASE_URL = os.getenv("SEIA_BASE_URL", "https://seia.sea.gob.cl")
-_SEARCH_PATH = "/busqueda/buscarProyectoAction.php"
+# Endpoint que alimenta el DataTable de la página de resultados. El anterior
+# (`buscarProyectoAction.php`) hoy devuelve 302 hacia una página cuya tabla la
+# puebla JavaScript, así que servía HTML vacío en vez de datos.
+_SEARCH_PATH = "/busqueda/buscarProyectoResumenAction.php"
 _MAX_PROJECTS = int(os.getenv("SEIA_MAX_PROJECTS", "30"))
 _DAYS_WINDOW = int(os.getenv("SEIA_DAYS_WINDOW", "14"))
 
@@ -69,92 +73,140 @@ def _parse_monto(text: str) -> float:
     return 0.0
 
 
+def _normalizar(txt: str) -> str:
+    """Sin tildes y en minúsculas, para comparar estados sin depender del acento."""
+    import unicodedata
+    return "".join(
+        c for c in unicodedata.normalize("NFD", (txt or "").lower())
+        if unicodedata.category(c) != "Mn"
+    ).strip()
+
+
+# El sitio renombró los estados. Los llamadores siguen usando las etiquetas
+# viejas, así que se traducen acá en vez de tocar cinco puntos de llamada.
+_EQUIV_ESTADO = {
+    "calificado favorablemente": "aprobado",
+    "en calificacion": "en calificacion",
+    "rechazado": "rechazado",
+}
+
+
 def _fetch_projects(estado: str, dias_atras: int = _DAYS_WINDOW) -> list[dict]:
     """
-    Consulta el buscador SEIA por estado y ventana de días.
-    Retorna lista de dicts con los campos del proyecto.
+    Proyectos del SEIA presentados en los últimos `dias_atras` días, filtrados
+    por estado.
+
+    POR QUÉ ESTO YA NO ES SCRAPING DE HTML
+    --------------------------------------
+    Hasta el 2026-08-04 esto hacía POST a `/busqueda/buscarProyectoAction.php` y
+    parseaba la tabla con BeautifulSoup. El sitio cambió: ese endpoint ahora
+    responde 302 hacia `buscarProyectoResumen.php`, y como el redirect convierte
+    el POST en GET, los filtros se pierden por el camino. Se aterrizaba en una
+    página de resumen cuya tabla (`datatable-proyectos`) la puebla JavaScript, o
+    sea vacía en el HTML.
+
+    El resultado era el peor posible: `requests` seguía el redirect, devolvía 200,
+    el parser no encontraba filas y el extractor reportaba "0 proyectos" como si
+    fuera un resultado legítimo. Ningún error, ninguna alerta, y la categoría SEIA
+    congelada desde el 2026-06-13.
+
+    Ahora se consume el endpoint que alimenta esa tabla, que devuelve JSON y trae
+    más de lo que había antes: inversión declarada, comuna, tipología y URL de
+    expediente.
     """
     import requests
-    from api.radar.proxy import fetch_feed_content
 
     ahora = datetime.now(timezone.utc)
     desde = (ahora - timedelta(days=dias_atras)).strftime("%d/%m/%Y")
     hasta = ahora.strftime("%d/%m/%Y")
 
-    form_data = {
-        "idRegion": "0",
-        "idTipologia": "0",
-        "nombreTitular": "",
-        "nombreProyecto": "",
-        "estadoTransaccion": estado,
-        "fechaIngresoDesde": desde,
-        "fechaIngresoHasta": hasta,
-        "pagina": "1",
-    }
+    buscado = _EQUIV_ESTADO.get(_normalizar(estado), _normalizar(estado))
+    encontrados: list[dict] = []
+    pagina = 1
+    por_pagina = 100
 
-    url = _BASE_URL + _SEARCH_PATH
+    while len(encontrados) < _MAX_PROJECTS and pagina <= 10:
+        form = {
+            "nombre": "", "titular": "", "folio": "",
+            "selectRegion": "", "selectComuna": "", "tipoPresentacion": "",
+            # El filtro de estado NO se manda al servidor: `projectStatus` espera
+            # un código interno y con la etiqueta rompe la respuesta (devuelve
+            # HTML en vez de JSON). Se filtra sobre ESTADO_PROYECTO, que viene en
+            # cada fila, para no depender de códigos que el sitio puede renumerar.
+            "projectStatus": "",
+            # La ventana se aplica sobre la fecha que corresponde al estado, no
+            # siempre sobre la de presentación. Un proyecto PRESENTADO hace 90
+            # días casi nunca está ya aprobado: sigue en calificación. Filtrando
+            # todo por presentación, "Calificado Favorablemente" y "Rechazado"
+            # devolvían 0 aunque el sitio tuviera 89 aprobados en ese período.
+            **(
+                {"PresentacionMin": "", "PresentacionMax": "",
+                 "CalificaMin": desde, "CalificaMax": hasta}
+                if buscado in ("aprobado", "rechazado")
+                else
+                {"PresentacionMin": desde, "PresentacionMax": hasta,
+                 "CalificaMin": "", "CalificaMax": ""}
+            ),
+            "sectores_economicos": "", "razoningreso": "", "id_tipoexpediente": "",
+            "offset": str(pagina), "limit": str(por_pagina),
+        }
 
-    try:
-        scraperapi_key = os.getenv("SCRAPERAPI_KEY", "")
-        if scraperapi_key:
-            resp = requests.post(
-                "https://api.scraperapi.com",
-                params={"api_key": scraperapi_key, "url": url},
-                data=form_data,
-                timeout=40,
-            )
-        else:
-            resp = requests.post(url, data=form_data, timeout=40, headers={
-                "User-Agent": "Mozilla/5.0 (compatible; BralidusBot/1.0)",
-                "Content-Type": "application/x-www-form-urlencoded",
+        try:
+            scraperapi_key = os.getenv("SCRAPERAPI_KEY", "")
+            if scraperapi_key:
+                resp = requests.post(
+                    "https://api.scraperapi.com",
+                    params={"api_key": scraperapi_key, "url": _BASE_URL + _SEARCH_PATH},
+                    data=form, timeout=45,
+                )
+            else:
+                resp = requests.post(
+                    _BASE_URL + _SEARCH_PATH, data=form, timeout=45,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (compatible; BralidusBot/1.0)",
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                )
+            resp.raise_for_status()
+            # El sitio sirve latin-1 y no lo declara; con la inferencia de
+            # `requests` los nombres con tilde llegan corruptos.
+            payload = json.loads(resp.content.decode("latin-1"))
+        except Exception as exc:
+            log.error("[seia] Error consultando estado=%s pagina=%s: %s", estado, pagina, exc)
+            break
+
+        filas = payload.get("data") or []
+        if not filas:
+            break
+
+        for pr in filas:
+            if _normalizar(pr.get("ESTADO_PROYECTO", "")) != buscado:
+                continue
+            encontrados.append({
+                "nombre":  pr.get("EXPEDIENTE_NOMBRE", ""),
+                "tipo":    pr.get("WORKFLOW_DESCRIPCION", "") or pr.get("DESCRIPCION_TIPOLOGIA", ""),
+                "titular": pr.get("TITULAR", ""),
+                "region":  pr.get("REGION_NOMBRE", ""),
+                "fecha":   pr.get("FECHA_PRESENTACION_FORMAT", ""),
+                "estado":  pr.get("ESTADO_PROYECTO", estado),
+                "url":     pr.get("EXPEDIENTE_URL_PPAL", ""),
+                # Nuevo: el scrape anterior no lo tenía.
+                "inversion_mmusd": pr.get("INVERSION_MM_FORMAT", ""),
+                "comuna":  pr.get("COMUNA_NOMBRE", ""),
             })
-        resp.raise_for_status()
-        return _parse_html(resp.text, estado)
-    except Exception as exc:
-        log.error("[seia] Error consultando estado=%s: %s", estado, exc)
-        return []
+            if len(encontrados) >= _MAX_PROJECTS:
+                break
 
+        if len(filas) < por_pagina:
+            break
+        pagina += 1
 
-def _parse_html(html: str, estado: str) -> list[dict]:
-    from bs4 import BeautifulSoup
-
-    soup = BeautifulSoup(html, "html.parser")
-    projects: list[dict] = []
-
-    # La tabla de resultados SEIA tiene class "tabla_proyectos" o similar
-    table = (
-        soup.find("table", class_=re.compile(r"tabla|result|project", re.I))
-        or soup.find("table")
+    log.info(
+        "[seia] %d proyectos extraídos (estado=%s, ventana=%sd)",
+        len(encontrados), estado, dias_atras,
     )
-    if not table:
-        log.warning("[seia] No se encontró tabla de resultados en la respuesta HTML.")
-        return []
-
-    rows = table.find_all("tr")[1:]  # skip header
-    for row in rows[:_MAX_PROJECTS]:
-        cols = [td.get_text(strip=True) for td in row.find_all("td")]
-        link_tag = row.find("a", href=True)
-        link = link_tag["href"] if link_tag else ""
-        if not link.startswith("http") and link:
-            link = _BASE_URL + link
-
-        if len(cols) < 3:
-            continue
-
-        # El orden de columnas varía según el año del sitio SEIA.
-        # Inferimos por posición: nombre / tipo / titular / región / fecha / estado
-        projects.append({
-            "nombre": cols[0] if len(cols) > 0 else "",
-            "tipo":   cols[1] if len(cols) > 1 else "",
-            "titular": cols[2] if len(cols) > 2 else "",
-            "region": cols[3] if len(cols) > 3 else "",
-            "fecha":  cols[4] if len(cols) > 4 else "",
-            "estado": estado,
-            "url":    link,
-        })
-
-    log.info("[seia] %d proyectos extraídos (estado=%s)", len(projects), estado)
-    return projects
+    return encontrados
 
 
 def project_to_node(proj: dict) -> dict:
