@@ -224,7 +224,21 @@ def assemble_context(nodes: list[dict]) -> str:
       _Último valor: X unidad (fecha)_
     """
     if not nodes:
-        return "_No se encontraron nodos relevantes para este contexto._"
+        # La ausencia de contexto se declara como INSTRUCCIÓN, no como una nota
+        # al pie. Este texto viaja dentro del prompt de un modelo que, si sólo
+        # lee "no se encontraron nodos", igual responde con su conocimiento
+        # paramétrico — y el usuario recibe una respuesta sin fuente creyendo que
+        # salió del grafo. Decir explícitamente qué hacer es lo que separa un
+        # "no tengo ese dato" de una invención con tono seguro.
+        return (
+            "## Contexto\n\n"
+            "**No hay información en la base de conocimiento para esta consulta.**\n\n"
+            "INSTRUCCIÓN: respondé exactamente que no se dispone de información "
+            "sobre este tema en la base y ofrecé reformular la pregunta. "
+            "NO respondas con conocimiento general ni con estimaciones propias: "
+            "todo lo que no esté en este contexto es, para esta respuesta, "
+            "información que no tenemos."
+        )
 
     parts: list[str] = ["## Contexto Macroeconómico y de Mercado\n"]
 
@@ -233,17 +247,31 @@ def assemble_context(nodes: list[dict]) -> str:
         latest = meta.get("ultimo_valor")
         unit = meta.get("unidad", "")
         date_raw = meta.get("ultima_fecha", "")
-        date = date_raw[:7] if date_raw else "N/A"
         source = node.get("source_type", "VECTOR")
         category = node.get("category") or "Macro"
 
         header = f"### {node['document_title']} [{source}] — {category}"
-        value_line = (
-            f"_Último valor: **{latest} {unit}** ({date})_"
-            if latest is not None
-            else "_Datos en proceso de actualización._"
-        )
 
-        parts.append(f"{header}\n{node['content']}\n{value_line}")
+        # Sólo se afirma la serie cuando la serie existe.
+        #
+        # Acá decía "_Datos en proceso de actualización._" para todo nodo sin
+        # `ultimo_valor`. Eso es una afirmación FALSA sobre el estado del
+        # sistema: la mayoría de estos nodos —leyes, metodología,
+        # jurisprudencia— no tiene ni va a tener un valor numérico, y no hay
+        # ninguna actualización en curso. El modelo lo leía y se lo repetía al
+        # usuario de buena fe. Era una alucinación que inyectábamos nosotros,
+        # no una que el modelo inventara.
+        #
+        # Un nodo sin serie simplemente no lleva línea de valor. La ausencia de
+        # una afirmación es más honesta que una afirmación sobre la ausencia.
+        if latest is not None:
+            fecha = date_raw[:7] if date_raw else None
+            sufijo = f" ({fecha})" if fecha else " (la fuente no informa fecha)"
+            parts.append(
+                f"{header}\n{node['content']}\n"
+                f"_Último valor: **{latest} {unit}**{sufijo}_"
+            )
+        else:
+            parts.append(f"{header}\n{node['content']}")
 
     return "\n\n".join(parts)
