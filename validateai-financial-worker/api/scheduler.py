@@ -57,8 +57,13 @@ async def _job_fred_sync() -> None:
             await asyncio.to_thread(bulk_update_embeddings, client, updates)
             log.info("[scheduler] %d embeddings actualizados.", len(updates))
 
+        job_health.report("fred_sync", len(nodes))
         log.info("[scheduler] FRED sync completado.")
     except Exception:
+        # Reportar 0 y NO sólo loguear: hasta el 2026-08-05 este `except` se
+        # tragaba la excepción sin avisar a nadie, así que un FRED caído se veía
+        # igual que uno sano — el latido decía "terminó" y no había más señal.
+        job_health.report("fred_sync", 0)
         log.exception("[scheduler] Error en FRED sync.")
 
 
@@ -91,8 +96,14 @@ async def _job_yfinance_sync() -> None:
             updates = [{"id": n["id"], "embedding": v} for n, v in zip(pending, vectors)]
             await asyncio.to_thread(bulk_update_embeddings, client, updates)
 
+        job_health.report("yfinance_sync", len(nodes))
         log.info("[scheduler] yfinance sync completado.")
     except Exception:
+        # Yahoo Finance castiga con rate limit y este job corre una vez al MES:
+        # sin reporte, una corrida fallida no se nota hasta la siguiente, o sea
+        # 30 días después. Reportar 0 hace que el umbral de 3 corridas vacías
+        # tenga sentido en un job de esta frecuencia.
+        job_health.report("yfinance_sync", 0)
         log.exception("[scheduler] Error en yfinance sync (posible rate limit).")
 
 
@@ -460,7 +471,23 @@ async def _job_empleo_sync() -> None:
 
 
 async def _job_cache_sweep() -> None:
-    """Limpia entradas expiradas del cache de embeddings."""
+    """
+    Limpia entradas expiradas del cache de embeddings.
+
+    ⚠️ NO HACE NADA EN PRODUCCIÓN, y por eso no reporta a `job_health`.
+
+    Barre `cache._cache`, que es un dict **del proceso**. Desde que el worker se
+    desplegó serverless (2026-07-14) cada invocación arranca con el dict vacío,
+    así que este job siempre encuentra cero entradas que limpiar. No está roto:
+    es que el problema que resolvía —un proceso persistente acumulando cache—
+    ya no existe.
+
+    Es el mismo patrón que dejó inservible al detector de fallos silenciosos:
+    estado de proceso que sobrevivía en un deploy persistente y dejó de hacerlo
+    al migrar. Se conserva por si el worker vuelve a correr persistente; NO se
+    le agrega reporte de salud porque un cero acá es lo normal y esperado, y
+    alertarlo sería ruido garantizado.
+    """
     from api import cache
     import time
 
@@ -559,14 +586,33 @@ scheduler.add_job(
     replace_existing=True,
 )
 
-scheduler.add_job(
-    _job_empleo_sync,
-    CronTrigger(day_of_week="sat", hour=9, minute=0, timezone="America/Santiago"),
-    id="empleo_sync",
-    name="Señal Empleo Sectorial — Computrabajo (semanal)",
-    misfire_grace_time=3600,
-    replace_existing=True,
-)
+# ── empleo_sync DESACTIVADO el 2026-08-05 ────────────────────────────────────
+#
+# Se retira por dos motivos, y el segundo pesa más que el primero.
+#
+# 1. Raspa Computrabajo, que resiste el scraping — el propio docstring del
+#    extractor "recomienda" ScraperAPI. Choca con la regla de no rodear
+#    controles de acceso, que desde el 2026-08-05 vale también para fuentes
+#    privadas (ver CLAUDE.md).
+#
+# 2. LA SEÑAL ESTABA MAL CONSTRUIDA EN ORIGEN. Contaba coincidencias de un
+#    BUSCADOR DE TEXTO ("minería cobre litio", "desarrollador software
+#    tecnología") y llamaba a eso "ofertas del sector minería". Eso mide cómo se
+#    redactan los avisos, no cuánta gente se contrata. Aunque el scraping
+#    funcionara perfecto, el número no significaba lo que decía significar.
+#
+# Y no fallaba en silencio: fallaba MINTIENDO. `_count_listings` devuelve 0
+# cuando el regex del contador no matchea, y `fetch_all_as_nodes` sólo saltea
+# cuando el valor es < 0 — así que el 0 se ingería como dato. La última corrida
+# (2026-08-01) dejó "Minería: 0 ofertas activas" y "Finanzas: 0" en el grafo,
+# citables por el RAG como hechos.
+#
+# Los 8 nodos 'Señal Empleo' se borraron el 2026-08-05. No alcanzaba con apagar
+# el job: tienen `permanent: false` porque se sobreescriben semanalmente, así que
+# al morir el job NO se borran — se quedan con el último valor y sin expirar.
+#
+# Para revivir la señal hay que rehacerla sobre otra fuente, no reactivar esto.
+# Ver ING-4 en docs/PLAN_POST_AUDITORIA.md.
 
 # ── bcch_sync DESACTIVADO el 2026-08-04 ──────────────────────────────────────
 #
@@ -624,10 +670,16 @@ async def _job_embeddings_pendientes() -> None:
     # category=None y categories=None -> todos los pendientes.
     pendientes = await asyncio.to_thread(fetch_nodes_pending_embedding, client, None, None)
     if not pendientes:
+        # OJO: acá "0" es el resultado SANO — que no haya pendientes significa
+        # que todo está vectorizado. Por eso se reporta 1 y no 0: el umbral de
+        # corridas vacías interpreta 0 como "no produjo", y este job estaría
+        # alertando justo cuando funciona perfecto.
+        job_health.report("embeddings_pendientes", 1)
         log.info("[embeddings] no hay nodos pendientes.")
         return
 
     vectores = await asyncio.to_thread(embed_nodes, pendientes)
     updates = [{"id": n["id"], "embedding": v} for n, v in zip(pendientes, vectores)]
     await asyncio.to_thread(bulk_update_embeddings, client, updates)
+    job_health.report("embeddings_pendientes", len(updates))
     log.info("[embeddings] %d nodos vectorizados.", len(updates))

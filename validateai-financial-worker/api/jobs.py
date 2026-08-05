@@ -23,7 +23,6 @@ from api.scheduler import (
     _job_embeddings_pendientes,
     _job_cmf_sync,
     _job_concursal_sync,
-    _job_empleo_sync,
     _job_fred_sync,
     _job_radar_refresh,
     _job_seia_sync,
@@ -42,8 +41,10 @@ _JOBS = {
     "cmf_sync": _job_cmf_sync,
     "seia_sync": _job_seia_sync,
     "concursal_sync": _job_concursal_sync,
-    "empleo_sync": _job_empleo_sync,
     "bcch_sync": _job_bcch_sync,
+    # empleo_sync NO figura acá a propósito: desactivado el 2026-08-05 por ser
+    # una señal mal construida que además ingería ceros falsos. Ver la nota en
+    # scheduler.py. `_job_empleo_sync` sigue existiendo pero no se dispara.
 }
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
