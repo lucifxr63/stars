@@ -21,13 +21,25 @@ Sobre 774 nodos de `knowledge_nodes`:
 
 | Hallazgo | Cantidad | Recuperable por el RAG |
 |:---|---:|:---|
-| Contenido útil = **0 caracteres** | **36** | **Sí, los 36 tienen embedding** |
-| Prefijo de plantilla `"Relacionado con: , , ,"` | 39 | Sí |
+| Contenido útil = **0 caracteres** | ~~36~~ → **49** | **Sí, los 49 tienen embedding** |
+| Prefijo de plantilla `"Relacionado con: …"` | 44 | Sí |
 | Andamiaje `"Asked on … against NotebookLM notebook"` | 30 | Sí |
-| Contenido útil entre 1 y 120 caracteres | 14 | Sí |
+| **Frontmatter YAML como contenido** (`--- titulo: … ---`) | **5** | Sí |
+| Contenido útil entre 1 y 120 caracteres | 9 | Sí |
 | Nodo literal `Test` / *"Test content para validacion chilena"* | 1 | Sí |
 
-### Qué son exactamente los 36 vacíos
+⚠️ **Los 36 originales estaban mal contados** (corregido el 2026-08-05 al tomar
+la línea base de CAL-6a). El filtro de la primera medición sólo descontaba
+`"Relacionado con: , , ,"`, así que un chunk cuyo contenido entero era
+`"Relacionado con: , , Asked on … against NotebookLM notebook"` se contaba como
+**no vacío**. Y el frontmatter YAML no se buscó: apareció leyendo una salida
+real del RAG, no consultando la base.
+
+Las cifras de este plan valen lo que valga su definición de "contenido útil".
+La definición vive ahora en una sola función —`contenido_util()` en
+`scripts/rag_baseline.py`— para que medir y limpiar no puedan divergir.
+
+### Qué son exactamente los chunks vacíos
 
 **Todos tienen `header_path = 'Introduccion'`** y se crearon el 2026-06-12.
 
@@ -54,11 +66,26 @@ Vesting y Contratos Societarios para Startups       → chunk vacío, recuperabl
 Product-Market Fit, Unit Economics, Mom Test, …     → +29 más
 ```
 
-El mecanismo: el vector search recupera el chunk vacío, `assemble_context` lo
-inyecta como `### Ley 21.521 Fintech Chile — Regulación Completa [VECTOR] —
-normativa` **sin contenido debajo**, y el modelo ve un encabezado que promete
-normativa fintech chilena y nada que leer. Completa el hueco con conocimiento
-paramétrico y el usuario recibe regulación inventada con formato de cita.
+El mecanismo, **corregido con lo medido en CAL-6a** — la primera versión de este
+párrafo decía que el encabezado llega sin nada debajo, y es falso:
+
+```
+### Ley 21.719 Proteccion de Datos Personales Chile [VECTOR] — normativa
+Relacionado con: , , , Asked on 2026-05-24T… against NotebookLM notebook
+```
+
+El encabezado promete normativa de protección de datos y debajo hay **una lista
+de relaciones vacía**, no un hueco. Eso es peor que el vacío: un hueco visible
+invita a decir "no tengo el dato", esto se lee como contenido y no señala nada.
+El modelo completa con conocimiento paramétrico y el usuario recibe regulación
+inventada con formato de cita.
+
+Y no es ruido incidental. `_build_embed_text` vectoriza
+`f"{document_title}. {content}"`, así que con `content` vacío **el vector del
+chunk es el del título** — un match más puro a una pregunta con forma de título
+que cualquier chunk real, cuyo vector está diluido por párrafos de detalle. En
+la línea base el chunk basura sale **#1**, por encima de todos los chunks reales
+de su propio documento.
 
 Es el mismo mecanismo que las aristas huérfanas, por otra vía.
 
@@ -284,11 +311,16 @@ imposible, no una convención.
 
 ### CAL-6 · Probar el RAG antes y después
 
+✅ **CAL-6a HECHO.** Línea base tomada el 2026-08-05, antes de tocar nada.
+`validateai-financial-worker/scripts/rag_baseline.py`, salida en
+`scripts/rag_baseline_out/antes.json`. Corregí el diagnóstico con lo medido —
+ver más abajo.
+
 Todo lo anterior es hipótesis hasta que se mida en la salida.
 
 **Criterios de aceptación**
-- [ ] Un conjunto de ~10 consultas de referencia sobre los temas afectados (Ley Fintech, Ley de Datos, PMF, Unit Economics, constitución de SpA…).
-- [ ] Ejecutado **antes** de la limpieza, guardado.
+- [x] Un conjunto de ~10 consultas de referencia sobre los temas afectados (Ley Fintech, Ley de Datos, PMF, Unit Economics, constitución de SpA…). **12 consultas.**
+- [x] Ejecutado **antes** de la limpieza, guardado.
 - [ ] Ejecutado **después**, comparado.
 - [ ] Documentado: cuántas devolvían un encabezado sin contenido antes, y cuántas después (esperado: 0).
 
@@ -296,6 +328,73 @@ Todo lo anterior es hipótesis hasta que se mida en la salida.
 que mejoró. **Verificar el efecto, no el status.**
 
 **Esfuerzo.** 2 h.
+
+---
+
+#### Línea base — 2026-08-05, antes de tocar nada
+
+Se mide el **Markdown que `assemble_context` le pone al modelo**, no la respuesta
+del LLM: ahí está el defecto y es determinista. Los embeddings de las 12
+consultas quedan cacheados y se reutilizan en la corrida "después", para que una
+diferencia no pueda venir del vector de la pregunta.
+
+| Métrica | Antes |
+|:---|---:|
+| Consultas con al menos un nodo basura | **8 de 12** |
+| Encabezados sin contenido útil | **15** |
+| Nodos recuperados | 72 |
+| Nodos basura recuperados | **15 (21 %)** |
+| Encabezados literalmente sin cuerpo | 0 |
+
+#### Tres correcciones al diagnóstico, todas por haber medido
+
+**1. El encabezado NO llega vacío. Llega con basura debajo — y eso es peor.**
+
+Este plan decía que el modelo recibe "un encabezado y ningún texto". Falso. La
+métrica "encabezado sin cuerpo" dio **0 en las 12 consultas**. Lo que recibe es:
+
+```
+### Mom Test — Framework Entrevistas de Validacion [VECTOR] — metodologia
+Relacionado con: , , , Asked on 2026-05-24T09:33:34.628Z against NotebookLM notebook
+```
+
+Un encabezado que promete un framework de entrevistas, y debajo la afirmación de
+una lista de relaciones **vacía**. Un hueco visible invita a decir "no tengo el
+dato"; esto se lee como contenido y no señala nada.
+
+**2. Son 49, no 36.** Con la definición de contenido útil aplicada de verdad:
+44 con plantilla o andamiaje, más **5 nodos que son puro frontmatter YAML**
+(`--- titulo: … fechaactualizacion: … ---`). Esa familia **no estaba en el
+diagnóstico**: apareció al leer la salida real de la consulta `mom-test`.
+
+**3. El chunk vacío no es ruido incidental: sale PRIMERO.**
+
+`_build_embed_text` vectoriza `f"{document_title}. {content}"`. Con `content`
+vacío, **el vector del chunk es el del título**, así que es un match más puro a
+una pregunta con forma de título que cualquier chunk real, cuyo vector está
+diluido por párrafos de detalle. Medido:
+
+```
+¿Cómo me afecta la Ley 21.719 de protección de datos personales?
+  1. rel=0.6823  útil=    0   Ley 21.719 Proteccion de Datos Personales  ← BASURA
+  2. rel=0.6792  útil=  838   Ley 21.719 Proteccion de Datos Personales
+
+¿A qué programas de CORFO puede postular mi startup?
+  1. rel=0.7393  útil=    0   Programas CORFO para Startups Chile        ← BASURA
+  2. rel=0.7242  útil=  658   Programas CORFO para Startups Chile
+```
+
+**Le gana a los chunks reales de su propio documento** y se queda con el primer
+lugar de un presupuesto de 6. Cada consulta regulatoria recuperó el chunk vacío
+del documento exacto por el que preguntaba: Ley 21.719, CMF/UAF, SpA, laboral,
+CORFO. El nodo menos capaz de responder es el que mejor rankea.
+
+**Peor caso: `mom-test`, 5 de 6 nodos basura.** Para "¿cómo hago entrevistas de
+validación sin sesgar al entrevistado?" —pregunta central del producto— el
+modelo recibe un solo chunk con conocimiento real.
+
+Esto sube la prioridad de CAL-2 y CAL-3: no son limpieza cosmética detrás de
+CAL-1, son la mayor parte del daño medido.
 
 ---
 
@@ -315,7 +414,7 @@ puede demostrar la mejora, sólo afirmarla.
 | # | Ticket | Bloquea a | Esfuerzo |
 |:--|:---|:---|:---|
 | 1 | ~~**CAL-0** — arreglar la cascada del trigger~~ ✅ | CAL-1 | 1 h |
-| 2 | **CAL-6a** — línea base del RAG | la verificación | 1 h |
+| 2 | ~~**CAL-6a** — línea base del RAG~~ ✅ | la verificación | 1 h |
 | 3 | **CAL-1** — borrar los 36 vacíos | — | 1 h |
 | 4 | **CAL-2** — prefijo, andamiaje y revectorización | — | 2 h |
 | 5 | **CAL-3** — `Test` y los casi vacíos | — | 2 h |
