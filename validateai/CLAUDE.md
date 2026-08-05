@@ -70,13 +70,39 @@ All functions run on Deno via Supabase Edge Functions.
      - `GET /api-v1/mercado-publico/opportunities` — Combined B2G tender opportunities.
      - `GET /api-v1/mercado-publico/licitaciones` — Large public tenders (LE, LP, LR).
      - `GET /api-v1/mercado-publico/health` — B2G integration service status.
-   - **Live fallback to Licitus (`fetchLicitusActivas()` in `api-v1/routes/data.ts`):** The canonical table `licitaciones_mercado_publico` is currently EMPTY — the `mp-sync` ingestion service does not exist in this project yet. When the canonical query returns nothing, `api-v1` queries **Licitus** (via the BralidusPY proxy, `BRALIDUS_URL`), which does hold live Mercado Público data (~650 open processes), and maps its shape to the canonical Animus vocabulary. Responses carry `meta.source = 'licitus_live'` and `data_source: 'licitus_live'` per item so consumers always know the provenance.
+   - **Fuente primaria: la tabla canónica `licitaciones_mercado_publico`.** Al 2026-08-04 tiene **38.305 filas frescas** (se cargan a diario), repartidas en las CUATRO vías por las que el Estado compra:
+
+     | `source_type` | Qué es | Filas |
+     |:---|:---|---:|
+     | `tender` | Licitación tradicional | 13.990 |
+     | `agile_purchase` | Compra ágil | 24.043 |
+     | `convenio_marco` | Contra catálogo ya licitado | 242 |
+     | `trato_directo` | **Sin competencia**, por excepción legal | 30 |
+
+     Las cuatro se consultan por `GET /mercado-publico/opportunities?type=`. Las rutas dedicadas `/convenio-marco` y `/tratos-directos` devuelven **501 y son redundantes** — no implementarlas.
+
+     La ingesta la hace `mp-sync` (`validateai-developer-portal/services/mercado-publico`, proyecto Vercel propio **sin integración Git**: se despliega a mano con `vercel deploy --prod`).
+   - **Fallback a Licitus (`fetchLicitusActivas()` en `api-v1/routes/data.ts`):** sólo si la consulta canónica no devuelve nada. Las respuestas llevan `meta.source = 'licitus_live'` y `data_source` por ítem para que la procedencia sea explícita.
      - `published_at` is `null` on this path: Licitus `/mercado/activas` exposes the CLOSING date, not the publication date. It is left null rather than filled in.
      - If Licitus is also unavailable, the endpoints return **503 `SOURCE_UNAVAILABLE`**. They do not fabricate records.
      - **NEVER reintroduce a hardcoded dataset here.** A previous version (commit `e01c47e`) injected 12 invented records whose `published_at` was computed as `now - N hours` on every request, so two consecutive calls returned different dates for the same `external_code`, and their `official_url` pointed at nonexistent fichas. An integrator caught it within minutes of testing.
-   - **Rate Limiting & Tiers (`api-v1/middleware/ratelimit.ts`):** Supports `free` tier (**500 monthly testing credits**, **30 req/min** burst limit — unblocked for immediate testing), `starter`, `pro`, and `enterprise`.
-   - **Licitus / Intelligence Routes:** `GET /api-v1/data/licitus/mercado/activas`, `GET /api-v1/intel/*`.
-   - **Deploy Command:** `npx supabase functions deploy api-v1 --no-verify-jwt`
+   - **La competencia real de las compras ágiles** — `GET /mercado-publico/ofertas?codigo=` o `?rut=`. Extraído de `raw_payload->detalle->proveedores_cotizando`, donde estaba enterrado: **7.111 ofertas, 2.369 proveedores, 1.095 adjudicaciones y 1.033 motivos de inadmisibilidad**. Tablas `mp_ofertas` / `mp_oferta_items`. Con `rut` agrega un resumen con la tasa de adjudicación. Sin filtro devuelve 400 en vez de volcar 7.111 filas.
+
+     Sólo hay oferentes de **compras ágiles concluidas** (1.308 de 24.043): licitaciones, convenios y tratos directos no los publican, y las abiertas todavía no.
+
+     La extracción la re-ejecuta `mp_extraer_ofertas()` como **step del workflow** de `sync-compra-agil`. Ojo: el workflow NO llama a `runSyncCompraAgilJob`, usa las funciones de slice — meter lógica en la monolítica es meterla en código muerto.
+   - **Precios de referencia** — `GET /mercado-publico/precios?q=` o `?codigo_producto=`. Devuelve `p25`/`mediana`/`p75` y **nunca un "precio de mercado" a secas**: `precio_unitario` mezclaba precios reales con canastas enteras puestas en una línea (7 pesos por cápsula convivía con 1.030.568 por "SEGÚN LISTADO EN ADJUNTO"). Se filtran esas líneas, pero queda dispersión real porque un código UNSPSC agrupa productos heterogéneos — por eso cada fila trae `ratio_p75_p25` y `fiabilidad`. **No presentar un número sin mirar esa señal.**
+
+   ### Autenticación y medición (reescritas el 2026-08-04)
+
+   - **La API key es OBLIGATORIA.** Se cerraron las dos puertas que había: el paso sin token y los literales `demo_public_key` / `demo_*` / `sb_publishable_*`. Hoy devuelven `401 AUTH_REQUIRED`.
+   - **Zona pública:** `GET /health/services` y `GET /` se registran en `index.ts` **antes** del `app.use` de los middlewares, así que Hono los resuelve sin pasar por auth. No es una excepción declarada: es consecuencia de la línea en que están escritos. **Agregar ahí una ruta de datos la publica sin cuota ni registro y nada falla para avisarlo.**
+   - **Tiers reales** (`TIER_CREDIT_LIMITS`): `anon` 150 · `free` 500 · `basic` 1.000 · `pro` 15.000 · `premium` 100.000 · `enterprise` 5.000.000. **No existe `starter`.** `anon` quedó inalcanzable al cerrar el acceso; se conserva como default defensivo.
+   - **La unidad es el CRÉDITO**, no la petición ni el token. `api_usage_logs.credits_used` es lo que se cobra y lo que se compara contra el tope; `tokens_used` es telemetría del costo real. Mezclarlas hacía que `/data/macro` cobrara 30 cuando se cotiza 1.
+   - **El sujeto medido**: `api_key` → ambas columnas; sesión → `api_key_id` NULL + `profile_id`; anónimo → ambas NULL. La RLS deja ver por `profile_id` **y** por la cláusula vieja sobre `api_keys`, que es lo único que mantiene visible el historial anterior a mayo.
+   - **`endpoint` guarda la PLANTILLA**, nunca la ruta concreta. Con 47 rutas parametrizadas, la ruta cruda escribía en el log qué causa revisó un abogado y qué RUT miró un analista. Eso es su agenda de investigación y no hace falta para medir consumo.
+   - **Los rechazos se registran**: 429 como fila con 0 créditos; 401/403 en `api_auth_failures`, un **contador** agregado por (prefijo de IP, día) y no un historial — es el único rechazo que cualquiera puede provocar sin credencial.
+   - **Deploy:** `npx supabase functions deploy api-v1 --no-verify-jwt`
 
 All responses must be pure JSON; frontend extractors handle markdown stripping if necessary.
 
