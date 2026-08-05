@@ -102,6 +102,7 @@ def _fetch_concursal_empresas(objetivo: int = 25) -> list[dict]:
         return []
 
     empresas: list[dict] = []
+    vistos: set[tuple[str, str]] = set()
     por_pagina = 100
     inicio = 0
 
@@ -133,6 +134,18 @@ def _fetch_concursal_empresas(objetivo: int = 25) -> list[dict]:
             tipo = (f.get("tipoProcedimiento") or "")
             if _SOLO_EMPRESAS not in tipo.lower():
                 continue  # persona natural: no entra
+
+            # Deduplicar por (empresa, tipo): una misma empresa aparece varias
+            # veces cuando tiene más de una publicación del mismo procedimiento.
+            # `bulk_insert_nodes` hace UPSERT con clave (document_title,
+            # header_path), y ambos nodos colisionarían en la MISMA sentencia:
+            # Postgres rechaza el batch entero con "ON CONFLICT DO UPDATE command
+            # cannot affect row a second time". Se perdían los 25 nodos por dos
+            # filas repetidas.
+            clave = ((f.get("deudorNombre") or "").strip().upper(), tipo.strip())
+            if clave in vistos:
+                continue
+            vistos.add(clave)
             empresas.append({
                 "razon_social": (f.get("deudorNombre") or "").strip()[:120],
                 # El endpoint no expone RUT. Se deja vacío en vez de inventarlo:
