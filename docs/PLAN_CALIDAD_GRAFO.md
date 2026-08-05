@@ -181,7 +181,10 @@ Base intacta: 774 nodos, 477 aristas, 0 huérfanas, cero residuo de prueba.
 
 # FASE 1 — Sacar del RAG lo que no dice nada
 
-### CAL-1 · Los 36 chunks vacíos
+### CAL-1 · Los chunks vacíos (36 → **49**)
+
+✅ **HECHO — 2026-08-05.** Opción A. 49 filas borradas, respaldo completo en
+`public.knowledge_nodes_respaldo_cal1`. Resultado medido al final del ticket.
 
 Depende de **CAL-0**. No ejecutar antes.
 
@@ -196,11 +199,11 @@ Tres opciones, en orden de preferencia:
 **Recomendada: A**, con respaldo previo.
 
 **Criterios de aceptación**
-- [ ] Respaldo de las 36 filas completas (incluido `embedding`) antes de borrar.
-- [ ] `select count(*) from knowledge_nodes where <contenido útil> = 0` devuelve **0**.
-- [ ] El grafo sigue en **0 aristas huérfanas**.
-- [ ] Los 36 documentos conservan sus chunks con contenido: `Ley 21.521…` sigue teniendo 28 filas y 17.137 caracteres.
-- [ ] Una consulta al RAG sobre "Ley Fintech 21.521" devuelve **contenido**, no un encabezado vacío.
+- [x] Respaldo de las filas completas (incluido `embedding`) antes de borrar. **49/49 con embedding.**
+- [x] `contenido_util(content) = ''` devuelve **0**.
+- [x] El grafo sigue en **0 aristas huérfanas**.
+- [x] Los documentos conservan sus chunks con contenido: `Ley 21.521…` quedó en **28 filas**, como predecía el plan.
+- [x] Una consulta al RAG sobre los temas afectados devuelve **contenido**.
 
 **Resultado esperado:** ningún nodo recuperable sin contenido. El RAG deja de
 poder entregar un título sin nada debajo.
@@ -209,7 +212,55 @@ poder entregar un título sin nada debajo.
 
 ---
 
+#### Resultado medido
+
+| | Antes | Después |
+|:---|---:|---:|
+| Nodos | 774 | **725** |
+| Títulos | 212 | **212** |
+| Aristas | 477 | **477** |
+| Nodos sin contenido útil | 49 | **0** |
+| Aristas huérfanas | 0 | **0** |
+
+**212 títulos antes y después**: ningún documento perdió su última fila. Y las
+**149 aristas** de los 44 documentos afectados siguen ahí — ése es CAL-0
+funcionando sobre datos reales, no sobre un caso de prueba.
+
+**El efecto en el contexto que recibe el modelo** (`antes` vs `despues_cal1`):
+
+| Métrica | Antes | Después |
+|:---|---:|---:|
+| Consultas con al menos un nodo basura | **8 de 12** | **0** |
+| Encabezados sin contenido útil | 15 | **0** |
+| Nodos con contenido real | 57 de 72 | **72 de 72** |
+| Caracteres útiles entregados al modelo | 62.506 | **75.843 (+21 %)** |
+
+**El hallazgo que no esperaba: la basura no sólo ensuciaba, DESPLAZABA.** Al
+ocupar lugares del presupuesto de `top_k`, empujaba conocimiento real fuera del
+contexto. Por eso borrar 49 filas *agregó* un 21 % de contenido sin generar
+nada. En `mom-test` el modelo pasó de **1 chunk útil a 6**, y entró
+`Mom Test — Regla de No Presentar`, que es exactamente lo que la pregunta pedía
+y antes no llegaba.
+
+---
+
 ### CAL-2 · El prefijo de plantilla y el andamiaje
+
+✅ **CERRADO SIN TRABAJO — CAL-1 se lo llevó entero.** Verificado después de
+borrar: **0** nodos con `Relacionado con:`, **0** con `NotebookLM`, **0** con
+frontmatter YAML.
+
+La premisa del ticket era falsa. Decía "tras CAL-1 quedan los que **sí** tienen
+contenido real detrás", y no queda ninguno: **todo nodo que llevaba plantilla o
+andamiaje lo llevaba como contenido ÚNICO**. Los 44 con plantilla, los 30 con
+NotebookLM y los 5 de frontmatter eran el mismo conjunto de 49, solapado.
+
+Consecuencia práctica: no hay contenido que modificar, así que **no hubo que
+revectorizar nada** y el gasto de OpenAI previsto para este ticket es cero. La
+regla de invalidar el embedding al cambiar contenido sigue valiendo para CAL-3 y
+para cualquier limpieza futura — simplemente acá no hubo caso.
+
+*(Texto original del ticket, conservado porque explica por qué era un defecto:)*
 
 39 nodos con `"Relacionado con: , , ,"`, 30 con `"Asked on … against NotebookLM
 notebook"`. Tras CAL-1 quedan los que **sí** tienen contenido real detrás.
@@ -415,8 +466,8 @@ puede demostrar la mejora, sólo afirmarla.
 |:--|:---|:---|:---|
 | 1 | ~~**CAL-0** — arreglar la cascada del trigger~~ ✅ | CAL-1 | 1 h |
 | 2 | ~~**CAL-6a** — línea base del RAG~~ ✅ | la verificación | 1 h |
-| 3 | **CAL-1** — borrar los 36 vacíos | — | 1 h |
-| 4 | **CAL-2** — prefijo, andamiaje y revectorización | — | 2 h |
+| 3 | ~~**CAL-1** — borrar los vacíos (49)~~ ✅ | — | 1 h |
+| 4 | ~~**CAL-2** — prefijo y andamiaje~~ ✅ sin trabajo, CAL-1 lo cubrió | — | 0 h |
 | 5 | **CAL-3** — `Test` y los casi vacíos | — | 2 h |
 | 6 | **CAL-4** — el generador | CAL-5 | 2–3 h |
 | 7 | **CAL-5** — guardarraíl en la base | — | 2 h |

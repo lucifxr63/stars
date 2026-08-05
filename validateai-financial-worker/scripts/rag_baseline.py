@@ -213,9 +213,21 @@ def correr(etiqueta: str) -> dict:
     return resumen
 
 
-def comparar() -> None:
-    a = json.loads((SALIDA / "antes.json").read_text(encoding="utf-8"))
-    d = json.loads((SALIDA / "despues.json").read_text(encoding="utf-8"))
+def comparar(izq: str = "antes", der: str = "despues") -> None:
+    a = json.loads((SALIDA / f"{izq}.json").read_text(encoding="utf-8"))
+    d = json.loads((SALIDA / f"{der}.json").read_text(encoding="utf-8"))
+
+    # Caracteres de conocimiento real que llegan al modelo. Es la métrica que
+    # muestra el efecto que no se ve contando basura: los nodos vacíos ganaban
+    # lugares del presupuesto de top_k y DESPLAZABAN contenido real fuera del
+    # contexto. Sacarlos no sólo limpia, agrega.
+    for r in (a, d):
+        r["chars_utiles"] = sum(
+            n["len_util"] for c in r["resultados"] for n in c["nodos"]
+        )
+        r["nodos_con_contenido"] = sum(
+            1 for c in r["resultados"] for n in c["nodos"] if n["len_util"] > 0
+        )
 
     filas = [
         ("Consultas con al menos un nodo basura",       "consultas_con_basura"),
@@ -223,17 +235,19 @@ def comparar() -> None:
         ("Nodos recuperados",                           "nodos_recuperados"),
         ("Nodos sin contenido útil",                    "nodos_sin_contenido_util"),
         ("Encabezados literalmente sin cuerpo",         "encabezados_vacios_totales"),
+        ("Nodos con contenido real",                    "nodos_con_contenido"),
+        ("Caracteres útiles entregados al modelo",      "chars_utiles"),
     ]
-    print(f"\n{'Métrica':<46}{'antes':>8}{'después':>10}")
-    print("-" * 64)
+    print(f"\n{'Métrica':<44}{izq:>12}{der:>14}")
+    print("-" * 70)
     for nombre, clave in filas:
-        print(f"{nombre:<46}{a[clave]:>8}{d[clave]:>10}")
+        print(f"{nombre:<44}{a[clave]:>12,}{d[clave]:>14,}")
 
 
 if __name__ == "__main__":
     modo = sys.argv[1] if len(sys.argv) > 1 else "antes"
     if modo == "comparar":
-        comparar()
+        comparar(*(sys.argv[2:4] or ["antes", "despues"]))
     else:
         print(f"Corrida '{modo}' — {len(CONSULTAS)} consultas, top_k={TOP_K}, umbral={MATCH_THRESHOLD}\n")
         r = correr(modo)
