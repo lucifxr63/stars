@@ -510,14 +510,34 @@ scheduler.add_job(
     replace_existing=True,
 )
 
-scheduler.add_job(
-    _job_cmf_sync,
-    CronTrigger(hour="9,13,17", minute=15, timezone="America/Santiago"),
-    id="cmf_sync",
-    name="CMF Hechos Esenciales — KG permanente + señales radar",
-    misfire_grace_time=3600,
-    replace_existing=True,
-)
+# ── cmf_sync DESACTIVADO el 2026-08-04 ───────────────────────────────────────
+#
+# NO se registra a propósito. El job corría tres veces al día y NUNCA produjo un
+# solo nodo: `knowledge_nodes` no tiene ni uno de categoría 'Regulatorio CMF' en
+# toda su historia. No es una regresión — nunca pudo funcionar.
+#
+# El extractor pide `hechos_esenciales` a
+# `api.cmfchile.cl/api-sbifv3/recursos/svs/api`, que hoy responde 302 hacia
+# `api.sbif.cl/error.html` (dominio de la ex-SBIF, fusionada en la CMF en 2019).
+# Desde Vercel ese host ni resuelve, y de ahí el ConnectionError tras 4
+# reintentos: 25,9 s gastados cada corrida para no traer nada.
+#
+# Y el problema de fondo no es la URL. Verificado endpoint por endpoint, esa API
+# sirve `uf`, `utm`, `dolar` y `euro` — NO hechos esenciales, que la CMF publica
+# sólo en su sitio web. El recurso contra el que se escribió este extractor no
+# existe en esa API y nunca existió.
+#
+# Los indicadores que sí sirve ya llegan por otra vía: `economic_knowledge` tiene
+# las filas de CMF al día. Así que esto no deja ningún hueco de datos.
+#
+# POR QUÉ SE DESACTIVA EN VEZ DE DEJARLO CORRER: un job que falla cada 4 horas y
+# se reporta verde entrena a ignorar el tablero. Las 64 señales
+# `health_monitor:cmf_sync` en radar_signals son el monitor avisando esto durante
+# meses, sin que nadie las leyera.
+#
+# PARA REVIVIRLO hay que escribir un scraper del sitio de la CMF, no arreglar una
+# URL. El job sigue en `_JOBS` para poder dispararlo a mano mientras se
+# desarrolla; lo que se quita es el schedule.
 
 # Mercado Público: ingestado por proceso externo — job no registrado aquí.
 
