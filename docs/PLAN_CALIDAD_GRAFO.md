@@ -404,6 +404,70 @@ y Blue Ocean"`). Eso no es conocimiento: es una relación mal guardada.
 
 ### CAL-4 · Encontrar y arreglar el generador
 
+✅ **HECHO — 2026-08-05**, en el submódulo `validateai-knowledge-vault`
+(commit `7f09452`). **Sin desplegar todavía**: el sync se dispara con un push a
+`main` del vault.
+
+#### El generador es `sync_obsidian_ast.ts`
+
+El vault de Obsidian es la **fuente** de estos nodos, no una copia. Su commit
+`49d3452` se llama *"Sprint 7 nodes — Wizard Rápido, Capital Efficiency, Data
+Storytelling"*: los documentos internos que hubo que retirar de producción
+salieron de ahí.
+
+Eso también quiere decir que **nada de lo borrado se perdió**. Las tres notas
+siguen en el vault, versionadas.
+
+#### El umbral era el origen exacto de los 49
+
+```ts
+if (content.length > 20) { nodes.push(...) }     // antes
+```
+
+`"Relacionado con: , , ,"` mide **22 caracteres**. Pasaba como contenido. Hoy el
+umbral se aplica sobre `contenidoUtil()`, espejo de `public.contenido_util(text)`.
+
+**La confirmación no es un argumento, es una medición:** el `--dry-run` retiene
+**exactamente 49 chunks**, los mismos 49 que hubo que borrar de producción, y
+todos con `header_path = 'Introduccion'`.
+
+#### El vault ahora declara audiencia
+
+```yaml
+audiencia: interna          # la nota entera se queda en el vault
+secciones_no_publicar:      # o sólo estas secciones
+  - "Prompt type: market_signals"
+```
+
+`audiencia: interna` corta **antes** de recorrer el AST, así que tampoco publica
+sus `[[WikiLinks]]` — si no, quedarían aristas hacia un documento que nunca va a
+existir.
+
+El nivel de sección no es un lujo: la nota del Data Storytelling Engine explica
+la TPM, la UF y el IPC —conocimiento útil para un fundador— al lado del color
+del botón que los muestra. Publica 5 de sus 11 secciones, que son exactamente
+las que quedaron en producción.
+
+#### Un defecto encadenado que sólo apareció al probar
+
+Las 7 notas con la sección `Answer` mal titulada, al retenerla, publicaban
+**cero nodos pero sí sus aristas**, con `source_title` apuntando a un documento
+inexistente. Con `trg_knowledge_edges_extremos` vivo, eso no corrompe el grafo:
+**hace fallar el lote entero** con `foreign_key_violation`. Ahora una nota que
+no publica ningún nodo tampoco publica aristas.
+
+Se agregó `--dry-run`, que era lo que faltaba para poder probar el filtrado sin
+escribir en la base, y todo lo retenido se reporta por consola.
+
+| | |
+|:---|---:|
+| A publicar | 522 nodos, 135 aristas |
+| Retenido | 1 nota interna, 15 secciones, **49 chunks sin contenido útil** |
+
+---
+
+*(Texto original del ticket:)*
+
 Los 36 vacíos se crearon el **2026-06-12** con `header_path = 'Introduccion'`.
 El andamiaje de NotebookLM apunta a un pipeline de ingesta con fecha
 `2026-05-24`.
@@ -556,7 +620,7 @@ puede demostrar la mejora, sólo afirmarla.
 | 3 | ~~**CAL-1** — borrar los vacíos (49)~~ ✅ | — | 1 h |
 | 4 | ~~**CAL-2** — prefijo y andamiaje~~ ✅ sin trabajo, CAL-1 lo cubrió | — | 0 h |
 | 5 | **CAL-3** — `Test`, casi vacíos y contenido mal titulado | — | 🟡 3a hecho |
-| 6 | **CAL-4** — el generador | CAL-5 | 2–3 h |
+| 6 | ~~**CAL-4** — el generador~~ ✅ sin desplegar | CAL-5 | 2–3 h |
 | 7 | **CAL-5** — guardarraíl en la base | — | 2 h |
 | 8 | **CAL-6b** — verificación final | — | 1 h |
 
