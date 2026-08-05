@@ -404,9 +404,11 @@ y Blue Ocean"`). Eso no es conocimiento: es una relación mal guardada.
 
 ### CAL-4 · Encontrar y arreglar el generador
 
-✅ **HECHO — 2026-08-05**, en el submódulo `validateai-knowledge-vault`
-(commit `7f09452`). **Sin desplegar todavía**: el sync se dispara con un push a
-`main` del vault.
+✅ **El filtrado, HECHO y verificado en CI** — submódulo
+`validateai-knowledge-vault`, commit `7f09452`, pusheado el 2026-08-05.
+
+⛔ **Pero la ingesta no llega: el pipeline vault → grafo está roto, y no por
+este cambio.** Ver *"El sync no puede escribir"* al final del ticket.
 
 #### El generador es `sync_obsidian_ast.ts`
 
@@ -463,6 +465,82 @@ escribir en la base, y todo lo retenido se reporta por consola.
 |:---|---:|
 | A publicar | 522 nodos, 135 aristas |
 | Retenido | 1 nota interna, 15 secciones, **49 chunks sin contenido útil** |
+
+#### El sync no puede escribir — y hace rato
+
+El push del 2026-08-05 corrió en GitHub Actions y **el filtrado dio idéntico al
+`--dry-run`**: 522 nodos, 135 aristas, 1 nota interna, 15 secciones, 49 chunks.
+Esa parte está verificada en CI, no sólo en mi máquina.
+
+**Pero la ingesta falló y el grafo no cambió en nada:** 697 nodos, 203 títulos,
+424 aristas, `updated_at` sin mover, 0 de los documentos que no deben volver.
+Falló entero, sin estado parcial.
+
+**El error, con el status que faltaba:**
+
+```
+Enviando a .../functions/v1/api-v1/vault/ingest...
+ERROR en ingest: HTTP 504 Gateway Timeout
+  content-type: (ninguno)
+  cuerpo: (vacío)
+```
+
+160 segundos exactos, dos veces. Sin `content-type` y sin cuerpo: eso no es una
+respuesta de la aplicación, es el gateway cortando.
+
+##### La causa, medida
+
+Sondeando el endpoint desde afuera con una clave **inválida** —que debería
+rechazar en el acto— sale un escalón nítido:
+
+| Cuerpo | Respuesta |
+|---:|:---|
+| 21 KB | `401` en 1,7 s |
+| 131 KB | `401` en 0,6 s |
+| 438 KB | `401` en 0,7 s |
+| 548 KB | `401` en 0,6 s |
+| **626 KB** | **nunca responde** |
+
+**El sync manda 626 KB.** Y el corte ocurre *antes* de la autenticación: con esa
+misma clave inválida, cualquier tamaño por debajo del umbral devuelve `401` en
+menos de un segundo. El cuerpo no llega a leerse entero, la conexión queda
+colgada y a los 160 s el gateway devuelve 504.
+
+⚠️ **Corrección.** Mi primera hipótesis fue que la causa era el stub 501 de
+`ingestVaultHandler` (`routes/ingest.ts`), o el cierre de acceso del 2026-08-04
+que exige API key. **Las dos estaban mal**: un 501 responde al instante y con
+cuerpo JSON, y un 401 también. La petición no llega a ninguno de los dos.
+
+##### Por qué ahora y no antes
+
+La última corrida exitosa fue el **2026-06-12**. No hubo ninguna entre esa y la
+de hoy, así que el vault cruzó el umbral de tamaño en algún momento del medio y
+nadie se enteró: **no hubo una corrida que fallara**, simplemente no hubo
+corridas.
+
+##### Lo que NO se puede concluir todavía
+
+Que la ingesta funcionaría con un cuerpo más chico. Nada llegó nunca al handler,
+así que no sabemos qué hace el desplegado. El repositorio dice que
+`POST /vault/ingest` es un **stub 501 desde el 2026-07-29** — pero eso está sin
+verificar contra producción.
+
+**El arreglo obvio es trocear el envío, y no es seguro hacerlo a ciegas:**
+`docs/INGESTA_PIPELINE.md` describe la ingesta como *"DELETE + INSERT por
+`source='obsidian_vault'` y prefijo de título"*. Si cada petición borra antes de
+insertar, mandar en lotes dejaría **sólo el último lote**. Hay que leer el
+handler desplegado antes de trocear.
+
+##### Consecuencia para este plan
+
+El riesgo de que "el próximo sync recree lo borrado" **hoy no existe**: el sync
+no llega a escribir. Marcar las notas sigue siendo lo correcto para cuando la
+ingesta vuelva, pero no era algo a punto de deshacer la limpieza.
+
+##### Consecuencia para el producto, más grande que este plan
+
+El vault de Obsidian es donde se escribe el conocimiento y **no llega al grafo**.
+Ticket propio, y no de calidad de contenido.
 
 ---
 
