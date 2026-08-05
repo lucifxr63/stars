@@ -52,10 +52,36 @@ error**. Esta tabla es el resultado de la auditoría; mantenerla al día.
 | `seia_sync` | ✅ **funciona** | Arreglado 2026-08-04. 30 nodos/corrida |
 | `concursal_sync` | ✅ **funciona** | Arreglado 2026-08-05. 25 nodos, sólo empresas |
 | `radar_refresh` | ✅ funciona | ~185 señales/semana |
-| `fred_sync` | ✅ funciona | |
+| `fred_sync` | 🟡 probablemente | Último dato CPI jun-2026, que es lo correcto un 05-ago. **Verificado a mano, no por monitoreo** |
+| `embeddings_pendientes` | ✅ **funciona** | 0 de 774 nodos sin vector (verificado 2026-08-05) |
+| `yfinance_sync` | ❓ sin verificar | Mensual. Sus nodos no llevan fecha en metadata |
+| `cache_sweep` | ⚪ **no-op** | Barre un dict en memoria; en serverless siempre está vacío |
 | `cmf_sync` | ⛔ **desactivado** | El recurso no existe en esa API |
 | `bcch_sync` | ⛔ **desactivado** | Fuente tras protección anti-bot |
-| `empleo_sync` | ⚠️ congelado | Sin producir desde 2026-06-13 |
+| `empleo_sync` | ⛔ **desactivado** | 2026-08-05. Señal mal construida + ceros falsos |
+
+### Cobertura del monitoreo (auditada 2026-08-05 — MON-1)
+
+**8 de los 9 jobs reportan a `job_health`.** Antes de esta auditoría eran 5:
+`fred_sync`, `yfinance_sync` y `embeddings_pendientes` eran **invisibles** — no
+aparecían en `job_health_resumen` ni podían disparar la alerta de fallo
+silencioso.
+
+Peor: `fred_sync` y `yfinance_sync` terminaban en un `except Exception:` que sólo
+logueaba. Una corrida caída se veía **idéntica** a una sana: el latido decía
+"terminó" y no había otra señal. Hoy ambos reportan `0` en el `except`.
+
+Dos sutilezas que conviene no revertir:
+
+- **`embeddings_pendientes` reporta `1` cuando no hay pendientes.** Ahí el cero
+  es el resultado *sano* —todo vectorizado—, y reportarlo como 0 haría que el
+  umbral de corridas vacías alertara justo cuando el job funciona perfecto.
+- **`cache_sweep` NO reporta, a propósito.** Es un no-op en serverless: un cero
+  es lo normal, y alertarlo sería ruido garantizado.
+
+⚠️ **Que un job no esté en `job_health` no significa que esté sano.** La tabla
+sólo tiene filas de jobs que corrieron **desde el 2026-08-04**, cuando se arregló
+el detector. Un job ausente es un job que no ha corrido, o uno que nunca reportó.
 
 ### Los tres modos de fallo silencioso encontrados
 
@@ -102,6 +128,89 @@ configurada, y no debe usarse para sortear Incapsula ni captchas.** Eso es eludi
 un control de acceso puesto a propósito por el emisor, no una alternativa técnica
 neutra. Animus vende inteligencia regulatoria; hacerlo saltándose al regulador es
 un riesgo que no compensa la señal.
+
+**La regla es la misma para fuentes privadas** (decidido 2026-08-05, a raíz de
+`empleo_sync` y Computrabajo). Cambia la naturaleza del riesgo —contractual en
+vez de reputacional— pero el bloqueo es igual de deliberado. Si una fuente pone
+un muro, la vía es pedir acceso, no rodearlo.
+
+El soporte de proxy en los cuatro extractores queda marcado para borrarse: una
+variable que existe y no debe usarse es una invitación a usarla.
+
+### `empleo_sync` — DESACTIVADO el 2026-08-05, nodos borrados
+
+**No estaba congelado desde junio.** Corrió el **2026-08-01**, cuatro días antes
+de retirarlo. La creencia contraria venía de mirar `updated_at`, que en estos
+nodos es inútil (ver más abajo).
+
+Se retiró por dos motivos, y el segundo pesa más:
+
+1. Raspa Computrabajo, que resiste el scraping — el propio docstring "recomienda"
+   ScraperAPI. Choca con la regla de arriba.
+2. **La señal estaba mal construida desde el origen.** Contaba coincidencias de
+   un *buscador de texto* (`"minería cobre litio"`) y llamaba a eso "ofertas del
+   sector minería". Eso mide cómo se redactan los avisos, no cuánta gente se
+   contrata. Aunque el scraping funcionara perfecto, el número no significaba lo
+   que decía significar.
+
+**No fallaba en silencio: fallaba MINTIENDO.** `_count_listings` devuelve `0`
+cuando el regex del contador no matchea, y `fetch_all_as_nodes` sólo saltea
+cuando el valor es `< 0`. O sea que el cero se ingería como dato. La corrida del
+2026-08-01 dejó **"Minería: 0 ofertas activas"** y **"Finanzas: 0"** en el grafo,
+citables por el RAG como hechos.
+
+**Desactivarlo no alcanzaba: había que borrar los nodos.** Tienen
+`"permanent": False` porque se sobreescriben semanalmente, así que al morir el
+job **no se borran** — se quedan con el último valor y sin `expires_at`. Los 8 se
+borraron el 2026-08-05; ninguna arista los referenciaba.
+
+Sus `radar_signals` sí expiraron solas (168 h). **Esa asimetría entre
+`radar_signals` y `knowledge_nodes` aplica a todo extractor que se desactive:**
+las señales se mueren, los nodos no.
+
+### ⚠️ Regla de honestidad del contexto (`api/rag.py`)
+
+Lo que `assemble_context` devuelve **entra directo al prompt de un LLM que corre
+en el consumidor** (Validus, el MCP). Todo lo que se escriba ahí, el modelo lo
+trata como hecho y se lo repite al usuario.
+
+Tres reglas que salieron de encontrar una alucinación propia:
+
+1. **No afirmar nada que no se haya verificado.** Hasta el 2026-08-05, todo nodo
+   sin `ultimo_valor` entraba con `_Datos en proceso de actualización._`. Es
+   falso: leyes, metodología y jurisprudencia no tienen valor numérico y no hay
+   actualización en curso. **La ausencia de una afirmación es más honesta que una
+   afirmación sobre la ausencia** — hoy un nodo sin serie no lleva línea de valor.
+2. **El contexto vacío se declara como INSTRUCCIÓN, no como nota al pie.** Un
+   modelo que sólo lee "no se encontraron nodos" responde igual desde su
+   conocimiento paramétrico, y el usuario cree que salió del grafo.
+3. **Una arista huérfana no es un hueco visible.** `search_hybrid_graphrag` trae
+   vecinos con INNER JOIN, así que una arista hacia un nodo inexistente aporta
+   cero filas **sin decirlo**. El grafo promete contexto que el join descarta, y
+   el modelo llena el hueco. Ver la nota de aristas en el CLAUDE.md del portal.
+
+### ⚠️ `updated_at` NO sirve para medir frescura
+
+`bulk_insert_nodes` (`src/db/supabase_client.py`) upsertea sólo las claves del
+dict del nodo, y `updated_at` no es una de ellas. **En un upsert que actualiza
+una fila existente, `updated_at` conserva el valor del INSERT original — para
+siempre.**
+
+Por eso los nodos de empleo mostraban `updated_at = 2026-06-13` (su creación)
+junto a `metadata.fecha = 2026-08-01` (su última corrida real). Mirar esa columna
+llevó a creer que el job estaba muerto hacía dos meses cuando había corrido
+cuatro días antes.
+
+Distingue dos casos:
+
+- **Categorías que crean nodos nuevos** (SEIA, Concursal): cada corrida inserta
+  filas, así que `max(updated_at)` sí refleja la última corrida.
+- **Categorías que sobreescriben un nodo fijo** (cualquier "snapshot"):
+  `updated_at` queda clavado en la fecha de creación.
+
+**Consecuencia abierta:** `api/data_freshness.py` mide con `max(updated_at)` por
+categoría. Para las del segundo tipo reporta una antigüedad falsa. Hay que usar
+`metadata->>'fecha'` cuando exista, o agregar `updated_at` al dict del nodo.
 
 ### `concursal_sync` — SÓLO EMPRESAS, por diseño
 
