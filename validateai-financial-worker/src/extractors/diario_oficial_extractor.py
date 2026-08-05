@@ -42,32 +42,119 @@ _MAX_PAGES_PDF = int(os.getenv("CONCURSAL_MAX_PAGES", "15"))
 
 # ── SUPERIR Boletín Concursal ─────────────────────────────────────────────────
 
-def _fetch_superir_pdf_links(limit: int = 3) -> list[tuple[str, str]]:
-    """Scrape la página SUPERIR para encontrar PDFs del boletín."""
-    from bs4 import BeautifulSoup
-    from api.radar.proxy import fetch_feed_content
+# Dominio nuevo del Boletín Concursal. La SUPERIR lo movió fuera de su sitio:
+# `superir.gob.cl/informacion-publica/boletin-concursal/` hoy responde 404.
+_BOLETIN_BASE = os.getenv("BOLETIN_CONCURSAL_URL", "https://www.boletinconcursal.cl")
+_BOLETIN_PAGINA = "/boletin/procedimientos"
+_BOLETIN_DATOS = "/boletin/getRIP/"
+
+# ── SÓLO EMPRESAS — decisión deliberada, no un descuido ──────────────────────
+#
+# El Boletín publica procedimientos de "Empresa Deudora" y de "Persona Deudora".
+# Medido sobre 100 registros: 70 son PERSONAS NATURALES, con nombre y apellido,
+# en quiebra personal.
+#
+# El Boletín es público por ley, pero su finalidad es la PUBLICIDAD LEGAL —que
+# acreedores y tribunales se enteren—. Meter eso en un grafo que alimenta un
+# producto comercial de inteligencia es una finalidad distinta, y la Ley 21.719
+# distingue justamente eso. Más allá del cumplimiento: la quiebra personal de
+# alguien apareciendo en un producto que se le vende a terceros es lo que termina
+# en un reclamo, aunque el dato sea público.
+#
+# Se filtra en la extracción y no aguas abajo a propósito: así el dato personal
+# no llega a entrar a la base ni siquiera de paso.
+_SOLO_EMPRESAS = "empresa deudora"
+
+
+def _fetch_concursal_empresas(objetivo: int = 25) -> list[dict]:
+    """
+    Procedimientos concursales de EMPRESAS desde el Boletín Concursal.
+
+    POR QUÉ ESTO YA NO ES SCRAPING DE PDF
+    -------------------------------------
+    Hasta el 2026-08-05 esto buscaba enlaces a PDF en la página de la SUPERIR,
+    extraía el texto y le pasaba una regex. Esa página devuelve 404 desde hace
+    meses —el Boletín se mudó a dominio propio— y el job reportaba 0 nodos sin
+    error. Nunca produjo un solo nodo.
+
+    El sitio nuevo expone la tabla por un endpoint DataTables que devuelve JSON
+    estructurado: nada de regex sobre texto de PDF.
+
+    Requiere sesión y token CSRF, que es el manejo normal de cualquier navegador
+    contra una app Spring —la página es pública, sin login ni captcha—, así que
+    se replica el mismo flujo: pedir la página, tomar el token, usarlo.
+    """
+    import requests
+
+    ses = requests.Session()
+    ses.headers.update({"User-Agent": "Mozilla/5.0 (compatible; BralidusBot/1.0)"})
 
     try:
-        html = fetch_feed_content(_SUPERIR_URL)
+        pagina = ses.get(_BOLETIN_BASE + _BOLETIN_PAGINA, timeout=30)
+        pagina.raise_for_status()
+        m = re.search(r'name="_csrf"\s+content="([^"]+)"', pagina.text)
+        if not m:
+            log.error("[concursal] No se encontró el token CSRF en %s", _BOLETIN_PAGINA)
+            return []
+        csrf = m.group(1)
     except Exception as exc:
-        log.error("[concursal] No se pudo acceder a SUPERIR: %s", exc)
+        log.error("[concursal] No se pudo abrir el Boletín Concursal: %s", exc)
         return []
 
-    soup = BeautifulSoup(html, "html.parser")
-    links: list[tuple[str, str]] = []
+    empresas: list[dict] = []
+    por_pagina = 100
+    inicio = 0
 
-    for tag in soup.find_all("a", href=True):
-        href: str = tag["href"]
-        if ".pdf" in href.lower() and ("boletin" in href.lower() or "concursal" in href.lower()):
-            if not href.startswith("http"):
-                href = "https://www.superir.gob.cl" + href
-            titulo = tag.get_text(strip=True) or href.split("/")[-1]
-            links.append((href, titulo))
-            if len(links) >= limit:
+    # Se piden varias páginas porque sólo ~30% son empresas: pedir `objetivo`
+    # filas devolvería mayormente personas que luego se descartan.
+    while len(empresas) < objetivo and inicio < 600:
+        try:
+            resp = ses.post(
+                _BOLETIN_BASE + _BOLETIN_DATOS,
+                headers={
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrf,
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                data={"draw": 1, "start": inicio, "length": por_pagina},
+                timeout=40,
+            )
+            resp.raise_for_status()
+            payload = resp.json()
+        except Exception as exc:
+            log.error("[concursal] Error consultando procedimientos (start=%d): %s", inicio, exc)
+            break
+
+        filas = payload.get("data") or []
+        if not filas:
+            break
+
+        for f in filas:
+            tipo = (f.get("tipoProcedimiento") or "")
+            if _SOLO_EMPRESAS not in tipo.lower():
+                continue  # persona natural: no entra
+            empresas.append({
+                "razon_social": (f.get("deudorNombre") or "").strip()[:120],
+                # El endpoint no expone RUT. Se deja vacío en vez de inventarlo:
+                # el consumidor distingue "no hay" de "es este".
+                "rut": "",
+                "tipo_procedimiento": tipo.strip(),
+                "fecha": f.get("fchPublicacion") or "",
+                "procedimiento": str(f.get("procedimiento") or ""),
+                "publicacion": (f.get("nombrePublicacion") or "").strip(),
+            })
+            if len(empresas) >= objetivo:
                 break
 
-    log.info("[concursal] %d PDFs boletín encontrados.", len(links))
-    return links
+        if len(filas) < por_pagina:
+            break
+        inicio += por_pagina
+
+    log.info(
+        "[concursal] %d procedimientos de EMPRESA extraídos (personas naturales excluidas por diseño)",
+        len(empresas),
+    )
+    return empresas
 
 
 def _extract_pdf_text(pdf_url: str) -> str:
@@ -291,18 +378,16 @@ def _do_entry_to_node(entry: dict) -> dict:
 def fetch_all_as_nodes() -> list[dict]:
     nodes: list[dict] = []
 
-    # 1. SUPERIR Boletín Concursal
-    for pdf_url, titulo in _fetch_superir_pdf_links(limit=2):
-        try:
-            text = _extract_pdf_text(pdf_url)
-            if not text:
-                continue
-            fecha = _parse_fecha(titulo + " " + pdf_url)
-            entries = _parse_concursal_entries(text)
-            concursal_nodes, _ = _concursal_to_nodes_and_signals(entries, pdf_url, fecha)
+    # 1. Boletín Concursal — SÓLO empresas (ver nota en _fetch_concursal_empresas)
+    try:
+        empresas = _fetch_concursal_empresas()
+        if empresas:
+            concursal_nodes, _ = _concursal_to_nodes_and_signals(
+                empresas, _BOLETIN_BASE + _BOLETIN_PAGINA, empresas[0].get("fecha", ""),
+            )
             nodes.extend(concursal_nodes)
-        except Exception as exc:
-            log.error("[concursal] Error en PDF %s: %s", pdf_url, exc)
+    except Exception as exc:
+        log.error("[concursal] Error extrayendo procedimientos: %s", exc)
 
     # 2. Diario Oficial — Sociedades
     do_entries = _fetch_do_sociedades()
@@ -313,18 +398,17 @@ def fetch_all_as_nodes() -> list[dict]:
 
 
 def fetch_all_as_signals() -> list:
+    """Señales de radar por insolvencias de EMPRESAS. Ver _fetch_concursal_empresas."""
     signals: list = []
-    for pdf_url, titulo in _fetch_superir_pdf_links(limit=1):
-        try:
-            text = _extract_pdf_text(pdf_url)
-            if not text:
-                continue
-            fecha = _parse_fecha(titulo + " " + pdf_url)
-            entries = _parse_concursal_entries(text)
-            _, sigs = _concursal_to_nodes_and_signals(entries, pdf_url, fecha)
+    try:
+        empresas = _fetch_concursal_empresas()
+        if empresas:
+            _, sigs = _concursal_to_nodes_and_signals(
+                empresas, _BOLETIN_BASE + _BOLETIN_PAGINA, empresas[0].get("fecha", ""),
+            )
             signals.extend(sigs)
-        except Exception as exc:
-            log.error("[concursal] Error señales %s: %s", pdf_url, exc)
+    except Exception as exc:
+        log.error("[concursal] Error generando señales: %s", exc)
     return signals
 
 
