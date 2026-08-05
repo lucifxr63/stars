@@ -568,14 +568,38 @@ scheduler.add_job(
     replace_existing=True,
 )
 
-scheduler.add_job(
-    _job_bcch_sync,
-    CronTrigger(day_of_week="mon", hour=7, minute=0, timezone="America/Santiago"),
-    id="bcch_sync",
-    name="BCCH Comunicados + Minutas — KG permanente + señal hawkish/dovish",
-    misfire_grace_time=3600,
-    replace_existing=True,
-)
+# ── bcch_sync DESACTIVADO el 2026-08-04 ──────────────────────────────────────
+#
+# Igual que cmf_sync: nunca produjo un nodo. `knowledge_nodes` no tiene ninguno
+# de categoría 'Banco Central Chile' en toda su historia.
+#
+# CAUSA: todo `www.bcentral.cl` está detrás de Incapsula (Imperva), la protección
+# anti-bot. Las páginas de comunicados, minutas, IPoM y hasta el RSS devuelven
+# HTTP 200 con 212 bytes de desafío JavaScript en vez del contenido:
+#
+#   <META NAME="robots" CONTENT="noindex,nofollow">
+#   <script src="/_Incapsula_Resource?SWJIYLWA=...">
+#
+# Como responde 200, `raise_for_status()` pasa limpio, el parser de PDF no
+# encuentra documentos y el job concluye "0 nodos" sin un solo error. El mismo
+# fallo silencioso que tenía SEIA, con otra causa.
+#
+# NO SE INTENTA SORTEAR. Es un control de acceso puesto a propósito por el emisor.
+# Existe soporte para proxy vía SCRAPERAPI_KEY en este extractor, pero usarlo
+# contra Incapsula es exactamente eludir esa protección, no una alternativa
+# técnica neutra.
+#
+# LA VÍA OFICIAL EXISTE Y YA SE USA: `si3.bcentral.cl/SieteRestWS` (la Base de
+# Datos Estadísticos) responde bien y sus credenciales BDE_USER/BDE_PASS ya están
+# en el ecosistema — `market-analyze` las usa. Sirve las SERIES (TPM, IPC, etc.),
+# no los documentos. Así que el dato numérico está cubierto; lo que se pierde es
+# el texto de comunicados y minutas, que es de donde salía la señal
+# hawkish/dovish.
+#
+# PARA REVIVIRLO: o se consigue autorización del BCCh para acceso programático a
+# los documentos, o se reconstruye el job sobre la API oficial aceptando que
+# entrega números y no narrativa. El job sigue en `_JOBS` para poder dispararlo a
+# mano; lo que se quita es el schedule.
 
 
 async def _job_embeddings_pendientes() -> None:
