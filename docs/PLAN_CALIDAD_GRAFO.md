@@ -294,6 +294,93 @@ conocimiento, sin restos del proceso que lo produjo.
 
 ### CAL-3 · El nodo `Test` y los casi vacíos
 
+🟡 **PARCIAL — 2026-08-05.** El ticket resultó ser mucho más grande de lo que
+decía: no son 14 nodos cortos, es una familia de defectos que sólo se ve leyendo
+el contenido. Hecho: la documentación interna. Abierto: `Test`, los 9 cortos y
+un hallazgo nuevo y más grave (títulos que no corresponden al contenido).
+
+---
+
+#### CAL-3a · Documentación interna del producto dentro del grafo ✅
+
+**No estaba en el plan.** Apareció al clasificar los nodos cortos: varios no
+eran conocimiento del dominio chileno sino **especificaciones internas de
+Validus**, recuperables por el RAG y servidas por una API que se cobra.
+
+La cadena de exposición es real: `animus-engine-mcp` —publicado en npm— llama
+`POST /api/v1/intel/query`, que en `routes/intel.ts` es un **proxy real** hacia
+el `/query` del worker, que es el que lee `knowledge_nodes`. (`/api/v1/rag/query`
+es otro corpus —`knowledge_base`, `rag_playbooks`, `tenant_vectors`— y no toca
+esta tabla.)
+
+**Medido, no supuesto.** Con la pregunta *"¿Cómo diseño un paywall para mi
+producto?"* por el camino real de recuperación:
+
+```
+1. 0.5808 INTERNO  Wizard Rapido Optimizado — ICP y Paywall Visual
+2. 0.5797 INTERNO  Wizard Rapido Optimizado — ICP y Paywall Visual
+3. 0.5677 INTERNO  Wizard Rapido Optimizado — ICP y Paywall Visual
+4. 0.5474          playbook-validacion
+5. 0.5433 INTERNO  Wizard Rapido Optimizado — ICP y Paywall Visual
+6. 0.5422 INTERNO  Wizard Rapido Optimizado — ICP y Paywall Visual
+```
+
+**5 de 6 lugares.** Lo que quedaba expuesto: metas de conversión
+(`quick→paid: >2%`), la mecánica del paywall (*"bloqueo selectivo para demostrar
+valor y empujar upgrade"*), la regla de fricción, y el costo de inferencia
+(*"Claude Haiku ~$0.10/request vs $1.00 con Opus"*).
+
+Y peor: un nodo titulado **`CAC Customer Acquisition Cost — SaaS B2B`**, de 9.381
+caracteres, cuyo contenido entero es una respuesta de NotebookLM que **inventaría
+nuestra documentación interna** — nombra `AUDITORIA_BACKEND_FRONTEND` ("análisis
+de endpoints, código muerto y problemas de arquitectura") y `CLAUDE.md`. Sobrevivió
+a CAL-1 porque tiene miles de caracteres "útiles": el filtro detecta restos de
+plantilla, no un texto que habla de otra cosa.
+
+**Qué se hizo** (21 chunks, respaldo completo en
+`public.knowledge_nodes_respaldo_internos`):
+
+| Documento | Acción | Por qué |
+|:---|:---|:---|
+| `Wizard Rapido Optimizado — ICP y Paywall Visual` | **borrado entero** (14 chunks) | Los 14 son spec interna. Sin valor de dominio |
+| `CAC Customer Acquisition Cost — SaaS B2B` | **borrado** (1 chunk) | Inventario de documentación interna. No contiene nada sobre CAC |
+| `Data Storytelling Engine — Market Signals…` | **6 chunks borrados de 11** | Se conservan TPM, UF, IPC, USD/CLP y la fuente `mindicador.cl`, que sí son dominio |
+
+**⚠️ Anular el embedding NO habría servido.** Era la mitigación obvia —
+reversible, no borra nada— y es falsa: `fetch_nodes_pending_embedding` devuelve
+**todos** los nodos con `embedding` nulo, y el job `embeddings_pendientes` los
+revectoriza. La mitigación habría durado hasta la siguiente corrida.
+
+Eso además invalida retroactivamente la **Opción B de CAL-1** ("quitarles el
+embedding, menos limpio pero reversible"): no era reversible, era temporal. Si se
+hubiera elegido, los 49 nodos habrían vuelto a ser recuperables solos y la
+línea base habría "empeorado" sin que nadie tocara nada.
+
+**Resultado**
+
+| | Antes | Después |
+|:---|---:|---:|
+| Nodos | 725 | **704** |
+| Títulos | 212 | **210** |
+| Aristas | 477 | **465** |
+| Huérfanas | 0 | **0** |
+
+Las 12 aristas que se fueron son exactamente las de los dos documentos que
+desaparecieron enteros — su cascada **debe** correr. `Data Storytelling`
+conservó sus 5 chunks de dominio y no perdió aristas propias: las 2 que sí
+perdió iban hacia los dos documentos borrados, que es lo correcto.
+
+Verificado en la recuperación: la consulta del paywall ya no devuelve **ningún**
+nodo interno, y *"¿Cómo calculo el CAC de mi startup SaaS?"* ahora devuelve
+`CAC — Costo de Adquisición de Cliente`, `Benchmark LTV:CAC > 3:1` y
+`Payback Period` — conocimiento real que el nodo inventario venía desplazando.
+Las 12 consultas de referencia siguen en 72/72 nodos con contenido: sin
+regresión.
+
+---
+
+#### CAL-3b · Lo que sigue abierto
+
 Un nodo titulado `Test`, categoría `normativa`, contenido *"Test content para
 validacion chilena"* — recuperable en producción.
 
@@ -468,7 +555,7 @@ puede demostrar la mejora, sólo afirmarla.
 | 2 | ~~**CAL-6a** — línea base del RAG~~ ✅ | la verificación | 1 h |
 | 3 | ~~**CAL-1** — borrar los vacíos (49)~~ ✅ | — | 1 h |
 | 4 | ~~**CAL-2** — prefijo y andamiaje~~ ✅ sin trabajo, CAL-1 lo cubrió | — | 0 h |
-| 5 | **CAL-3** — `Test` y los casi vacíos | — | 2 h |
+| 5 | **CAL-3** — `Test`, casi vacíos y contenido mal titulado | — | 🟡 3a hecho |
 | 6 | **CAL-4** — el generador | CAL-5 | 2–3 h |
 | 7 | **CAL-5** — guardarraíl en la base | — | 2 h |
 | 8 | **CAL-6b** — verificación final | — | 1 h |
