@@ -127,10 +127,12 @@ comment on schema licitus is
 -- (1,28 GB) y no hay razón para exponerlo acá. Importar es metadato, no datos,
 -- pero una tabla foránea de más es superficie de más.
 
--- La lista sale de leer los repositorios de mp-sync que NO usan
--- `bralidusQuery`, o sea los que escriben en el otro proyecto.
+-- La lista se verificó contra el catálogo del origen: son objetos que existen.
+-- Se deja afuera `inapi_records` (1,28 GB) a propósito — ya tiene su propio
+-- camino por la Edge Function `inapi-fetch`, y no hay razón para exponerlo acá.
 import foreign schema public
-  limit to (purchase_orders, purchase_order_items, opportunities,
+  limit to (purchase_orders, purchase_order_items,
+            opportunities, opportunity_items,
             buyer_profiles, buyer_context_cache, buyer_reputation,
             buyer_winning_suppliers,
             supplier_profiles, supplier_categories, supplier_keywords,
