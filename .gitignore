@@ -26,3 +26,7 @@ supabase/.temp/
 
 # Credenciales sueltas — nunca al repo
 pass.md
+
+# Directorios de herramientas de agentes — locales, nunca al repo
+.agents/
+.codex/
