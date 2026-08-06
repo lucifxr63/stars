@@ -566,6 +566,69 @@ recuperable.
 
 ### CAL-5 · Guardarraíl en la base
 
+✅ **HECHO — 2026-08-06**, migración `20260806000001`, aplicada y verificada en
+producción. 8 de 8 pruebas contra la base real, más una contra el camino de
+escritura que usan los extractores.
+
+#### La opción que este plan prefería NO funciona
+
+El ticket proponía «un trigger que ponga `embedding = NULL` … más suave y
+probablemente mejor». Es falso, y se descubrió aplicando CAL-3:
+
+```
+fetch_nodes_pending_embedding() devuelve TODOS los nodos con embedding nulo,
+y el job `embeddings_pendientes` los revectoriza.
+```
+
+Anular el vector no impide nada: lo repone la corrida siguiente. El guardarraíl
+habría durado un día, y el estado «malo» se ve idéntico al «recién insertado,
+pendiente de vector». Así que **el guardarraíl impide que la fila exista**, no
+que tenga vector.
+
+*(El mismo hallazgo invalidó retroactivamente la opción B de CAL-1 —«quitarles
+el embedding, reversible»—: no era reversible, era temporal.)*
+
+#### Qué rechaza exactamente
+
+Sólo `contenido_util(content) = ''`. **No es un umbral de longitud**: el nodo
+más corto legítimo del grafo tiene 35 caracteres y sigue entrando. Un mínimo
+tipo «> 120 chars» habría rechazado contenido corto pero real —*"Inflación
+mensual. Impacta burn rate real en pesos chilenos."* son 60— y un guardarraíl
+que rechaza cosas buenas termina desactivado.
+
+#### El costo, dicho de frente
+
+`bulk_insert_nodes` upsertea en bloque: si un nodo del lote viene vacío, **falla
+la sentencia entera** y esa corrida no ingiere nada en vez de ingerir 29 de 30.
+Es el mismo trato que ya se aceptó para `trg_knowledge_edges_extremos`, y por la
+misma razón: un extractor que empieza a producir basura tiene que reventar.
+
+#### Verificación
+
+`validateai/supabase/tests/knowledge_nodes_contenido.sql`, 8 casos con rollback,
+corrido **antes y después** de aplicar:
+
+| | Sin trigger | Con trigger |
+|:---|:---|:---|
+| vacío / plantilla / andamiaje (1-3) | ACEPTADO ❌ | RECHAZADO ✅ |
+| contenido corto real, 60 y 35 chars (4-5) | ACEPTADO ✅ | ACEPTADO ✅ |
+| contenido real con plantilla adelante (6) | ACEPTADO ✅ | ACEPTADO ✅ |
+| vaciar por `UPDATE` (7) | ACEPTADO ❌ | RECHAZADO ✅ |
+
+Los casos 4, 5 y 6 son los que lo hacen valer: un guardarraíl que sólo demuestra
+que rechaza lo malo no dice nada sobre si deja pasar lo bueno.
+
+Y una prueba aparte por `bulk_insert_nodes` —el camino real de los extractores,
+que va por PostgREST y podía fallar distinto—: lote legítimo de 3 → insertados;
+lote con una cáscara en el medio → rechazado entero, con el mensaje correcto y
+sin dejar nada a medias.
+
+Grafo intacto: 697 nodos, 0 sin contenido útil, 0 sin embedding.
+
+---
+
+*(Texto original del ticket:)*
+
 Análogo a los triggers de integridad de aristas: la base impide el estado malo
 en vez de confiar en que nadie lo produzca.
 
@@ -699,7 +762,7 @@ puede demostrar la mejora, sólo afirmarla.
 | 4 | ~~**CAL-2** — prefijo y andamiaje~~ ✅ sin trabajo, CAL-1 lo cubrió | — | 0 h |
 | 5 | **CAL-3** — `Test`, casi vacíos y contenido mal titulado | — | 🟡 3a hecho |
 | 6 | ~~**CAL-4** — el generador~~ ✅ sin desplegar | CAL-5 | 2–3 h |
-| 7 | **CAL-5** — guardarraíl en la base | — | 2 h |
+| 7 | ~~**CAL-5** — guardarraíl en la base~~ ✅ | — | 2 h |
 | 8 | **CAL-6b** — verificación final | — | 1 h |
 
 **Total estimado: 12–13 h.**
