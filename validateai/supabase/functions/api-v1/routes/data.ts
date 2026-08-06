@@ -176,7 +176,7 @@ export const licitusProveedorOportunidadesHandler = licitusProxyHandler(
 // objeto literal exacto y RECHAZA los campos que varios handlers agregan al
 // meta (`base`, `excluido`, `cobertura`…), así que `deno check` fallaba sobre
 // este archivo desde antes de agosto: nadie podía chequearlo de tipos.
-const buildAnimusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico'): Record<string, any> => ({
+const buildAnimusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico'): Record<string, unknown> => ({
   engine: 'Animus Engine v2.0',
   version: '2.0.0',
   source,
