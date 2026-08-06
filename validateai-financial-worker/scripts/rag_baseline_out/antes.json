@@ -1,0 +1,675 @@
+{
+  "etiqueta": "antes",
+  "fecha": "2026-08-05T21:00:12.711856+00:00",
+  "top_k": 6,
+  "match_threshold": 0.4,
+  "embeddings_reusados": 12,
+  "consultas": 12,
+  "consultas_con_basura": 8,
+  "encabezados_sin_contenido_util": 15,
+  "consultas_con_encabezado_vacio": 0,
+  "encabezados_vacios_totales": 0,
+  "nodos_recuperados": 72,
+  "nodos_sin_contenido_util": 15,
+  "resultados": [
+    {
+      "slug": "fintech-21521",
+      "pregunta": "¿Qué exige la Ley 21.521 Fintech a una startup en Chile?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.7903,
+          "len_content": 774,
+          "len_util": 774
+        },
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.7751,
+          "len_content": 659,
+          "len_util": 659
+        },
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.7725,
+          "len_content": 887,
+          "len_util": 887
+        },
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.7612,
+          "len_content": 1043,
+          "len_util": 1043
+        },
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.7597,
+          "len_content": 1874,
+          "len_util": 1874
+        },
+        {
+          "titulo": "Ley Fintech 21.521, Ley de Datos 21.719 y Estructura Societaria",
+          "origen": "VECTOR",
+          "relevancia": 0.7587,
+          "len_content": 2174,
+          "len_util": 2174
+        }
+      ],
+      "nodos_sin_contenido_util": 0,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\nDicho lo anterior, las siguientes condiciones corresponden a las que deben cumplir las entidades que presten servicios Fintech, entre otras, si bien la exigencia en el cumplimiento de cada una de ellas dependerá del tipo de servicio Fintech de que se trate: Tener giro exclusivo (sociedades extranjeras deben tener domicilio en Chile). Obligaciones de información a los clientes financieros (sea de bancos, compañías de seguros, cooperativas, cajas de compensación, administradoras generales de fondos, entre otras instituciones financieras). Obligaciones de gobierno corporativo y gestión de riesgos. Capacidad operacional. Constitución de garantías (incluyendo seguros). Contar con un patrimonio mínimo permanente. Contar con reglamento interno. Idoneidad y conocimientos.\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\nEn muchos casos, organizaciones que no se consideraban parte del ecosistema fintech ahora deben cumplir requisitos formales, presentar reportes periódicos y acreditar mecanismos de control interno que garanticen la seguridad del usuario y del mercado. Riesgos de no cumplir la normativa Las sanciones asociadas a la Ley Fintec Chile 2025 pueden incluir multas, suspensión de operaciones e incluso la revocación de autorizaciones para operar. Pero más allá de las sanciones formales, existe un riesgo reputacional significativo: las empresas que no logren demostrar cumplimiento pueden perder la confianza de sus clientes, inversionistas y socios estratégicos.\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\nLey Fintech Chile 2026: 42 startups registradas y plazos CMF – El Ecosistema Startup Saltar al contenido Menu Noticias Glosario Pódcasts Convocatorias Ir a la Comunidad Inicio › Blog › Actualidad Startup › Ley Fintech Chile 2026: 42 startups registradas y plazos CMF Ley Fintech Chile 2026: 42 startups registradas y plazos CMF mayo 7, 2026 por Equipo Ecosistema Startup ¿Qué está pasando con la Ley Fintech en Chile? El diputado Diego Schalper envió un oficio fiscalizador a la Comisión para el Mercado Financiero (CMF) exigiendo celeridad en la implementación del Sistema de Finanzas Abiertas, cuya entrada en vigencia está programada para julio de 2026 . Esta acción responde a las advertencias de la presidenta de la CMF, Catherine Tornel , quien señaló que la operatividad para esa fecha es compleja debido a que la normativa aún está en revisión por la Fiscalía Nacional Económica.\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\nA continuación, sintetizaremos brevemente y bajo un formato de preguntas y respuestas, cuáles son los principales contenidos de la nueva normativa, así como los plazos establecidos en la misma ley respecto a la entrada en vigor de sus diferentes disposiciones: 1. ¿Cuál es el objetivo de la Ley Fintech? La finalidad general de esta normativa es promover la competencia e inclusión financiera a través de la innovación y tecnología en la prestación de servicios financieros. Para esto, la Ley Fintech establece una serie de principios que infunden la regulación propuesta, como son (i) inclusión e innovación financiera; (ii) promoción de la competencia; (iii) protección al cliente financiero (sea de bancos, compañías de seguros, cooperativas, cajas de compensación, administradoras generales de fondos, entre otras instituciones financieras); (iv) adecuado resguardo de los datos tratados; (v) preservación de la integridad y estabilidad financiera y (vi) prevención del lavado de activos y financiamiento del narcotráfico y del terrorismo.\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\n¿Cuáles son los requisitos que deben cumplir las entidades que presten servicios Fintech? Las entidades que presten servicios financieros basados en tecnología deben estar registradas en el Registros de Proveedores de Servicios Financieros que creará la Comisión para el Mercado Financiero (CMF), además de contar con la autorización que al efecto debe otorgar esta misma institución. Es importante señalar que estos servicios serán fiscalizados por la CMF, quien además podrá dictar normas de carácter general que regulen, de forma adicional a las medidas establecidas en la Ley Fintech, las operaciones de estas entidades. ¿Cuáles son los requisitos que deben cumplir las entidades que presten servicios Fintech? Las entidades que presten servicios financieros basados en tecnología deben estar registradas en el Registros de Proveedores de Servicios Financieros que creará la Comisión para el Mercado Financiero (CMF), además de contar con la autorización que al efecto debe otorgar esta misma institución. Es importante señalar que estos servicios serán fiscalizados por la CMF, quien además podrá dictar normas de carácter general que regulen, de forma adicional a las medidas establecidas en la Ley Fintech, las operaciones de estas entidades. ¿Cuáles son los requisitos que deben cumplir las entidades que presten servicios Fintech? Las entidades que presten servicios financieros basados en tecnología deben estar registradas en el Registros de Proveedores de Servicios Financieros que creará la Comisión para el Mercado Financiero (CMF), además de contar con la autorización que al efecto debe otorgar esta misma institución. Es importante señalar que estos servicios serán fiscalizados por la CMF, quien además podrá dictar normas de carácter general que regulen, de forma adicional a las medidas establecidas en la Ley Fintech, las operaciones de estas entidades.\n\n### Ley Fintech 21.521, Ley de Datos 21.719 y Estructura Societaria [VECTOR] — normativa\nLa Ley Fintech chilena (Ley 21.521) regula el mercado de servicios financieros basados en tecnología. Si tu modelo de negocio toca el dinero o los datos financieros de terceros, estás bajo la lupa de la Comisión para el Mercado Financiero (CMF). Las 5 verticales que caen bajo esta ley son: Plataformas de financiamiento colectivo (crowdfunding), Sistemas alternativos de transacción, Asesoría crediticia y de inversión (robo-advisors), Custodia de instrumentos financieros y Enrutamiento de órdenes e intermediación. Sus 3 obligaciones principales y regulatorias son: Inscripción y Autorización: Obligación de inscribirse en el Registro de Prestadores de Servicios Financieros y obtener la autorización explícita de la CMF para operar.Compliance y Ciberseguridad: Implementar sistemas rigurosos de prevención de lavado de activos (PLA/FT), gestión de riesgos, seguridad de la información, continuidad operacional y reporte inmediato de incidentes.Resguardo Patrimonial: Acreditar solvencia, mantener un patrimonio mínimo permanente y constituir garantías o seguros para proteger al cliente financiero. Inscripción y Autorización: Obligación de inscribirse en el Registro de Prestadores de Servicios Financieros y obtener la autorización explícita de la CMF para operar. Inscripción y Autorización: Obligación de inscribirse en el Registro de Prestadores de Servicios Financieros y obtener la autorización explícita de la CMF para operar. Compliance y Ciberseguridad: Implementar sistemas rigurosos de prevención de lavado de activos (PLA/FT), gestión de riesgos, seguridad de la información, continuidad operacional y reporte inmediato de incidentes. Compliance y Ciberseguridad: Implementar sistemas rigurosos de prevención de lavado de activos (PLA/FT), gestión de riesgos, seguridad de la información, continuidad operacional y reporte inmediato de incidentes. Resguardo Patrimonial: Acreditar solvencia, mantener un patrimonio mínimo permanente y constituir garantías o seguros para proteger al cliente financiero. Resguardo Patrimonial: Acreditar solvencia, mantener un patrimonio mínimo permanente y constituir garantías o seguros para proteger al cliente financiero."
+    },
+    {
+      "slug": "datos-21719",
+      "pregunta": "¿Cómo me afecta la Ley 21.719 de protección de datos personales?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Ley 21.719 Proteccion de Datos Personales Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6823,
+          "len_content": 82,
+          "len_util": 0
+        },
+        {
+          "titulo": "Ley 21.719 Proteccion de Datos Personales Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6792,
+          "len_content": 838,
+          "len_util": 838
+        },
+        {
+          "titulo": "Ley Fintech 21.521, Ley de Datos 21.719 y Estructura Societaria",
+          "origen": "VECTOR",
+          "relevancia": 0.6667,
+          "len_content": 1120,
+          "len_util": 1120
+        },
+        {
+          "titulo": "Ley 21.719 Proteccion de Datos Personales Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6645,
+          "len_content": 511,
+          "len_util": 511
+        },
+        {
+          "titulo": "Ley 21.719 — Estándar GDPR Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6497,
+          "len_content": 771,
+          "len_util": 771
+        },
+        {
+          "titulo": "Ley 21.719 Proteccion de Datos Personales Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6375,
+          "len_content": 708,
+          "len_util": 708
+        }
+      ],
+      "nodos_sin_contenido_util": 1,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "Ley 21.719 Proteccion de Datos Personales Chile [VECTOR] — normativa"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Ley 21.719 Proteccion de Datos Personales Chile [VECTOR] — normativa\nRelacionado con: , , Asked on 2026-05-24T09:28:03.777Z against NotebookLM notebook\n\n### Ley 21.719 Proteccion de Datos Personales Chile [VECTOR] — normativa\nHome Nosotros Servicios Contacto Canal Ético Test de Autoevaluación Ley 21.719: Lo que tu empresa debe cumplir ahora en protección de datos personales en Chile Nueva Ley de Protección de Datos Personales en Chile: Lo que tu empresa debe saber antes de 2026 Con la inminente entrada en vigor de la Ley N° 21.719 el 1 de diciembre de 2026, el ecosistema digital y empresarial chileno enfrenta uno de los mayores cambios legislativos en materia de privacidad y protección de datos personales. Esta ley no solo reemplazará a la antigua Ley 19.628, sino que transforma completamente la forma en que las organizaciones deben recolectar, almacenar, tratar y compartir la información personal de ciudadanos en Chile. Siguiendo estándares internacionales como el GDPR europeo, la reforma posiciona a Chile a la vanguardia regional en esta materia.\n\n### Ley Fintech 21.521, Ley de Datos 21.719 y Estructura Societaria [VECTOR] — normativa\nEsta nueva ley (que entra en vigencia en diciembre de 2026) adopta el estándar europeo (GDPR) y crea la Agencia de Protección de Datos Personales (APDP), con multas de hasta 20.000 UTM. Para empresas SaaS/B2B que procesan datos, la ley exige obligatoriamente: Privacidad desde el diseño y por defecto (Privacy by Design).Gestión de Derechos ARCO+: Acceso, Rectificación, Supresión, Oposición y Portabilidad.Reporte Inmediato de Brechas a la APDP y a los titulares afectados.Adopción de un Modelo de Prevención de Infracciones con DPO designado. Privacidad desde el diseño y por defecto (Privacy by Design). Privacidad desde el diseño y por defecto (Privacy by Design). Gestión de Derechos ARCO+: Acceso, Rectificación, Supresión, Oposición y Portabilidad. Gestión de Derechos ARCO+: Acceso, Rectificación, Supresión, Oposición y Portabilidad. Reporte Inmediato de Brechas a la APDP y a los titulares afectados. Reporte Inmediato de Brechas a la APDP y a los titulares afectados. Adopción de un Modelo de Prevención de Infracciones con DPO designado. Adopción de un Modelo de Prevención de Infracciones con DPO designado.\n\n### Ley 21.719 Proteccion de Datos Personales Chile [VECTOR] — normativa\nArtículo 15 ter.- Evaluación de impacto en protección de datos personales. Cuando sea probable que un tipo de tratamiento, por su naturaleza, alcance, contexto, tecnología utilizada o fines, pueda producir un alto riesgo para los derechos de las personas titulares de los datos personales, el responsable del tratamiento deberá realizar, previo al inicio de las operaciones del tratamiento, una evaluación del impacto en protección de datos personales. La evaluación de impacto se requerirá siempre en casos de:\n\n### Ley 21.719 — Estándar GDPR Chile [VECTOR] — Cumplimiento Normativo\nLa Ley 21.719 (en vigor desde 2026) reemplaza la Ley 19.628 y eleva el estándar de protección de datos personales en Chile al nivel del GDPR europeo. Cambios estructurales: bases legales de tratamiento taxativas (consentimiento, interés legítimo, obligación legal, ejecución contractual, interés vital); principio de minimización de datos; obligación de Evaluaciones de Impacto en Protección de Datos (EIPD) para tratamientos de alto riesgo (perfilamiento, decisiones automatizadas, datos sensibles a escala); creación de la Agencia de Protección de Datos Personales como órgano fiscalizador independiente. Sanciones escalonadas: infracciones leves hasta UF 1.000; infracciones graves hasta UF 5.000 (~USD 215.000); infracciones gravísimas hasta UF 10.000 (~USD 430.000).\n\n### Ley 21.719 Proteccion de Datos Personales Chile [VECTOR] — normativa\nAcceso : Los ciudadanos pueden saber exactamente qué datos tiene una organización sobre ellos y cómo los usa. Rectificación : Permite corregir datos erróneos o desactualizados. Supresión (o derecho al olvido) : Cualquier persona puede pedir que sus datos sean eliminados si ya no son necesarios. Oposición : Los titulares pueden evitar que sus datos sean tratados en determinadas circunstancias. Portabilidad : Solicitar sus datos en formato estructurado para migrarlos a otro proveedor. Bloqueo temporal : Suspensión del tratamiento mientras se tramita una solicitud. Decisiones automatizadas : Derecho a no ser objeto de decisiones basadas únicamente en algoritmos, como en el caso de perfiles crediticios."
+    },
+    {
+      "slug": "cmf-uaf",
+      "pregunta": "¿Qué registros de la CMF y la UAF necesita una fintech chilena?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Marco Regulatorio Fintech Chile — CMF y UAF",
+          "origen": "VECTOR",
+          "relevancia": 0.7038,
+          "len_content": 84,
+          "len_util": 0
+        },
+        {
+          "titulo": "Regulacion Sectorial Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6939,
+          "len_content": 2130,
+          "len_util": 2130
+        },
+        {
+          "titulo": "Ley Fintech 21.521 — Registro CMF de Prestadores",
+          "origen": "VECTOR",
+          "relevancia": 0.6841,
+          "len_content": 870,
+          "len_util": 870
+        },
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.6723,
+          "len_content": 543,
+          "len_util": 543
+        },
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.6611,
+          "len_content": 1874,
+          "len_util": 1874
+        },
+        {
+          "titulo": "Ley 21.521 Fintech Chile — Regulacion Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.6588,
+          "len_content": 638,
+          "len_util": 638
+        }
+      ],
+      "nodos_sin_contenido_util": 1,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "Marco Regulatorio Fintech Chile — CMF y UAF [VECTOR] — normativa"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Marco Regulatorio Fintech Chile — CMF y UAF [VECTOR] — normativa\nRelacionado con: , , , Asked on 2026-05-24T09:30:31.347Z against NotebookLM notebook\n\n### Regulacion Sectorial Chile [VECTOR] — normativa\nVer también: Por tipo de actividad fintech: Plataforma de inversión: Requiere registro como Intermediario de Valores ante CMF.Crédito online: Si captas fondos del público → banco (regulado BCCh/CMF). Si prestas fondos propios o de inversores acreditados → puede operar sin licencia bancaria.Medios de pago: Operadores de tarjetas y pagos requieren registro CMF. Pero intermediarios de pago (PSP) que no custodian fondos tienen menores requisitos.Open Banking: La Ley Fintech 21.521 establece el marco para APIs abiertas de bancos. CMF está emitiendo normativas 2025-2026 — monitorear activamente.Criptomonedas: No hay regulación específica en Chile (2026). El SII grava las ganancias en crypto como renta. CMF está evaluando regulación. Plataforma de inversión: Requiere registro como Intermediario de Valores ante CMF. Plataforma de inversión: Requiere registro como Intermediario de Valores ante CMF. Crédito online: Si captas fondos del público → banco (regulado BCCh/CMF). Si prestas fondos propios o de inversores acreditados → puede operar sin licencia bancaria. Crédito online: Si captas fondos del público → banco (regulado BCCh/CMF). Si prestas fondos propios o de inversores acreditados → puede operar sin licencia bancaria. Medios de pago: Operadores de tarjetas y pagos requieren registro CMF. Pero intermediarios de pago (PSP) que no custodian fondos tienen menores requisitos. Medios de pago: Operadores de tarjetas y pagos requieren registro CMF. Pero intermediarios de pago (PSP) que no custodian fondos tienen menores requisitos. Open Banking: La Ley Fintech 21.521 establece el marco para APIs abiertas de bancos. CMF está emitiendo normativas 2025-2026 — monitorear activamente. Open Banking: La Ley Fintech 21.521 establece el marco para APIs abiertas de bancos. CMF está emitiendo normativas 2025-2026 — monitorear activamente. Criptomonedas: No hay regulación específica en Chile (2026). El SII grava las ganancias en crypto como renta. CMF está evaluando regulación. Criptomonedas: No hay regulación específica en Chile (2026). El SII grava las ganancias en crypto como renta. CMF está evaluando regulación.\n\n### Ley Fintech 21.521 — Registro CMF de Prestadores [VECTOR] — Cumplimiento Normativo\nLa Ley Fintech 21.521 (vigente desde enero 2023, reglamentos en fuerza gradual hasta 2025) obliga a toda empresa que preste Servicios de Plataforma de Financiamiento Colectivo (crowdfunding), Intermediación de Instrumentos Financieros, Sistemas de Pago, Custodia de Valores, Enrutamiento de Órdenes, o Asesoría Crediticia a registrarse ante la CMF antes de operar en Chile. El proceso de registro requiere: plan de negocio aprobado, patrimonio mínimo según tipo de servicio (desde UF 5.000 hasta UF 50.000), políticas de continuidad operacional, y sistemas de gestión de riesgos documentados. Sanciones por operar sin registro: multas hasta UF 15.000 (~USD 650.000) y cierre forzado con responsabilidad personal de los directores. Due diligence pre-inversión: toda fintech debe presentar certificado vigente de registro CMF o demostrar que su actividad no está regulada.\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\nAdecuados resguardos de datos personales / innovación / interoperabilidad Alcance del SFA: información a compartir y servicios Servicio Consentimiento cliente Detalle Términos y condiciones NO Información sobre términos y condiciones generales de los productos y servicios financieros que ofrezcan al público y canales de atención al público dispuestos por las instituciones proveedoras de información. Ejemplos: Tipos de créditos que se ofrecen a clientes, tipos de seguros, plazos considerados, rangos de tasas, ubicación de sucursales, etc.\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\n¿Cuáles son los requisitos que deben cumplir las entidades que presten servicios Fintech? Las entidades que presten servicios financieros basados en tecnología deben estar registradas en el Registros de Proveedores de Servicios Financieros que creará la Comisión para el Mercado Financiero (CMF), además de contar con la autorización que al efecto debe otorgar esta misma institución. Es importante señalar que estos servicios serán fiscalizados por la CMF, quien además podrá dictar normas de carácter general que regulen, de forma adicional a las medidas establecidas en la Ley Fintech, las operaciones de estas entidades. ¿Cuáles son los requisitos que deben cumplir las entidades que presten servicios Fintech? Las entidades que presten servicios financieros basados en tecnología deben estar registradas en el Registros de Proveedores de Servicios Financieros que creará la Comisión para el Mercado Financiero (CMF), además de contar con la autorización que al efecto debe otorgar esta misma institución. Es importante señalar que estos servicios serán fiscalizados por la CMF, quien además podrá dictar normas de carácter general que regulen, de forma adicional a las medidas establecidas en la Ley Fintech, las operaciones de estas entidades. ¿Cuáles son los requisitos que deben cumplir las entidades que presten servicios Fintech? Las entidades que presten servicios financieros basados en tecnología deben estar registradas en el Registros de Proveedores de Servicios Financieros que creará la Comisión para el Mercado Financiero (CMF), además de contar con la autorización que al efecto debe otorgar esta misma institución. Es importante señalar que estos servicios serán fiscalizados por la CMF, quien además podrá dictar normas de carácter general que regulen, de forma adicional a las medidas establecidas en la Ley Fintech, las operaciones de estas entidades.\n\n### Ley 21.521 Fintech Chile — Regulacion Completa [VECTOR] — normativa\nRegistro obligatorio Las empresas que operen servicios regulados deben inscribirse en el Registro de Prestadores de Servicios Financieros ante la CMF. Esto aplica también a extranjeras con operaciones en Chile. Requisitos operativos clave Implementar sistemas de gestión de riesgos, planes de continuidad operacional, seguridad de la información, trazabilidad de operaciones, y políticas contra lavado de activos (PLA/FT). Impacto en empresas no fintech Empresas tradicionales que integren soluciones financieras (pagos digitales, financiamiento a clientes, billeteras virtuales) deben evaluar si sus modelos quedan alcanzados por la ley."
+    },
+    {
+      "slug": "spa",
+      "pregunta": "¿Cómo constituyo una SpA en Chile y cuánto cuesta?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Contratos Societarios y Vesting",
+          "origen": "VECTOR",
+          "relevancia": 0.6906,
+          "len_content": 1016,
+          "len_util": 1016
+        },
+        {
+          "titulo": "Estructura SpA (Sociedad por Acciones)",
+          "origen": "VECTOR",
+          "relevancia": 0.69,
+          "len_content": 873,
+          "len_util": 873
+        },
+        {
+          "titulo": "Regulacion Laboral para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.669,
+          "len_content": 572,
+          "len_util": 572
+        },
+        {
+          "titulo": "Vesting y Contratos Societarios para Startups",
+          "origen": "VECTOR",
+          "relevancia": 0.6527,
+          "len_content": 599,
+          "len_util": 599
+        },
+        {
+          "titulo": "Constitucion SpA Chile — Guia Completa",
+          "origen": "VECTOR",
+          "relevancia": 0.5945,
+          "len_content": 82,
+          "len_util": 0
+        },
+        {
+          "titulo": "Como Evaluan los VCs una Startup",
+          "origen": "VECTOR",
+          "relevancia": 0.5753,
+          "len_content": 574,
+          "len_util": 574
+        }
+      ],
+      "nodos_sin_contenido_util": 1,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "Constitucion SpA Chile — Guia Completa [VECTOR] — normativa"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Contratos Societarios y Vesting [VECTOR] — normativa\nLa SpA (Sociedad por Acciones) es el vehículo estándar para startups en Chile. Ventajas sobre la SRL: Permite múltiples clases de acciones (ordinarias, preferentes).Facilita onboarding de inversores con derechos específicos.Permite convertir deuda en equity (notas convertibles, SAFEs).Constitución en 1 día vía portal Empresa en un Día del Ministerio de Economía. Permite múltiples clases de acciones (ordinarias, preferentes). Permite múltiples clases de acciones (ordinarias, preferentes). Facilita onboarding de inversores con derechos específicos. Facilita onboarding de inversores con derechos específicos. Permite convertir deuda en equity (notas convertibles, SAFEs). Permite convertir deuda en equity (notas convertibles, SAFEs). Constitución en 1 día vía portal Empresa en un Día del Ministerio de Economía. Constitución en 1 día vía portal Empresa en un Día del Ministerio de Economía. Capital inicial mínimo: No existe mínimo legal en Chile. Recomiendamos $1M CLP (~USD 1.000) para tener estructura real.\n\n### Estructura SpA (Sociedad por Acciones) [VECTOR] — Gobernanza\nLa Sociedad por Acciones (SpA) es el vehículo societario estándar para startups chilenas que buscan financiamiento de capital de riesgo. Ventajas clave para VC: permite múltiples clases de acciones (ordinarias, preferentes, fantasmas/phantom equity); puede operar con un solo accionista inicial; no requiere capital mínimo; sus estatutos y pacto de accionistas son privados. Due diligence legal pre-inversión: verificar que los estatutos permitan emisión de acciones preferentes con liquidation preference; que no existan compromisos de compra o promesas de venta previas no registradas; que todos los founders tengan sus acciones correctamente inscritas antes de la primera ronda. Una SpA mal estructurada (ej. sin cláusulas de veto, sin autorización para nuevas series de acciones) puede bloquear una ronda de inversión o requerir una reestructuración societaria costosa.\n\n### Regulacion Laboral para Startups Chile [VECTOR] — normativa\n27.- ¿Para qué sirven las \"acciones en reserva\" en una SpA? Son acciones que dejas listas para ser usadas en el futuro, por ejemplo, para dar entrada a un nuevo socio que no existe ahora pero que puede aparecer en el futuro, o para ofrecer participación a un trabajador clave. El principal beneficio es que te permiten hacerlo de forma rápida y sin tener que modificar los estatutos de tu SpA para aumentar el capital, ahorrándote trámites y costos. 28.- En el formulario, ¿cómo ingreso las “acciones en reserva” para una SpA y qué pongo en el \"plazo suscripción (meses)\"?\n\n### Vesting y Contratos Societarios para Startups [VECTOR] — normativa\nPaso 1: Define la estructura societaria adecuada (SpA) Antes de redactar cualquier pacto, necesitas el vehículo jurídico correcto. La Sociedad por Acciones (SpA) es la opción preferida por las startups en Chile debido a la flexibilidad que otorga el artículo 424 del Código de Comercio. Esta estructura permite: Tener un solo accionista inicial (a diferencia de la S.A.). Crear diferentes series de acciones (preferentes) con derechos económicos o políticos distintos. Regular en los estatutos materias que tradicionalmente iban en pactos privados, dándoles mayor fuerza ejecutiva frente a terceros.\n\n### Constitucion SpA Chile — Guia Completa [VECTOR] — normativa\nRelacionado con: , , Asked on 2026-05-24T09:26:28.836Z against NotebookLM notebook\n\n### Como Evaluan los VCs una Startup [VECTOR] — metodologia\nCorporate venture capital and family offices are also filling the Series A and B gap. The Santiago Stock Exchange and CORFO launched “ScaleX” to give high-growth companies public market access. Learn more about startup funding rounds and what investors expect at each stage. How can foreigners start a business in Chile? Foreigners can start a business in Chile by incorporating a Sociedad por Acciones (SpA) and obtaining a tax ID. Chile allows 100% foreign ownership in almost all sectors. There are no minimum capital requirements for the most common business structures."
+    },
+    {
+      "slug": "laboral",
+      "pregunta": "¿Qué obligaciones laborales tiene una startup al contratar en Chile?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Regulacion Laboral para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7285,
+          "len_content": 82,
+          "len_util": 0
+        },
+        {
+          "titulo": "Regulacion Laboral para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7273,
+          "len_content": 4439,
+          "len_util": 4439
+        },
+        {
+          "titulo": "Fintoc Open Banking API Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7071,
+          "len_content": 4439,
+          "len_util": 4439
+        },
+        {
+          "titulo": "Regulacion Laboral para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6908,
+          "len_content": 593,
+          "len_util": 593
+        },
+        {
+          "titulo": "Regulacion Laboral para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6704,
+          "len_content": 570,
+          "len_util": 570
+        },
+        {
+          "titulo": "Regulacion Laboral para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6589,
+          "len_content": 567,
+          "len_util": 567
+        }
+      ],
+      "nodos_sin_contenido_util": 1,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "Regulacion Laboral para Startups Chile [VECTOR] — normativa"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Regulacion Laboral para Startups Chile [VECTOR] — normativa\nRelacionado con: , , Asked on 2026-05-24T09:32:08.203Z against NotebookLM notebook\n\n### Regulacion Laboral para Startups Chile [VECTOR] — normativa\nLey 40 Horas (Ley 21.561) Esta normativa reduce la jornada laboral máxima en Chile de forma progresiva a lo largo de 5 años. Para las startups, los puntos críticos de implementación son:\nCronograma gradual: La jornada bajó a 44 horas en abril de 2024, bajará a 42 horas en abril de 2026, y finalmente llegará a 40 horas en abril de 2028\n1\n2\n. No hay reducción estipulada para 2025\n2\n.\nRestricción del Artículo 22 (Exclusión de jornada): Se limitó estrictamente esta exención. Ahora solo aplica a cargos de alta gerencia, administradores o personas sin fiscalización superior inmediata\n3\n4\n. Si un trabajador tiene jefatura que supervisa directamente cómo y cuándo hace sus tareas (incluso mediante plataformas digitales o GPS), está sujeto a límite de jornada y registro de asistencia\n5\n6\n.\nProtección de ingresos: Está prohibido reducir la remuneración de los trabajadores como consecuencia directa de la disminución de su jornada laboral\n4\n7\n.\nNuevas modalidades de flexibilidad:\nJornada 4x3: Se permite acordar trabajar 4 días y descansar 3 en la semana\n8\n9\n.\nBandas horarias: Los padres o cuidadores de niños menores de 12 años tienen el derecho de adelantar o retrasar el inicio de su jornada hasta en una hora\n9\n10\n.\nHoras extras: Pueden ser compensadas con hasta 5 días de feriado adicionales al año, a razón de 1,5 horas de feriado por cada 1 hora extra trabajada\n7\n.\nLey Karin (Ley 21.643) Vigente desde agosto de 2024, modifica el Código del Trabajo para la prevención, investigación y sanción del acoso laboral, acoso sexual y la violencia en el trabajo (esta última referida a actos de terceros ajenos a la empresa, como clientes o proveedores)\nObligaciones documentales: Todas las empresas deben elaborar e implementar un protocolo de prevención. Si la startup tiene 10 o más trabajadores, debe incorporarlo obligatoriamente en su Reglamento Interno de Orden, Higiene y Seguridad. Si tiene menos de 10 empleados, igual debe tener el protocolo y un procedimiento claro de investigación y sanción\n15\n16\n.\nAtención y resguardo a la víctima: Tras una denuncia, el empleador debe adoptar medidas de resguardo inmediatas y proporcionar Atención Psicológica Temprana (APT) a través de su organismo administrador (como la ACHS)\nInvestigación y sanciones: La investigación interna debe ser confidencial, imparcial, rápida y con perspectiva de género. Las sanciones deben aplicarse dentro de los 15 días posteriores a la recepción del informe\n18\n.\nModalidades de contrato La legislación laboral aplicable reconoce principalmente a los trabajadores con contratos a plazo fijo, indefinido, y por obra o faena\n20\n. Asimismo, en el marco de la nueva Ley 40 Horas, se estipula que la jornada parcial (part-time) pasa a definirse como aquella de hasta 30 horas semanales\n10\n.\nEquity Compensation y Opciones de Acciones (Stock Options) En Chile, la estructura jurídica preferida por las startups para manejar incentivos a empleados es la SpA (Sociedad por Acciones).\nAcciones en reserva: La ley permite dejar \"acciones en reserva\" (sin suscribir ni pagar inmediatamente) en los estatutos. El beneficio principal es que se dejan listas para ser usadas en el futuro, permitiendo ofrecer participación a un trabajador clave sin tener que gastar en trámites y modificaciones de estatutos cada vez que se emita equity\n21\n.\nStock Options como excepción antidilución: Un sistema de incentivos para empleados con stock options constituye una justificación válida en el pacto de accionistas para pactar excepciones al derecho de suscripción preferente de los socios actuales\n22\n.\nVesting: Aunque no es una figura de la ley chilena, este incentivo se ancla mediante contratos como el \"Reverse Vesting\" y un \"Cliff\", donde las acciones entregadas al empleado/fundador solo se consolidan tras un periodo de permanencia (ej. ganar un 25% al cumplir 1 año en la startup, y el resto mes a mes)\n23\n24\n.\nObligaciones de teletrabajo DATO NO DISPONIBLE: Aunque las fuentes mencionan el \"Trabajo a distancia y teletrabajo\" como una categoría de cobertura y gestión legal de las mutualidades\n25\n, los documentos seleccionados no contienen los detalles específicos de las obligaciones normativas o la regulación particular del teletrabajo en Chile. Tenga en cuenta que podría necesitar consultar directamente la \"Ley de Teletrabajo\" (Ley 21.220) a través de canales externos para conocer obligaciones como la provisión de equipos o el derecho a desconexión digital.\n\n### Fintoc Open Banking API Chile [VECTOR] — metodologia\nLey 40 Horas (Ley 21.561) Esta normativa reduce la jornada laboral máxima en Chile de forma progresiva a lo largo de 5 años. Para las startups, los puntos críticos de implementación son:\nCronograma gradual: La jornada bajó a 44 horas en abril de 2024, bajará a 42 horas en abril de 2026, y finalmente llegará a 40 horas en abril de 2028\n1\n2\n. No hay reducción estipulada para 2025\n2\n.\nRestricción del Artículo 22 (Exclusión de jornada): Se limitó estrictamente esta exención. Ahora solo aplica a cargos de alta gerencia, administradores o personas sin fiscalización superior inmediata\n3\n4\n. Si un trabajador tiene jefatura que supervisa directamente cómo y cuándo hace sus tareas (incluso mediante plataformas digitales o GPS), está sujeto a límite de jornada y registro de asistencia\n5\n6\n.\nProtección de ingresos: Está prohibido reducir la remuneración de los trabajadores como consecuencia directa de la disminución de su jornada laboral\n4\n7\n.\nNuevas modalidades de flexibilidad:\nJornada 4x3: Se permite acordar trabajar 4 días y descansar 3 en la semana\n8\n9\n.\nBandas horarias: Los padres o cuidadores de niños menores de 12 años tienen el derecho de adelantar o retrasar el inicio de su jornada hasta en una hora\n9\n10\n.\nHoras extras: Pueden ser compensadas con hasta 5 días de feriado adicionales al año, a razón de 1,5 horas de feriado por cada 1 hora extra trabajada\n7\n.\nLey Karin (Ley 21.643) Vigente desde agosto de 2024, modifica el Código del Trabajo para la prevención, investigación y sanción del acoso laboral, acoso sexual y la violencia en el trabajo (esta última referida a actos de terceros ajenos a la empresa, como clientes o proveedores)\nObligaciones documentales: Todas las empresas deben elaborar e implementar un protocolo de prevención. Si la startup tiene 10 o más trabajadores, debe incorporarlo obligatoriamente en su Reglamento Interno de Orden, Higiene y Seguridad. Si tiene menos de 10 empleados, igual debe tener el protocolo y un procedimiento claro de investigación y sanción\n15\n16\n.\nAtención y resguardo a la víctima: Tras una denuncia, el empleador debe adoptar medidas de resguardo inmediatas y proporcionar Atención Psicológica Temprana (APT) a través de su organismo administrador (como la ACHS)\nInvestigación y sanciones: La investigación interna debe ser confidencial, imparcial, rápida y con perspectiva de género. Las sanciones deben aplicarse dentro de los 15 días posteriores a la recepción del informe\n18\n.\nModalidades de contrato La legislación laboral aplicable reconoce principalmente a los trabajadores con contratos a plazo fijo, indefinido, y por obra o faena\n20\n. Asimismo, en el marco de la nueva Ley 40 Horas, se estipula que la jornada parcial (part-time) pasa a definirse como aquella de hasta 30 horas semanales\n10\n.\nEquity Compensation y Opciones de Acciones (Stock Options) En Chile, la estructura jurídica preferida por las startups para manejar incentivos a empleados es la SpA (Sociedad por Acciones).\nAcciones en reserva: La ley permite dejar \"acciones en reserva\" (sin suscribir ni pagar inmediatamente) en los estatutos. El beneficio principal es que se dejan listas para ser usadas en el futuro, permitiendo ofrecer participación a un trabajador clave sin tener que gastar en trámites y modificaciones de estatutos cada vez que se emita equity\n21\n.\nStock Options como excepción antidilución: Un sistema de incentivos para empleados con stock options constituye una justificación válida en el pacto de accionistas para pactar excepciones al derecho de suscripción preferente de los socios actuales\n22\n.\nVesting: Aunque no es una figura de la ley chilena, este incentivo se ancla mediante contratos como el \"Reverse Vesting\" y un \"Cliff\", donde las acciones entregadas al empleado/fundador solo se consolidan tras un periodo de permanencia (ej. ganar un 25% al cumplir 1 año en la startup, y el resto mes a mes)\n23\n24\n.\nObligaciones de teletrabajo DATO NO DISPONIBLE: Aunque las fuentes mencionan el \"Trabajo a distancia y teletrabajo\" como una categoría de cobertura y gestión legal de las mutualidades\n25\n, los documentos seleccionados no contienen los detalles específicos de las obligaciones normativas o la regulación particular del teletrabajo en Chile. Tenga en cuenta que podría necesitar consultar directamente la \"Ley de Teletrabajo\" (Ley 21.220) a través de canales externos para conocer obligaciones como la provisión de equipos o el derecho a desconexión digital.\n\n### Regulacion Laboral para Startups Chile [VECTOR] — normativa\nActualizado el 11 de mayo de 2026 ¿Las empresas deben contar con un reglamento interno? Sí. Todas las empresas , establecimientos, faenas o unidades económicas con 10 o más trabajadoras y trabajadores tienen la obligación de contar con un reglamento interno de orden, higiene y seguridad . Este reglamento debe incluir un protocolo de prevención respecto del acoso sexual, laboral y la violencia en el trabajo. También debe contener el procedimiento que se seguirá en estos casos, además de las medidas de resguardo que se adopten respecto de los involucrados y las sanciones que se aplicarán.\n\n### Regulacion Laboral para Startups Chile [VECTOR] — normativa\nIndicación clara de cómo se informará a los socios de la oportunidad. Plazos muy concretos para poder tomar la decisión. Qué pasos hay que seguir si uno de los socios decide no participar. Claro, no todo es tan rígido: se pueden pactar excepciones, como cuando la ampliación busca captar inversores estratégicos que aportan algo más allá de dinero, o si la empresa decide poner en marcha un sistema de incentivos para empleados con stock options. Así que siempre hay un margen de flexibilidad, aunque a veces los matices legales pasan desapercibidos entre tanto papeleo.\n\n### Regulacion Laboral para Startups Chile [VECTOR] — normativa\nConoce sobre la ACHS Conoce sobre la ACHS Únete a la ACHS Participación de mercado de la ACHS ¿Quiénes somos? Rol de la ACHS y de la empresa Ver todo Responsabilidad legal Responsabilidad legal Trabajo a distancia y teletrabajo Gestión de tu cumplimiento de aspectos legales Preventiva ocupacional Proceso de devolución de cotizaciones Ver todo Cómo cuidar a tus trabajadores Cómo cuidar a tus trabajadores ACHS Gestión Catálogo productos preventivos Protocolos de vigilancia – Protocolos MINSAL Servicios de evaluaciones laborales Enfermedades profesionales Ver todo"
+    },
+    {
+      "slug": "vesting",
+      "pregunta": "¿Cómo funciona el vesting de acciones entre socios fundadores?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Contratos Societarios y Vesting",
+          "origen": "VECTOR",
+          "relevancia": 0.7341,
+          "len_content": 2146,
+          "len_util": 2146
+        },
+        {
+          "titulo": "Vesting y Contratos Societarios para Startups",
+          "origen": "VECTOR",
+          "relevancia": 0.7148,
+          "len_content": 684,
+          "len_util": 684
+        },
+        {
+          "titulo": "Contratos Societarios y Vesting",
+          "origen": "VECTOR",
+          "relevancia": 0.7103,
+          "len_content": 2577,
+          "len_util": 2577
+        },
+        {
+          "titulo": "Vesting y Contratos Societarios para Startups",
+          "origen": "VECTOR",
+          "relevancia": 0.7077,
+          "len_content": 1202,
+          "len_util": 1202
+        },
+        {
+          "titulo": "Vesting y Cliff — Retención de Fundadores",
+          "origen": "VECTOR",
+          "relevancia": 0.7056,
+          "len_content": 838,
+          "len_util": 838
+        },
+        {
+          "titulo": "Vesting y Contratos Societarios para Startups",
+          "origen": "VECTOR",
+          "relevancia": 0.6783,
+          "len_content": 822,
+          "len_util": 822
+        }
+      ],
+      "nodos_sin_contenido_util": 0,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Contratos Societarios y Vesting [VECTOR] — normativa\nEl vesting protege a la empresa si un co-fundador se va. Sin vesting, el fundador que sale conserva sus acciones y el que se queda trabaja para alguien que no contribuye. Cliff + Vesting lineal mensual: Cliff de 1 año: No se libera ninguna acción hasta cumplir 12 meses. Si un fundador se va en el mes 6, no recibe nada.Vesting de 4 años: Total de acciones se libera linealmente mes a mes durante 48 meses (con el cliff en el mes 12).Ejemplo: Fundador con 40% de la empresa, vesting 4 años con cliff 1 año → Mes 1-11: 0% liberado. Mes 12: 25% liberado (1 año). Mes 13-48: 2.083% adicional por mes. Cliff de 1 año: No se libera ninguna acción hasta cumplir 12 meses. Si un fundador se va en el mes 6, no recibe nada. Cliff de 1 año: No se libera ninguna acción hasta cumplir 12 meses. Si un fundador se va en el mes 6, no recibe nada. Vesting de 4 años: Total de acciones se libera linealmente mes a mes durante 48 meses (con el cliff en el mes 12). Vesting de 4 años: Total de acciones se libera linealmente mes a mes durante 48 meses (con el cliff en el mes 12). Ejemplo: Fundador con 40% de la empresa, vesting 4 años con cliff 1 año → Mes 1-11: 0% liberado. Mes 12: 25% liberado (1 año). Mes 13-48: 2.083% adicional por mes. Ejemplo: Fundador con 40% de la empresa, vesting 4 años con cliff 1 año → Mes 1-11: 0% liberado. Mes 12: 25% liberado (1 año). Mes 13-48: 2.083% adicional por mes. Aceleración de vesting: Single trigger: Aceleración automática si la empresa es adquirida (no recomendado para fundadores — asusta a adquirentes).Double trigger: Aceleración solo si la empresa es adquirida Y el fundador es despedido sin causa (estándar recomendado). Single trigger: Aceleración automática si la empresa es adquirida (no recomendado para fundadores — asusta a adquirentes). Single trigger: Aceleración automática si la empresa es adquirida (no recomendado para fundadores — asusta a adquirentes). Double trigger: Aceleración solo si la empresa es adquirida Y el fundador es despedido sin causa (estándar recomendado). Double trigger: Aceleración solo si la empresa es adquirida Y el fundador es despedido sin causa (estándar recomendado).\n\n### Vesting y Contratos Societarios para Startups [VECTOR] — normativa\nLa cláusula de vesting para retener talento clave Con el vesting, las acciones asignadas a un fundador no pasan de golpe a su propiedad: se van desbloqueando por tramos durante varios años. Si abandona antes, pierde su parte no consolidada. Más de una vez, esto ha salvado a startups de historias donde un fundador buscaba irse con buena parte de la empresa bajo el brazo antes de que el proyecto despegara. Duración: Normalmente se extiende entre 3 y 5 años. Cliff: Si no llegas al primer aniversario, no te llevas ni una acción. Al cumplirlo, desbloqueas el primer bloque grande (a menudo, el 25%). Consolidación: El resto se adquiere gradualmente mes a mes o trimestre a trimestre.\n\n### Contratos Societarios y Vesting [VECTOR] — normativa\nEl Shareholders Agreement es más importante que los estatutos. Define el contrato real entre fundadores. Cláusulas mínimas indispensables: Tag-along: Si el socio mayoritario vende, los minoritarios tienen derecho a vender en las mismas condiciones.Drag-along: La mayoría puede forzar a la minoría a vender si hay una oferta de compra de la empresa (necesario para exits).Right of First Refusal (ROFR): Antes de vender acciones a un tercero, debes ofrecerlas primero a los socios existentes.Anti-dilución: Protege a inversores si se hace una ronda a valorización más baja (down round). Ponderado o full ratchet.Liquidation preference: En un exit, los inversores preferentes cobran primero (1x non-participating es el estándar VC en LatAm).Board composition: Define quién controla el directorio. Fundadores deben mantener mayoría en el board hasta Serie A mínimo.Vesting del CEO: Si el CEO fundador es removido por el board, ¿cuánto equity conserva? Tag-along: Si el socio mayoritario vende, los minoritarios tienen derecho a vender en las mismas condiciones. Tag-along: Si el socio mayoritario vende, los minoritarios tienen derecho a vender en las mismas condiciones. Drag-along: La mayoría puede forzar a la minoría a vender si hay una oferta de compra de la empresa (necesario para exits). Drag-along: La mayoría puede forzar a la minoría a vender si hay una oferta de compra de la empresa (necesario para exits). Right of First Refusal (ROFR): Antes de vender acciones a un tercero, debes ofrecerlas primero a los socios existentes. Right of First Refusal (ROFR): Antes de vender acciones a un tercero, debes ofrecerlas primero a los socios existentes. Anti-dilución: Protege a inversores si se hace una ronda a valorización más baja (down round). Ponderado o full ratchet. Anti-dilución: Protege a inversores si se hace una ronda a valorización más baja (down round). Ponderado o full ratchet. Liquidation preference: En un exit, los inversores preferentes cobran primero (1x non-participating es el estándar VC en LatAm). Liquidation preference: En un exit, los inversores preferentes cobran primero (1x non-participating es el estándar VC en LatAm). Board composition: Define quién controla el directorio. Fundadores deben mantener mayoría en el board hasta Serie A mínimo. Board composition: Define quién controla el directorio. Fundadores deben mantener mayoría en el board hasta Serie A mínimo. Vesting del CEO: Si el CEO fundador es removido por el board, ¿cuánto equity conserva? Vesting del CEO: Si el CEO fundador es removido por el board, ¿cuánto equity conserva?\n\n### Vesting y Contratos Societarios para Startups [VECTOR] — normativa\nEl SHA es un contrato privado entre los socios que regula situaciones no contempladas en los estatutos generales. En el ecosistema startup, existen cláusulas estándar que son de facto obligatorias para atraer inversión de capital de riesgo.[36] Vesting y Cliff: Mecanismo de permanencia donde los fundadores adquieren la propiedad de sus acciones gradualmente (ej. 4 años con un año de \"cliff\" o carencia inicial). Si un socio se retira antes del cliff, pierde el 100% de su participación.[36, 40] Derecho de Primera Oferta (ROFR): Obliga a un accionista que desea vender a ofrecer sus acciones primero a los socios actuales antes que a terceros.[36] Drag-Along (Derecho de Arrastre): Permite a la mayoría obligar a la minoría a vender sus acciones en caso de una oferta por la totalidad de la empresa, evitando bloqueos en adquisiciones millonarias.[36, 41] Tag-Along (Derecho de Acompañamiento): Protege a los minoritarios permitiéndoles unirse a una venta iniciada por los mayoritarios bajo las mismas condiciones.[36, 42] Materias Reservadas: Lista de decisiones que requieren una mayoría reforzada (ej. 75%), como la emisión de deuda, cambio de giro o venta de propiedad intelectual clave.[36, 43]\n\n### Vesting y Cliff — Retención de Fundadores [VECTOR] — Gobernanza\nEl vesting es el mecanismo por el cual founders y empleados clave adquieren sus acciones o stock options de forma gradual, condicionado a permanencia activa en la empresa. Estándar de mercado VC chileno y LATAM: 4 años de vesting con 1 año de cliff. El cliff significa que si un founder abandona antes del primer año, pierde el 100% de sus acciones vesting — protegiendo al equipo restante y a los inversores. Después del cliff, las acciones se liberan mensualmente (1/48 por mes). Due diligence crítico: si no existe acuerdo de vesting entre cofundadores antes de la primera inversión, la startup es prácticamente no-inversible — un cofundador puede abandonar en el año 2 con el 40–50% del cap table sin trabajar un día más. Fundadores con vesting no firmado es un hard block en procesos de due diligence de fondos LATAM Seed y Series A.\n\n### Vesting y Contratos Societarios para Startups [VECTOR] — normativa\nPaso 2: Implementa Vesting y Cliff (Reverse Vesting) En Chile, el vesting no existe como figura legal expresa, por lo que debe implementarse mediante una ingeniería contractual específica, usualmente conocida como «Reverse Vesting». El mecanismo: Los fundadores suscriben todas sus acciones al inicio, pero otorgan a la sociedad (o a los otros socios) una opción de compra irrevocable sobre esas acciones a un precio castigado (valor nominal). El desbloqueo: Esta opción de compra se va extinguiendo progresivamente a medida que pasa el tiempo (ej. 4 años). Si el fundador se va antes, la sociedad ejerce la opción y recupera las acciones no «vesteadas». El Cliff: Es un periodo de carencia inicial (ej. 1 año). Si el fundador se va antes del año, la opción de compra aplica sobre el 100% de sus acciones (se va con cero)."
+    },
+    {
+      "slug": "pmf",
+      "pregunta": "¿Cómo sé si mi startup alcanzó product-market fit?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Product-Market Fit — Medicion y Framework",
+          "origen": "VECTOR",
+          "relevancia": 0.665,
+          "len_content": 887,
+          "len_util": 887
+        },
+        {
+          "titulo": "Product-Market Fit",
+          "origen": "VECTOR",
+          "relevancia": 0.6431,
+          "len_content": 22,
+          "len_util": 0
+        },
+        {
+          "titulo": "Product-Market Fit",
+          "origen": "VECTOR",
+          "relevancia": 0.634,
+          "len_content": 1842,
+          "len_util": 1842
+        },
+        {
+          "titulo": "Product-Market Fit — Medicion y Framework",
+          "origen": "VECTOR",
+          "relevancia": 0.6248,
+          "len_content": 84,
+          "len_util": 0
+        },
+        {
+          "titulo": "Product-Market Fit — Medicion y Framework",
+          "origen": "VECTOR",
+          "relevancia": 0.6223,
+          "len_content": 617,
+          "len_util": 617
+        },
+        {
+          "titulo": "Product-Market Fit — Medicion y Framework",
+          "origen": "VECTOR",
+          "relevancia": 0.6145,
+          "len_content": 537,
+          "len_util": 537
+        }
+      ],
+      "nodos_sin_contenido_util": 2,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "Product-Market Fit [VECTOR] — metodologia",
+        "Product-Market Fit — Medicion y Framework [VECTOR] — metodologia"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Product-Market Fit — Medicion y Framework [VECTOR] — metodologia\nCausa de Fracaso Frecuencia (2024-2025) Naturaleza del Problema Lección Estratégica Falta de Necesidad de Mercado 42-43% Raíz (Market Fit) [15, 16] Validar el problema antes de escribir la primera línea de código.[17] Agotamiento de Efectivo 70% Síntoma (Operativo) [15] Gestionar el \"burn rate\" en función de hitos de validación, no de métricas de vanidad.[16] Desarmonía en el Equipo / Socios 23% Raíz (Humana) [17, 18] El 65% de los fracasos de equipo involucran conflictos entre co-fundadores.[16] Competencia Superior 19% Raíz (Mercado) [17, 18] La distribución suele vencer al producto en mercados de \"el ganador se lleva todo\".[16] Modelo de Negocio Inviable 19% Raíz (Económica) [15] Asegurar que el costo de adquisición (CAC) sea menor que el valor de vida (LTV).[15] Momento Inadecuado 29% Raíz (Exógena) [15] Estar demasiado temprano es indistinguible de estar equivocado.[19]\n\n### Product-Market Fit [VECTOR] — metodologia\nRelacionado con: , , ,\n\n### Product-Market Fit [VECTOR] — metodologia\nEl error más común es crecer antes de tener PMF. La secuencia debe ser: Habla con 100 clientes potenciales (Mom Test — ver ). No escribas código.Identifica el ICP (Ideal Customer Profile): El segmento donde el pain es más agudo y la disposición a pagar más alta.Construye el MVP mínimo posible para validar la hipótesis central. En LatAm, el MVP puede ser un servicio manual (\"Wizard of Oz\").Consigue 10 clientes pagadores en el ICP. Solo 10, no 1.000.Mide retención a 90 días. Si retención D90 > 40% B2B o > 20% B2C, considera que tienes señal inicial de PMF.Solo entonces escala adquisición. Antes de este punto, escalar quema caja y enmascara el problema. Habla con 100 clientes potenciales (Mom Test — ver ). No escribas código. Habla con 100 clientes potenciales (Mom Test — ver ). No escribas código. Identifica el ICP (Ideal Customer Profile): El segmento donde el pain es más agudo y la disposición a pagar más alta. Identifica el ICP (Ideal Customer Profile): El segmento donde el pain es más agudo y la disposición a pagar más alta. Construye el MVP mínimo posible para validar la hipótesis central. En LatAm, el MVP puede ser un servicio manual (\"Wizard of Oz\"). Construye el MVP mínimo posible para validar la hipótesis central. En LatAm, el MVP puede ser un servicio manual (\"Wizard of Oz\"). Consigue 10 clientes pagadores en el ICP. Solo 10, no 1.000. Consigue 10 clientes pagadores en el ICP. Solo 10, no 1.000. Mide retención a 90 días. Si retención D90 > 40% B2B o > 20% B2C, considera que tienes señal inicial de PMF. Mide retención a 90 días. Si retención D90 > 40% B2B o > 20% B2C, considera que tienes señal inicial de PMF. Solo entonces escala adquisición. Antes de este punto, escalar quema caja y enmascara el problema. Solo entonces escala adquisición. Antes de este punto, escalar quema caja y enmascara el problema.\n\n### Product-Market Fit — Medicion y Framework [VECTOR] — metodologia\nRelacionado con: , , , Asked on 2026-05-24T09:39:53.974Z against NotebookLM notebook\n\n### Product-Market Fit — Medicion y Framework [VECTOR] — metodologia\nNorth Star Metric The North Star metric of Amplitude, a product analytics platform, is the weekly learning of users. By tracking weekly learning, the company knows what users are looking at the product and what they're learning. Product-Market Fit Product-market fit is when a company successfully identifies a target audience and serves them with a product they need and value. It's about listening to what consumers say and how they're experiencing the product you're providing. Ask users: \"If the product were to go away tomorrow, would you be very disappointed, somewhat disappointed, or not disappointed at all?\"\n\n### Product-Market Fit — Medicion y Framework [VECTOR] — metodologia\nBut is it really a good idea? Collecting false positives is something you don't want as an entrepreneur. If you're serious about starting a business , you need to understand the real problems of the people you're targeting before devoting a couple of years to something that might potentially sink. So, the question here is, “How?” The solution here is simple: Have productive and honest conversations with people. That's why so many people are probably ignoring this tip. It doesn't seem like something that will work. It's too generic."
+    },
+    {
+      "slug": "unit-economics",
+      "pregunta": "¿Cómo calculo el CAC y el LTV de mi SaaS B2B?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "unit-economics-benchmarks",
+          "origen": "VECTOR",
+          "relevancia": 0.7244,
+          "len_content": 308,
+          "len_util": 308
+        },
+        {
+          "titulo": "Unit Economics y Benchmarks B2B SaaS",
+          "origen": "VECTOR",
+          "relevancia": 0.7212,
+          "len_content": 637,
+          "len_util": 637
+        },
+        {
+          "titulo": "Unit Economics y Benchmarks B2B SaaS",
+          "origen": "VECTOR",
+          "relevancia": 0.7099,
+          "len_content": 758,
+          "len_util": 758
+        },
+        {
+          "titulo": "LTV Lifetime Value y Ratio LTV CAC",
+          "origen": "VECTOR",
+          "relevancia": 0.7061,
+          "len_content": 576,
+          "len_util": 576
+        },
+        {
+          "titulo": "LTV Lifetime Value y Ratio LTV CAC",
+          "origen": "VECTOR",
+          "relevancia": 0.7058,
+          "len_content": 505,
+          "len_util": 505
+        },
+        {
+          "titulo": "LTV Lifetime Value y Ratio LTV CAC",
+          "origen": "VECTOR",
+          "relevancia": 0.6907,
+          "len_content": 580,
+          "len_util": 580
+        }
+      ],
+      "nodos_sin_contenido_util": 0,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### unit-economics-benchmarks [VECTOR] — metodologia\n- LTV:CAC: Minimo 3:1. Excelencia 4:1 a 7:1. Peligro < 2:1.\r - Payback: SMB < 12 meses, Mid-Market < 18 meses, Enterprise < 24 meses.\r - Churn Mensual: < 2% SMB, < 1% Enterprise.\r \r Tabla CAC/LTV por segmento: SMB ($100-400 CAC, $15k-40k LTV), Mid-Market ($400-800, $80k-200k), Enterprise ($800+, $300k-1M+).\n\n### Unit Economics y Benchmarks B2B SaaS [VECTOR] — metodologia\nLTV:CAC: Minimo 3:1. Excelencia 4:1 a 7:1. Peligro < 2:1.Payback: SMB < 12 meses, Mid-Market < 18 meses, Enterprise < 24 meses.Churn Mensual: < 2% SMB, < 1% Enterprise. LTV:CAC: Minimo 3:1. Excelencia 4:1 a 7:1. Peligro < 2:1. LTV:CAC: Minimo 3:1. Excelencia 4:1 a 7:1. Peligro < 2:1. Payback: SMB < 12 meses, Mid-Market < 18 meses, Enterprise < 24 meses. Payback: SMB < 12 meses, Mid-Market < 18 meses, Enterprise < 24 meses. Churn Mensual: < 2% SMB, < 1% Enterprise. Churn Mensual: < 2% SMB, < 1% Enterprise. Tabla CAC/LTV por segmento: SMB ($100-400 CAC, $15k-40k LTV), Mid-Market ($400-800, $80k-200k), Enterprise ($800+, $300k-1M+).\n\n### Unit Economics y Benchmarks B2B SaaS [VECTOR] — metodologia\nLTV: (ARPU x % Margen Bruto) / Tasa de Churn MensualCAC: Gastos Totales de Ventas y Marketing / Nuevos Clientes AdquiridosPayback Period: CAC / (ARPU Mensual x % Margen Bruto)Churn Rate Mensual: Clientes Perdidos / Total de Clientes al inicio del mes LTV: (ARPU x % Margen Bruto) / Tasa de Churn Mensual LTV: (ARPU x % Margen Bruto) / Tasa de Churn Mensual CAC: Gastos Totales de Ventas y Marketing / Nuevos Clientes Adquiridos CAC: Gastos Totales de Ventas y Marketing / Nuevos Clientes Adquiridos Payback Period: CAC / (ARPU Mensual x % Margen Bruto) Payback Period: CAC / (ARPU Mensual x % Margen Bruto) Churn Rate Mensual: Clientes Perdidos / Total de Clientes al inicio del mes Churn Rate Mensual: Clientes Perdidos / Total de Clientes al inicio del mes\n\n### LTV Lifetime Value y Ratio LTV CAC [VECTOR] — metodologia\nPairing CAC with customer lifetime value (LTV) gives a more complete picture of your unit economics. LTV represents the total revenue a customer is expected to generate during their relationship with your company. For instance, if a SaaS customer pays $200 per month for 24 months, their LTV would be $4,800. The LTV:CAC ratio is a key benchmark for sustainable growth. A 3:1 ratio – where LTV is at least three times CAC – is often considered the baseline for a healthy business [1] [2] . Many B2B SaaS companies aim for ratios between 4:1 and 7:1, depending on their market.\n\n### LTV Lifetime Value y Ratio LTV CAC [VECTOR] — metodologia\nFor the business model of a SaaS company and customer acquisition strategy to be repeatable and feasible over the long run, the profits derived from customers must be in excess of the costs associated with acquiring them. If not, the SaaS company's business model is not sustainable over the long haul, and would only be a matter of time before What is Good LTV:CAC Ratio in the SaaS Industry? For early-stage SaaS companies, the general guidelines for a “good” LTV/CAC ratio are as follows. LTV:CAC Ratio\n\n### LTV Lifetime Value y Ratio LTV CAC [VECTOR] — metodologia\nSee how they did it → Related Resources Churn Rate Benchmark CAC by Channel NRR Benchmark What is LTV? CAC Payback Period LTV:CAC Ratio Tiers <2:1 Danger Zone You're spending too much to acquire customers who don't stay long enough. Either CAC is bloated (inefficient sales/marketing) or LTV is suppressed (high churn, no expansion). Fix before scaling. 2-3:1 Acceptable, Not Great Many early-stage companies operate here while finding product-market fit. Sustainable if you have capital, but limits growth reinvestment. Focus on retention improvements before scaling acquisition."
+    },
+    {
+      "slug": "mom-test",
+      "pregunta": "¿Cómo hago entrevistas de validación sin sesgar al entrevistado?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "psicologia-sesgos-founder",
+          "origen": "VECTOR",
+          "relevancia": 0.5662,
+          "len_content": 75,
+          "len_util": 0
+        },
+        {
+          "titulo": "playbook-validacion",
+          "origen": "VECTOR",
+          "relevancia": 0.5645,
+          "len_content": 678,
+          "len_util": 678
+        },
+        {
+          "titulo": "playbook-validacion",
+          "origen": "VECTOR",
+          "relevancia": 0.536,
+          "len_content": 182,
+          "len_util": 0
+        },
+        {
+          "titulo": "Mom Test — Framework Entrevistas de Validacion",
+          "origen": "VECTOR",
+          "relevancia": 0.5282,
+          "len_content": 84,
+          "len_util": 0
+        },
+        {
+          "titulo": "playbook-validacion",
+          "origen": "VECTOR",
+          "relevancia": 0.5202,
+          "len_content": 107,
+          "len_util": 0
+        },
+        {
+          "titulo": "psicologia-sesgos-founder",
+          "origen": "VECTOR",
+          "relevancia": 0.5177,
+          "len_content": 194,
+          "len_util": 0
+        }
+      ],
+      "nodos_sin_contenido_util": 5,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "psicologia-sesgos-founder [VECTOR] — metodologia",
+        "playbook-validacion [VECTOR] — metodologia",
+        "Mom Test — Framework Entrevistas de Validacion [VECTOR] — metodologia",
+        "playbook-validacion [VECTOR] — metodologia",
+        "psicologia-sesgos-founder [VECTOR] — metodologia"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### psicologia-sesgos-founder [VECTOR] — metodologia\nRelacionado con: Playbook de Validacion de Ideas, Fundraising — Etapas y VC\n\n### playbook-validacion [VECTOR] — metodologia\nSi me vas a presentar una idea, mas te vale haber hablado con tus clientes primero. Aplica estas 5 reglas en tus entrevistas:\r \r 1. Habla de su vida, no de tu idea: Esta estrictamente prohibido mencionar tu solucion o producto.\r 2. Exige hechos del pasado, ignora el futuro: Nunca preguntes \"Comprarias esto?\". Pregunta: \"Cuentame paso a paso como resolviste este problema la ultima vez\".\r 3. Cierra la boca y escucha: Habla un 20% y escucha un 80%.\r 4. Huye de los cumplidos: Los \"Que buena idea!\" son caramelos sin valor. Exige compromisos reales.\r 5. Ancla el Fluff a la realidad: Si el cliente usa generalidades, ancla con \"Cuando fue la ultima vez exacta que hiciste eso?\".\n\n### playbook-validacion [VECTOR] — metodologia\n---\r titulo: \"Playbook de Validacion de Ideas\"\r categoria: metodologia\r tags: [VALIDATION, MOMTEST, JTBD, LEAN]\r fuente: \"ValidateAI Corpus v1.0\"\r fechaactualizacion: 2026-05-23\r ---\n\n### Mom Test — Framework Entrevistas de Validacion [VECTOR] — metodologia\nRelacionado con: , , , Asked on 2026-05-24T09:33:34.628Z against NotebookLM notebook\n\n### playbook-validacion [VECTOR] — metodologia\nRelacionado con: Unit Economics y Benchmarks B2B SaaS, Psicologia y Sesgos del Founder, Growth GTM y Ventas\n\n### psicologia-sesgos-founder [VECTOR] — metodologia\n---\r titulo: \"Psicologia y Sesgos del Founder\"\r categoria: metodologia\r tags: [PSYCHOLOGY, BIASES, FOUNDERRISK, POSTMORTEM]\r fuente: \"ValidateAI Corpus v1.0\"\r fechaactualizacion: 2026-05-23\r ---"
+    },
+    {
+      "slug": "corfo",
+      "pregunta": "¿A qué programas de CORFO puede postular mi startup?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Programas CORFO para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7393,
+          "len_content": 82,
+          "len_util": 0
+        },
+        {
+          "titulo": "Programas CORFO para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7242,
+          "len_content": 658,
+          "len_util": 658
+        },
+        {
+          "titulo": "Programas CORFO para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7241,
+          "len_content": 550,
+          "len_util": 550
+        },
+        {
+          "titulo": "Programas CORFO para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7198,
+          "len_content": 520,
+          "len_util": 520
+        },
+        {
+          "titulo": "Programas CORFO para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7137,
+          "len_content": 717,
+          "len_util": 717
+        },
+        {
+          "titulo": "Programas CORFO para Startups Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.7114,
+          "len_content": 502,
+          "len_util": 502
+        }
+      ],
+      "nodos_sin_contenido_util": 1,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "Programas CORFO para Startups Chile [VECTOR] — normativa"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Programas CORFO para Startups Chile [VECTOR] — normativa\nRelacionado con: , , Asked on 2026-05-24T09:25:34.835Z against NotebookLM notebook\n\n### Programas CORFO para Startups Chile [VECTOR] — normativa\nRequisitos Documentación Evaluación Bases Dudas y consultas Requisitos de Postulación Personas jurídicas, constituidas en Chile que: 1. Tengan menos de 36 meses de iniciadas actividades ante el SII. 2. Tengan ingresos por ventas de la solución postulada de al menos de $100.000 netos. 3. Tengan ventas de máximo $60.000.000 netos. Documentación El detalle de la postulación se especifica en en punto N°8 de las bases técnicas del instrumento. Criterios de Evaluación Los criterios de evaluación debe revisarlos en las Bases Técnicas del instrumento que serán publicadas oportunamente en el siguiente enlace: https://www.corfo.cl/sites/cpp/inf/semilla-expande\n\n### Programas CORFO para Startups Chile [VECTOR] — normativa\n¿Cómo postular? Revisa las Bases Técnicas del concurso Dirígete al sistema de postulación haciendo clic en el botón \"Postular\". Ingresa a la plataforma de postulación. Para esto, debes crear una cuenta ingresando un correo electrónico y una contraseña. Si ya estás registrado, ingresa tus datos para entrar a la plataforma. Completa todos los datos requeridos, sube tu video y envía tu postulación. Una vez enviada tu postulación, recuerda hacer seguimiento de ésta ingresando al portal privado del sistema de postulación con tu usuario y contraseña.\n\n### Programas CORFO para Startups Chile [VECTOR] — normativa\nTipo de Postulante: Persona Jurídica Personas jurídicas constituidas en Chile. Tipo de Financiamiento: Hasta $45.000.000 Corfo cofinanciará hasta el 75% del total del proyecto con un monto por etapa: Etapa 1: hasta $25.000.000 Etapa 2 hasta $20.000.000 Para empresas lideradas por mujeres, Corfo confinanciará hasta el 85% del total del proyecto con un monto de: Etapa 1: hasta $28.333.334 Etapa 2: hasta $22.666.667 Modalidad de postulación: Online EN OTRA PLATAFORMA Modalidad de postulación: Online EN OTRA PLATAFORMA\n\n### Programas CORFO para Startups Chile [VECTOR] — normativa\nImportante : obtén más información en el punto 4 y punto 8 de las bases técnicas.  Informarte de los requerimientos Conocer más Tu iniciativa debe: Acreditar que cuenta con un prototipo de su producto o servicio, o con una idea, cuyo plan sea de rápida implementación. Tener un objetivo alineado con el programa. No registrar ventas a la fecha de apertura de la respectiva convocatoria. Por lo anterior, no serán pertinentes aquellas iniciativas que: Tengan como propósito solo la compra de materias primas, insumos, equipamiento o maquinaria. Consistan únicamente en la exportación o importación de productos, consultorías o adquisición de franquicias. Planteen una solución con alcance de carácter local o regional.\n\n### Programas CORFO para Startups Chile [VECTOR] — normativa\nPortal Único de Fondos Concursables Inicio Nosotros Preguntas Frecuentes Accesibilidad Iniciar sesión Soy ciudadano/a Soy administrador/a Accesibilidad Iniciar sesión Soy ciudadano/a Soy administrador/a Volver CERRADO Cierre de postulación: Jueves 04 de Julio, 2024 SEMILLA EXPANDE Apoyar a emprendedores(as) que cuenten con proyectos de negocio de alto potencial de crecimiento, que se encuentren validados comercialmente, es decir, que ya cuenten con ventas de la solución de al menos $100.000 netos."
+    },
+    {
+      "slug": "pagos",
+      "pregunta": "¿Qué pasarela de pagos conviene integrar en Chile, Transbank o Fintoc?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "Comparativa Pasarelas de Pago Chile 2025",
+          "origen": "VECTOR",
+          "relevancia": 0.6832,
+          "len_content": 1133,
+          "len_util": 1133
+        },
+        {
+          "titulo": "Comparativa Pasarelas de Pago Chile 2025",
+          "origen": "VECTOR",
+          "relevancia": 0.6793,
+          "len_content": 502,
+          "len_util": 502
+        },
+        {
+          "titulo": "Comparativa Pasarelas de Pago Chile 2025",
+          "origen": "VECTOR",
+          "relevancia": 0.6473,
+          "len_content": 912,
+          "len_util": 912
+        },
+        {
+          "titulo": "Transbank — Integracion Completa Chile",
+          "origen": "VECTOR",
+          "relevancia": 0.6454,
+          "len_content": 629,
+          "len_util": 629
+        },
+        {
+          "titulo": "Comparativa Pasarelas de Pago Chile 2025",
+          "origen": "VECTOR",
+          "relevancia": 0.6385,
+          "len_content": 786,
+          "len_util": 786
+        },
+        {
+          "titulo": "Comparativa Pasarelas de Pago Chile 2025",
+          "origen": "VECTOR",
+          "relevancia": 0.6357,
+          "len_content": 719,
+          "len_util": 719
+        }
+      ],
+      "nodos_sin_contenido_util": 0,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### Comparativa Pasarelas de Pago Chile 2025 [VECTOR] — metodologia\nTest mode Building with AI SDKs and Integrations Zapier Widget Web Integration WebView Integration Listen to Widget events Webhooks Create your Webhook Endpoint Test your Webhook Endpoint Validate the signature of your Webhook Endpoint Activate your Webhook Endpoint Webhooks best practices Fintoc CLI Install the Fintoc CLI Fintoc CLI Keys Use the Fintoc CLI Payments Overview Quickstart Countries and Institutions Transaction limits Payment scenarios Accept a payment Save a PaymentMethod of a customer for future payments Accept a one-click payment with Apple Pay Accept recurring payments Setup a Payment Method for future charges Fintoc collects Receiving payouts Refund payments Handling payment exceptions Reporting and reconciliation Checking payment eligibility Direct payments Setup direct payments Handling payment exceptions Reporting and reconciliation Checking payment eligibility Checkout UX Guidelines Chile Guidelines Mexico Guidelines Direct Transfer Payment Links Test your integration Go-Live Checklist Fintoc fees E-commerce Plugins VTEX Shopify Magento Cash Payments (Mexico Only) Buy Now Pay Later (Chile Only)\n\n### Comparativa Pasarelas de Pago Chile 2025 [VECTOR] — metodologia\nTransfers Overview Entity Account Account Number (CLABE) Transfer Movements Quickstart Pick your use case Payins on dedicated CLABEs Payouts to users or suppliers Wallet for end users Payroll or bulk payouts Verify a CLABE before payout Setup Generate JWS Keys Test your integration Security Controls Daily settlement Receive transfers Return a Transfer Add logic to CLABEs Manage your CLABEs Send transfers Verify CLABEs Batch Transfers Manage your Accounts Create more accounts Get Account Statements\n\n### Comparativa Pasarelas de Pago Chile 2025 [VECTOR] — metodologia\nDurante la validación de la integración se pretende verificar que el comercio transacciona de manera segura y sin problemas, por lo que se solicitarán una serie de pruebas y su posterior envío de evidencias para validar la integración. Esta validación es requisito necesario para dejar al comercio en producción y no se permitirá que un comercio utilice productivamente el servicio Webpay sin poseer una validación. Transbank solo validará las integraciones de aquellos comercios que tengan un código de comercio productivo. Para obtenerlo, sigue las instrucciones en cómo hacerse cliente en el portal http://www.transbank.cl o contacte a su ejecutivo comercial. Para integración con plugins , creamos un nuevo formulario online para que comiences el proceso de validación: Comenzar formulario de integración Para integraciones Webpay Plus, Webpay Plus Mall y OneClick Mall (con SDK o integración directa al API)\n\n### Transbank — Integracion Completa Chile [VECTOR] — metodologia\nFlujo El flujo de Webpay Plus Mall es en general el mismo que el de Webpay Plus tanto de cara al tarjeta habiente como de cara al integrador. Las diferencias son: Se debe usar un código de comercio configurado para modalidad Mall en Transbank, el cual debe ser indicado al iniciar la transacción. Se pueden indicar múltiples transacciones, cada una asociada a un código de comercio de tienda (que debe estar configurada en Transbank como perteneciente al mall). Se debe verificar por separado el resultado de cada una de esas transacciones individualmente, pues es posible que el emisor de la tarjeta autorice algunas y otras no.\n\n### Comparativa Pasarelas de Pago Chile 2025 [VECTOR] — metodologia\nWeb Integration Jump to Content Dashboard Home Guides API Reference Changelog API version 2021-03-23 API version 2023-11-15 v2026-02-01 Dashboard Home Log In Guides Log In v2026-02-01 Guides API Reference Changelog Web Integration Search CTRL-K Ask AI Home Welcome 👋 API Reference 📖 Currencies Changes to the API API Keys API rate limits Dashboard Get your Fintoc account's Secret Key and Public Key Permission Roles Resources Test mode Building with AI SDKs and Integrations Zapier Widget Web Integration WebView Integration Listen to Widget events Webhooks Create your Webhook Endpoint Test your Webhook Endpoint Validate the signature of your Webhook Endpoint Activate your Webhook Endpoint Webhooks best practices Fintoc CLI Install the Fintoc CLI Fintoc CLI Keys Use the Fintoc CLI\n\n### Comparativa Pasarelas de Pago Chile 2025 [VECTOR] — metodologia\nProducción . Ambiente de integración : En este ambiente el comercio realiza la integración del producto a contratar y testea su solución de medio pago. HOST: https://webpay3gint.transbank.cl Ambiente de producción : En este ambiente el comercio operará luego de finalizar el proceso de puesta en producción y realizará transacciones con tarjetas de crédito, débito o prepago reales . HOST: https://webpay3g.transbank.cl Ambiente de integración En el ambiente de integración existen códigos de comercio previamente creados para todos los productos (Webpay Plus, Oneclick Mall, etc), para cada una de sus modalidades (Captura Diferida, Mall, Mall Captura Diferida, etc) y dependiendo de la moneda que acepten (USD o CLP)."
+    },
+    {
+      "slug": "fundraising",
+      "pregunta": "¿Cómo levanto una ronda pre-seed y qué miran los VC?",
+      "n_nodos": 6,
+      "nodos": [
+        {
+          "titulo": "unit-economics-benchmarks",
+          "origen": "VECTOR",
+          "relevancia": 0.6694,
+          "len_content": 96,
+          "len_util": 0
+        },
+        {
+          "titulo": "psicologia-sesgos-founder",
+          "origen": "VECTOR",
+          "relevancia": 0.6539,
+          "len_content": 75,
+          "len_util": 0
+        },
+        {
+          "titulo": "Como Evaluan los VCs una Startup",
+          "origen": "VECTOR",
+          "relevancia": 0.6381,
+          "len_content": 82,
+          "len_util": 0
+        },
+        {
+          "titulo": "Como Evaluan los VCs una Startup",
+          "origen": "VECTOR",
+          "relevancia": 0.6369,
+          "len_content": 5558,
+          "len_util": 5558
+        },
+        {
+          "titulo": "Fundraising",
+          "origen": "VECTOR",
+          "relevancia": 0.6342,
+          "len_content": 735,
+          "len_util": 735
+        },
+        {
+          "titulo": "Fundraising — Etapas y VC",
+          "origen": "VECTOR",
+          "relevancia": 0.6342,
+          "len_content": 735,
+          "len_util": 735
+        }
+      ],
+      "nodos_sin_contenido_util": 3,
+      "encabezados_sin_cuerpo": [],
+      "encabezados_sin_contenido_util": [
+        "unit-economics-benchmarks [VECTOR] — metodologia",
+        "psicologia-sesgos-founder [VECTOR] — metodologia",
+        "Como Evaluan los VCs una Startup [VECTOR] — metodologia"
+      ],
+      "contexto": "## Contexto Macroeconómico y de Mercado\n\n\n### unit-economics-benchmarks [VECTOR] — metodologia\nRelacionado con: Fundraising — Etapas y VC, Playbook de Validacion de Ideas, Growth GTM y Ventas\n\n### psicologia-sesgos-founder [VECTOR] — metodologia\nRelacionado con: Playbook de Validacion de Ideas, Fundraising — Etapas y VC\n\n### Como Evaluan los VCs una Startup [VECTOR] — metodologia\nRelacionado con: , , Asked on 2026-05-24T09:52:12.178Z against NotebookLM notebook\n\n### Como Evaluan los VCs una Startup [VECTOR] — metodologia\nFramework de Evaluación VC Para los fondos de Venture Capital (VC), la evaluación de una startup no se basa en presentimientos, sino en evidencia estructurada. Este es el framework que utilizan:\nEquipo (Team): En etapas tempranas (Pre-Seed/Seed), la evaluación del equipo representa aproximadamente el 40% de la decisión de inversión\n1\n. Los VCs buscan el founder-market fit: por qué este equipo es el más calificado para resolver este problema específico\n2\n3\n. Se valora la experiencia en el dominio, habilidades complementarias (técnicas, producto y ventas) y la resiliencia (grit)\n2\n4\n.\nTamaño de Mercado (Market Size): Demostrar que el problema afecta a un mercado lo suficientemente grande como para construir una empresa significativa. Los inversores prefieren cálculos bottom-up (desde abajo hacia arriba) en lugar de top-down para definir el TAM (Total Addressable Market), SAM y SOM\nTracción (Traction): A los VCs no les importan tanto los números absolutos como la forma de la curva de crecimiento; compran trayectorias\n8\n. Para etapas Seed, buscan MRR inicial y crecimientos de 15% al 25% mensual (MoM)\n9\n. Para Serie A, exigen ingresos anuales (ARR) comprobados, Net Revenue Retention (NRR) mayor al 120% y métricas unitarias saludables como un LTV:CAC superior a 3:1\nVentaja Competitiva (Competitive Landscape): No basta con tener más funcionalidades, ya que estas pueden ser copiadas. Se evalúan ventajas sostenibles como efectos de red, datos propietarios o un lock-in del ecosistema\n12\n13\n.\nRed Flags Típicos en Due Diligence\n\"No tenemos competencia\": Afirmar que no existen competidores es una señal de alerta grave que demuestra ingenuidad o falta de investigación de mercado. Toda solución tiene alternativas, incluso si es el \"hacer nada\"\n13\n14\n.\nProyecciones Financieras Irreales (Hockey-stick): Proyectar crecimientos de $0 a $100M en 12 meses sin explicar las mecánicas ni los supuestos clave de conversión y ventas destruye la credibilidad del fundador\n14\n15\n.\nDesarmonía en el Equipo o Inversores: Los conflictos entre cofundadores o con el directorio (como la incapacidad de recibir feedback) son responsables de gran parte de los fracasos de startups\nHistorial Legal y Laboral Oculto: En la auditoría legal (especialmente en Chile), la existencia de causas laborales abiertas en el Poder Judicial (PJUD) por despidos injustificados o beneficios impagos, o la falta de protección de propiedad intelectual ante INAPI, son red flags inmediatas\nLa trampa de los SAFEs (Dilución masiva): Acumular múltiples notas convertibles o Post-Money SAFEs sin control de valoración temprana genera una dilución sorpresiva y masiva para el fundador al llegar a la ronda Seed, lo que desmotiva al equipo clave\n22\n23\n.\nComponentes Críticos del Term Sheet y Pacto de Socios El Term Sheet y el Pacto de Socios fijan las reglas de convivencia y control. Los inversores exigen:\nLiquidation Preference (Preferencia de Liquidación): Asegura que, en caso de que la startup sea vendida o liquidada, el VC reciba la devolución íntegra de su capital invertido antes de que los fundadores o accionistas comunes reciban cualquier pago\n24\n25\n.\nPro-rata Rights (Derecho de Suscripción Preferente): Permite al inversor participar en futuras rondas de financiación inyectando más capital para mantener su porcentaje exacto de propiedad y no diluirse\n26\n27\n.\nBoard Seats y Materias Reservadas (Vetos): El VC suele exigir nombrar al menos a un miembro en el Directorio (Board) y establecer derechos de veto sobre decisiones estratégicas (ej. cambiar el giro, endeudamiento masivo, emitir nuevas acciones, etc.) mediante mayorías calificadas\nAnti-dilución (Weighted Average vs. Full Ratchet): Protege al inversor si la empresa recauda dinero en el futuro a una valoración más baja (down round):\nFull Ratchet: Mecanismo agresivo que iguala automáticamente el precio de las acciones del inversor antiguo al precio más bajo de la nueva ronda. Genera una dilución brutal para los fundadores\nWeighted Average (Media Ponderada): Un modelo más justo y común que promedia el precio antiguo y el nuevo basándose en la cantidad de acciones emitidas, mitigando el impacto sobre los fundadores\nDiferencia entre VCs, Ángeles y Family Offices en LatAm\nÁngeles Inversores (Angel Investors): Son individuos que invierten su propio patrimonio personal en etapas formativas (Pre-Seed y Seed). Sus tickets de inversión suelen ir desde $25.000 hasta $500.000 USD\n38\n. Actúan como mentores tempranos para facilitar la transferencia tecnológica y la inserción comercial\n39\n.\nVenture Capital (VCs): Son fondos institucionales que manejan dinero de terceros (LPs) y lideran las rondas (Seed, Serie A y posteriores) estableciendo la valoración y el Term Sheet. Operan con expectativas de crecimiento masivo (3x-5x interanual)\n40\n. En LatAm en 2025, operan bajo un modelo de \"menos rondas, pero más capital\", priorizando empresas con métricas unitarias claras y un camino sólido hacia la rentabilidad, alejándose del crecimiento ciego de años anteriores\n41\n42\n.\nFamily Offices: Son gestoras de patrimonio privado de grandes grupos familiares. En Chile y la región, han comenzado a jugar un rol crucial llenando el \"gap\" de capital en etapas de escalamiento (Series A y B) donde las startups son demasiado grandes para los ángeles pero quizás aún inmaduras para los grandes fondos internacionales o la bolsa\n43\n. Buscan diversificación, preservación de riqueza y a menudo se asocian como Corporate Venture Capital si el giro de la startup complementa los negocios tradicionales de la familia\n44\n.\n\n### Fundraising [VECTOR] — mercado\nPre-Seed (<$500k USD): Problema definido, equipo, MVP crudo o mockup Figma.Seed (~$4.6M USD): Producto operativo, PMF inicial, equipo minimo viable.Serie A (~$19.8M USD): PMF comprobado, ARR $500k-$4M, plan de crecimiento 3x-5x en 12-18 meses. Pre-Seed (<$500k USD): Problema definido, equipo, MVP crudo o mockup Figma. Pre-Seed (<$500k USD): Problema definido, equipo, MVP crudo o mockup Figma. Seed (~$4.6M USD): Producto operativo, PMF inicial, equipo minimo viable. Seed (~$4.6M USD): Producto operativo, PMF inicial, equipo minimo viable. Serie A (~$19.8M USD): PMF comprobado, ARR $500k-$4M, plan de crecimiento 3x-5x en 12-18 meses. Serie A (~$19.8M USD): PMF comprobado, ARR $500k-$4M, plan de crecimiento 3x-5x en 12-18 meses.\n\n### Fundraising — Etapas y VC [VECTOR] — mercado\nPre-Seed (<$500k USD): Problema definido, equipo, MVP crudo o mockup Figma.Seed (~$4.6M USD): Producto operativo, PMF inicial, equipo minimo viable.Serie A (~$19.8M USD): PMF comprobado, ARR $500k-$4M, plan de crecimiento 3x-5x en 12-18 meses. Pre-Seed (<$500k USD): Problema definido, equipo, MVP crudo o mockup Figma. Pre-Seed (<$500k USD): Problema definido, equipo, MVP crudo o mockup Figma. Seed (~$4.6M USD): Producto operativo, PMF inicial, equipo minimo viable. Seed (~$4.6M USD): Producto operativo, PMF inicial, equipo minimo viable. Serie A (~$19.8M USD): PMF comprobado, ARR $500k-$4M, plan de crecimiento 3x-5x en 12-18 meses. Serie A (~$19.8M USD): PMF comprobado, ARR $500k-$4M, plan de crecimiento 3x-5x en 12-18 meses."
+    }
+  ]
+}

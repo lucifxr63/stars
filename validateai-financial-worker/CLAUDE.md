@@ -197,12 +197,37 @@ impone semántica de foreign key:
 | Trigger | Qué hace |
 |:---|:---|
 | `trg_knowledge_edges_extremos` | Rechaza toda arista cuyos extremos no existan (`23503`) |
-| `trg_knowledge_nodes_renombre` | Renombrar un nodo propaga el título a sus aristas |
-| `trg_knowledge_nodes_borrado` | **Borrar un nodo borra sus aristas, en cascada** |
+| `trg_knowledge_nodes_renombre` | Renombrar el **último** chunk de un título propaga el nuevo a sus aristas |
+| `trg_knowledge_nodes_borrado` | Borrar el **último** chunk de un título borra sus aristas, en cascada |
 
-**El tercero es destructivo por diseño.** Borrar un nodo ahora se lleva sus
+**El tercero es destructivo por diseño.** Borrar un documento ahora se lleva sus
 relaciones sin preguntar. Es lo correcto —una arista sin extremo no sirve y el
 INNER JOIN ya la descartaba— pero conviene saberlo antes de borrar nodos a mano.
+
+⚠️ **Un `document_title` es un DOCUMENTO, no una fila.** Los nodos vienen
+troceados por sección: mismo `document_title`, distinta `header_path`. Al
+2026-08-05 son 774 filas en 212 títulos, y **56 títulos multi-chunk concentran
+354 de las 477 aristas**.
+
+La versión original de las piezas 2 y 3 (aplicada y corregida el mismo día,
+migración `20260805000003`) ignoraba eso y cascadeaba por título sin mirar los
+hermanos: **borrar un chunk se llevaba las aristas de los otros 28**. Medido:
+la limpieza de nodos vacíos que venía a continuación habría destruido 149
+aristas. No explotó sólo porque no se borró ningún nodo en el medio.
+
+Hoy la referencia se considera satisfecha mientras exista **al menos un** chunk
+con ese título — que es la semántica de una FK contra una clave no única. Los
+triggers son `AFTER … FOR EACH ROW`, y Postgres los encola hasta el final de la
+sentencia: borrar los 29 chunks de una vez cascadea igual que hacerlo uno a uno.
+
+Regresión permanente en `validateai/supabase/tests/knowledge_graph_cascada.sql`
+(8 casos contra la base real, con rollback). Sus casos 1, 5 y 7 fallan contra
+los triggers viejos: eso es lo que los hace valer.
+
+**Lección, porque el error fue nuestro:** se escribió y probó el trigger con
+nodos de una fila por título. Las 6 pruebas pasaron porque cubrían el caso
+imaginado, no el que había en la base. Un test que sólo cubre el caso que
+supusiste no dice nada del que no.
 
 **Insertar una arista mala ahora REVIENTA.** Ese es el punto: era un fallo
 silencioso y pasó a ser un error. Los cinco insertadores vivos se relevaron

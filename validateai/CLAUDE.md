@@ -70,6 +70,26 @@ All functions run on Deno via Supabase Edge Functions.
      - `GET /api-v1/mercado-publico/opportunities` — Combined B2G tender opportunities.
      - `GET /api-v1/mercado-publico/licitaciones` — Large public tenders (LE, LP, LR).
      - `GET /api-v1/mercado-publico/health` — B2G integration service status.
+   - **Órdenes de compra (`/mercado-publico/ordenes-compra`)** — implementadas el
+     2026-08-05, después de meses en 501. **No están en este proyecto**: viven en
+     `purchase_orders` del proyecto `szzibobuwgcopewmnkkl` —el que el código
+     llama "Licitus" por herencia y el dashboard muestra como
+     `validateai-knowledge-vault`, pero que **es de Animus**—. Se leen por
+     `postgres_fdw` (migración `20260805000005`) a través de las vistas
+     `public.mp_ordenes_compra` / `…_items`, que existen porque PostgREST sólo
+     sirve el esquema `public`.
+
+     ⚠️ **El 58 % de las órdenes son cáscaras y el endpoint las FILTRA.** De
+     125.273 sólo 52.188 tienen contenido; las otras traen `external_code` y
+     `state_code` y nada más. `sync-ordenes` inserta el identificador y
+     `enrich-ordenes` lo completa después, y ese segundo job está en «NUNCA
+     TERMINA (huérfanas)» desde ~el 21-jul. El tamaño del hueco viaja en
+     `meta.enriquecimiento_pendiente`; el detalle de una orden sin enriquecer
+     responde **409 `PENDING_ENRICHMENT`**, no un objeto con todo en `null`.
+
+     **No mover estas tablas a la canónica.** `licitaciones_mercado_publico`
+     modela mecanismos de contratación, no órdenes post-adjudicación.
+
    - **Fuente primaria: la tabla canónica `licitaciones_mercado_publico`.** Al 2026-08-04 tiene **38.305 filas frescas** (se cargan a diario), repartidas en las CUATRO vías por las que el Estado compra:
 
      | `source_type` | Qué es | Filas |

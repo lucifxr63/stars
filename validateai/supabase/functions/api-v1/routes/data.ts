@@ -172,7 +172,11 @@ export const licitusProveedorOportunidadesHandler = licitusProxyHandler(
 )
 // GET /api/v1/data/licitus/mercado/benchmarks?unspsc&region&periodo_meses
 // ── Bralidus REST Standard Response Helper ────────────────────────────────────
-const buildAnimusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico') => ({
+// El tipo de retorno va anotado a propósito. Sin él, TypeScript infiere el
+// objeto literal exacto y RECHAZA los campos que varios handlers agregan al
+// meta (`base`, `excluido`, `cobertura`…), así que `deno check` fallaba sobre
+// este archivo desde antes de agosto: nadie podía chequearlo de tipos.
+const buildAnimusMeta = (page = 1, pageSize = 20, total = 0, source = 'mercado_publico'): Record<string, any> => ({
   engine: 'Animus Engine v2.0',
   version: '2.0.0',
   source,
@@ -636,25 +640,122 @@ export const mercadoPublicoLicitacionDetailHandler = async (c: any) => {
 // GET /api/v1/mercado-publico/ordenes-compra
 // GET /api/v1/mercado-publico/ordenes-compra/:codigo_oc
 //
-// Las órdenes de compra NO están en este proyecto: viven en la base de Licitus
-// (`purchase_orders`, proyecto szzibobuwgcopewmnkkl). Estos handlers las
-// consultaban acá y por eso devolvían 500 siempre.
+// Las órdenes de compra viven en el OTRO proyecto de Animus
+// (`purchase_orders`, szzibobuwgcopewmnkkl). Durante meses esto respondió 501
+// porque el gateway no lo consultaba; desde la migración 20260805000005 ese
+// proyecto está montado acá por `postgres_fdw` y se lee en vivo a través de las
+// vistas `public.mp_ordenes_compra` / `…_items` (20260805000007).
 //
-// Tampoco se pueden proxyar todavía: la superficie /licitus de BralidusPY
-// expone proveedor, benchmarks y licitaciones activas, pero no un listado ni
-// un detalle de OC. Hasta que exista ese endpoint, se responde 501 explícito.
+// Sigue siendo cierto que la tabla canónica NO debe absorberlas: modela
+// mecanismos de contratación, no órdenes post-adjudicación. Por eso se leen de
+// donde están y no se copian.
 //
-// Nota: el servicio de ingesta mp-sync escribe las OC solo en la base de
-// Licitus a propósito — la tabla canónica modela mecanismos de contratación,
-// no órdenes post-adjudicación (ver plan del traspaso).
-const OC_FUERA_DE_ALCANCE =
-  'Órdenes de compra no disponibles en este gateway: se almacenan en la base de Licitus y aún no hay endpoint que las exponga. Para actividad de compras usar /api/v1/data/licitus/proveedor/:rut.'
+// ⚠️ EL 58 % DE LAS ÓRDENES SON CÁSCARAS, y por eso este handler no devuelve
+// todo lo que hay. `sync-ordenes` inserta el identificador y `enrich-ordenes`
+// lo completa después. Al 2026-08-05 el segundo figura como «NUNCA TERMINA
+// (huérfanas)»: de 125.273 órdenes sólo 52.188 tienen contenido, y **todo lo
+// creado después del 16-jul está sin completar** — cero organismo, cero
+// proveedor, cero monto, cero ítems.
+//
+// Devolver esas filas sería servir un identificador con forma de dato: el
+// mismo defecto que se pasó agosto cerrando en el RAG. Se filtran, y el
+// tamaño del hueco viaja en `meta.enriquecimiento_pendiente` para que el
+// consumidor sepa que existe en vez de descubrirlo por un total que no cuadra.
 
-export const mercadoPublicoOrdenesHandler = (c: any) =>
-  notImplemented(c, OC_FUERA_DE_ALCANCE, 'mercado_publico')
+const OC_COBERTURA =
+  'Sólo se listan órdenes con contenido. Las pendientes de enriquecimiento traen ' +
+  'el identificador pero ningún dato, y se omiten a propósito.'
 
-export const mercadoPublicoOrdenDetailHandler = (c: any) =>
-  notImplemented(c, OC_FUERA_DE_ALCANCE, 'mercado_publico')
+// GET /api/v1/mercado-publico/ordenes-compra
+export const mercadoPublicoOrdenesHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const page = Math.max(Number(c.req.query('page') ?? 1), 1)
+    const pageSize = Math.min(Number(c.req.query('page_size') ?? 20), 100)
+    const offset = (page - 1) * pageSize
+
+    const rutProveedor = c.req.query('rut_proveedor') || c.req.query('supplier_code')
+    const codigoOrganismo = c.req.query('codigo_organismo') || c.req.query('buyer_org_code')
+    const estado = c.req.query('estado') || c.req.query('state_code')
+    const fecha = c.req.query('fecha') || c.req.query('fecha_inicio')
+    const fechaFin = c.req.query('fecha_fin')
+
+    let query = supabase
+      .from('mp_ordenes_compra')
+      .select('*', { count: 'exact' })
+      .eq('enriquecida', true)
+      .order('issued_at', { ascending: false })
+
+    if (rutProveedor) query = query.eq('supplier_code', rutProveedor)
+    if (codigoOrganismo) query = query.eq('buyer_org_code', codigoOrganismo)
+    if (estado) query = query.eq('state_code', estado)
+    if (fecha) query = query.gte('issued_at', fecha)
+    if (fechaFin) query = query.lte('issued_at', fechaFin)
+
+    const { data, count, error } = await query.range(offset, offset + pageSize - 1)
+    if (error) throw error
+
+    // El conteo de pendientes se pide aparte y sin traer filas: es una señal de
+    // salud de la ingesta, no parte del resultado.
+    const { count: pendientes } = await supabase
+      .from('mp_ordenes_compra')
+      .select('external_code', { count: 'exact', head: true })
+      .eq('enriquecida', false)
+
+    // Sin `emptyButHealthy`: ese helper marca la fuente como Licitus, y estas
+    // órdenes no vienen de su API sino de nuestra propia base. Un cero acá es
+    // un cero legítimo del filtro, no una fuente caída.
+    c.set('tokens_used', 25)
+    const res = buildBralidusResponse(data ?? [], page, pageSize, count ?? 0)
+    res.meta.cobertura = OC_COBERTURA
+    res.meta.enriquecimiento_pendiente = pendientes ?? 0
+    return c.json(res)
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
+
+// GET /api/v1/mercado-publico/ordenes-compra/:codigo_oc
+export const mercadoPublicoOrdenDetailHandler = async (c: any) => {
+  const codigo = c.req.param('codigo_oc') || c.req.param('id') || c.req.param('code')
+  try {
+    const supabase = getSupabase()
+
+    const { data: orden, error } = await supabase
+      .from('mp_ordenes_compra')
+      .select('*')
+      .eq('external_code', codigo)
+      .maybeSingle()
+    if (error) throw error
+
+    if (!orden) {
+      return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico',
+        [{ code: 'NOT_FOUND', message: `Orden de compra ${codigo} no encontrada` }]), 404)
+    }
+
+    // Una orden sin enriquecer existe pero no dice nada. Decirlo es más honesto
+    // que devolver un objeto con todos los campos en null, que el consumidor
+    // leería como «no tiene proveedor» en vez de «no lo sabemos todavía».
+    if (!orden.enriquecida) {
+      return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{
+        code: 'PENDING_ENRICHMENT',
+        message: `La orden ${codigo} está registrada pero su detalle todavía no se descargó de ChileCompra. No se conocen su organismo, proveedor, monto ni ítems.`,
+      }]), 409)
+    }
+
+    const { data: items, error: errItems } = await supabase
+      .from('mp_ordenes_compra_items')
+      .select('*')
+      .eq('orden_external_code', codigo)
+      .order('line_number', { ascending: true })
+    if (errItems) throw errItems
+
+    c.set('tokens_used', 15)
+    return c.json(buildBralidusResponse({ ...orden, items: items ?? [] }, 1, 1, 1))
+  } catch (err) {
+    return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
+  }
+}
 
 // GET /api/v1/mercado-publico/organismos
 export const mercadoPublicoOrganismosHandler = async (c: any) => {
