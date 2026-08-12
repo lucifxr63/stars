@@ -44,7 +44,9 @@ interface KnowledgeChunk {
 }
 
 async function retrieveChunks(
-  supabase: ReturnType<typeof createClient>,
+  // Ver la nota en validate.ts: `ReturnType<typeof createClient>` usa los
+  // genéricos por defecto y no acepta el cliente que devuelve una llamada real.
+  supabase: ReturnType<typeof getSupabase>,
   embedding: number[],
   profileId: string,
   filterCategory?: string,

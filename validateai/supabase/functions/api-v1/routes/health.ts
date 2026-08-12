@@ -10,7 +10,6 @@ const FINTOC_SECRET_KEY = Deno.env.get('FINTOC_SECRET_KEY')
 const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')
 const FRED_API_KEY = Deno.env.get('FRED_API_KEY')
 const SII_APIGATEWAY_KEY = Deno.env.get('SII_APIGATEWAY_KEY')
-const BDE_USER = Deno.env.get('BDE_USER')
 const BRALIDUS_API_KEY = Deno.env.get('BRALIDUS_API_KEY')
 const BRALIDUS_URL = Deno.env.get('BRALIDUS_URL') ?? 'https://braliduspy-production.up.railway.app'
 
@@ -25,15 +24,21 @@ interface ServiceInfo {
   message: string
 }
 
+// Acá el cliente se creaba en línea, así que no había de dónde sacar el tipo
+// exacto. Ver la nota en validate.ts: `ReturnType<typeof createClient>` instancia
+// los genéricos por defecto y no acepta lo que devuelve una llamada real. Con una
+// factoría, el tipo sale de la construcción y no puede desalinearse.
+const crearCliente = () => createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
 /** Check if a Supabase table has at least one row. Returns null on error. */
-async function hasRows(supabase: ReturnType<typeof createClient>, table: string): Promise<boolean | null> {
+async function hasRows(supabase: ReturnType<typeof crearCliente>, table: string): Promise<boolean | null> {
   const { data, error } = await supabase.from(table).select('id').limit(1)
   if (error) return null
   return Array.isArray(data) && data.length > 0
 }
 
 export const servicesHealthHandler = async (c: any) => {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  const supabase = crearCliente()
   const services: ServiceInfo[] = []
 
   // ── Infrastructure ─────────────────────────────────────────────────────────
@@ -201,15 +206,17 @@ export const servicesHealthHandler = async (c: any) => {
       bralidusStatus = 'degraded'
       bralidusMsg = `HTTP ${br.status} · Railway`
     }
-  } catch (e) {
+  } catch {
     bralidusLatency = Date.now() - bralidusT0
     bralidusMsg = `Timeout / offline · ${BRALIDUS_URL}`
   }
-  const [{ count: kgTotal }, { data: embNodes }] = await Promise.all([
-    supabase.from('knowledge_nodes').select('id', { count: 'exact', head: true }),
-    supabase.from('knowledge_nodes').select('id').not('embedding', 'is', null).limit(10),
-  ])
-  const embCount = embNodes?.length ?? 0
+  // Acá había un segundo `select` que traía hasta 10 nodos con embedding para
+  // contarlos en `embCount`, y `embCount` no se usaba en ninguna parte. Era un
+  // viaje a la base por llamada, en un endpoint PÚBLICO que la portada pega en
+  // cada visita. Se deja sólo el conteo, que sí se reporta.
+  const { count: kgTotal } = await supabase
+    .from('knowledge_nodes')
+    .select('id', { count: 'exact', head: true })
   const totalNodes = kgTotal ?? 0
   if (bralidusStatus === 'ok') bralidusMsg += ` · ${totalNodes} nodos KG`
   services.push({

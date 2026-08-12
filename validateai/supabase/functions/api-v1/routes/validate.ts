@@ -1,5 +1,16 @@
+// Acá había un `import { z } from 'npm:zod'` que NO se usaba: los esquemas
+// (`ValidateRequestSchema`, `LlmValidationResponseSchema`) vienen ya construidos
+// de `shared-schemas/mod.ts`, que importa zod pinneado en 3.23.8 por URL como el
+// resto de las funciones.
+//
+// Costaba dos cosas. Una, `deno check` fallaba: `npm:` obliga a resolver contra
+// node_modules y en CI no hay, así que el workflow venía rojo desde el 16-jul en
+// TODA PR que tocara `index.ts` —que importa este archivo— y dejó de informar
+// nada. Dos, el especificador iba SIN versión: habría traído zod 4, que tiene
+// cambios incompatibles con el 3.23.8 que usan los esquemas de verdad.
+//
+// Al agregar una dependencia acá: URL con versión fija, como los otros módulos.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z } from 'npm:zod';
 import {
   ValidateRequestSchema,
   LlmValidationResponseSchema,
@@ -88,7 +99,12 @@ async function fetchSiiEmpresa(rut: string): Promise<Record<string, unknown> | n
 }
 
 async function searchCompetitors(
-  supabase: ReturnType<typeof createClient>,
+  // `ReturnType<typeof createClient>` instancia los genéricos por DEFECTO
+  // (`never`), mientras una llamada real infiere `"public"`. Los dos tipos no
+  // son asignables entre sí, así que pasarle el cliente que devuelve
+  // `getSupabase()` fallaba el type-check aunque en runtime sea el mismo objeto.
+  // Tomando el tipo de la factoría, coinciden por construcción.
+  supabase: ReturnType<typeof getSupabase>,
   embedding: number[],
 ): Promise<Array<{ name: string; description: string; similarity: number }>> {
   const { data, error } = await supabase.rpc('search_competitors', {
@@ -101,7 +117,12 @@ async function searchCompetitors(
 }
 
 async function searchPlaybooks(
-  supabase: ReturnType<typeof createClient>,
+  // `ReturnType<typeof createClient>` instancia los genéricos por DEFECTO
+  // (`never`), mientras una llamada real infiere `"public"`. Los dos tipos no
+  // son asignables entre sí, así que pasarle el cliente que devuelve
+  // `getSupabase()` fallaba el type-check aunque en runtime sea el mismo objeto.
+  // Tomando el tipo de la factoría, coinciden por construcción.
+  supabase: ReturnType<typeof getSupabase>,
   embedding: number[],
 ): Promise<Array<{ title: string; content: string }>> {
   const { data, error } = await supabase.rpc('search_rag_playbooks', {
@@ -114,7 +135,12 @@ async function searchPlaybooks(
 }
 
 async function checkSemanticCache(
-  supabase: ReturnType<typeof createClient>,
+  // `ReturnType<typeof createClient>` instancia los genéricos por DEFECTO
+  // (`never`), mientras una llamada real infiere `"public"`. Los dos tipos no
+  // son asignables entre sí, así que pasarle el cliente que devuelve
+  // `getSupabase()` fallaba el type-check aunque en runtime sea el mismo objeto.
+  // Tomando el tipo de la factoría, coinciden por construcción.
+  supabase: ReturnType<typeof getSupabase>,
   embedding: number[],
 ): Promise<RaasResponse | null> {
   const { data, error } = await supabase.rpc('search_cached_analyses', {
@@ -123,11 +149,16 @@ async function checkSemanticCache(
     match_count: 1,
   }).maybeSingle();
   if (error || !data) return null;
-  try {
-    return data.result_json as RaasResponse;
-  } catch {
-    return null;
-  }
+
+  // El `rpc()` no está tipado, así que `data` llega como `{}`. Antes esto era
+  // `data.result_json as RaasResponse` envuelto en un try/catch que no protegía
+  // de nada —acceder a una propiedad no lanza—: si la fila venía sin
+  // `result_json`, la función devolvía `undefined` con tipo `RaasResponse` y el
+  // llamador lo trataba como un análisis cacheado válido. Ahora se comprueba y
+  // se devuelve null, que es lo que la firma promete para "no hay caché".
+  const fila = data as { result_json?: unknown };
+  if (!fila.result_json) return null;
+  return fila.result_json as RaasResponse;
 }
 
 // ─── LLM Orchestration ────────────────────────────────────────────────────────

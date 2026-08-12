@@ -193,7 +193,8 @@ const buildAnimusResponse = (data: any, page = 1, pageSize = 20, total = 0, sour
   ...(errors.length > 0 ? { errors } : {})
 })
 
-const buildBralidusMeta = buildAnimusMeta
+// `buildBralidusMeta` vivía acá como alias y no lo usaba nadie: quedó del
+// renombre a `buildAnimus*`. Se elimina en vez de mantenerlo "por las dudas".
 const buildBralidusResponse = buildAnimusResponse
 
 const withOfficialUrl = (item: any) => {
@@ -276,7 +277,13 @@ export const licitusActivasHandler = async (c: any) => {
       c.set('tokens_used', 30)
       return c.json(buildBralidusResponse(data.map(withOfficialUrl), 1, limit, count ?? data.length))
     }
-  } catch {}
+  } catch (err) {
+    // Caer a Licitus ante un fallo de la canónica es deliberado, pero el `catch {}`
+    // vacío que había acá se tragaba el error sin dejar rastro: una consulta rota
+    // y una tabla legítimamente vacía producían exactamente la misma respuesta, y
+    // no había forma de distinguirlas desde afuera ni desde los logs.
+    console.error('licitusActivasHandler: la consulta canónica falló, se cae a Licitus:', err)
+  }
   return licitusProxyHandler(() => '/mercado/activas', 30)(c)
 }
 
@@ -1671,7 +1678,7 @@ export const mercadoPublicoCompradorHandler = async (c: any) => {
 // Sin implementar: requiere el motor de matching, que vive en Licitus y no está
 // expuesto acá. Se responde 501 explícito en vez de devolver recomendaciones
 // inventadas, que es lo peor que puede hacer un endpoint de este tipo.
-export const mercadoPublicoAiRecomendacionesHandler = async (c: any) => {
+export const mercadoPublicoAiRecomendacionesHandler = (c: any) => {
   return c.json(
     buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [
       {
