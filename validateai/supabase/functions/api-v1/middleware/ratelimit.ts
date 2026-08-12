@@ -1,5 +1,6 @@
 import { getSupabase, uuidONulo } from './auth.ts'
 import { normalizarRuta } from './usage.ts'
+import { errorJson } from '../utils/errors.ts'
 
 // Tier Monthly Credit Quotas (weighted credits per calendar month)
 export const TIER_CREDIT_LIMITS: Record<string, number> = {
@@ -97,11 +98,9 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
 
   // Free tier tiene 500 créditos mensuales para que desarrolladores prueben la API
   if (creditLimit === 0 && tier !== 'admin') {
-    return c.json({
-      error: 'Acceso API deshabilitado en este plan. Actualiza tu cuenta en el portal de desarrolladores.',
-      code: 'TIER_INSUFFICIENT',
-      upgrade_url: 'https://validus.scouttech.lat/pricing',
-    }, 403)
+    return errorJson(c, 403, 'TIER_INSUFFICIENT',
+      'Acceso API deshabilitado en este plan. Actualiza tu cuenta en el portal de desarrolladores.',
+      { upgrade_url: 'https://validus.scouttech.lat/pricing' })
   }
 
   const pathname = new URL(c.req.url).pathname
@@ -175,22 +174,18 @@ export const rateLimitMiddleware = async (c: any, next: any) => {
   // Enforce burst limit per minute
   if (minuteReqs >= burstLimit) {
     registrarRechazo(429)
-    return c.json({
-      error: `Límite por minuto alcanzado (${burstLimit} req/min para tu plan ${tier}).`,
-      code: 'RATE_LIMIT_BURST',
-      retry_after_seconds: 60,
-    }, 429)
+    return errorJson(c, 429, 'RATE_LIMIT_BURST',
+      `Límite por minuto alcanzado (${burstLimit} req/min para tu plan ${tier}).`,
+      { retry_after_seconds: 60 })
   }
 
   // Enforce monthly credit quota
   if (currentCreditsUsed + costOfCurrentReq > creditLimit) {
     registrarRechazo(429)
-    return c.json({
-      error: `Cuota mensual de créditos agotada (${currentCreditsUsed.toLocaleString()}/${creditLimit.toLocaleString()} créditos en plan ${tier}).`,
-      code: 'RATE_LIMIT_MONTHLY',
-      quota: { limit: creditLimit, used: currentCreditsUsed, tier },
-      upgrade_url: 'https://validus.scouttech.lat/pricing',
-    }, 429)
+    return errorJson(c, 429, 'RATE_LIMIT_MONTHLY',
+      `Cuota mensual de créditos agotada (${currentCreditsUsed.toLocaleString()}/${creditLimit.toLocaleString()} créditos en plan ${tier}).`,
+      { quota: { limit: creditLimit, used: currentCreditsUsed, tier },
+        upgrade_url: 'https://validus.scouttech.lat/pricing' })
   }
 
   const remaining = Math.max(0, creditLimit - currentCreditsUsed - costOfCurrentReq)

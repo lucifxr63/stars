@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { errorJson } from '../utils/errors.ts'
 
 // Perfil ficticio que se le asigna al tráfico sin credencial. NO existe como
 // fila en profiles (ni podría: profiles.id tiene FK a auth.users), así que no
@@ -87,11 +88,8 @@ export const authMiddleware = async (c: any, next: any) => {
   // pasa por acá (verificado: responde 200 sin token y sin headers de cuota).
   if (!token) {
     contarFalloAuth(c, 'AUTH_REQUIRED')
-    return c.json({
-      error: 'Se requiere una API key. Obtén la tuya en https://animus.scouttech.lat',
-      code: 'AUTH_REQUIRED',
-      docs: 'https://animus.scouttech.lat/llms.txt',
-    }, 401)
+    return errorJson(c, 401, 'AUTH_REQUIRED',
+      'Se requiere una API key. Obtén la tuya en https://animus.scouttech.lat')
   }
 
   try {
@@ -124,17 +122,27 @@ export const authMiddleware = async (c: any, next: any) => {
 
     if (error) {
       console.error('Auth middleware DB error:', error)
-      return c.json({ error: 'Internal server error during authentication' }, 500)
+      return errorJson(c, 500, 'SERVER_ERROR',
+        'No se pudo verificar la credencial contra la base. Es un problema nuestro, no de tu clave.')
     }
 
     if (!keyRecord) {
       contarFalloAuth(c, 'INVALID_KEY')
-      return c.json({ error: 'Invalid API key or session token' }, 401)
+      // API_KEY_INVALID y API_KEY_REVOKED se separan a propósito: una se arregla
+      // copiando bien la clave (o usando la correcta, que fue el caso real que
+      // motivó esto), la otra generando una nueva. Juntarlas en un solo texto
+      // le costó un día de diagnóstico a un integrador.
+      return errorJson(c, 401, 'API_KEY_INVALID',
+        'La API key no corresponde a ninguna credencial registrada. Revisa que sea la que ' +
+        'generaste en https://animus.scouttech.lat y que no estés usando una anterior. ' +
+        'No existe una clave pública compartida.')
     }
 
     if (!keyRecord.is_active) {
       contarFalloAuth(c, 'KEY_REVOKED')
-      return c.json({ error: 'API key has been revoked' }, 403)
+      return errorJson(c, 403, 'API_KEY_REVOKED',
+        'Esta API key existe pero fue revocada. Genera una nueva en https://animus.scouttech.lat; ' +
+        'copiarla de nuevo no va a servir.')
     }
 
     // Update last_used_at non-blocking (fire and forget)
@@ -147,6 +155,10 @@ export const authMiddleware = async (c: any, next: any) => {
     return await next()
   } catch (err) {
     console.error('Auth middleware exception:', err)
-    return c.json({ error: 'Authentication failed' }, 401)
+    // Una excepción acá NO es culpa de la credencial, así que se responde 500 y
+    // no 401: devolver 401 mandaba al integrador a revisar su clave por un fallo
+    // nuestro. Es reintentable, y el `code` lo dice.
+    return errorJson(c, 500, 'SERVER_ERROR',
+      'Falló la verificación de la credencial por un error interno. Reintenta en unos momentos.')
   }
 }

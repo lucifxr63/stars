@@ -43,7 +43,7 @@ export function getBaseUrl(): string {
  *
  * El test de empaquetado verifica que coincida con package.json.
  */
-export const VERSION = '0.1.4';
+export const VERSION = '0.1.5';
 const VERSION_CLIENTE = VERSION;
 
 /**
@@ -99,18 +99,52 @@ function presupuesto(path: string): number {
 function traducirError(status: number, cuerpo: string, headers: Headers, metodo: string, path: string): Error {
   let codigo = '';
   let mensajeApi = '';
+  let requestId = '';
   try {
     const j = JSON.parse(cuerpo);
     codigo = j?.code ?? '';
     mensajeApi = j?.error ?? '';
+    // Se propaga al usuario para que pueda reportarlo: es lo único que permite
+    // encontrar SU petición en nuestros logs entre todas las demás.
+    requestId = j?.request_id ?? headers.get('x-request-id') ?? '';
   } catch { /* el gateway no siempre devuelve JSON (502 de la CDN, por ejemplo) */ }
 
-  if (status === 401 || codigo === 'AUTH_REQUIRED') {
+  // El gateway distingue estos tres casos desde el 2026-08-12; antes devolvía el
+  // mismo 401 sin `code` para todos y acá se los juntaba en una sola frase: "es
+  // inválida, fue revocada o no se está enviando". Un integrador perdió un día
+  // por eso — su clave era otra, más vieja, y esa hipótesis quedó tapada entre
+  // las otras dos. Un texto no se puede ramificar; un `code` sí.
+  if (codigo === 'AUTH_REQUIRED') {
+    return new Error(
+      'No se está enviando ninguna ANIMUS_API_KEY. Agregala al bloque "env" de tu ' +
+        'configuración MCP:\n  "env": { "ANIMUS_API_KEY": "tu_clave" }',
+    );
+  }
+
+  if (codigo === 'API_KEY_INVALID') {
+    return new Error(
+      'La ANIMUS_API_KEY que estás enviando no corresponde a ninguna credencial registrada. ' +
+        'La clave SÍ está llegando, así que revisa que no sea una anterior: comparala con la ' +
+        'que figura en https://animus.scouttech.lat. No existe una clave pública compartida.' +
+        (requestId ? `\nrequest_id: ${requestId}` : ''),
+    );
+  }
+
+  if (codigo === 'API_KEY_REVOKED') {
+    return new Error(
+      'Tu ANIMUS_API_KEY fue revocada. Genera una nueva en https://animus.scouttech.lat: ' +
+        'volver a copiar la misma no va a servir.' +
+        (requestId ? `\nrequest_id: ${requestId}` : ''),
+    );
+  }
+
+  // Sin `code` sólo queda el status. Se mantiene el texto amplio porque acá
+  // genuinamente no sabemos cuál de los tres es.
+  if (status === 401) {
     return new Error(
       'Tu ANIMUS_API_KEY es inválida, fue revocada o no se está enviando. ' +
         'Revisa el bloque "env" de tu configuración MCP y genera una nueva en ' +
-        'https://animus.scouttech.lat si hace falta. ' +
-        'No existe una clave pública compartida.',
+        'https://animus.scouttech.lat si hace falta.',
     );
   }
 

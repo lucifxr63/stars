@@ -19,6 +19,7 @@ import {
   spulseNetworkHandler,
   mercadoPublicoHealthHandler,
   mercadoPublicoOpportunitiesHandler,
+  mercadoPublicoFacetasHandler,
   mercadoPublicoOpportunityDetailHandler,
   mercadoPublicoLicitacionesHandler,
   mercadoPublicoLicitacionDetailHandler,
@@ -163,6 +164,9 @@ app.use('*', cors({
     'x-ratelimit-remaining-credits',
     'x-ratelimit-request-cost',
     'x-ratelimit-tier',
+    // Si no se declara, el navegador lo oculta y el integrador no puede
+    // reportarnos qué petición falló — que es justamente para lo que existe.
+    'x-request-id',
   ],
   maxAge: 86400,
   credentials: true
@@ -227,6 +231,8 @@ app.get('/api/v1/data/pjud/estadisticas', pjudEstadisticasHandler)
 app.get('/api/v1/mercado-publico/health', mercadoPublicoHealthHandler)
 // 1. Buscador Unificado Oportunidades & Compra Ágil
 app.get('/api/v1/mercado-publico/opportunities', mercadoPublicoOpportunitiesHandler)
+// Conteos agregados sobre el mismo universo filtrado que /opportunities.
+app.get('/api/v1/mercado-publico/facetas', mercadoPublicoFacetasHandler)
 app.get('/api/v1/mercado-publico/opportunities/:id', mercadoPublicoOpportunityDetailHandler)
 app.get('/api/v1/mercado-publico/licitaciones', mercadoPublicoLicitacionesHandler)
 app.get('/api/v1/mercado-publico/licitaciones/:codigo_externo', mercadoPublicoLicitacionDetailHandler)
