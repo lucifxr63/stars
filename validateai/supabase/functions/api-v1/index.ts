@@ -151,7 +151,19 @@ app.use('*', cors({
   origin: (origin) => origin || '*',
   allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type', 'x-validus-signature', 'x-bralidus-key', 'x-requested-with', 'accept'],
   allowMethods: ['POST', 'GET', 'DELETE', 'PUT', 'PATCH', 'OPTIONS'],
-  exposeHeaders: ['content-length', 'x-ratelimit-remaining'],
+  // `x-ratelimit-remaining` a secas NO EXISTE: ratelimit.ts emite los cuatro de
+  // abajo, con sufijo -credits. Exponer un nombre inventado dejaba los headers
+  // de cuota ilegibles desde un navegador —CORS sólo entrega lo que se declara
+  // acá— y por eso un integrador terminó ESTIMANDO su consumo en el cliente, con
+  // un contador que se reiniciaba al reiniciar su servidor. El dato viajaba en
+  // cada respuesta; lo que faltaba era permitirle leerlo.
+  exposeHeaders: [
+    'content-length',
+    'x-ratelimit-limit-credits',
+    'x-ratelimit-remaining-credits',
+    'x-ratelimit-request-cost',
+    'x-ratelimit-tier',
+  ],
   maxAge: 86400,
   credentials: true
 }))
