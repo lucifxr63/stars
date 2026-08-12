@@ -3,8 +3,12 @@
 Servidor Model Context Protocol que expone los datos de Animus a Claude Desktop,
 Cursor y Windsurf.
 
-**npm:** `animus-engine-mcp` · publicado, última en el registro **0.1.2**
-(2026-08-12). En el repo hay **0.1.3** lista y sin publicar — ver §1.
+**npm:** `animus-engine-mcp` · última en el registro **0.1.4** (2026-08-12),
+igual que el repo.
+
+> Este número queda viejo cada vez que se publica. Antes de citarlo,
+> `npm view animus-engine-mcp version` — es la misma disciplina que la §4 pide
+> para los volúmenes de Mercado Público, y por la misma razón.
 **Gateway:** `https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1`
 
 ---
