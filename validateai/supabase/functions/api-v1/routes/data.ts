@@ -1,6 +1,7 @@
 import { getSupabase } from '../middleware/auth.ts'
 import { sendOpsAlert } from '../../_shared/opsAlert.ts'
 import { isValidRut, formatRutCanonical } from '../utils/validation.ts'
+import { errorJson } from '../utils/errors.ts'
 import { notImplemented } from './_honest.ts'
 
 const MP_BASE = 'https://api.mercadopublico.cl/servicios/v1/publico'
@@ -504,6 +505,118 @@ const sourceUnavailable = (c: any, detail?: string) => {
   )
 }
 
+/**
+ * Filtros del buscador unificado, en un solo lugar.
+ *
+ * Los usan `/opportunities` y `/facetas`, y tienen que ser LOS MISMOS: si las
+ * facetas se calcularan con un criterio distinto del listado, los conteos del
+ * tablero no cuadrarían con lo que devuelve la búsqueda y no habría forma de
+ * saber cuál de los dos miente.
+ */
+function leerFiltrosMp(c: any) {
+  return {
+    q: c.req.query('q'),
+    type: c.req.query('type'),
+    status: c.req.query('status'),
+    region: c.req.query('region'),
+    buyerRut: c.req.query('buyer_rut') || c.req.query('buyer_id'),
+    buyerName: c.req.query('buyer_name'),
+    amountMin: c.req.query('amount_min'),
+    amountMax: c.req.query('amount_max'),
+    closingFrom: c.req.query('closing_from'),
+    closingTo: c.req.query('closing_to'),
+  }
+}
+
+function aplicarFiltrosMp(query: any, f: ReturnType<typeof leerFiltrosMp>) {
+  if (f.type) query = query.in('source_type', f.type.split(',').map((t: string) => t.trim()))
+  if (f.status) query = query.eq('status_code', f.status)
+  if (f.q) query = query.ilike('title', `%${f.q}%`)
+  if (f.region) query = query.ilike('buyer_region', `%${f.region}%`)
+  if (f.buyerRut) query = query.eq('buyer_rut', f.buyerRut)
+  if (f.buyerName) query = query.ilike('buyer_name', `%${f.buyerName}%`)
+  if (f.closingFrom) query = query.gte('closing_at', f.closingFrom)
+  if (f.closingTo) query = query.lte('closing_at', f.closingTo)
+  // Ver la nota del handler de listado: `amount_estimated = 0` con
+  // `amount_is_public = false` significa "el organismo lo ocultó", no cero.
+  if (f.amountMin) query = query.gte('amount_estimated', f.amountMin).not('amount_is_public', 'is', false)
+  if (f.amountMax) query = query.lte('amount_estimated', f.amountMax).not('amount_is_public', 'is', false)
+  return query
+}
+
+/**
+ * GET /api/v1/mercado-publico/facetas
+ *
+ * Conteos agregados sobre el MISMO universo filtrado que devuelve
+ * `/opportunities`. Existe porque un integrador no podía mostrar cifras reales
+ * en su tablero: el gateway entregaba listados y nada más, así que cualquier
+ * número agregado había que calcularlo sobre la página traída —que es lo mismo
+ * que inventarlo— o pedir el universo entero.
+ *
+ * Cuesta lo mismo que una búsqueda y evita traerse 60.528 filas para contar.
+ */
+export const mercadoPublicoFacetasHandler = async (c: any) => {
+  try {
+    const supabase = getSupabase()
+    const f = leerFiltrosMp(c)
+
+    // `head: true` con `count: 'exact'` cuenta en el servidor sin transferir
+    // filas: es lo que hace viable pedir varias facetas en una sola llamada.
+    const contar = async (extra: (q: any) => any = (q) => q) => {
+      const base = supabase.from('licitaciones_mercado_publico').select('id', { count: 'exact', head: true })
+      const { count, error } = await extra(aplicarFiltrosMp(base, f))
+      if (error) throw error
+      return count ?? 0
+    }
+
+    const VIAS = ['tender', 'agile_purchase', 'convenio_marco', 'trato_directo']
+    const ESTADOS = ['publicada', 'cerrada', 'adjudicada', 'revocada', 'desierta']
+    // Los tramos salen de la distribución real, no de números redondos por
+    // gusto: bajo 1 UTM aprox, compra ágil típica, licitación menor, y el resto.
+    const TRAMOS: Array<[string, number, number | null]> = [
+      ['0_1m', 0, 1_000_000],
+      ['1m_10m', 1_000_000, 10_000_000],
+      ['10m_100m', 10_000_000, 100_000_000],
+      ['100m_mas', 100_000_000, null],
+    ]
+
+    const [total, vias, estados, tramos, sinMonto] = await Promise.all([
+      contar(),
+      Promise.all(VIAS.map((v) => contar((q) => q.eq('source_type', v)))),
+      Promise.all(ESTADOS.map((e) => contar((q) => q.eq('status_code', e)))),
+      Promise.all(TRAMOS.map(([, min, max]) =>
+        contar((q) => (max === null ? q.gte('amount_estimated', min) : q.gte('amount_estimated', min).lt('amount_estimated', max))),
+      )),
+      // Se cuenta aparte y se declara: un tablero que reparte el total entre
+      // tramos de monto sin esto muestra un agujero sin explicación.
+      contar((q) => q.is('amount_is_public', false)),
+    ])
+
+    const porClave = (claves: string[], valores: number[]) =>
+      Object.fromEntries(claves.map((k, i) => [k, valores[i]]))
+
+    c.set('tokens_used', 25)
+    return c.json({
+      data: {
+        total,
+        por_via: porClave(VIAS, vias),
+        por_estado: porClave(ESTADOS, estados),
+        por_rango_monto: porClave(TRAMOS.map((t) => t[0]), tramos),
+        con_monto_oculto: sinMonto,
+      },
+      meta: {
+        source: 'mercado_publico',
+        timestamp: new Date().toISOString(),
+        filtros_aplicados: Object.fromEntries(Object.entries(f).filter(([, v]) => v)),
+        nota: 'por_rango_monto excluye los procesos con amount_is_public = false; van en con_monto_oculto.',
+      },
+    })
+  } catch (err) {
+    console.error('mercadoPublicoFacetasHandler error:', err)
+    return errorJson(c, 500, 'SERVER_ERROR', `No se pudieron calcular las facetas: ${String(err)}`)
+  }
+}
+
 // GET /api/v1/mercado-publico/opportunities (Buscador Unificado: tender + agile_purchase)
 export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
   try {
@@ -511,10 +624,6 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     const page = Math.max(Number(c.req.query('page') ?? 1), 1)
     const pageSize = Math.min(Number(c.req.query('page_size') ?? c.req.query('limit') ?? 20), 100)
     const offset = (page - 1) * pageSize
-    const typeParam = c.req.query('type') // 'tender', 'agile_purchase', or comma-separated
-    const statusParam = c.req.query('status')
-    const q = c.req.query('q')
-
     // ── Filtros de servidor ────────────────────────────────────────────────────
     //
     // Antes sólo había q/type/status. Un integrador reportó que al buscar sobre
@@ -523,16 +632,10 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     // "4.659 resultados" mostrando 3. Filtrar en el cliente sobre una página no
     // es filtrar: es mentir sobre el total.
     //
-    // Van sobre la consulta, así que `count: 'exact'` los refleja en meta.total.
-    // `buyer_region` y `buyer_rut` tienen índice desde la migración
-    // 20260811000001; el resto son columnas ya indexadas o de baja cardinalidad.
-    const region = c.req.query('region')
-    const buyerRut = c.req.query('buyer_rut') || c.req.query('buyer_id')
-    const buyerName = c.req.query('buyer_name')
-    const amountMin = c.req.query('amount_min')
-    const amountMax = c.req.query('amount_max')
-    const closingFrom = c.req.query('closing_from')
-    const closingTo = c.req.query('closing_to')
+    // Se leen y aplican con los helpers COMPARTIDOS con /facetas: si cada uno
+    // interpretara los parámetros a su manera, los conteos del tablero no
+    // cuadrarían con la búsqueda y no habría forma de saber cuál miente.
+    const f = leerFiltrosMp(c)
 
     // Orden configurable. El defecto sigue siendo `published_at desc` — se
     // documenta en vez de dejarlo implícito, que era la queja real: no que
@@ -546,13 +649,8 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     const desc = (c.req.query('order') ?? 'desc').toLowerCase() !== 'asc'
     const sortCol = ORDENES[sortParam]
     if (!sortCol) {
-      return c.json(
-        buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{
-          code: 'INVALID_PARAM',
-          message: `sort debe ser uno de: ${Object.keys(ORDENES).join(', ')}`,
-        }]),
-        400,
-      )
+      return errorJson(c, 400, 'INVALID_PARAM',
+        `sort debe ser uno de: ${Object.keys(ORDENES).join(', ')}`)
     }
 
     let query = supabase
@@ -562,23 +660,7 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
       // página al ordenar por monto o por cierre, que es justo donde más faltan.
       .order(sortCol, { ascending: !desc, nullsFirst: false })
 
-    if (typeParam) {
-      const types = typeParam.split(',').map((t: string) => t.trim())
-      query = query.in('source_type', types)
-    }
-    if (statusParam) query = query.eq('status_code', statusParam)
-    if (q) query = query.ilike('title', `%${q}%`)
-    if (region) query = query.ilike('buyer_region', `%${region}%`)
-    if (buyerRut) query = query.eq('buyer_rut', buyerRut)
-    if (buyerName) query = query.ilike('buyer_name', `%${buyerName}%`)
-    if (closingFrom) query = query.gte('closing_at', closingFrom)
-    if (closingTo) query = query.lte('closing_at', closingTo)
-    // El monto se filtra sólo cuando es comparable: `amount_estimated = 0` con
-    // `amount_is_public = false` significa "el organismo lo ocultó", no cero. Un
-    // amount_min los descartaría como si fueran baratos, y amount_max los
-    // incluiría como si fueran gratis. En ambos casos se excluyen los ocultos.
-    if (amountMin) query = query.gte('amount_estimated', amountMin).not('amount_is_public', 'is', false)
-    if (amountMax) query = query.lte('amount_estimated', amountMax).not('amount_is_public', 'is', false)
+    query = aplicarFiltrosMp(query, f)
 
     const { data, count, error } = await query.range(offset, offset + pageSize - 1)
     // Acá había un fallback a la tabla `opportunities`, que no existe en este
@@ -596,11 +678,11 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     // engaño que estos filtros vinieron a eliminar. Si la consulta canónica no
     // trae nada bajo filtros, la respuesta honesta es "cero".
     const usaFiltrosNuevos = Boolean(
-      region || buyerRut || buyerName || amountMin || amountMax || closingFrom || closingTo,
+      f.region || f.buyerRut || f.buyerName || f.amountMin || f.amountMax || f.closingFrom || f.closingTo,
     )
 
     if (mappedData.length === 0 && !usaFiltrosNuevos) {
-      const { items, sourceOk, error: licitusError } = await fetchLicitusActivas({ type: typeParam, q })
+      const { items, sourceOk, error: licitusError } = await fetchLicitusActivas({ type: f.type, q: f.q })
       if (!sourceOk) return sourceUnavailable(c, licitusError)
       if (items.length === 0) return emptyButHealthy(c, page, pageSize, COVERAGE_TENDERS)
       c.set('tokens_used', 25)
