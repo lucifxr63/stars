@@ -24,20 +24,26 @@ import { raasGet } from '../client/raasClient.js';
  */
 
 /**
- * Los 33.682 que decía esta descripción no eran organismos: era el número de
- * FILAS de la tabla de oportunidades en la fecha en que se escribió. El endpoint
- * pagina sobre esas filas y deduplica sólo DENTRO de cada página, así que un
- * mismo organismo reaparece en muchas páginas y `meta.total` cuenta compras, no
- * compradores. Medido el 2026-08-12: 2.705 organismos distintos entre 60.528
- * filas — la cifra publicada estaba 12 veces inflada.
+ * Esta descripción se equivocó dos veces seguidas, y las dos por lo mismo:
+ * contar una columna sin preguntarse qué guarda.
+ *
+ * Primero dijo 33.682 organismos, que era el número de FILAS de oportunidades.
+ * Después 2.705, que son los valores distintos de `buyer_org_code` — pero esa
+ * columna guarda un RUT en compra ágil y un código interno en licitación, así
+ * que el mismo organismo se contaba dos veces (el MOP figura como
+ * `61.202.000-0` y como `7067`).
+ *
+ * Desde el 2026-08-12 el endpoint lee la vista `mp_organismos`, agrupada por
+ * `buyer_rut` —poblado al 100 % en las cuatro vías—: **1.786 entidades reales**,
+ * con paginación y conteo correctos.
  */
 export const DESC_ORGANISMOS =
-  'Directorio de organismos compradores del Estado de Chile: 2.705 distintos ' +
-  '(medido 2026-08-12). Devuelve nombre y código de organismo, que sirve para cruzar con ' +
-  'licitaciones. Buscar por nombre parcial.\n' +
-  'LÍMITE CONOCIDO: la deduplicación es por página, no global. `meta.total` informa las ' +
-  '60.528 filas de oportunidades, NO la cantidad de organismos, y un mismo comprador puede ' +
-  'repetirse entre páginas. No uses `meta.total` como conteo de organismos.';
+  'Directorio de entidades compradoras del Estado de Chile: 1.786 al 2026-08-12. ' +
+  'Una fila por RUT comprador, con `nombre`, `region`, `compras`, `compras_abiertas`, ' +
+  '`ultima_publicacion`, `vias` (por qué canales compra) y `codigos_organismo` (los ' +
+  'identificadores internos que aparecen en la ficha oficial de Mercado Público).\n' +
+  'Ordenado por volumen de compras, no alfabéticamente. Buscar por `nombre` parcial o ' +
+  '`rut` exacto. `meta.total` cuenta organismos, no compras.';
 
 export const MpOrganismosSchema = z
   .object({
@@ -45,24 +51,22 @@ export const MpOrganismosSchema = z
       .string()
       .optional()
       .describe('Búsqueda parcial por nombre. Ej: "MINEDUC", "MUNICIPALIDAD".'),
+    rut: z.string().optional().describe('RUT del comprador, exacto. Ej: "60.910.000-1".'),
     page: z.number().optional(),
-    page_size: z.number().optional().describe('Default 20.'),
+    page_size: z.number().optional().describe('Default 20, máximo 100.'),
   })
   .describe(DESC_ORGANISMOS);
 
 /**
- * Las cuatro vías por las que el Estado de Chile compra, con su volumen real
- * verificado el 2026-08-04 contra `licitaciones_mercado_publico`.
+ * Las cuatro vías por las que el Estado de Chile compra.
  *
  * Acá decía sólo `tender | agile_purchase`. Las otras dos existen en la tabla y
- * son perfectamente consultables —`?type=trato_directo` devuelve sus 30 filas—
- * pero al no estar declaradas el modelo no tenía forma de saberlo y nunca las
- * pedía: 272 registros invisibles por una descripción incompleta, no por falta
- * de endpoint.
- */
-/**
+ * son perfectamente consultables, pero al no estar declaradas el modelo no tenía
+ * forma de saberlo y nunca las pedía: registros invisibles por una descripción
+ * incompleta, no por falta de endpoint.
+ *
  * Volúmenes medidos contra producción el 2026-08-12. Los anteriores eran del
- * 04/08 y sumaban 38.305: la tabla creció 58 % en una semana y la cifra vieja
+ * 04/08 y sumaban 38.305: la tabla creció 58 % en ocho días y la cifra vieja
  * apareció como "inconsistencia" en la revisión de un integrador, que comparaba
  * nuestro `health` (correcto) contra nuestra documentación (vieja). Al tocarlos,
  * remedir — no arrastrar.
