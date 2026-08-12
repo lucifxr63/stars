@@ -94,6 +94,36 @@ export const MpPreciosSchema = z
       'se comparan. No presentes un número sin mirar antes esa señal.',
   );
 
+/**
+ * Qué trae y qué NO trae la ficha, con los números medidos el 2026-08-11 sobre
+ * las 59.932 filas de `licitaciones_mercado_publico`.
+ *
+ * La descripción anterior prometía "ítems, adjuntos, montos, organismo comprador
+ * y fechas". Los adjuntos salían SIEMPRE vacíos —el mapper canónico los
+ * descartaba— y los ítems faltan en 4 de cada 5 licitaciones. Un modelo que lee
+ * esa promesa y encuentra `[]` no puede distinguir un bug de un proceso que
+ * genuinamente no tiene bases, así que rellena el hueco. Es el mismo defecto
+ * que las advertencias de PJUD vinieron a cerrar: lo que la fuente no da hay
+ * que decirlo donde el modelo lo lea, no en el README.
+ */
+const COBERTURA_DETALLE =
+  'Ficha completa de UNA oportunidad. Usar después de `animus_mp_oportunidades`, cuando ya se ' +
+  'identificó cuál interesa y hace falta el detalle que el listado no trae.\n' +
+  'TRAE: cronograma completo (publicación, cierre, foro de preguntas, publicación de respuestas, ' +
+  'apertura técnica y económica, adjudicación estimada), comprador con RUT, región, comuna, ' +
+  'dirección y encargado, monto con su visibilidad, e ítems por línea.\n' +
+  'COBERTURA REAL — no asumir que un campo vacío es un error:\n' +
+  '· Ítems: presentes en el 88 % de las compras ágiles pero sólo en el 20 % de las licitaciones.\n' +
+  '· `attachments`: sólo Compra Ágil publica sus bases por API (31.689 de 44.237, con `id` y ' +
+  '`nombre` pero SIN enlace de descarga: `url` va en null). En licitaciones va vacío siempre — ' +
+  'la fuente no las expone.\n' +
+  '· `amount_estimated = 0` NO significa que no haya presupuesto: mirar `amount_is_public` ' +
+  '(false = el organismo lo ocultó) y `amount_estimation_type` (3 = no estimable).\n' +
+  '· Visita a terreno, entrega de antecedentes y email del responsable de contrato: MP devuelve ' +
+  'la clave pero nunca la llena. Van en null en las 15.695 fichas.\n' +
+  'NO EXISTEN en esta fuente, no los inventes ni los busques en otra herramienta: criterios de ' +
+  'evaluación con ponderación, garantías exigidas y requisitos de habilidad de los oferentes.';
+
 export const MpDetalleSchema = z
   .object({
     codigo: z
@@ -103,11 +133,7 @@ export const MpDetalleSchema = z
           '(ej: "4429-45-L126" para licitación, "1233619-464-COT26" para compra ágil).',
       ),
   })
-  .describe(
-    'Ficha completa de UNA oportunidad: ítems, adjuntos, montos, organismo comprador y fechas. ' +
-      'Usar después de `animus_mp_oportunidades`, cuando ya se identificó cuál interesa y hace ' +
-      'falta el detalle que el listado no trae.',
-  );
+  .describe(COBERTURA_DETALLE);
 
 export const PjudEstadisticasSchema = z
   .object({

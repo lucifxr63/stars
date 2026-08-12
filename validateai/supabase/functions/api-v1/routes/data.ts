@@ -666,6 +666,39 @@ const OC_COBERTURA =
   'Sólo se listan órdenes con contenido. Las pendientes de enriquecimiento traen ' +
   'el identificador pero ningún dato, y se omiten a propósito.'
 
+/**
+ * Enlaces de una orden de compra. Las licitaciones pasaban por `withOfficialUrl`
+ * desde siempre; las OC eran los ÚNICOS handlers que no, así que salían sin
+ * ningún enlace: el consumidor recibía un `external_code` y ninguna forma de
+ * llegar al documento.
+ *
+ * FORMATO VERIFICADO CONTRA UN CONTROL (2026-08-12). Acá no basta con un 200:
+ * mercadopublico.cl devuelve 200 con una página vacía para códigos inexistentes
+ * —ya pasó con Compra Ágil y un integrador lo reportó—. Se comprobó pidiendo
+ * 4968-1045-SE26 y un código inventado: la real muestra "TIC SERVICES",
+ * "QUILPUE" y "1.639.225"; la inventada no muestra ninguno de los tres.
+ *
+ * `licitacion_url` sólo se arma cuando hay código de origen. MP manda cadena
+ * VACÍA —no null— en las órdenes que no vienen de una licitación (trato directo,
+ * convenio marco), y un enlace con `?code=` en blanco lleva a un buscador vacío
+ * que parece un error del producto.
+ */
+const withOrdenUrls = (oc: any) => {
+  if (!oc) return oc
+  const codigo = oc.external_code ?? oc.codigo ?? ''
+  const licitacion = String(oc.licitation_code ?? '').trim()
+
+  return {
+    ...oc,
+    official_url:
+      oc.official_url ||
+      `https://www.mercadopublico.cl/PurchaseOrder/Modules/PO/DetailsPurchaseOrder.aspx?codigoOC=${encodeURIComponent(codigo)}`,
+    licitacion_url: licitacion
+      ? `https://www.mercadopublico.cl/Procurement/Modules/RFBA/Details.aspx?code=${encodeURIComponent(licitacion)}`
+      : null,
+  }
+}
+
 // GET /api/v1/mercado-publico/ordenes-compra
 export const mercadoPublicoOrdenesHandler = async (c: any) => {
   try {
@@ -706,7 +739,7 @@ export const mercadoPublicoOrdenesHandler = async (c: any) => {
     // órdenes no vienen de su API sino de nuestra propia base. Un cero acá es
     // un cero legítimo del filtro, no una fuente caída.
     c.set('tokens_used', 25)
-    const res = buildBralidusResponse(data ?? [], page, pageSize, count ?? 0)
+    const res = buildBralidusResponse((data ?? []).map(withOrdenUrls), page, pageSize, count ?? 0)
     res.meta.cobertura = OC_COBERTURA
     res.meta.enriquecimiento_pendiente = pendientes ?? 0
     return c.json(res)
@@ -751,7 +784,7 @@ export const mercadoPublicoOrdenDetailHandler = async (c: any) => {
     if (errItems) throw errItems
 
     c.set('tokens_used', 15)
-    return c.json(buildBralidusResponse({ ...orden, items: items ?? [] }, 1, 1, 1))
+    return c.json(buildBralidusResponse({ ...withOrdenUrls(orden), items: items ?? [] }, 1, 1, 1))
   } catch (err) {
     return c.json(buildBralidusResponse(null, 1, 1, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
   }
