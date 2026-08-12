@@ -43,7 +43,7 @@ export function getBaseUrl(): string {
  *
  * El test de empaquetado verifica que coincida con package.json.
  */
-export const VERSION = '0.1.5';
+export const VERSION = '0.1.6';
 const VERSION_CLIENTE = VERSION;
 
 /**

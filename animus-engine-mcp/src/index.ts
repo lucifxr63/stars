@@ -173,9 +173,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            nombre: { type: 'string', description: 'Busqueda parcial. Ej: "MINEDUC", "MUNICIPALIDAD".' },
+            nombre: { type: 'string', description: 'Búsqueda parcial. Ej: "MINEDUC", "MUNICIPALIDAD".' },
+            rut: { type: 'string', description: 'RUT del comprador, exacto. Ej: "60.910.000-1".' },
             page: { type: 'number' },
-            page_size: { type: 'number', description: 'Default 20.' },
+            page_size: { type: 'number', description: 'Default 20, máximo 100.' },
           },
         },
       },

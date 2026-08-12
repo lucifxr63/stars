@@ -956,24 +956,32 @@ export const mercadoPublicoOrganismosHandler = async (c: any) => {
     const nombre = c.req.query('nombre') || c.req.query('q')
     const rut = c.req.query('rut')
 
-    // Repuntado a la tabla canónica: antes leía `purchase_orders`, que vive en
-    // el proyecto de Licitus. Los organismos compradores también figuran acá,
-    // y así este listado queda consistente con /organismos/:id.
-    let query = supabase.from('licitaciones_mercado_publico').select('buyer_org_code, buyer_name', { count: 'exact' })
+    // Antes esto consultaba `licitaciones_mercado_publico` y deduplicaba con un
+    // Map sobre la PÁGINA ya traída. Dos consecuencias, las dos silenciosas:
+    // `meta.total` informaba 60.528 —las compras, no los compradores— y con
+    // page_size=20 podía devolver 3 filas y repetir esos mismos compradores en
+    // la página siguiente. Deduplicar después de paginar no deduplica nada.
+    //
+    // La vista `mp_organismos` agrupa en la base por `buyer_rut`, así que la
+    // paginación y el conteo caen sobre organismos de verdad. Ver el comentario
+    // de la migración 20260812000001 para por qué NO se agrupa por
+    // `buyer_org_code`: esa columna guarda un RUT en compra ágil y un código
+    // interno en licitación.
+    let query = supabase
+      .from('mp_organismos')
+      .select('rut, nombre, region, compras, compras_abiertas, ultima_publicacion, vias, codigos_organismo', { count: 'exact' })
+      // Por compras descendente: un directorio ordenado alfabéticamente entierra
+      // a los compradores que importan detrás de los que publicaron una vez.
+      .order('compras', { ascending: false })
 
-    if (nombre) query = query.ilike('buyer_name', `%${nombre}%`)
-    if (rut) query = query.eq('buyer_org_code', rut)
+    if (nombre) query = query.ilike('nombre', `%${nombre}%`)
+    if (rut) query = query.eq('rut', rut)
 
     const { data, count, error } = await query.range(offset, offset + pageSize - 1)
     if (error) throw error
 
-    // Elimina duplicados de compradores
-    const uniqueBuyers = Array.from(
-      new Map((data ?? []).map((item: any) => [item.buyer_org_code, item])).values()
-    )
-
     c.set('tokens_used', 20)
-    return c.json(buildBralidusResponse(uniqueBuyers, page, pageSize, count ?? 0))
+    return c.json(buildBralidusResponse(data ?? [], page, pageSize, count ?? 0))
   } catch (err) {
     return c.json(buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{ code: 'SERVER_ERROR', message: String(err) }]), 500)
   }
