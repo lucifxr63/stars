@@ -186,11 +186,12 @@ export const DESC_DETALLE =
   // en las licitaciones ABIERTAS — aparecen recién al cerrar. La distinción
   // importa porque quien prepara una oferta sólo mira procesos abiertos, y
   // decirle "no existe" lo manda a buscar a otra parte en vez de a la ficha web.
-  '· `attachments`: en Compra Ágil hay 31.906 fichas con documentos, con `id` y `nombre` pero ' +
-  'SIN enlace de descarga (`url` va en null); 936 de las 1.162 abiertas los traen. En ' +
-  'licitación hay 5.584 CON enlace de descarga real, pero NINGUNA de las 2.273 abiertas: los ' +
-  'adjuntos aparecen recién cuando el proceso cierra. Para preparar una oferta sobre un ' +
-  'proceso abierto hay que ir a la ficha web de Mercado Público (`official_url`).\n' +
+  '· `attachments`: los documentos NO SON DESCARGABLES por API en ninguna vía, y el campo lo ' +
+  'declara con `descargable: false`. En Compra Ágil hay 31.906 fichas con la LISTA de ' +
+  'documentos (`id` y `nombre`, `url` en null); 936 de las 1.162 abiertas la traen. En ' +
+  'licitación hay 5.584 con `url`, pero ese enlace devuelve una página con captcha, no un ' +
+  'archivo — y ninguna de las 2.273 abiertas lo tiene. Para leer las bases hay que abrir la ' +
+  'ficha web (`official_url`): no ofrezcas descargar un adjunto ni digas que el enlace sirve.\n' +
   '· `amount_estimated = 0` NO significa que no haya presupuesto: mirar `amount_is_public` ' +
   '(false = el organismo lo ocultó) y `amount_estimation_type` (3 = no estimable).\n' +
   '· Contacto SÍ disponible en licitación: contacto del comprador 100 %, dirección 92 %, ' +

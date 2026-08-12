@@ -65,10 +65,17 @@ Acá **nuestra documentación estaba mal** y la corregimos. Decíamos que en
 licitación los adjuntos "van vacíos siempre porque la fuente no los expone". Es
 falso. Lo medido:
 
+> ⚠️ **CORREGIDO el 12/08 — ver `RESPUESTA_PLIEXA_2_2026-08-12.md` §1.** La fila
+> de licitación decía "URL real de descarga" y es **falso**: esa URL devuelve una
+> página HTML detrás de reCAPTCHA Enterprise, no un archivo. La conclusión
+> correcta es que **las bases no son obtenibles por API en ninguna vía**. Se deja
+> la tabla como estaba, con esta marca, porque es el texto que el integrador
+> recibió.
+
 | Vía | Fichas con documentos | ¿Enlace de descarga? | En procesos **abiertos** |
 |:---|---:|:---|---:|
 | Compra ágil | 31.906 | ❌ `url` en null (sólo `id` y `nombre`) | **936 de 1.162 (81 %)** |
-| Licitación | 5.584 | ✅ **URL real de `ViewAttachment.aspx`** | **0 de 2.273** |
+| Licitación | 5.584 | ⚠️ ~~URL real~~ → página con captcha, **no descarga** | **0 de 2.273** |
 
 La conclusión honesta, y la mala noticia: **en licitación los adjuntos aparecen
 recién cuando el proceso cierra.** Para preparar una oferta sobre un proceso
