@@ -508,7 +508,52 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     const statusParam = c.req.query('status')
     const q = c.req.query('q')
 
-    let query = supabase.from('licitaciones_mercado_publico').select('*', { count: 'exact' }).order('published_at', { ascending: false })
+    // ── Filtros de servidor ────────────────────────────────────────────────────
+    //
+    // Antes sólo había q/type/status. Un integrador reportó que al buscar sobre
+    // el universo (4.659 resultados) tenía que DESACTIVAR sus filtros de monto,
+    // cierre y organismo, porque aplicarlos sobre la página ya traída producía
+    // "4.659 resultados" mostrando 3. Filtrar en el cliente sobre una página no
+    // es filtrar: es mentir sobre el total.
+    //
+    // Van sobre la consulta, así que `count: 'exact'` los refleja en meta.total.
+    // `buyer_region` y `buyer_rut` tienen índice desde la migración
+    // 20260811000001; el resto son columnas ya indexadas o de baja cardinalidad.
+    const region = c.req.query('region')
+    const buyerRut = c.req.query('buyer_rut') || c.req.query('buyer_id')
+    const buyerName = c.req.query('buyer_name')
+    const amountMin = c.req.query('amount_min')
+    const amountMax = c.req.query('amount_max')
+    const closingFrom = c.req.query('closing_from')
+    const closingTo = c.req.query('closing_to')
+
+    // Orden configurable. El defecto sigue siendo `published_at desc` — se
+    // documenta en vez de dejarlo implícito, que era la queja real: no que
+    // estuviera mal, sino que no estuviera declarado.
+    const ORDENES: Record<string, string> = {
+      closing_at: 'closing_at',
+      published_at: 'published_at',
+      amount_estimated: 'amount_estimated',
+    }
+    const sortParam = (c.req.query('sort') ?? 'published_at').trim()
+    const desc = (c.req.query('order') ?? 'desc').toLowerCase() !== 'asc'
+    const sortCol = ORDENES[sortParam]
+    if (!sortCol) {
+      return c.json(
+        buildBralidusResponse(null, 1, 20, 0, 'mercado_publico', [{
+          code: 'INVALID_PARAM',
+          message: `sort debe ser uno de: ${Object.keys(ORDENES).join(', ')}`,
+        }]),
+        400,
+      )
+    }
+
+    let query = supabase
+      .from('licitaciones_mercado_publico')
+      .select('*', { count: 'exact' })
+      // nullsFirst:false para que las filas sin el dato no acaparen la primera
+      // página al ordenar por monto o por cierre, que es justo donde más faltan.
+      .order(sortCol, { ascending: !desc, nullsFirst: false })
 
     if (typeParam) {
       const types = typeParam.split(',').map((t: string) => t.trim())
@@ -516,6 +561,17 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
     }
     if (statusParam) query = query.eq('status_code', statusParam)
     if (q) query = query.ilike('title', `%${q}%`)
+    if (region) query = query.ilike('buyer_region', `%${region}%`)
+    if (buyerRut) query = query.eq('buyer_rut', buyerRut)
+    if (buyerName) query = query.ilike('buyer_name', `%${buyerName}%`)
+    if (closingFrom) query = query.gte('closing_at', closingFrom)
+    if (closingTo) query = query.lte('closing_at', closingTo)
+    // El monto se filtra sólo cuando es comparable: `amount_estimated = 0` con
+    // `amount_is_public = false` significa "el organismo lo ocultó", no cero. Un
+    // amount_min los descartaría como si fueran baratos, y amount_max los
+    // incluiría como si fueran gratis. En ambos casos se excluyen los ocultos.
+    if (amountMin) query = query.gte('amount_estimated', amountMin).not('amount_is_public', 'is', false)
+    if (amountMax) query = query.lte('amount_estimated', amountMax).not('amount_is_public', 'is', false)
 
     const { data, count, error } = await query.range(offset, offset + pageSize - 1)
     // Acá había un fallback a la tabla `opportunities`, que no existe en este
@@ -526,7 +582,17 @@ export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
 
     const mappedData = (data ?? []).map(withOfficialUrl)
 
-    if (mappedData.length === 0) {
+    // El fallback a Licitus sólo sabe filtrar por `type` y `q`. Con cualquier
+    // filtro nuevo aplicado, caer ahí devolvería resultados que NO cumplen lo
+    // que se pidió —una búsqueda por región del Biobío contestada con procesos
+    // de todo Chile— y sin forma de notarlo desde afuera. Es la misma clase de
+    // engaño que estos filtros vinieron a eliminar. Si la consulta canónica no
+    // trae nada bajo filtros, la respuesta honesta es "cero".
+    const usaFiltrosNuevos = Boolean(
+      region || buyerRut || buyerName || amountMin || amountMax || closingFrom || closingTo,
+    )
+
+    if (mappedData.length === 0 && !usaFiltrosNuevos) {
       const { items, sourceOk, error: licitusError } = await fetchLicitusActivas({ type: typeParam, q })
       if (!sourceOk) return sourceUnavailable(c, licitusError)
       if (items.length === 0) return emptyButHealthy(c, page, pageSize, COVERAGE_TENDERS)

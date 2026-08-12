@@ -82,7 +82,7 @@ jobs:
           head -1 node_modules/animus-engine-mcp/dist/index.js | grep -q '^#!' \
             || { echo "::error::falta el shebang en dist/index.js"; exit 1; }
 
-      - name: Lista sus 14 herramientas por stdio
+      - name: Lista sus 15 herramientas por stdio
         # Sin API key a propósito: `tools/list` no debe requerirla. Si alguna vez
         # empieza a pedirla, el servidor se volvio inusable antes de configurarse.
         run: |
@@ -92,9 +92,10 @@ jobs:
             '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
             '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
             | timeout 60 ./node_modules/.bin/animus-engine-mcp 2>/dev/null)
-          # 14 desde el 2026-08-04: se quitaron animus_licitus_activas y
+          # 15 desde el 2026-08-04: se quitaron animus_licitus_activas y
           # animus_licitus_compra_agil (duplicaban el buscador unificado y pegaban
-          # al MISMO endpoint canonico) y se agrego animus_mp_detalle.
+          # al MISMO endpoint canonico) y se agregaron animus_mp_detalle,
+          # animus_mp_ofertas y animus_mp_precios.
           N=$(printf '%s' "$SALIDA" | grep -o '"name":"animus_' | wc -l)
           echo "herramientas expuestas: $N"
           if [ "$N" -ne 15 ]; then

@@ -64,9 +64,19 @@ export const PjudCausasSchema = z
     grupo_termino: z
       .string()
       .optional()
-      .describe('Confirmados, Revocados, Rechazados, Inadmisibles, Acogidos, Desistidos.'),
+      .describe(
+        'Coincidencia EXACTA, no parcial: Confirmados, Revocados, Rechazados, Inadmisibles, ' +
+          'Acogidos, Desistidos. La lista no es exhaustiva y un valor inexistente devuelve 0 ' +
+          'filas sin error.',
+      ),
     sala: z.string().optional().describe('Coincidencia parcial.'),
-    serie: z.string().optional(),
+    serie: z
+      .string()
+      .optional()
+      .describe(
+        'terminos_suprema_detalle (falladas) | ingresos_recursos_suprema_detalle (ingresadas) | ' +
+          'inventario_suprema_detalle (pendientes). Otro valor devuelve 400.',
+      ),
     page: z.number().optional(),
     page_size: z.number().optional().describe('Máximo 200.'),
   })

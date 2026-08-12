@@ -44,6 +44,22 @@ import {
   MpOfertasSchema,
   MpPreciosSchema,
   PjudEstadisticasSchema,
+  // Las descripciones se IMPORTAN, no se copian. Lo que el modelo lee es el
+  // `inputSchema` de acá abajo, no el `.describe()` de los esquemas Zod (que
+  // sólo se usan para `.parse()` al ejecutar). Mientras el texto estuvo escrito
+  // en los dos sitios, las copias divergieron en silencio: la 0.1.2 documentó
+  // en el Zod la cobertura real de la ficha y el modelo siguió recibiendo acá
+  // la promesa vieja de "ítems, adjuntos, montos" — el texto que ese cambio
+  // venía justamente a corregir. Nada falló para avisarlo.
+  DESC_ORGANISMOS,
+  DESC_OPORTUNIDADES,
+  DESC_VIAS_DE_COMPRA,
+  DESC_STATUS,
+  DESC_SORT,
+  DESC_DETALLE,
+  DESC_OFERTAS,
+  DESC_PRECIOS,
+  DESC_PJUD_ESTADISTICAS,
   executeMpOrganismos,
   executeMpOportunidades,
   executeMpDetalle,
@@ -112,8 +128,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             anio: { type: 'number' },
             libro: { type: 'string' },
             tipo_recurso: { type: 'string', description: 'Coincidencia parcial.' },
-            grupo_termino: { type: 'string', description: 'Confirmados, Revocados, Rechazados, Inadmisibles, Acogidos.' },
+            grupo_termino: {
+              type: 'string',
+              // El gateway filtra con igualdad exacta, así que un valor mal escrito
+              // devuelve 0 filas y NO un error. Sin decirlo, un resultado vacío se
+              // lee como "no hay causas así" cuando en realidad es un typo.
+              description:
+                'Coincidencia EXACTA, no parcial: Confirmados, Revocados, Rechazados, ' +
+                'Inadmisibles, Acogidos, Desistidos. La lista no es exhaustiva y un valor ' +
+                'inexistente devuelve 0 filas sin error — no lo leas como ausencia de causas.',
+            },
             sala: { type: 'string', description: 'Coincidencia parcial.' },
+            // El gateway acepta este filtro y lo valida contra tres valores; estaba
+            // en el esquema Zod pero no acá, así que el modelo no podía usarlo y
+            // terminaba mezclando causas falladas, ingresadas y en inventario.
+            serie: {
+              type: 'string',
+              description:
+                'terminos_suprema_detalle (falladas) | ingresos_recursos_suprema_detalle ' +
+                '(ingresadas) | inventario_suprema_detalle (pendientes). Sin esto se mezclan ' +
+                'las tres series, que son disjuntas. Otro valor devuelve 400.',
+            },
             page: { type: 'number' },
             page_size: { type: 'number', description: 'Máximo 200.' },
           },
@@ -134,7 +169,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'animus_mp_organismos',
-        description: 'Directorio de organismos compradores del Estado de Chile (33.682). Devuelve nombre y codigo de organismo, util para cruzar con licitaciones. Buscar por nombre parcial.',
+        description: DESC_ORGANISMOS,
         inputSchema: {
           type: 'object',
           properties: {
@@ -146,47 +181,46 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'animus_mp_oportunidades',
-        description:
-          'Buscador UNIFICADO de compras del Estado de Chile (Mercado Publico). Es la puerta de ' +
-          'entrada a las CUATRO vias por las que el Estado compra, en una sola consulta. Usalo ' +
-          'siempre que no sepas de antemano por cual se publico lo que buscas.',
+        description: DESC_OPORTUNIDADES,
         inputSchema: {
           type: 'object',
           properties: {
-            q: { type: 'string', description: 'Termino de busqueda libre sobre el titulo.' },
-            type: {
-              type: 'string',
-              // Antes decia solo 'tender | agile_purchase'. Los otros dos existen y son
-              // consultables, pero al no estar declarados el modelo no podia saberlo y nunca
-              // los pedia: 272 registros invisibles por una descripcion incompleta.
+            q: { type: 'string', description: 'Término de búsqueda libre sobre el título.' },
+            // Antes decía sólo 'tender | agile_purchase'. Los otros dos existen y son
+            // consultables, pero al no estar declarados el modelo no podía saberlo y nunca
+            // los pedía: 272 registros invisibles por una descripción incompleta.
+            type: { type: 'string', description: DESC_VIAS_DE_COMPRA },
+            status: { type: 'string', description: DESC_STATUS },
+            region: { type: 'string', description: 'Coincidencia parcial. Ej: "Biobío", "Metropolitana".' },
+            buyer_rut: { type: 'string', description: 'RUT del organismo comprador, exacto.' },
+            buyer_name: { type: 'string', description: 'Nombre del organismo, coincidencia parcial.' },
+            amount_min: { type: 'number', description: 'Monto estimado mínimo.' },
+            amount_max: {
+              type: 'number',
               description:
-                'Via de compra. Omitir para buscar en las cuatro. ' +
-                'tender = licitacion tradicional (13.990). ' +
-                'agile_purchase = compra agil, monto menor y proceso rapido (24.043). ' +
-                'convenio_marco = compra contra catalogo ya licitado (242). ' +
-                'trato_directo = adjudicacion SIN competencia, por excepcion legal (30) — ' +
-                'es la via con menos competencia y la de mayor interes para auditoria.',
+                'Monto estimado máximo. OJO: filtrar por monto EXCLUYE los procesos con ' +
+                'presupuesto oculto (amount_is_public = false), porque su 0 no es un cero real.',
             },
-            status: { type: 'string', description: 'publicada | cerrada | adjudicada' },
+            closing_from: { type: 'string', description: 'Cierre desde (ISO 8601, ej: 2026-08-20).' },
+            closing_to: { type: 'string', description: 'Cierre hasta (ISO 8601).' },
+            sort: { type: 'string', description: DESC_SORT },
+            order: { type: 'string', description: 'asc | desc. Por defecto desc.' },
             page: { type: 'number' },
-            page_size: { type: 'number', description: 'Default 20. Subelo solo si hace falta: cada item es voluminoso.' },
+            page_size: { type: 'number', description: 'Default 20, máximo 100. Cada ítem es voluminoso.' },
           },
         },
       },
       {
         name: 'animus_mp_detalle',
-        description:
-          'Ficha completa de UNA oportunidad de Mercado Publico: items, adjuntos, montos, ' +
-          'organismo comprador y fechas. Usalo despues de animus_mp_oportunidades, cuando ya ' +
-          'identificaste cual te interesa y necesitas el detalle que el listado no trae.',
+        description: DESC_DETALLE,
         inputSchema: {
           type: 'object',
           properties: {
             codigo: {
               type: 'string',
               description:
-                'Codigo externo tal como lo devuelve el buscador en external_code ' +
-                '(ej: "4429-45-L126" para licitacion, "1233619-464-COT26" para compra agil).',
+                'Código externo tal como lo devuelve el buscador en `external_code` ' +
+                '(ej: "4429-45-L126" para licitación, "1233619-464-COT26" para compra ágil).',
             },
           },
           required: ['codigo'],
@@ -194,17 +228,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'animus_mp_ofertas',
-        description:
-          'La COMPETENCIA real de las compras del Estado: quien cotizo, por cuanto, quien gano y ' +
-          'con que argumento se declaro inadmisible al resto. Requiere `codigo` (quienes ' +
-          'compitieron por una compra) o `rut` (como le va a un proveedor, con su tasa de ' +
-          'adjudicacion). LIMITE: solo compras agiles concluidas — hay datos de 1.308 de 24.043.',
+        description: DESC_OFERTAS,
         inputSchema: {
           type: 'object',
           properties: {
-            codigo: { type: 'string', description: 'external_code de una compra agil.' },
+            codigo: { type: 'string', description: 'external_code de una compra ágil.' },
             rut: { type: 'string', description: 'RUT del proveedor, con o sin puntos.' },
-            solo_adjudicadas: { type: 'boolean', description: 'Solo las ofertas que ganaron.' },
+            solo_adjudicadas: { type: 'boolean', description: 'Sólo las ofertas que ganaron.' },
             page: { type: 'number' },
             page_size: { type: 'number', description: 'Default 20.' },
           },
@@ -212,23 +242,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'animus_mp_precios',
-        description:
-          'Precios de referencia por producto: cuanto se paga en el Estado, segun lo que ' +
-          'realmente cotizaron los proveedores. COMO LEERLO: usa `mediana` con el rango ' +
-          '`p25`-`p75`, nunca minimo/maximo. Cada fila trae `fiabilidad` y `ratio_p75_p25`: si ' +
-          'el ratio es alto, ese codigo agrupa productos distintos y la mediana NO es un precio.',
+        description: DESC_PRECIOS,
         inputSchema: {
           type: 'object',
           properties: {
             q: { type: 'string', description: 'Nombre de producto. Ej: "guantes", "toner".' },
-            codigo_producto: { type: 'string', description: 'Codigo UNSPSC exacto.' },
-            min_muestras: { type: 'number', description: 'Minimo de cotizaciones. Default 5.' },
+            codigo_producto: { type: 'string', description: 'Código UNSPSC exacto.' },
+            min_muestras: { type: 'number', description: 'Mínimo de cotizaciones. Default 5.' },
           },
         },
       },
       {
         name: 'animus_pjud_estadisticas',
-        description: 'Series AGREGADAS del Poder Judicial: presupuesto, dotacion, adquisiciones y cuenta publica. Distintas de las causas individuales — aca no hay roles ni fallos, son totales institucionales.',
+        description: DESC_PJUD_ESTADISTICAS,
         inputSchema: {
           type: 'object',
           properties: {
