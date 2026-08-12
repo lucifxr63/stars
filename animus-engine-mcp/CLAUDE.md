@@ -3,7 +3,8 @@
 Servidor Model Context Protocol que expone los datos de Animus a Claude Desktop,
 Cursor y Windsurf.
 
-**npm:** `animus-engine-mcp` · publicado, versión actual **0.1.1**
+**npm:** `animus-engine-mcp` · publicado, última en el registro **0.1.2**
+(2026-08-12). En el repo hay **0.1.3** lista y sin publicar — ver §1.
 **Gateway:** `https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1`
 
 ---
@@ -65,6 +66,40 @@ código coincida con `package.json`.
 
 Al agregar o quitar una hay que **actualizar el conteo en `mcp-ci.yml`**, que lo
 verifica de forma exacta.
+
+### La descripción de una herramienta se escribe UNA vez
+
+Lo que el modelo lee **no** es el `.describe()` del esquema Zod: es el
+`inputSchema` que `index.ts` devuelve en `tools/list`. Los Zod sólo corren en
+`.parse()` al ejecutar la herramienta.
+
+Mientras el texto estuvo escrito en los dos sitios, las copias divergieron sin
+que nada fallara. La 0.1.2 agregó `COBERTURA_DETALLE` —que los ítems están en el
+20 % de las licitaciones, que `attachments` no trae URL de descarga, que
+`amount_estimated = 0` no significa sin presupuesto— y el modelo siguió
+recibiendo la promesa vieja de "ítems, adjuntos, montos": exactamente el texto
+que ese cambio venía a corregir. El commit entero fue código muerto de cara al
+modelo. En el mismo barrido faltaba el filtro `serie` en `animus_pjud_causas`
+(estaba en el Zod, no en el cable) y `grupo_termino` listaba 5 valores contra 6.
+
+Desde 0.1.3 las descripciones de Mercado Público viven en constantes `DESC_*`
+exportadas de `tools/mercadoPublicoTools.ts`, y `index.ts` las **importa**. Al
+agregar una herramienta, la descripción va ahí y se importa — no se copia.
+
+Verificarlo se hace sobre el cable, nunca leyendo el fuente:
+
+```bash
+printf '%s\n%s\n%s\n' \
+ '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"x","version":"1"}}}' \
+ '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+ '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+ | node dist/index.js 2>/dev/null
+```
+
+**Pendiente recomendado:** derivar los `inputSchema` de los Zod con
+`zod-to-json-schema` y borrar los escritos a mano. Es lo único que vuelve la
+divergencia imposible en vez de sólo improbable; hoy sigue dependiendo de que
+quien agrega una herramienta importe la constante.
 
 ### Retiradas en 0.1.1
 

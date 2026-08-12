@@ -58,14 +58,17 @@ La clave se obtiene en https://animus.scouttech.lat y es **obligatoria**: no hay
 
 ### Mercado Público — compras del Estado (B2G)
 - \`animus_mp_oportunidades\`: buscador unificado de las CUATRO vías de compra.
-  \`type\`: \`tender\` licitación (13.990) · \`agile_purchase\` compra ágil (24.043) ·
-  \`convenio_marco\` catálogo ya licitado (242) · \`trato_directo\` adjudicación sin
-  competencia (30). Omitir \`type\` busca en las cuatro.
+  \`type\`: \`tender\` licitación (15.669) · \`agile_purchase\` compra ágil (44.545) ·
+  \`convenio_marco\` catálogo ya licitado (274) · \`trato_directo\` adjudicación sin
+  competencia (40). Omitir \`type\` busca en las cuatro. Total 60.528 al 2026-08-12.
+  Filtros: \`q\`, \`status\`, \`region\`, \`buyer_rut\`, \`buyer_name\`, \`amount_min\`,
+  \`amount_max\`, \`closing_from\`, \`closing_to\`, más \`sort\` y \`order\`.
 - \`animus_mp_detalle\`: ficha completa de una oportunidad, por su \`external_code\`
 - \`animus_mp_ofertas\`: la COMPETENCIA — quién cotizó, cuánto, quién ganó y por qué
   se declaró inadmisible al resto. Por \`codigo\` (una compra) o por \`rut\` (un
-  proveedor, con su tasa de adjudicación). Sólo compras ágiles concluidas.
-- \`animus_mp_organismos\`: directorio de organismos compradores
+  proveedor, con su tasa de adjudicación). 16.919 ofertas de 3.990 proveedores
+  sobre 3.122 compras. Sólo compras ágiles concluidas: 3.122 de 44.545 (7 %).
+- \`animus_mp_organismos\`: directorio de organismos compradores (2.705 distintos)
 
 ### Economía e inteligencia
 - \`animus_economic_macro\`: UF diaria CMF, UTM, USD/CLP, cobre, WTI, Fed funds, IPC USA
