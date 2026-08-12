@@ -68,6 +68,25 @@ All functions run on Deno via Supabase Edge Functions.
    - **B2G Mercado Público ChileCompra Routes:**
      - `GET /api-v1/mercado-publico/compra-agil` — Compras Ágiles (< 30 UTM) with canonical fallback.
      - `GET /api-v1/mercado-publico/opportunities` — Combined B2G tender opportunities.
+       Filtros de servidor (2026-08-12): `q`, `type`, `status`, `region`, `buyer_rut`,
+       `buyer_name`, `amount_min`, `amount_max`, `closing_from`, `closing_to`, más
+       `sort` (`closing_at`|`published_at`|`amount_estimated`) y `order`. Todos van
+       sobre la consulta, así que `meta.total` los refleja.
+
+       Dos decisiones que no conviene revertir:
+       · **Filtrar por monto excluye los presupuestos ocultos.** 7.935 filas tienen
+         `amount_is_public = false` y las 7.935 traen `amount_estimated = 0`. Sin ese
+         guard, un `amount_max` las devolvería como si fueran gratis.
+       · **Con cualquier filtro nuevo aplicado no hay fallback a Licitus.** El fallback
+         sólo sabe filtrar por `type` y `q`: contestaría una búsqueda por región con
+         procesos de todo Chile y nada fallaría para avisarlo.
+
+     - ⚠️ **`GET /mercado-publico/organismos` cuenta mal.** No lee una tabla de
+       organismos: pagina sobre las 60.528 oportunidades y deduplica **dentro de cada
+       página**, así que un mismo comprador reaparece entre páginas y `meta.total`
+       informa compras, no compradores. Los organismos distintos son **2.705**, no los
+       33.682 que decía la documentación. Arreglarlo bien pide una vista o RPC con
+       `distinct`; hasta entonces, no usar `meta.total` como conteo de organismos.
      - `GET /api-v1/mercado-publico/licitaciones` — Large public tenders (LE, LP, LR).
      - `GET /api-v1/mercado-publico/health` — B2G integration service status.
    - **Órdenes de compra (`/mercado-publico/ordenes-compra`)** — implementadas el
@@ -90,14 +109,20 @@ All functions run on Deno via Supabase Edge Functions.
      **No mover estas tablas a la canónica.** `licitaciones_mercado_publico`
      modela mecanismos de contratación, no órdenes post-adjudicación.
 
-   - **Fuente primaria: la tabla canónica `licitaciones_mercado_publico`.** Al 2026-08-04 tiene **38.305 filas frescas** (se cargan a diario), repartidas en las CUATRO vías por las que el Estado compra:
+   - **Fuente primaria: la tabla canónica `licitaciones_mercado_publico`.** Al 2026-08-12 tiene **60.528 filas frescas** (se cargan a diario), repartidas en las CUATRO vías por las que el Estado compra:
 
      | `source_type` | Qué es | Filas |
      |:---|:---|---:|
-     | `tender` | Licitación tradicional | 13.990 |
-     | `agile_purchase` | Compra ágil | 24.043 |
-     | `convenio_marco` | Contra catálogo ya licitado | 242 |
-     | `trato_directo` | **Sin competencia**, por excepción legal | 30 |
+     | `tender` | Licitación tradicional | 15.669 |
+     | `agile_purchase` | Compra ágil | 44.545 |
+     | `convenio_marco` | Contra catálogo ya licitado | 274 |
+     | `trato_directo` | **Sin competencia**, por excepción legal | 40 |
+
+     ⚠️ **Estas cifras se mueven rápido: crecieron 58 % entre el 04 y el 12 de agosto.**
+     Publicar un número sin fecha ya costó caro — un integrador reportó como
+     "inconsistencia" que `health` dijera 60.528 y la documentación 38.305. Los dos
+     eran correctos en su momento; el problema fue no fecharlos. **Al citar un
+     volumen, remedirlo y poner la fecha al lado.**
 
      Las cuatro se consultan por `GET /mercado-publico/opportunities?type=`. Las rutas dedicadas `/convenio-marco` y `/tratos-directos` devuelven **501 y son redundantes** — no implementarlas.
 
@@ -106,9 +131,9 @@ All functions run on Deno via Supabase Edge Functions.
      - `published_at` is `null` on this path: Licitus `/mercado/activas` exposes the CLOSING date, not the publication date. It is left null rather than filled in.
      - If Licitus is also unavailable, the endpoints return **503 `SOURCE_UNAVAILABLE`**. They do not fabricate records.
      - **NEVER reintroduce a hardcoded dataset here.** A previous version (commit `e01c47e`) injected 12 invented records whose `published_at` was computed as `now - N hours` on every request, so two consecutive calls returned different dates for the same `external_code`, and their `official_url` pointed at nonexistent fichas. An integrator caught it within minutes of testing.
-   - **La competencia real de las compras ágiles** — `GET /mercado-publico/ofertas?codigo=` o `?rut=`. Extraído de `raw_payload->detalle->proveedores_cotizando`, donde estaba enterrado: **7.111 ofertas, 2.369 proveedores, 1.095 adjudicaciones y 1.033 motivos de inadmisibilidad**. Tablas `mp_ofertas` / `mp_oferta_items`. Con `rut` agrega un resumen con la tasa de adjudicación. Sin filtro devuelve 400 en vez de volcar 7.111 filas.
+   - **La competencia real de las compras ágiles** — `GET /mercado-publico/ofertas?codigo=` o `?rut=`. Extraído de `raw_payload->detalle->proveedores_cotizando`, donde estaba enterrado: al 2026-08-12, **16.919 ofertas, 3.990 proveedores, 2.633 adjudicaciones y 2.583 motivos de inadmisibilidad**. Tablas `mp_ofertas` / `mp_oferta_items`. Con `rut` agrega un resumen con la tasa de adjudicación. Sin filtro devuelve 400 en vez de volcar todo.
 
-     Sólo hay oferentes de **compras ágiles concluidas** (1.308 de 24.043): licitaciones, convenios y tratos directos no los publican, y las abiertas todavía no.
+     Sólo hay oferentes de **compras ágiles concluidas** (3.122 de 44.545, un 7 %): licitaciones, convenios y tratos directos no los publican, y las abiertas todavía no.
 
      La extracción la re-ejecuta `mp_extraer_ofertas()` como **step del workflow** de `sync-compra-agil`. Ojo: el workflow NO llama a `runSyncCompraAgilJob`, usa las funciones de slice — meter lógica en la monolítica es meterla en código muerto.
    - **Precios de referencia** — `GET /mercado-publico/precios?q=` o `?codigo_producto=`. Devuelve `p25`/`mediana`/`p75` y **nunca un "precio de mercado" a secas**: `precio_unitario` mezclaba precios reales con canastas enteras puestas en una línea (7 pesos por cápsula convivía con 1.030.568 por "SEGÚN LISTADO EN ADJUNTO"). Se filtran esas líneas, pero queda dispersión real porque un código UNSPSC agrupa productos heterogéneos — por eso cada fila trae `ratio_p75_p25` y `fiabilidad`. **No presentar un número sin mirar esa señal.**
