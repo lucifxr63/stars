@@ -64,13 +64,13 @@ soporta.
 **Sobre `animus_mp_ofertas`.** Es lo que un listado de licitaciones no da. Con
 `rut` devuelve el historial de un proveedor y su tasa de adjudicación; con
 `codigo`, todos los que compitieron por esa compra, ordenados con el ganador
-primero. Los datos salen de 7.111 ofertas sobre 2.369 proveedores, con 1.033
+primero. Los datos salen de 16.919 ofertas sobre 3.990 proveedores, con 2.583
 motivos de inadmisibilidad escritos.
 
 > **Límite que conviene tener presente:** sólo hay oferentes de **compras
 > ágiles concluidas**. Licitaciones, convenios marco y tratos directos no los
 > publican en esta fuente, y las compras aún abiertas todavía no los muestran:
-> hay datos de 1.308 de las 24.043 compras ágiles.
+> hay datos de 3.122 de las 44.545 compras ágiles.
 
 **Sobre `animus_mp_precios`.** Devuelve `mediana` con el rango `p25`–`p75`, no un
 "precio de mercado". La razón: `precio_unitario` mezclaba precios reales con
@@ -81,14 +81,19 @@ heterogéneos. Por eso cada fila trae `ratio_p75_p25` y `fiabilidad`: con ratio
 1,5 la mediana es un precio; con ratio 6 es el promedio de cosas que no se
 comparan.
 
-**Las cuatro vías por las que el Estado compra** (`type`, volúmenes al 2026-08-04):
+**Las cuatro vías por las que el Estado compra** (`type`, volúmenes al 2026-08-12):
 
 | `type` | Qué es | Registros |
 |:---|:---|---:|
-| `tender` | Licitación tradicional | 13.990 |
-| `agile_purchase` | Compra ágil: monto menor, proceso rápido | 24.043 |
-| `convenio_marco` | Compra contra catálogo ya licitado | 242 |
-| `trato_directo` | Adjudicación **sin competencia**, por excepción legal | 30 |
+| `tender` | Licitación tradicional | 15.669 |
+| `agile_purchase` | Compra ágil: monto menor, proceso rápido | 44.545 |
+| `convenio_marco` | Compra contra catálogo ya licitado | 274 |
+| `trato_directo` | Adjudicación **sin competencia**, por excepción legal | 40 |
+
+> Estas cifras crecieron **58 % en ocho días**. Un integrador reportó como
+> "inconsistencia" que `health` dijera un total y este README otro: los dos
+> números eran correctos, lo que faltaba era la fecha al lado. Para el dato
+> vivo, `animus_mp_oportunidades` sin filtros informa el total en `meta.total`.
 
 Omitir `type` busca en las cuatro. `trato_directo` es la vía con menos
 competencia y la de mayor interés para auditoría.

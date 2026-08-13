@@ -287,3 +287,61 @@ export async function executeMpPrecios(args: z.infer<typeof MpPreciosSchema>) {
 export async function executePjudEstadisticas(args: z.infer<typeof PjudEstadisticasSchema>) {
   return texto(await raasGet('/data/pjud/estadisticas', params(args)));
 }
+
+/**
+ * Órdenes de compra: la mitad del ciclo B2G que faltaba.
+ *
+ * Hasta acá el MCP llegaba a la ADJUDICACIÓN y se cortaba. Quién ganó estaba en
+ * `animus_mp_ofertas`; quién efectivamente COBRÓ, cuánto y contra qué licitación,
+ * no estaba en ninguna parte.
+ *
+ * Es además el dataset más profundo de Mercado Público: 10 años contra los 16
+ * días que cubren las ofertas, y 21.621 proveedores contra 3.990.
+ *
+ * Vive en otro proyecto de Supabase y se lee por `postgres_fdw`. Eso es
+ * transparente para quien consulta, pero explica por qué esta herramienta puede
+ * tardar más que las demás.
+ */
+export const DESC_ORDENES =
+  'Órdenes de compra del Estado de Chile: quién COBRÓ efectivamente, cuánto y contra qué ' +
+  'licitación. Es la etapa siguiente a la adjudicación — `animus_mp_ofertas` dice quién ganó, ' +
+  'esta dice quién terminó facturando.\n' +
+  'COBERTURA (medida 2026-08-12): 124.868 órdenes con contenido, 21.621 proveedores y 1.129 ' +
+  'organismos, entre 2016-09-22 y 2026-08-11. Es el dataset más profundo de Mercado Público: ' +
+  'las ofertas cubren 16 días, esto cubre 10 años.\n' +
+  'CRUCE CON LA LICITACIÓN: posible, pero en pocos casos. `licitation_code` nunca es null y eso ' +
+  'engaña: 72.708 de las 124.868 vienen como cadena VACÍA, sólo 52.160 traen un código, y de ' +
+  'esos apenas **3.159 corresponden a una licitación que tengamos**. La causa es el desfase de ' +
+  'ventanas: estas órdenes arrancan en 2016 y la tabla de licitaciones cubre lo reciente. ' +
+  'Comprobá que `licitation_code` no venga vacío antes de intentar el cruce, y no interpretes ' +
+  'un cruce fallido como que la orden no tuvo licitación.\n' +
+  'PENDIENTE DE ENRIQUECIMIENTO: hay 43.961 órdenes más que todavía sólo tienen identificador. ' +
+  'NO se devuelven —serían un código con forma de dato— y su cantidad viaja en ' +
+  '`meta.enriquecimiento_pendiente`. Se completan solas: el job drena ~5.000/día. Un total que ' +
+  'no cuadra con otra fuente casi siempre es esto, no un error de tu consulta.';
+
+export const MpOrdenesSchema = z
+  .object({
+    rut_proveedor: z
+      .string()
+      .optional()
+      .describe('RUT del proveedor que cobró. Devuelve todo lo que le compró el Estado.'),
+    codigo_organismo: z.string().optional().describe('Código del organismo comprador.'),
+    estado: z
+      .string()
+      .optional()
+      .describe(
+        'Código numérico, no texto: 12 = Recepción Conforme (76.827) · 6 = Aceptada (41.611) · ' +
+          '4 = Nueva orden (3.672) · 9 = Cancelada (1.797) · 11 = No aceptada (562) · ' +
+          '5 = En proceso (399). El nombre legible viene en `supplier_state_label`.',
+      ),
+    fecha: z.string().optional().describe('Emitidas desde (ISO 8601, ej: 2026-01-01).'),
+    fecha_fin: z.string().optional().describe('Emitidas hasta (ISO 8601).'),
+    page: z.number().optional(),
+    page_size: z.number().optional().describe('Default 20, máximo 100.'),
+  })
+  .describe(DESC_ORDENES);
+
+export async function executeMpOrdenes(args: z.infer<typeof MpOrdenesSchema>) {
+  return texto(await raasGet('/mercado-publico/ordenes-compra', params(args)));
+}

@@ -58,19 +58,26 @@ código coincida con `package.json`.
 
 ---
 
-## 3. Las 15 herramientas
+## 3. Las 16 herramientas
 
 **Corte Suprema** — `animus_pjud_tendencias`, `animus_pjud_resumen`,
 `animus_pjud_causas`, `animus_pjud_causa`, `animus_pjud_estadisticas`
 
 **Mercado Público** — `animus_mp_oportunidades`, `animus_mp_detalle`,
-`animus_mp_ofertas`, `animus_mp_precios`, `animus_mp_organismos`
+`animus_mp_ofertas`, `animus_mp_precios`, `animus_mp_organismos`,
+`animus_mp_ordenes`
 
 **Economía e inteligencia** — `animus_economic_macro`, `animus_economic_catalog`,
 `animus_intel_query`, `animus_rag_search`, `animus_api_docs`
 
 Al agregar o quitar una hay que **actualizar el conteo en `mcp-ci.yml`**, que lo
 verifica de forma exacta.
+
+`animus_mp_ordenes` cierra la mitad post-adjudicación del ciclo: `ofertas` dice
+quién ganó, `ordenes` quién cobró. Es el dataset más profundo de Mercado Público
+—10 años y 21.621 proveedores, contra 16 días y 3.990 de las ofertas— y el único
+que se lee de otro proyecto de Supabase por `postgres_fdw`, así que responde más
+lento que el resto.
 
 ### La descripción de una herramienta se escribe UNA vez
 
