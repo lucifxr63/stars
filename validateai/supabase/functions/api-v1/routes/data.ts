@@ -525,8 +525,47 @@ function leerFiltrosMp(c: any) {
     amountMax: c.req.query('amount_max'),
     closingFrom: c.req.query('closing_from'),
     closingTo: c.req.query('closing_to'),
+    // Filtrar por monto excluye los 7.935 procesos con presupuesto oculto,
+    // porque su `amount_estimated = 0` no es un cero real. Con esto se pueden
+    // pedir igual: el integrador que audita quiere ver justamente esos.
+    incluirOcultos: c.req.query('include_hidden_amounts') === 'true',
   }
 }
+
+/**
+ * Rechaza parámetros que no existen, en vez de ignorarlos.
+ *
+ * POR QUÉ. Un integrador mandó `include_hidden_amounts` —que en ese momento no
+ * existía— y recibió un 200 con el mismo total de siempre. El parámetro se
+ * ignoró en silencio y no había forma de distinguir "lo apliqué y no cambió
+ * nada" de "no sé qué me pediste". Peor: la misma ruta SÍ rechazaba
+ * `sort=inventado` con 400, así que el contrato era inconsistente consigo mismo.
+ *
+ * Un parámetro tragado es peor que un error: el cliente cree que filtró.
+ *
+ * Se listan los aceptados en el mensaje porque el error tiene que ser
+ * accionable sin ir a leer la documentación.
+ */
+function rechazarParametrosDesconocidos(c: any, aceptados: string[]) {
+  const recibidos = Object.keys(c.req.query())
+  const desconocidos = recibidos.filter((k) => !aceptados.includes(k))
+  if (desconocidos.length === 0) return null
+  return errorJson(
+    c,
+    400,
+    'INVALID_PARAM',
+    `Parámetro${desconocidos.length > 1 ? 's' : ''} desconocido${desconocidos.length > 1 ? 's' : ''}: ` +
+      `${desconocidos.join(', ')}. Aceptados: ${aceptados.join(', ')}.`,
+    { parametros_desconocidos: desconocidos, parametros_aceptados: aceptados },
+  )
+}
+
+/** Todo lo que `/opportunities` y `/facetas` entienden. */
+const PARAMS_MP = [
+  'q', 'type', 'status', 'region', 'buyer_rut', 'buyer_id', 'buyer_name',
+  'amount_min', 'amount_max', 'closing_from', 'closing_to', 'include_hidden_amounts',
+  'sort', 'order', 'page', 'page_size', 'limit',
+]
 
 function aplicarFiltrosMp(query: any, f: ReturnType<typeof leerFiltrosMp>) {
   if (f.type) query = query.in('source_type', f.type.split(',').map((t: string) => t.trim()))
@@ -537,10 +576,18 @@ function aplicarFiltrosMp(query: any, f: ReturnType<typeof leerFiltrosMp>) {
   if (f.buyerName) query = query.ilike('buyer_name', `%${f.buyerName}%`)
   if (f.closingFrom) query = query.gte('closing_at', f.closingFrom)
   if (f.closingTo) query = query.lte('closing_at', f.closingTo)
-  // Ver la nota del handler de listado: `amount_estimated = 0` con
-  // `amount_is_public = false` significa "el organismo lo ocultó", no cero.
-  if (f.amountMin) query = query.gte('amount_estimated', f.amountMin).not('amount_is_public', 'is', false)
-  if (f.amountMax) query = query.lte('amount_estimated', f.amountMax).not('amount_is_public', 'is', false)
+  // `amount_estimated = 0` con `amount_is_public = false` significa "el organismo
+  // lo ocultó", no cero: incluirlos en un `amount_max` los mostraría como gratis.
+  // Se excluyen por defecto y se pueden pedir con `include_hidden_amounts=true`,
+  // que es lo que necesita quien audita en vez de comprar.
+  if (f.amountMin) {
+    query = query.gte('amount_estimated', f.amountMin)
+    if (!f.incluirOcultos) query = query.not('amount_is_public', 'is', false)
+  }
+  if (f.amountMax) {
+    query = query.lte('amount_estimated', f.amountMax)
+    if (!f.incluirOcultos) query = query.not('amount_is_public', 'is', false)
+  }
   return query
 }
 
@@ -557,6 +604,9 @@ function aplicarFiltrosMp(query: any, f: ReturnType<typeof leerFiltrosMp>) {
  */
 export const mercadoPublicoFacetasHandler = async (c: any) => {
   try {
+    const malo = rechazarParametrosDesconocidos(c, PARAMS_MP)
+    if (malo) return malo
+
     const supabase = getSupabase()
     const f = leerFiltrosMp(c)
 
@@ -620,6 +670,9 @@ export const mercadoPublicoFacetasHandler = async (c: any) => {
 // GET /api/v1/mercado-publico/opportunities (Buscador Unificado: tender + agile_purchase)
 export const mercadoPublicoOpportunitiesHandler = async (c: any) => {
   try {
+    const malo = rechazarParametrosDesconocidos(c, PARAMS_MP)
+    if (malo) return malo
+
     const supabase = getSupabase()
     const page = Math.max(Number(c.req.query('page') ?? 1), 1)
     const pageSize = Math.min(Number(c.req.query('page_size') ?? c.req.query('limit') ?? 20), 100)

@@ -45,6 +45,7 @@ import {
   MpDetalleSchema,
   MpOfertasSchema,
   MpPreciosSchema,
+  MpOrdenesSchema,
   PjudEstadisticasSchema,
   // Las descripciones se IMPORTAN, no se copian. Lo que el modelo lee es el
   // `inputSchema` de acá abajo, no el `.describe()` de los esquemas Zod (que
@@ -58,6 +59,7 @@ import {
   executeMpDetalle,
   executeMpOfertas,
   executeMpPrecios,
+  executeMpOrdenes,
   executePjudEstadisticas,
 } from './tools/mercadoPublicoTools.js';
 
@@ -141,6 +143,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       herramienta('animus_mp_detalle', MpDetalleSchema),
       herramienta('animus_mp_ofertas', MpOfertasSchema),
       herramienta('animus_mp_precios', MpPreciosSchema),
+      herramienta('animus_mp_ordenes', MpOrdenesSchema),
       // Economía e inteligencia
       herramienta('animus_economic_macro', EconomicMacroSchema),
       herramienta('animus_economic_catalog', EconomicCatalogSchema),
@@ -194,6 +197,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'animus_mp_precios': {
         const parsed = MpPreciosSchema.parse(args);
         return await executeMpPrecios(parsed);
+      }
+      case 'animus_mp_ordenes': {
+        return await executeMpOrdenes(MpOrdenesSchema.parse(args ?? {}));
       }
       case 'animus_pjud_estadisticas': {
         return await executePjudEstadisticas(PjudEstadisticasSchema.parse(args ?? {}));

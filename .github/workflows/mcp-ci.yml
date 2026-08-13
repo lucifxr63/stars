@@ -82,7 +82,7 @@ jobs:
           head -1 node_modules/animus-engine-mcp/dist/index.js | grep -q '^#!' \
             || { echo "::error::falta el shebang en dist/index.js"; exit 1; }
 
-      - name: Lista sus 15 herramientas por stdio
+      - name: Lista sus 16 herramientas por stdio
         # Sin API key a propósito: `tools/list` no debe requerirla. Si alguna vez
         # empieza a pedirla, el servidor se volvio inusable antes de configurarse.
         run: |
@@ -92,14 +92,15 @@ jobs:
             '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
             '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
             | timeout 60 ./node_modules/.bin/animus-engine-mcp 2>/dev/null)
-          # 15 desde el 2026-08-04: se quitaron animus_licitus_activas y
-          # animus_licitus_compra_agil (duplicaban el buscador unificado y pegaban
-          # al MISMO endpoint canonico) y se agregaron animus_mp_detalle,
-          # animus_mp_ofertas y animus_mp_precios.
+          # 16 desde el 2026-08-12: se sumo animus_mp_ordenes, que cierra la mitad
+          # post-adjudicacion del ciclo B2G (quien COBRO, no solo quien gano).
+          # Antes: 15 desde el 2026-08-04, cuando se quitaron animus_licitus_activas
+          # y animus_licitus_compra_agil (duplicaban el buscador unificado) y se
+          # agregaron animus_mp_detalle, animus_mp_ofertas y animus_mp_precios.
           N=$(printf '%s' "$SALIDA" | grep -o '"name":"animus_' | wc -l)
           echo "herramientas expuestas: $N"
-          if [ "$N" -ne 15 ]; then
-            echo "::error::se esperaban 15 herramientas, se listaron $N"
+          if [ "$N" -ne 16 ]; then
+            echo "::error::se esperaban 16 herramientas, se listaron $N"
             printf '%s' "$SALIDA" | grep -o '"name":"animus_[a-z_]*"' | sort
             exit 1
           fi
