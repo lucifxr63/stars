@@ -43,7 +43,7 @@ export function getBaseUrl(): string {
  *
  * El test de empaquetado verifica que coincida con package.json.
  */
-export const VERSION = '0.1.8';
+export const VERSION = '0.1.9';
 const VERSION_CLIENTE = VERSION;
 
 /**
@@ -193,8 +193,43 @@ function traducirError(status: number, cuerpo: string, headers: Headers, metodo:
   );
 }
 
-async function pedir(metodo: 'GET' | 'POST', path: string, init: RequestInit, url: string): Promise<any> {
-  const ms = presupuesto(path);
+/**
+ * Reintentos.
+ *
+ * QUÉ SE REINTENTA Y QUÉ NO
+ * -------------------------
+ * Sólo lo que puede salir distinto la próxima vez: un error de red y los 502,
+ * 503 y 504, que son el gateway o la CDN cayéndose un instante, no una respuesta
+ * sobre la consulta. Un 401 o un 400 van a fallar igual las tres veces y
+ * reintentarlos sólo retrasa el mensaje que el usuario necesita leer.
+ *
+ * NUNCA SE REINTENTA UN TIMEOUT, y es la regla que importa. `ROBUSTEZ.md` lo
+ * anotó al revés de como suele hacerse: los reintentos van DESPUÉS del timeout
+ * porque reintentar sin presupuesto de tiempo empeora las cosas. Si el primer
+ * intento agotó los 30 s, dos más convierten una herramienta lenta en una
+ * herramienta colgada durante minuto y medio — que es exactamente el fallo que
+ * el `AbortController` vino a eliminar. Un `AbortError` significa que el
+ * presupuesto se gastó: se informa y se sale.
+ *
+ * Se reintenta también en POST porque `/intel/query` y `/rag/query` son de
+ * lectura pese al verbo: no hay nada que se ejecute dos veces.
+ */
+const INTENTOS_MAX = 3;
+const ESTADOS_REINTENTABLES = new Set([502, 503, 504]);
+
+/** Espera creciente con algo de azar, para no sincronizar a todos los clientes
+ *  golpeando el gateway en el mismo milisegundo cuando vuelve de una caída. */
+const esperaMs = (intento: number) => 400 * 2 ** (intento - 1) + Math.floor(Math.random() * 250);
+
+const dormir = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+async function unIntento(
+  metodo: 'GET' | 'POST',
+  path: string,
+  init: RequestInit,
+  url: string,
+  ms: number,
+): Promise<{ ok: true; datos: any } | { ok: false; error: Error; reintentable: boolean }> {
   const control = new AbortController();
   const alarma = setTimeout(() => control.abort(), ms);
 
@@ -209,23 +244,61 @@ async function pedir(metodo: 'GET' | 'POST', path: string, init: RequestInit, ur
       // puesto, `Math.round(ms/1000)` decía "superó el límite de 0 s", que
       // parece un bug del servidor en vez de una configuración del usuario.
       const legible = ms >= 1000 ? `${Math.round(ms / 1000)} s` : `${ms} ms`;
-      throw new Error(
-        `La petición a ${path} superó el límite de ${legible} y se canceló. ` +
-          'Puede ser una caída del gateway o una red lenta. ' +
-          'Súbelo con la variable de entorno ANIMUS_TIMEOUT_MS si tu conexión lo necesita.',
-      );
+      return {
+        ok: false,
+        reintentable: false,
+        error: new Error(
+          `La petición a ${path} superó el límite de ${legible} y se canceló. ` +
+            'Puede ser una caída del gateway o una red lenta. ' +
+            'Súbelo con la variable de entorno ANIMUS_TIMEOUT_MS si tu conexión lo necesita.',
+        ),
+      };
     }
-    throw new Error(`No se pudo contactar el gateway de Animus en ${path}: ${err?.message ?? err}`);
+    return {
+      ok: false,
+      reintentable: true,
+      error: new Error(`No se pudo contactar el gateway de Animus en ${path}: ${err?.message ?? err}`),
+    };
   } finally {
     clearTimeout(alarma);
   }
 
   if (!response.ok) {
     const cuerpo = await response.text().catch(() => '');
-    throw traducirError(response.status, cuerpo, response.headers, metodo, path);
+    return {
+      ok: false,
+      reintentable: ESTADOS_REINTENTABLES.has(response.status),
+      error: traducirError(response.status, cuerpo, response.headers, metodo, path),
+    };
   }
 
-  return await response.json();
+  return { ok: true, datos: await response.json() };
+}
+
+async function pedir(metodo: 'GET' | 'POST', path: string, init: RequestInit, url: string): Promise<any> {
+  const ms = presupuesto(path);
+  // El presupuesto es POR INTENTO, pero el total también se acota: sin este
+  // tope, tres intentos de 90 s en una ruta de LLM darían cuatro minutos y
+  // medio de espera sin una sola señal para quien mira.
+  const limiteTotal = Date.now() + ms * 2;
+  let ultimo: Error = new Error(`No se pudo completar la petición a ${path}`);
+
+  for (let intento = 1; intento <= INTENTOS_MAX; intento++) {
+    const r = await unIntento(metodo, path, init, url, ms);
+    if (r.ok) return r.datos;
+
+    ultimo = r.error;
+    if (!r.reintentable || intento === INTENTOS_MAX) break;
+
+    const espera = esperaMs(intento);
+    if (Date.now() + espera >= limiteTotal) break;
+    // A stderr y no a stdout: stdout es el canal JSON-RPC del MCP y cualquier
+    // cosa que se escriba ahí corrompe el protocolo.
+    console.error(`[animus-mcp] ${path} falló de forma transitoria, reintento ${intento} de ${INTENTOS_MAX - 1}`);
+    await dormir(espera);
+  }
+
+  throw ultimo;
 }
 
 export async function raasGet(path: string, queryParams?: Record<string, string | number>): Promise<any> {
