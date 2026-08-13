@@ -119,6 +119,53 @@ jobs:
           grep -q 'ANIMUS_API_KEY' /tmp/salida.txt \
             || { echo "::error::el error no menciona ANIMUS_API_KEY"; cat /tmp/salida.txt; exit 1; }
 
+      - name: Un 502 pasajero se reintenta; un timeout NO
+        # Las dos mitades de la misma regla. Reintentar es util ante una caida
+        # instantanea del gateway, pero reintentar un TIMEOUT convierte una
+        # herramienta lenta en una colgada durante minuto y medio — que es
+        # justo el fallo que el AbortController vino a eliminar.
+        run: |
+          cd /tmp/limpio
+          cat > s.mjs <<'JS'
+          import { createServer } from 'node:http';
+          let n = 0;
+          createServer((_q, r) => { n++;
+            if (n <= 2) { r.writeHead(502, {'content-type':'application/json'}); r.end('{}'); }
+            else { r.writeHead(200, {'content-type':'application/json'}); r.end(JSON.stringify({ok:true, intentos:n})); }
+          }).listen(8799, () => console.error('listo'));
+          JS
+          node s.mjs & SRV=$!
+          sleep 2
+          INIT='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}'
+          NOTI='{"jsonrpc":"2.0","method":"notifications/initialized"}'
+          CALL='{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"animus_economic_macro","arguments":{}}}'
+
+          SALIDA=$(printf '%s\n%s\n%s\n' "$INIT" "$NOTI" "$CALL" \
+            | ANIMUS_API_KEY=x ANIMUS_GATEWAY_URL=http://127.0.0.1:8799 \
+              timeout 60 ./node_modules/.bin/animus-engine-mcp 2>/dev/null)
+          kill $SRV || true
+          # Se parsea en vez de grepear: el resultado viaja como JSON escapado
+          # dentro del JSON-RPC, asi que un grep del texto plano falla aunque el
+          # reintento haya funcionado. Lo detecto simulando este paso en local.
+          echo "$SALIDA" | node -e '
+            let d = "";
+            process.stdin.on("data", c => d += c).on("end", () => {
+              const linea = d.trim().split("\n")
+                .map(x => { try { return JSON.parse(x) } catch { return null } })
+                .find(x => x && x.id === 2);
+              const t = JSON.parse(linea.result.content[0].text);
+              if (t.intentos !== 3) { console.error("intentos=" + t.intentos); process.exit(1); }
+            })' \
+            || { echo "::error::un 502 pasajero no se reintento"; echo "$SALIDA"; exit 1; }
+
+          printf '%s\n%s\n%s\n' "$INIT" "$NOTI" "$CALL" \
+            | ANIMUS_API_KEY=x ANIMUS_GATEWAY_URL=https://10.255.255.1 ANIMUS_TIMEOUT_MS=2000 \
+              timeout 60 ./node_modules/.bin/animus-engine-mcp 2>ret.txt >/dev/null
+          if grep -q 'reintento' ret.txt; then
+            echo "::error::se reintento un TIMEOUT — eso vuelve a colgar la herramienta"
+            cat ret.txt; exit 1
+          fi
+
       - name: El timeout corta y lo dice
         # `fetch` sin signal no vuelve nunca. Se apunta a un host inexistente con
         # presupuesto minimo: debe devolver un error legible, no colgarse.

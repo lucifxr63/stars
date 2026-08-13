@@ -52,9 +52,9 @@ Un `grep 'npm notice'` escondió el warning de que npm estaba **descartando el
 instalable pero sin ejecutable, rompiendo el `npx -y` que documenta el README.
 
 El CI (`.github/workflows/mcp-ci.yml`) prueba el **tarball instalado**, no el
-fuente: que exista el ejecutable, el shebang, las 15 herramientas por stdio, que
-sin key falle con instrucciones, que el timeout corte, y que la versión del
-código coincida con `package.json`.
+fuente: que exista el ejecutable, el shebang, las 16 herramientas por stdio, que
+sin key falle con instrucciones, que el timeout corte SIN reintentar, que un 502
+sí se reintente, y que la versión del código coincida con `package.json`.
 
 ---
 
@@ -178,6 +178,25 @@ Las tres, verificadas contra la base:
    **Pendiente de dictamen de un abogado** — ver
    `validateai/docs/PJUD_VALIDACION_EXPERTO.md`.
 
+### Los reintentos NUNCA cubren un timeout
+
+Desde 0.1.9 se reintenta hasta tres veces ante un error de red y ante 502, 503 y
+504: el gateway o la CDN cayéndose un instante, que puede salir distinto la
+próxima vez. Un 401 o un 400 no se reintentan — van a fallar igual las tres veces
+y sólo retrasan el mensaje que el usuario necesita leer.
+
+**Un `AbortError` no se reintenta jamás, y es la regla que importa.** Si el primer
+intento agotó los 30 s, dos más convierten una herramienta lenta en una colgada
+durante minuto y medio: exactamente el fallo que el `AbortController` vino a
+eliminar. Por eso los reintentos se agregaron DESPUÉS del timeout y no antes.
+Hay además un tope total de dos presupuestos, para que una ruta de LLM con 90 s
+no llegue a cuatro minutos y medio de espera muda.
+
+Se reintenta también en POST porque `/intel/query` y `/rag/query` son de lectura
+pese al verbo: no hay nada que se ejecute dos veces.
+
+El CI lo fija con un servidor que devuelve 502 y otro que se cuelga.
+
 ### El JSON va sin indentar
 
 Lo lee un modelo, no una persona. Quitar la indentación bajó las 15 herramientas
@@ -193,8 +212,6 @@ CI lo verifica.
 
 ## 5. Deuda conocida
 
-- **Sin reintentos.** Un 502 pasajero tumba la llamada. Va *después* del timeout:
-  reintentar sin timeout empeora las cosas.
 - **Respuestas grandes.** `animus_intel_query` sigue en ~15 k caracteres.
 - **Trusted Publishing** pendiente (ver §1).
 - Análisis completo en `ROBUSTEZ.md` y `EXPERIENCIA_Y_TELEMETRIA.md`.
