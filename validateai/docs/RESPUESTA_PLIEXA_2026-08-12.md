@@ -257,6 +257,14 @@ comprador reaparece entre páginas y `meta.total` informa compras, no compradore
 documentación. Está en nuestra cola; hasta entonces no usen `meta.total` como
 conteo de organismos.
 
+> ⚠️ **CORREGIDO el 13/08 — ver `RESPUESTA_PLIEXA_3_2026-08-13.md` §8.** Ese
+> 2.705 **también estaba mal**, y por el mismo defecto: contar una columna sin
+> preguntarse qué guarda. `buyer_org_code` tiene un RUT en compra ágil y un
+> código interno en licitación, así que suma dos espacios de nombres — el MOP
+> figura como `61.202.000-0` y como `7067`. Las entidades reales son **1.786**,
+> y el endpoint ya agrupa por `buyer_rut`, con `meta.total` correcto y sin
+> repetir compradores entre páginas.
+
 ---
 
 ## 8. Lo que no vamos a poder darles con esta fuente
