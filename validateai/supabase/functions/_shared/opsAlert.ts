@@ -17,12 +17,17 @@
 //   degradacion  → lo que "funciona" mientras miente (RAG sin corpus, mocks,
 //                  fallbacks sirviendo en lugar del dato real).
 //   negocio      → señal de producto: cuotas agotadas, tiers, leads.
+//   extracciones → el parte periódico de la ingesta: cuánto entró en las
+//                  últimas 24 h por fuente. Va aparte de `latido` porque no
+//                  informa que una corrida terminó, sino QUÉ PRODUJO — que es
+//                  la distinción que este sistema viene aprendiendo a los
+//                  golpes: un job puede cerrar en verde y no traer una fila.
 //
 // Nunca lanza y nunca bloquea: un fallo de alerting no debe romper el flujo que
 // lo emitió. Todos los llamadores deben usar `void sendOpsAlert(...)`.
 
 export type OpsLevel = 'info' | 'warn' | 'error';
-export type OpsChannel = 'incidentes' | 'latido' | 'degradacion' | 'negocio';
+export type OpsChannel = 'incidentes' | 'latido' | 'degradacion' | 'negocio' | 'extracciones';
 
 export interface OpsField {
   name: string;
@@ -55,6 +60,7 @@ const NOMBRE_CANAL: Record<OpsChannel, string> = {
   latido: 'Latido',
   degradacion: 'Degradación',
   negocio: 'Negocio',
+  extracciones: 'Extracciones',
 };
 
 function urlDeCanal(channel: OpsChannel): string | undefined {
@@ -64,6 +70,7 @@ function urlDeCanal(channel: OpsChannel): string | undefined {
     latido: Deno.env.get('OPS_WEBHOOK_LATIDO'),
     degradacion: Deno.env.get('OPS_WEBHOOK_DEGRADACION'),
     negocio: Deno.env.get('OPS_WEBHOOK_NEGOCIO'),
+    extracciones: Deno.env.get('OPS_WEBHOOK_EXTRACCIONES'),
   };
   // Sin canal propio cae a incidentes: preferible un canal mezclado a un aviso
   // mudo.
