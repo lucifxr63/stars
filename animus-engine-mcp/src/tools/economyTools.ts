@@ -1,9 +1,17 @@
 import { z } from 'zod';
 import { raasGet } from '../client/raasClient.js';
 
-export const EconomicMacroSchema = z.object({}).describe('Obtener indicadores macroeconómicos chilenos normalizados en tiempo real (UF diaria de la CMF, UTM, TPM, etc.)');
+export const DESC_ECONOMIC_MACRO =
+  'Obtener indicadores macroeconómicos chilenos normalizados en tiempo real (UF diaria de la ' +
+  'CMF, UTM, TPM, etc.).';
 
-export const EconomicCatalogSchema = z.object({}).describe('Obtener el catálogo completo multi-proveedor de series económicas en la base de datos (CMF, SII, BCCh, FRED)');
+export const EconomicMacroSchema = z.object({}).describe(DESC_ECONOMIC_MACRO);
+
+export const DESC_ECONOMIC_CATALOG =
+  'Obtener el catálogo completo multi-proveedor de series económicas almacenadas en base de ' +
+  'datos (CMF, SII, BCCh, FRED).';
+
+export const EconomicCatalogSchema = z.object({}).describe(DESC_ECONOMIC_CATALOG);
 
 export async function executeEconomicMacro() {
   const result = await raasGet('/data/macro');

@@ -23,6 +23,12 @@ import { raasGet } from '../client/raasClient.js';
  * en otro.
  */
 
+export const DESC_PJUD_TENDENCIAS =
+  'Serie por año de la Corte Suprema de Chile (2020-2025): causas falladas, % confirmados, ' +
+  '% revocados y duración media entre ingreso y fallo. Filtrable por libro, tipo de recurso y ' +
+  'sala. OJO: cubre SOLO causas ya falladas; no mide causas pendientes ni permite restar ' +
+  'ingresos menos términos del mismo año, porque una causa ingresada un año puede fallarse en otro.';
+
 export const PjudTendenciasSchema = z
   .object({
     libro: z.string().optional().describe('Civil, Criminal, Familia, Reforma Laboral, etc.'),
@@ -35,11 +41,11 @@ export const PjudTendenciasSchema = z
       .optional()
       .describe('Coincidencia parcial. Ej: "CONSTITUCIONAL", "PENAL", "MIXTA".'),
   })
-  .describe(
-    'Serie por año de la Corte Suprema de Chile: volumen de causas falladas, ' +
-      'porcentaje de confirmados y revocados, y duración media entre ingreso y fallo. ' +
-      'Cubre 2020-2025 y SÓLO la serie de términos (causas ya falladas).',
-  );
+  .describe(DESC_PJUD_TENDENCIAS);
+
+export const DESC_PJUD_RESUMEN =
+  'Totales de la Corte Suprema por año, serie, libro, tipo de recurso, sala y grupo de ' +
+  'término. Usar para ver la distribución global antes de pedir el detalle.';
 
 export const PjudResumenSchema = z
   .object({
@@ -52,9 +58,11 @@ export const PjudResumenSchema = z
           'inventario_suprema_detalle (pendientes). Sin esto mezcla las tres.',
       ),
   })
-  .describe(
-    'Totales de la Corte Suprema por año, serie, libro, tipo de recurso, sala y grupo de término.',
-  );
+  .describe(DESC_PJUD_RESUMEN);
+
+export const DESC_PJUD_CAUSAS =
+  'Causas individuales de la Corte Suprema con rol, libro, tipo de recurso, sala y fechas. ' +
+  'Usar para revisar los casos concretos detrás de una cifra agregada.';
 
 export const PjudCausasSchema = z
   .object({
@@ -80,10 +88,12 @@ export const PjudCausasSchema = z
     page: z.number().optional(),
     page_size: z.number().optional().describe('Máximo 200.'),
   })
-  .describe(
-    'Causas individuales de la Corte Suprema, con rol, libro, tipo de recurso, sala y fechas. ' +
-      'Sirve para revisar casos concretos detrás de una cifra agregada.',
-  );
+  .describe(DESC_PJUD_CAUSAS);
+
+export const DESC_PJUD_CAUSA =
+  'Historia completa de UNA causa de la Corte Suprema. Devuelve un ARREGLO: la misma causa ' +
+  'puede figurar como ingresada, en inventario y con más de un término, con distinto resultado ' +
+  'cada vez. No asumir que la primera fila es la definitiva.';
 
 export const PjudCausaSchema = z
   .object({
@@ -91,11 +101,7 @@ export const PjudCausaSchema = z
     rol: z.number().describe('Número de rol.'),
     ano_rol: z.number().describe('Año del rol.'),
   })
-  .describe(
-    'Historia completa de UNA causa. Devuelve un ARREGLO: la misma causa puede aparecer ' +
-      'como ingresada, en inventario y con más de un término — una causa puede terminarse ' +
-      'más de una vez, con distinto resultado cada vez.',
-  );
+  .describe(DESC_PJUD_CAUSA);
 
 /**
  * ADVERTENCIAS QUE VIAJAN CON LOS DATOS

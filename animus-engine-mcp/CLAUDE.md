@@ -3,12 +3,13 @@
 Servidor Model Context Protocol que expone los datos de Animus a Claude Desktop,
 Cursor y Windsurf.
 
-**npm:** `animus-engine-mcp` · última en el registro **0.1.4** (2026-08-12),
-igual que el repo.
+**npm:** `animus-engine-mcp`
 
-> Este número queda viejo cada vez que se publica. Antes de citarlo,
-> `npm view animus-engine-mcp version` — es la misma disciplina que la §4 pide
-> para los volúmenes de Mercado Público, y por la misma razón.
+> Acá había un número de versión y quedó viejo dos veces en el mismo día. La
+> publicada la dice `npm view animus-engine-mcp version`; la del repo,
+> `package.json`. Es la misma disciplina que la §4 pide para los volúmenes de
+> Mercado Público, y por la misma razón: un número escrito a mano envejece solo.
+
 **Gateway:** `https://fcdhcntyvsydnvjwopfe.supabase.co/functions/v1/api-v1`
 
 ---
@@ -86,11 +87,25 @@ que ese cambio venía a corregir. El commit entero fue código muerto de cara al
 modelo. En el mismo barrido faltaba el filtro `serie` en `animus_pjud_causas`
 (estaba en el Zod, no en el cable) y `grupo_termino` listaba 5 valores contra 6.
 
-Desde 0.1.3 las descripciones de Mercado Público viven en constantes `DESC_*`
-exportadas de `tools/mercadoPublicoTools.ts`, y `index.ts` las **importa**. Al
-agregar una herramienta, la descripción va ahí y se importa — no se copia.
+**Desde 0.1.7 el `inputSchema` se GENERA del Zod** con `zod-to-json-schema`, así
+que ya no hay dos definiciones que puedan separarse: hay una y el cable sale de
+ella. La 0.1.3 lo había mitigado exportando constantes `DESC_*` e importándolas,
+pero eso seguía dependiendo de que quien agregara una herramienta se acordara de
+hacerlo — y en un solo día hubo que corregir dos descripciones.
 
-Verificarlo se hace sobre el cable, nunca leyendo el fuente:
+Agregar una herramienta hoy es: definir el Zod con `.describe()` en el objeto y
+en cada campo, y sumar una línea `herramienta('animus_x', XSchema)`. Si el
+esquema no trae `.describe()`, el servidor **falla al arrancar** en vez de
+exponer una herramienta que el modelo no puede elegir.
+
+Se descartan dos claves de lo que genera la librería: `$schema`, que ningún
+cliente MCP usa, y la `description` de nivel raíz, que repetiría literalmente la
+de la herramienta —1.772 caracteres duplicados sólo en `animus_mp_detalle`—.
+A cambio llegan `required` y `additionalProperties: false` derivados, que antes
+no existían.
+
+Para comprobar que un cambio llega al modelo, tocar sólo el `.describe()` del Zod
+y mirar el cable — nunca el fuente:
 
 ```bash
 printf '%s\n%s\n%s\n' \
@@ -99,11 +114,6 @@ printf '%s\n%s\n%s\n' \
  '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
  | node dist/index.js 2>/dev/null
 ```
-
-**Pendiente recomendado:** derivar los `inputSchema` de los Zod con
-`zod-to-json-schema` y borrar los escritos a mano. Es lo único que vuelve la
-divergencia imposible en vez de sólo improbable; hoy sigue dependiendo de que
-quien agrega una herramienta importe la constante.
 
 ### Retiradas en 0.1.1
 
