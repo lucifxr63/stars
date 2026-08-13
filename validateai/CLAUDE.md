@@ -98,13 +98,29 @@ All functions run on Deno via Supabase Edge Functions.
      `public.mp_ordenes_compra` / `…_items`, que existen porque PostgREST sólo
      sirve el esquema `public`.
 
-     ⚠️ **El 58 % de las órdenes son cáscaras y el endpoint las FILTRA.** De
-     125.273 sólo 52.188 tienen contenido; las otras traen `external_code` y
-     `state_code` y nada más. `sync-ordenes` inserta el identificador y
-     `enrich-ordenes` lo completa después, y ese segundo job está en «NUNCA
-     TERMINA (huérfanas)» desde ~el 21-jul. El tamaño del hueco viaja en
-     `meta.enriquecimiento_pendiente`; el detalle de una orden sin enriquecer
-     responde **409 `PENDING_ENRICHMENT`**, no un objeto con todo en `null`.
+     ⚠️ **Una parte de las órdenes son cáscaras y el endpoint las FILTRA.**
+     `sync-ordenes` inserta el identificador y `enrich-ordenes` lo completa
+     después. El tamaño del hueco viaja en `meta.enriquecimiento_pendiente`; el
+     detalle de una orden sin enriquecer responde **409 `PENDING_ENRICHMENT`**,
+     no un objeto con todo en `null`.
+
+     **Medido el 2026-08-12: 168.829 órdenes, 26 % pendientes, y el job está
+     sano** (`mp_job_health_resumen` lo reporta `ok`; 885 corridas exitosas y 8
+     fallos en 9 días). Enriquece **13.844/día contra 8.783 que llegan**, así que
+     drena el atraso a ~5.000/día. Va FIFO dentro del backlog, por eso los días
+     recientes se ven al 100 % de cáscaras mientras trabaja los viejos primero.
+
+     Acá decía «58 % de cáscaras» y «NUNCA TERMINA (huérfanas) desde el 21-jul».
+     Las dos cosas fueron ciertas el 05/08 y ninguna lo es hoy: hubo dos días
+     malos —el 05 y 06/08 rindió 4-5 k/día contra 18-19 k de ingesta— y desde el
+     07/08 va en 10-14 k/día. **Un estado transitorio quedó escrito como
+     permanente durante una semana**, y es el mismo error que la §3 de la raíz
+     advierte al revés: acá no se confundió un status verde con efecto, se
+     confundió un rojo viejo con el presente. Medir antes de citar.
+
+     Lo que sí queda roto: **176 órdenes con `enrichment_attempts >= 5`**, que el
+     job ya no vuelve a mirar. Es un número chico y estable, pero no se recupera
+     solo.
 
      **No mover estas tablas a la canónica.** `licitaciones_mercado_publico`
      modela mecanismos de contratación, no órdenes post-adjudicación.
