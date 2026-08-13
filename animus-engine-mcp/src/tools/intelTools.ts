@@ -1,13 +1,21 @@
 import { z } from 'zod';
 import { raasPost } from '../client/raasClient.js';
 
+export const DESC_INTEL_QUERY =
+  'Consulta en lenguaje natural al Grafo de Conocimiento MoE (Mixture of Experts) de Animus ' +
+  'Engine (ej: "¿Cuál es la Tasa de Política Monetaria en Chile?")';
+
+export const DESC_RAG_SEARCH =
+  'Búsqueda semántica (Vector RAG) en la Base de Conocimiento con síntesis en Markdown y ' +
+  'citas fehacientes de leyes y normas chilenas.';
+
 export const IntelQuerySchema = z.object({
   query: z.string().describe('Consulta en lenguaje natural al Grafo de Conocimiento MoE (ej: "¿Cuál es la Tasa de Política Monetaria fijada por el Banco Central en Chile?")'),
-});
+}).describe(DESC_INTEL_QUERY);
 
 export const RagSearchSchema = z.object({
   query: z.string().describe('Búsqueda semántica en el Knowledge Base normativo con síntesis markdown y citas fehacientes (ej: "Regulación Ley Fintech 21.521 en Chile")'),
-});
+}).describe(DESC_RAG_SEARCH);
 
 export async function executeIntelQuery(args: z.infer<typeof IntelQuerySchema>) {
   const result = await raasPost('/intel/query', { query: args.query });
@@ -35,7 +43,12 @@ export async function executeRagSearch(args: z.infer<typeof RagSearchSchema>) {
   };
 }
 
-export const ApiDocsSchema = z.object({}).describe('Obtener la documentación pública y especificación del API de Animus Engine (NO REQUIERE AUTENTICACIÓN). Úsalo para saber cómo llamar los endpoints o cómo conectar la app del usuario.');
+export const DESC_API_DOCS =
+  'Obtener la documentación pública, especificación técnica y guía de integración del API ' +
+  'Animus Engine / Bralidus RaaS (NO REQUIERE AUTENTICACIÓN NI API KEY). Úsalo primero si el ' +
+  'usuario pregunta por documentación o cómo integrar.';
+
+export const ApiDocsSchema = z.object({}).describe(DESC_API_DOCS);
 
 export async function executeApiDocs() {
   const docsText = `# Especificación Oficial Animus Engine / Bralidus RaaS API v1
