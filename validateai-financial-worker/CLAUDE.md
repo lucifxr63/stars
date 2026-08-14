@@ -279,6 +279,41 @@ entre a la base ni de paso**. No moverlo.
 `diariooficial.interior.gob.cl` devuelve 403 incluso en la raíz, desde IP
 residencial chilena. Su fallo está contenido y no rompe la extracción concursal.
 
+### `mp_attachments_downloader.py` — BORRADO el 2026-08-13
+
+Prometía descargar los adjuntos de una licitación (bases, EETT, anexos) y dejar
+un `manifest.json` con checksums para "ingesta directa en el Vector Vault / RAG".
+**Sus dos vías reales estaban muertas y la tercera fabricaba los archivos.**
+
+- `fetch_attachments_via_api` buscaba una clave `Adjuntos` que la API v1 **no
+  tiene** (verificado el 2026-08-13: el detalle trae 52 campos y ninguno es de
+  adjuntos), con `Items` —que son los productos pedidos— como alternativa.
+- `fetch_attachments_via_web` raspaba `Details.aspx` / `FichaLicitacion.html`
+  buscando `<a href>` a PDFs. Hoy esas páginas no sirven enlaces así.
+- Al no encontrar nada, **inventaba dos adjuntos**:
+  `Bases_Administrativas_y_Tecnicas_<codigo>.pdf` y
+  `Anexo_1_Formulario_Oferta_<codigo>.pdf`, ambos apuntando a la **página HTML**
+  del proceso. Y si la descarga fallaba, escribía un *stub* de texto con ese
+  mismo nombre `.pdf`, le calculaba un SHA-256 y lo anotaba en el manifest con
+  `"note": "Documento referenciado de Mercado Público"`.
+
+Como ninguna vía real producía, el fallback inventor era **el único camino que se
+ejecutaba**. El resultado era un manifest que declaraba N archivos con checksum
+donde cada uno era una página HTML o un stub — con el nombre de un documento
+legal que nadie había leído.
+
+Es el modo de fallo de `empleo_sync` llevado un paso más allá: no reportaba cero,
+**reportaba documentos**. Un checksum no vuelve verdadero a un archivo inventado;
+sólo lo hace parecer auditado.
+
+Se salvó por un detalle: era un CLI suelto (`__main__` propio), no lo importaba
+ningún job, y nada de eso llegó al grafo por vía automática.
+
+**No hay ruta autorizada a los adjuntos hoy** — las cuatro vías están medidas en
+`validateai/docs/SOLICITUD_CHILECOMPRA_ADJUNTOS.md`, junto con la solicitud
+formal a ChileCompra. Quien vuelva a escribir esto: la ausencia de un adjunto se
+declara, no se rellena.
+
 ---
 
 ## 4. Monitoreo de fallos silenciosos
